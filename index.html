@@ -22,11 +22,14 @@
 
   var container;
   var parent;
+  var animation = true;
   function init() {
     container = document.createElement('div');
     document.body.appendChild(container);
 
     var aspect = window.innerWidth/window.innerHeight;
+    spline_camera = new THREE.PerspectiveCamera(50, aspect,
+                                         1, 1000);
     camera = new THREE.PerspectiveCamera(50, aspect,
                                          1, 1000);
 
@@ -56,7 +59,7 @@
       return mesh;
     }
 
-    var tube = make_mesh(KINASE);
+    tube = make_mesh(KINASE);
     var mesh = add_geometry(tube, 0xff1100, 0, 0, 0, 0, 0, 0, 1);
     renderer = new THREE.WebGLRenderer( { antialias: true } );
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -74,6 +77,31 @@
   }
 
   function animate() {
+    var time = Date.now();
+    var loop_time = 20 * 10000;
+    var t = (time % loop_time) / loop_time;
+    var pos = tube.path.getPointAt(t);
+    var segments = tube.tangents.length;
+    var pickt = t * segments;
+    var pick = Math.floor( pickt);
+    var pick_next = (pick + 1) % segments;
+    var binormal = new THREE.Vector3();
+    binormal.subVectors(tube.binormals[pick_next], tube.binormals[pick]);
+    binormal.multiplyScalar(pickt-pick).add(tube.binormals[pick]);
+    var dir = tube.path.getTangentAt(t);
+    var normal = new THREE.Vector3();
+    normal.copy(binormal).cross(dir);
+    var offset = 1.5;
+    pos.add(normal.clone().multiplyScalar(offset));
+    spline_camera.position = pos;
+    var look_at = new THREE.Vector3();
+    var x = new THREE.Vector3();
+    x.copy(normal).multiplyScalar(-0.5);
+
+    //look_at.copy(pos).add(dir).add(x);
+    var look_at = tube.path.getPointAt(t+0.002);
+    spline_camera.matrix.lookAt(spline_camera.position, look_at, normal);
+    spline_camera.rotation.setEulerFromRotationMatrix(spline_camera.matrix, spline_camera.eulerOrder);
     requestAnimationFrame(animate);
     render();
   }
@@ -121,7 +149,7 @@
   }
 
   function render() {
-    renderer.render(scene, camera);
+    renderer.render(scene, animation ? spline_camera : camera);
   }
 
   init();
