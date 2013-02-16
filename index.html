@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script src='js/three.min.js'></script>
+    <script src='js/mkmesh.js'></script>
+    <script src='js/cam.js'></script>
+    <script src='pdbs/1ake.json'></script>
+    <title>kinky kinase</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <style>
+    body {
+      font-family: Monospace;
+      background-color: #f0f0f0;
+      margin: 0px;
+      overflow: hidden;
+    }
+    </style>
+    </head>
+<body>
+  <script>
+  var camera, scene, renderer;
+
+  var container;
+  var parent;
+  function init() {
+    container = document.createElement('div');
+    document.body.appendChild(container);
+
+    var aspect = window.innerWidth/window.innerHeight;
+    camera = new THREE.PerspectiveCamera(50, aspect,
+                                         1, 1000);
+    camera.position.set(0, 75, 100);
+
+    scene = new THREE.Scene();
+
+    var  light = new THREE.DirectionalLight(0xffffff);
+    light.position.set(0, 0, 1);
+    scene.add(light);
+
+    parent = new THREE.Object3D();
+    parent.position.y = 50;
+    scene.add(parent);
+
+    function add_geometry(geometry, color, x, y, z, rx, ry, rz, s) {
+      // to be written...
+      var materials = [
+      new THREE.MeshLambertMaterial({ color: color, opacity : 0.2, 
+                                      transparent : true }),
+      new THREE.MeshBasicMaterial({color: 0x000000, wireframe : true, 
+                                   opacity : 0.3})
+      ]
+      var mesh = THREE.SceneUtils.createMultiMaterialObject(geometry, 
+                                                            materials);
+      mesh.position.set(x, y, z);
+      mesh.scale.set(s, s, s);
+      mesh.rotation.set(rx, ry, rz);
+      parent.add(mesh);
+    }
+    var tube = make_mesh(KINASE);
+    add_geometry(tube, 0xff1100, 0, 0, 0, 0, 0, 0, 1);
+    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.setSize( window.innerWidth, window.innerHeight );
+
+    container.appendChild( renderer.domElement );
+
+  }
+
+  function animate() {
+    requestAnimationFrame( animate );
+    render();
+  }
+
+  function render() {
+    //parent.rotation.y += ( targetRotation - parent.rotation.y ) * 0.05;
+    renderer.render(scene, camera);
+
+  }
+  init();
+  animate();
+
+  </script>
+</body>
+</html>
