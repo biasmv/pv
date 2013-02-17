@@ -16,3 +16,50 @@ function make_mesh(calpha_positions) {
                                           12, false, true);
    return tube_mesh;
 }
+
+
+function Vehicle(radius, depth, thickness) {
+
+  var geom = new THREE.Geometry();
+  var depth_half = depth * 0.5;
+  var angle = 70;
+  var sin_angle_r = Math.sin(angle)*radius;
+  var cos_angle_r = Math.cos(angle)*radius;
+  geom.vertices.push(new THREE.Vector3(0, radius, -depth_half));
+  geom.vertices.push(new THREE.Vector3(sin_angle_r, cos_angle_r, -depth_half));
+  geom.vertices.push(new THREE.Vector3(sin_angle_r*1.1, cos_angle_r*1.1, -depth_half));
+  geom.vertices.push(new THREE.Vector3(0, radius*1.2, -depth_half));
+  geom.vertices.push(new THREE.Vector3(-sin_angle_r, cos_angle_r, -depth_half));
+  geom.vertices.push(new THREE.Vector3(-sin_angle_r*1.1, cos_angle_r*1.1, -depth_half));
+
+  geom.vertices.push(new THREE.Vector3(0, radius, depth_half));
+  geom.vertices.push(new THREE.Vector3(sin_angle_r, cos_angle_r, depth_half));
+  geom.vertices.push(new THREE.Vector3(sin_angle_r*1.1, cos_angle_r*1.1, depth_half));
+  geom.vertices.push(new THREE.Vector3(0, radius*1.2, depth_half));
+  geom.vertices.push(new THREE.Vector3(-sin_angle_r, cos_angle_r, depth_half));
+  geom.vertices.push(new THREE.Vector3(-sin_angle_r*1.1, cos_angle_r*1.1, depth_half));
+
+  geom.faces.push(new THREE.Face4(0, 3, 2, 1));
+  geom.faces.push(new THREE.Face4(0, 4, 5, 3));
+
+  geom.faces.push(new THREE.Face4(6, 7, 8, 9));
+  geom.faces.push(new THREE.Face4(6, 9, 11, 10));
+
+  geom.faces.push(new THREE.Face4(2, 3, 9, 8));
+  geom.faces.push(new THREE.Face4(3, 5, 11, 9));
+
+  geom.faces.push(new THREE.Face4(0, 1, 7, 6));
+
+  geom.faces.push(new THREE.Face4(0, 6, 10, 4));
+  geom.faces.push(new THREE.Face4(0, 1, 7, 6));
+
+  geom.faces.push(new THREE.Face4(1, 2, 8, 7));
+
+  geom.faces.push(new THREE.Face4(4, 10, 11, 5));
+
+  geom.computeFaceNormals();
+
+  return geom;
+
+ 
+}
