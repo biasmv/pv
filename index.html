@@ -23,6 +23,8 @@
   var container;
   var parent;
   var animation = true;
+  time = 0;
+  last_time = Date.now();
 
   function init() {
     container = document.createElement('div');
@@ -83,9 +85,11 @@
   }
 
   function animate() {
-    var time = Date.now();
+    var now = Date.now();
+    time += now - last_time;
+    last_time = now;
     var loop_time = 20 * 10000;
-    var look_ahead_delta_t = 5*tube.tangents.length/loop_time;
+    var look_ahead_delta_t = 7*tube.tangents.length/loop_time;
     var t = (time % loop_time) / loop_time;
     var pos = tube.path.getPointAt(t);
     var segments = tube.tangents.length;
