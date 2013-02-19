@@ -88,8 +88,8 @@
     var now = Date.now();
     time += now - last_time;
     last_time = now;
-    var loop_time = 20 * 10000;
-    var look_ahead_delta_t = 7*tube.tangents.length/loop_time;
+    var loop_time = 100 * tube.tangents.length;
+    var look_ahead_delta_t = 3*tube.tangents.length/loop_time;
     var t = (time % loop_time) / loop_time;
     var pos = tube.path.getPointAt(t);
     var segments = tube.tangents.length;
@@ -121,7 +121,6 @@
     vehicle.matrix.multiply(la);
     vehicle.updateMatrixWorld(true);
     spline_camera.matrix.lookAt(spline_camera.position, look_at, normal);
-    light.position.applyMatrix4(spline_camera.matrix);
     spline_camera.rotation.setEulerFromRotationMatrix(spline_camera.matrix, 
                                                       spline_camera.eulerOrder);
     requestAnimationFrame(animate);
