@@ -22,10 +22,13 @@
 
   var container;
   var parent;
-  var animation = true;
+  var animation = false;
+  var stop = false;
   time = 0;
   last_time = Date.now();
 
+  var left_down = false;
+  var right_down = false;
   function init() {
     container = document.createElement('div');
     document.body.appendChild(container);
@@ -37,6 +40,7 @@
                                          1, 1000);
 
     scene = new THREE.Scene();
+    //scene.fog = new THREE.Fog(0x000000, 1, 10);
     var ambient_light = new THREE.AmbientLight(0x404040); // soft white light
     scene.add(ambient_light);
     light = new THREE.DirectionalLight(0xffffff);
@@ -48,12 +52,16 @@
     function add_geometry(geometry, color, x, y, z, rx, ry, rz, s) {
       var materials = [
       new THREE.MeshLambertMaterial({ color: color, opacity : 1.0, 
-                                      transparent : false }),
+                                      transparent : false,
+                                      shading: THREE.FlatShading}),
       new THREE.MeshBasicMaterial({color: 0x000000, wireframe : true, 
                                    opacity : 1.0})
       ]
       var mesh = THREE.SceneUtils.createMultiMaterialObject(geometry, 
                                                             materials);
+      if (geometry.debug) {
+        mesh.add(geometry.debug);
+      }
       mesh.position.set(x, y, z);
       mesh.scale.set(s, s, s);
       mesh.rotation.set(rx, ry, rz);
@@ -62,10 +70,15 @@
     }
 
     tube = make_mesh(CRAMBIN);
-    var v = Vehicle(0.6, 0.3);
-    var mesh = add_geometry(tube, 0xff1100, 0, 0, 0, 0, 0, 0, 1);
+    var v = new THREE.SphereGeometry(0.2);
+    var mesh = add_geometry(tube, 0xffaa33, 0, 0, 0, 0, 0, 0, 1);
     vehicle = add_geometry(v, 0x11ff00, 0, 0, 0, 0, 0, 0, 1);
+    vehicle.velocity = tube.tangents[0];
+    vehicle.position = initial_pos(tube);
+    vehicle.last_t_on_path = 0;
+    vehicle.last_p_on_path = tube.path.getPointAt(0);
     renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer.sortObjects = false;
     //renderer = new THREE.CanvasRenderer( { antialias: true } );
     renderer.setSize( window.innerWidth, window.innerHeight );
 
@@ -84,47 +97,66 @@
     update_cam();
   }
 
+  function initial_pos(tube, radius) {
+    var pos = tube.path.getPointAt(0);
+    radius = radius || 0.5;
+    var normal = tube.path.getTangentAt(0).cross(tube.binormals[0]);
+    return pos.add(normal.multiplyScalar(radius));
+  }
+
   function animate() {
     var now = Date.now();
-    time += now - last_time;
+    var time_delta = now - last_time;
     last_time = now;
-    var loop_time = 100 * tube.tangents.length;
-    var look_ahead_delta_t = 3*tube.tangents.length/loop_time;
-    var t = (time % loop_time) / loop_time;
-    var pos = tube.path.getPointAt(t);
-    var segments = tube.tangents.length;
-    var pickt = t * segments;
-    var pick = Math.floor( pickt);
-    var pick_next = (pick + 1) % segments;
-    var binormal = new THREE.Vector3();
-    binormal.subVectors(tube.binormals[pick_next], tube.binormals[pick]);
-    binormal.multiplyScalar(pickt-pick).add(tube.binormals[pick]);
-    var dir = tube.path.getTangentAt(t);
-    var normal = new THREE.Vector3();
-    normal.copy(binormal).cross(dir);
-    var offset = 1.5;
-    pos.add(normal.clone().multiplyScalar(offset));
-    spline_camera.position = pos;
-    var look_at = new THREE.Vector3();
-    var x = new THREE.Vector3();
-    x.copy(normal).multiplyScalar(-0.5);
-    var look_at = tube.path.getPointAt(t+look_ahead_delta_t);
-    vehicle.position = look_at;
-    vehicle.matrixAutoUpdate = false;
-    var hdir = tube.path.getTangentAt(t+look_ahead_delta_t); 
-    var center = new THREE.Vector3();
-    center.copy(look_at).add(hdir);
-    var la = new THREE.Matrix4();
-    la.lookAt(look_at, center, normal);
-    vehicle.matrix.identity();
-    vehicle.matrix.translate(look_at);
-    vehicle.matrix.multiply(la);
-    vehicle.updateMatrixWorld(true);
-    spline_camera.matrix.lookAt(spline_camera.position, look_at, normal);
+    var speed = 0.0020
+
+    var ds = vehicle.velocity.clone().multiplyScalar(time_delta*speed);
+    var new_pos = vehicle.position.clone().add(ds);
+
+    var min_distance = 100;
+    var closest_t_on_path, closest_p_on_path;
+    var min_i = 0;
+    for (var i=0; i<100; ++i) {
+      var p = tube.path.getPointAt(vehicle.last_t_on_path+i*0.00001);
+      var distance = p.clone().sub(new_pos).lengthSq();
+      if (distance<min_distance) {
+        closest_t_on_path = vehicle.last_t_on_path+i*0.00001;
+        closest_p_on_path = p;
+        min_distance = distance;
+        min_i = i;
+      }
+    }
+    var x = new_pos.clone().sub(closest_p_on_path);
+    x.normalize();
+    var left = x.clone().cross(tube.path.getTangentAt(closest_t_on_path));
+    left.normalize().multiplyScalar(0.3*speed*time_delta);
+    if (left_down) {
+      x.add(left);
+    }
+    if (right_down) {
+      x.sub(left);
+    }
+    x.normalize();
+    var real_new_pos = closest_p_on_path.clone().add(x.multiplyScalar(0.5));
+    var real_ds = real_new_pos.clone().sub(vehicle.position);
+    real_ds.normalize();
+    real_ds.add(tube.path.getTangentAt(closest_t_on_path).normalize());
+
+    vehicle.velocity = real_ds;
+    vehicle.last_t_on_path = closest_t_on_path;
+    vehicle.last_p_on_path = closest_p_on_path;
+
+    vehicle.position = real_new_pos;
+    if (!stop)
+      requestAnimationFrame(animate);
+
+    spline_camera.position = closest_p_on_path.clone().sub(real_ds).add(x.clone().multiplyScalar(2));
+    spline_camera.matrix.lookAt(spline_camera.position, closest_p_on_path, x);
     spline_camera.rotation.setEulerFromRotationMatrix(spline_camera.matrix, 
                                                       spline_camera.eulerOrder);
-    requestAnimationFrame(animate);
     render();
+
+    
   }
 
   function key_down(event) {
@@ -134,6 +166,12 @@
     }
     if (event.keyCode == 75) {
       right_down = true;
+    }
+    if (event.keyCode == 86) {
+      animation = !animation;
+    }
+    if (event.keyCode == 90) {
+      stop = true;
     }
   }
 
@@ -153,16 +191,18 @@
     renderer.domElement.addEventListener('mouseout', mouse_out, false);
     last_mouse_pos = new THREE.Vector2(event.pageX, event.pageY);
   }
+
   function update_cam() {
     var cam_matrix = new THREE.Matrix4();
     cam_matrix.translate(center);
     cam_matrix.multiplyMatrices(cam_matrix, rot);
-    var trans = new THREE.Vector3(0, 0, 100);
+    var trans = new THREE.Vector3(0, 0, 30);
     trans.multiplyScalar(scale);
     cam_matrix.translate(trans);
     camera.matrix = cam_matrix;
     camera.updateMatrixWorld(true);
   }
+
 
   function mouse_wheel(event) {
      var delta = 1+event.wheelDelta*0.0001;

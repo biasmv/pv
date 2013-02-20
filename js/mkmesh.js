@@ -13,7 +13,7 @@ function make_mesh(calpha_positions) {
    var tube_mesh = new THREE.TubeGeometry(spline,
                                           extrude_settings.steps,
                                           extrude_settings.radius,
-                                          12, false, true);
+                                          12, false, false);
    return tube_mesh;
 }
 
