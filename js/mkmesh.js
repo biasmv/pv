@@ -17,7 +17,6 @@ function make_mesh(calpha_positions) {
    return tube_mesh;
 }
 
-
 function Vehicle(radius, depth, thickness) {
 
   var geom = new THREE.Geometry();
@@ -25,19 +24,20 @@ function Vehicle(radius, depth, thickness) {
   var angle = 70;
   var sin_angle_r = Math.sin(angle)*radius;
   var cos_angle_r = Math.cos(angle)*radius;
-  geom.vertices.push(new THREE.Vector3(0, radius, -depth_half));
-  geom.vertices.push(new THREE.Vector3(sin_angle_r, cos_angle_r, -depth_half));
-  geom.vertices.push(new THREE.Vector3(sin_angle_r*1.1, cos_angle_r*1.1, -depth_half));
-  geom.vertices.push(new THREE.Vector3(0, radius*1.2, -depth_half));
-  geom.vertices.push(new THREE.Vector3(-sin_angle_r, cos_angle_r, -depth_half));
-  geom.vertices.push(new THREE.Vector3(-sin_angle_r*1.1, cos_angle_r*1.1, -depth_half));
+  var y_shift = -radius*0.8;
+  geom.vertices.push(new THREE.Vector3(0, radius+y_shift, -depth_half));
+  geom.vertices.push(new THREE.Vector3(sin_angle_r, cos_angle_r+y_shift, -depth_half));
+  geom.vertices.push(new THREE.Vector3(sin_angle_r*1.1, cos_angle_r*1.1+y_shift, -depth_half));
+  geom.vertices.push(new THREE.Vector3(0, radius*1.2+y_shift, -depth_half));
+  geom.vertices.push(new THREE.Vector3(-sin_angle_r, cos_angle_r+y_shift, -depth_half));
+  geom.vertices.push(new THREE.Vector3(-sin_angle_r*1.1, cos_angle_r*1.1+y_shift, -depth_half));
 
-  geom.vertices.push(new THREE.Vector3(0, radius, depth_half));
-  geom.vertices.push(new THREE.Vector3(sin_angle_r, cos_angle_r, depth_half));
-  geom.vertices.push(new THREE.Vector3(sin_angle_r*1.1, cos_angle_r*1.1, depth_half));
-  geom.vertices.push(new THREE.Vector3(0, radius*1.2, depth_half));
-  geom.vertices.push(new THREE.Vector3(-sin_angle_r, cos_angle_r, depth_half));
-  geom.vertices.push(new THREE.Vector3(-sin_angle_r*1.1, cos_angle_r*1.1, depth_half));
+  geom.vertices.push(new THREE.Vector3(0, radius+y_shift, depth_half));
+  geom.vertices.push(new THREE.Vector3(sin_angle_r, cos_angle_r+y_shift, depth_half));
+  geom.vertices.push(new THREE.Vector3(sin_angle_r*1.1, cos_angle_r*1.1+y_shift, depth_half));
+  geom.vertices.push(new THREE.Vector3(0, radius*1.2+y_shift, depth_half));
+  geom.vertices.push(new THREE.Vector3(-sin_angle_r, cos_angle_r+y_shift, depth_half));
+  geom.vertices.push(new THREE.Vector3(-sin_angle_r*1.1, cos_angle_r*1.1+y_shift, depth_half));
 
   geom.faces.push(new THREE.Face4(0, 3, 2, 1));
   geom.faces.push(new THREE.Face4(0, 4, 5, 3));

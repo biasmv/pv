@@ -71,7 +71,7 @@
     }
 
     tube = make_mesh(CRAMBIN);
-    var v = new THREE.SphereGeometry(0.2);
+    var v = new Vehicle(0.5, 0.1);
     for (var i = 0; i<CRAMBIN_CBETA.length; ++i) {
       var s = new THREE.SphereGeometry(0.12);
       var sg = add_geometry(s, 0x33ffff, 0,0,0,0,0,0,1);
@@ -79,8 +79,8 @@
                                     CRAMBIN_CBETA[i][1],
                                     CRAMBIN_CBETA[i][2]);
       var calpha = new THREE.Vector3(CRAMBIN[i][0],
-                                    CRAMBIN[i][1],
-                                    CRAMBIN[i][2]);
+                                     CRAMBIN[i][1],
+                                     CRAMBIN[i][2]);
       var ps = calpha.add(cbeta.sub(calpha).normalize().multiplyScalar(0.6));
       sg.position = ps;
       
@@ -164,15 +164,26 @@
     vehicle.last_p_on_path = closest_p_on_path;
 
     vehicle.position = real_new_pos;
+
     if (!stop)
       requestAnimationFrame(animate);
 
       spline_camera.position = closest_p_on_path.clone()
                                 .sub(real_ds.clone().multiplyScalar(2.0))
                                 .add(x.clone().multiplyScalar(2));
+
+    var fwd = tube.path.getTangentAt(closest_t_on_path);
+    var up = x;
+    vehicle.matrixAutoUpdate = false;
+    var vehicle_mat = new THREE.Matrix4();
+    vehicle.matrix.identity();
+    vehicle.matrix.translate(vehicle.position);
+    vehicle_mat.lookAt(new THREE.Vector3(0,0,0), fwd, up);
+    vehicle.matrix.multiply(vehicle_mat);
     spline_camera.matrix.lookAt(spline_camera.position, closest_p_on_path, x);
     spline_camera.rotation.setEulerFromRotationMatrix(spline_camera.matrix, 
                                                       spline_camera.eulerOrder);
+
     render();
 
     
