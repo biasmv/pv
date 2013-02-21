@@ -41,7 +41,7 @@
                                          1, 1000);
 
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0xf0f0f0, 1, 10);
+    scene.fog = new THREE.Fog(0xf0f0f0, 1, 100);
     var ambient_light = new THREE.AmbientLight(0x404040); // soft white light
     scene.add(ambient_light);
     light = new THREE.DirectionalLight(0xffffff);
@@ -72,6 +72,19 @@
 
     tube = make_mesh(CRAMBIN);
     var v = new THREE.SphereGeometry(0.2);
+    for (var i = 0; i<CRAMBIN_CBETA.length; ++i) {
+      var s = new THREE.SphereGeometry(0.12);
+      var sg = add_geometry(s, 0x33ffff, 0,0,0,0,0,0,1);
+      var cbeta = new THREE.Vector3(CRAMBIN_CBETA[i][0],
+                                    CRAMBIN_CBETA[i][1],
+                                    CRAMBIN_CBETA[i][2]);
+      var calpha = new THREE.Vector3(CRAMBIN[i][0],
+                                    CRAMBIN[i][1],
+                                    CRAMBIN[i][2]);
+      var ps = calpha.add(cbeta.sub(calpha).normalize().multiplyScalar(0.6));
+      sg.position = ps;
+      
+    }
     var mesh = add_geometry(tube, 0xffaa33, 0, 0, 0, 0, 0, 0, 1);
     vehicle = add_geometry(v, 0x11ff00, 0, 0, 0, 0, 0, 0, 1);
     vehicle.velocity = tube.tangents[0];
