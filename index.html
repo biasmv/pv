@@ -28,6 +28,7 @@
   last_time = Date.now();
 
   var left_down = false;
+  var steer = 0.0;
   var right_down = false;
   function init() {
     container = document.createElement('div');
@@ -40,7 +41,7 @@
                                          1, 1000);
 
     scene = new THREE.Scene();
-    //scene.fog = new THREE.Fog(0x000000, 1, 10);
+    scene.fog = new THREE.Fog(0xf0f0f0, 1, 10);
     var ambient_light = new THREE.AmbientLight(0x404040); // soft white light
     scene.add(ambient_light);
     light = new THREE.DirectionalLight(0xffffff);
@@ -129,13 +130,16 @@
     var x = new_pos.clone().sub(closest_p_on_path);
     x.normalize();
     var left = x.clone().cross(tube.path.getTangentAt(closest_t_on_path));
-    left.normalize().multiplyScalar(0.3*speed*time_delta);
+    left.normalize().multiplyScalar(0.1*speed*time_delta);
     if (left_down) {
-      x.add(left);
+      steer += 0.03*time_delta;
     }
     if (right_down) {
-      x.sub(left);
+      steer -= 0.03*time_delta;
     }
+    steer = Math.max(-10, Math.min(10, steer));
+    steer*=0.95;
+    x.add(left.multiplyScalar(steer));
     x.normalize();
     var real_new_pos = closest_p_on_path.clone().add(x.multiplyScalar(0.5));
     var real_ds = real_new_pos.clone().sub(vehicle.position);
@@ -150,7 +154,9 @@
     if (!stop)
       requestAnimationFrame(animate);
 
-    spline_camera.position = closest_p_on_path.clone().sub(real_ds).add(x.clone().multiplyScalar(2));
+      spline_camera.position = closest_p_on_path.clone()
+                                .sub(real_ds.clone().multiplyScalar(2.0))
+                                .add(x.clone().multiplyScalar(2));
     spline_camera.matrix.lookAt(spline_camera.position, closest_p_on_path, x);
     spline_camera.rotation.setEulerFromRotationMatrix(spline_camera.matrix, 
                                                       spline_camera.eulerOrder);
