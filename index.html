@@ -109,7 +109,7 @@
     var now = Date.now();
     var time_delta = now - last_time;
     last_time = now;
-    var speed = 0.0020
+    var speed = 0.0040
 
     var ds = vehicle.velocity.clone().multiplyScalar(time_delta*speed);
     var new_pos = vehicle.position.clone().add(ds);
@@ -143,8 +143,8 @@
     x.normalize();
     var real_new_pos = closest_p_on_path.clone().add(x.multiplyScalar(0.5));
     var real_ds = real_new_pos.clone().sub(vehicle.position);
-    real_ds.normalize();
-    real_ds.add(tube.path.getTangentAt(closest_t_on_path).normalize());
+    real_ds.normalize().multiplyScalar(3.0);
+    real_ds.add(tube.path.getTangentAt(closest_t_on_path)).normalize();
 
     vehicle.velocity = real_ds;
     vehicle.last_t_on_path = closest_t_on_path;
