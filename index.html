@@ -41,7 +41,7 @@
                                          1, 1000);
 
     scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0xf0f0f0, 1, 100);
+    scene.fog = new THREE.Fog(0xf0f0f0, 1, 10);
     var ambient_light = new THREE.AmbientLight(0x404040); // soft white light
     scene.add(ambient_light);
     light = new THREE.DirectionalLight(0xffffff);
@@ -91,7 +91,7 @@
     vehicle.position = initial_pos(tube);
     vehicle.last_t_on_path = 0;
     vehicle.last_p_on_path = tube.path.getPointAt(0);
-    renderer = new THREE.WebGLRenderer( { antialias: true } );
+    renderer = new THREE.WebGLRenderer( { antialias: false } );
     renderer.sortObjects = false;
     //renderer = new THREE.CanvasRenderer( { antialias: true } );
     renderer.setSize( window.innerWidth, window.innerHeight );
@@ -122,7 +122,7 @@
     var now = Date.now();
     var time_delta = now - last_time;
     last_time = now;
-    var speed = 0.0040
+    var speed = 0.0030
 
     var ds = vehicle.velocity.clone().multiplyScalar(time_delta*speed);
     var new_pos = vehicle.position.clone().add(ds);
@@ -145,10 +145,10 @@
     var left = x.clone().cross(tube.path.getTangentAt(closest_t_on_path));
     left.normalize().multiplyScalar(0.1*speed*time_delta);
     if (left_down) {
-      steer += 0.03*time_delta;
+      steer += 0.005*time_delta;
     }
     if (right_down) {
-      steer -= 0.03*time_delta;
+      steer -= 0.005*time_delta;
     }
     steer = Math.max(-10, Math.min(10, steer));
     steer*=0.95;
@@ -160,6 +160,8 @@
     real_ds.add(tube.path.getTangentAt(closest_t_on_path)).normalize();
 
     vehicle.velocity = real_ds;
+    //light.position = real_new_pos.clone();
+    light.position = real_ds.clone().negate();
     vehicle.last_t_on_path = closest_t_on_path;
     vehicle.last_p_on_path = closest_p_on_path;
 
@@ -170,7 +172,7 @@
 
       spline_camera.position = closest_p_on_path.clone()
                                 .sub(real_ds.clone().multiplyScalar(2.0))
-                                .add(x.clone().multiplyScalar(2));
+                               ;// .add(x.clone().multiplyScalar(2));
 
     var fwd = tube.path.getTangentAt(closest_t_on_path);
     var up = x;
