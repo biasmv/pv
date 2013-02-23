@@ -17,6 +17,42 @@
     </style>
     </head>
 <body>
+  <pre id='frag-shader-1' style='display:none'>
+    void main() { 
+      gl_FragColor = vec4(0.2,0.3,0.3,1);
+                          
+    }
+  </pre>
+  <pre id='vert-shader-1' style='display:none'>
+    void main() {
+      vec4 pos = projectionMatrix * modelViewMatrix * vec4(position, 1);
+      vec3 norm = (modelViewMatrix *vec4(normal, 0)).xyz;
+      pos.x+=norm.x*0.020;
+      pos.y+=norm.y*0.020;
+      pos.z+=0.000;
+      gl_Position = pos;
+    }
+  </pre>
+  <pre id='frag-shader-2' style='display:none'>
+
+    varying vec3 v_normal;
+    void main() { 
+      float l_dot = -v_normal.z;
+      float mix_factor = l_dot*0.5 + 0.5;
+      vec4 diffuse=vec4(0.1,0.1,0.1,1.0);
+      vec4 color=vec4(0.9,0.9,0.9, 1.0);
+      gl_FragColor = mix(color, diffuse, mix_factor);
+                          
+    }
+  </pre>
+  <pre id='vert-shader-2' style='display:none'>
+    varying vec3 v_normal;
+
+    void main() {
+      v_normal = (modelViewMatrix * vec4(normal, 0)).xyz;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1);
+    }
+  </pre>
   <script>
   var camera, scene, renderer;
 
@@ -50,13 +86,24 @@
     parent = new THREE.Object3D();
     scene.add(parent);
 
+    var vert_shader_code_one = document.getElementById('vert-shader-1').innerHTML;
+    var frag_shader_code_one = document.getElementById('frag-shader-1').innerHTML;
+
+    var vert_shader_code_two = document.getElementById('vert-shader-2').innerHTML;
+    var frag_shader_code_two = document.getElementById('frag-shader-2').innerHTML;
     function add_geometry(geometry, color, x, y, z, rx, ry, rz, s) {
       var materials = [
-      new THREE.MeshLambertMaterial({ color: color, opacity : 1.0, 
-                                      transparent : false,
-                                      shading: THREE.FlatShading}),
-      new THREE.MeshBasicMaterial({color: 0x000000, wireframe : true, 
-                                   opacity : 1.0})
+      //new THREE.MeshLambertMaterial({ color: color, opacity : 1.0, 
+      //                                transparent : false,
+      //                                shading: THREE.FlatShading}),
+        new THREE.ShaderMaterial({ vertexShader : vert_shader_code_one,
+                                   fragmentShader : frag_shader_code_one,
+                                   side:THREE.BackSide}),
+        new THREE.ShaderMaterial({ vertexShader : vert_shader_code_two,
+                                   fragmentShader : frag_shader_code_two,
+                                   side:THREE.FrontSide}),
+      //new THREE.MeshBasicMaterial({color: 0x000000, wireframe : true, 
+      //                             opacity : 1.0})
       ]
       var mesh = THREE.SceneUtils.createMultiMaterialObject(geometry, 
                                                             materials);
@@ -72,7 +119,7 @@
 
     tube = make_mesh(CRAMBIN);
     var v = new Vehicle(0.5, 0.1);
-    for (var i = 0; i<CRAMBIN_CBETA.length; ++i) {
+    /*for (var i = 0; i<CRAMBIN_CBETA.length; ++i) {
       var s = new THREE.SphereGeometry(0.12);
       var sg = add_geometry(s, 0x33ffff, 0,0,0,0,0,0,1);
       var cbeta = new THREE.Vector3(CRAMBIN_CBETA[i][0],
@@ -81,10 +128,10 @@
       var calpha = new THREE.Vector3(CRAMBIN[i][0],
                                      CRAMBIN[i][1],
                                      CRAMBIN[i][2]);
-      var ps = calpha.add(cbeta.sub(calpha).normalize().multiplyScalar(0.6));
+      var ps = calpha.clone().add(cbeta.sub(calpha).normalize().multiplyScalar(0.6));
       sg.position = ps;
       
-    }
+    }*/
     var mesh = add_geometry(tube, 0xffaa33, 0, 0, 0, 0, 0, 0, 1);
     vehicle = add_geometry(v, 0x11ff00, 0, 0, 0, 0, 0, 0, 1);
     vehicle.velocity = tube.tangents[0];
@@ -93,7 +140,6 @@
     vehicle.last_p_on_path = tube.path.getPointAt(0);
     renderer = new THREE.WebGLRenderer( { antialias: false } );
     renderer.sortObjects = false;
-    //renderer = new THREE.CanvasRenderer( { antialias: true } );
     renderer.setSize( window.innerWidth, window.innerHeight );
 
     container.appendChild(renderer.domElement);
@@ -122,7 +168,7 @@
     var now = Date.now();
     var time_delta = now - last_time;
     last_time = now;
-    var speed = 0.0030
+    var speed = 0.0040
 
     var ds = vehicle.velocity.clone().multiplyScalar(time_delta*speed);
     var new_pos = vehicle.position.clone().add(ds);
@@ -172,7 +218,7 @@
 
       spline_camera.position = closest_p_on_path.clone()
                                 .sub(real_ds.clone().multiplyScalar(2.0))
-                               ;// .add(x.clone().multiplyScalar(2));
+                                .add(x.clone().multiplyScalar(2));
 
     var fwd = tube.path.getTangentAt(closest_t_on_path);
     var up = x;
