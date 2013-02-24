@@ -218,7 +218,7 @@
 
       spline_camera.position = closest_p_on_path.clone()
                                 .sub(real_ds.clone().multiplyScalar(2.0))
-                                .add(x.clone().multiplyScalar(2));
+                                .add(x.clone().multiplyScalar(2.5));
 
     var fwd = tube.path.getTangentAt(closest_t_on_path);
     var up = x;
