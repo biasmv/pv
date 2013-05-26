@@ -10,7 +10,7 @@
     <style>
     body {
       font-family: Monospace;
-      background-color: #f0f0f0;
+      background-color: #fff;/*#f0f0f0;*/
       margin: 0px;
       overflow: hidden;
     }
@@ -26,9 +26,10 @@
   <pre id='vert-shader-1' style='display:none'>
     void main() {
       vec4 pos = projectionMatrix * modelViewMatrix * vec4(position, 1);
-      vec3 norm = (modelViewMatrix *vec4(normal, 0)).xyz;
-      pos.x+=norm.x*0.020;
-      pos.y+=norm.y*0.020;
+      vec2 norm = normalize((projectionMatrix * modelViewMatrix *vec4(normal, 0)).xy);
+      
+      pos.x+=norm.x*0.15;
+      pos.y+=norm.y*0.15;
       pos.z+=0.000;
       gl_Position = pos;
     }
@@ -41,7 +42,7 @@
       float mix_factor = l_dot*0.5 + 0.5;
       vec4 diffuse=vec4(0.1,0.1,0.1,1.0);
       vec4 color=vec4(0.9,0.9,0.9, 1.0);
-      gl_FragColor = mix(color, diffuse, mix_factor);
+      gl_FragColor = vec4(1,1,1,1);//mix(color, diffuse, mix_factor);
                           
     }
   </pre>
