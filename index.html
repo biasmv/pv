@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <script src='js/three.min.js'></script>
-    <script src='js/mkmesh.js'></script>
-    <script src='pdbs/1crn.json'></script>
-    <title>kinky kinase</title>
+    <title>pv - JavaScript protein viewer</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <script src='js/jquery-2.0.2.min.js'></script>
+    <script src='js/gl-matrix.js'></script>
+    <script src='js/structure.js'></script>
     <style>
     body {
       font-family: Monospace;
@@ -17,303 +17,43 @@
     </style>
     </head>
 <body>
-  <pre id='frag-shader-1' style='display:none'>
-    void main() { 
-      gl_FragColor = vec4(0.2,0.3,0.3,1);
-                          
-    }
-  </pre>
-  <pre id='vert-shader-1' style='display:none'>
-    void main() {
-      vec4 pos = projectionMatrix * modelViewMatrix * vec4(position, 1);
-      vec2 norm = normalize((projectionMatrix * modelViewMatrix *vec4(normal, 0)).xy);
-      
-      pos.x+=norm.x*0.15;
-      pos.y+=norm.y*0.15;
-      pos.z+=0.000;
-      gl_Position = pos;
-    }
-  </pre>
-  <pre id='frag-shader-2' style='display:none'>
+  <div id=gl>
+  </div>
+  <script type='x-shader/x-fragment' id='shader-fs'>
+    precision mediump float;
 
-    varying vec3 v_normal;
-    void main() { 
-      float l_dot = -v_normal.z;
-      float mix_factor = l_dot*0.5 + 0.5;
-      vec4 diffuse=vec4(0.1,0.1,0.1,1.0);
-      vec4 color=vec4(0.9,0.9,0.9, 1.0);
-      gl_FragColor = vec4(1,1,1,1);//mix(color, diffuse, mix_factor);
-                          
-    }
-  </pre>
-  <pre id='vert-shader-2' style='display:none'>
-    varying vec3 v_normal;
+    varying vec3 vert_color;
 
-    void main() {
-      v_normal = (modelViewMatrix * vec4(normal, 0)).xyz;
-      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1);
+    void main(void) {
+      gl_FragColor = vec4(vert_color, 1.0);
     }
-  </pre>
+
+  </script>
+  <script type='x-shader/x-vertex' id='shader-vs'>
+    attribute vec3 vertex_pos;
+    attribute vec3 vertex_color;
+
+    uniform mat4 projection_mat;
+    uniform mat4 modelview_mat;
+    varying vec3 vert_color;
+    void main(void) {
+      gl_Position = projection_mat * modelview_mat * vec4(vertex_pos, 1.0);
+      vert_color = vertex_color;
+    }
+  </script>
   <script>
-  var camera, scene, renderer;
+    var pv = PV(document.getElementById('gl'));
 
-  var container;
-  var parent;
-  var animation = false;
-  var stop = false;
-  time = 0;
-  last_time = Date.now();
-
-  var left_down = false;
-  var steer = 0.0;
-  var right_down = false;
-  function init() {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-
-    var aspect = window.innerWidth/window.innerHeight;
-    spline_camera = new THREE.PerspectiveCamera(50, aspect,
-                                         1, 1000);
-    camera = new THREE.PerspectiveCamera(50, aspect,
-                                         1, 1000);
-
-    scene = new THREE.Scene();
-    scene.fog = new THREE.Fog(0xf0f0f0, 1, 10);
-    var ambient_light = new THREE.AmbientLight(0x404040); // soft white light
-    scene.add(ambient_light);
-    light = new THREE.DirectionalLight(0xffffff);
-    light.position.set(0, 0, 1);
-    scene.add(light);
-    parent = new THREE.Object3D();
-    scene.add(parent);
-
-    var vert_shader_code_one = document.getElementById('vert-shader-1').innerHTML;
-    var frag_shader_code_one = document.getElementById('frag-shader-1').innerHTML;
-
-    var vert_shader_code_two = document.getElementById('vert-shader-2').innerHTML;
-    var frag_shader_code_two = document.getElementById('frag-shader-2').innerHTML;
-    function add_geometry(geometry, color, x, y, z, rx, ry, rz, s) {
-      var materials = [
-      //new THREE.MeshLambertMaterial({ color: color, opacity : 1.0, 
-      //                                transparent : false,
-      //                                shading: THREE.FlatShading}),
-        new THREE.ShaderMaterial({ vertexShader : vert_shader_code_one,
-                                   fragmentShader : frag_shader_code_one,
-                                   side:THREE.BackSide}),
-        new THREE.ShaderMaterial({ vertexShader : vert_shader_code_two,
-                                   fragmentShader : frag_shader_code_two,
-                                   side:THREE.FrontSide}),
-      //new THREE.MeshBasicMaterial({color: 0x000000, wireframe : true, 
-      //                             opacity : 1.0})
-      ]
-      var mesh = THREE.SceneUtils.createMultiMaterialObject(geometry, 
-                                                            materials);
-      if (geometry.debug) {
-        mesh.add(geometry.debug);
-      }
-      mesh.position.set(x, y, z);
-      mesh.scale.set(s, s, s);
-      mesh.rotation.set(rx, ry, rz);
-      parent.add(mesh);
-      return mesh;
+   
+    function on_ready() {
+      $.ajax({ url : 'pdbs/sh2.pdb', success : function(data) {
+        var structure = load_pdb(data);
+        pv.add(structure);
+        pv.center_on(structure);
+        pv.draw();
+      }});
     }
-
-    tube = make_mesh(CRAMBIN);
-    var v = new Vehicle(0.5, 0.1);
-    /*for (var i = 0; i<CRAMBIN_CBETA.length; ++i) {
-      var s = new THREE.SphereGeometry(0.12);
-      var sg = add_geometry(s, 0x33ffff, 0,0,0,0,0,0,1);
-      var cbeta = new THREE.Vector3(CRAMBIN_CBETA[i][0],
-                                    CRAMBIN_CBETA[i][1],
-                                    CRAMBIN_CBETA[i][2]);
-      var calpha = new THREE.Vector3(CRAMBIN[i][0],
-                                     CRAMBIN[i][1],
-                                     CRAMBIN[i][2]);
-      var ps = calpha.clone().add(cbeta.sub(calpha).normalize().multiplyScalar(0.6));
-      sg.position = ps;
-      
-    }*/
-    var mesh = add_geometry(tube, 0xffaa33, 0, 0, 0, 0, 0, 0, 1);
-    vehicle = add_geometry(v, 0x11ff00, 0, 0, 0, 0, 0, 0, 1);
-    vehicle.velocity = tube.tangents[0];
-    vehicle.position = initial_pos(tube);
-    vehicle.last_t_on_path = 0;
-    vehicle.last_p_on_path = tube.path.getPointAt(0);
-    renderer = new THREE.WebGLRenderer( { antialias: false } );
-    renderer.sortObjects = false;
-    renderer.setSize( window.innerWidth, window.innerHeight );
-
-    container.appendChild(renderer.domElement);
-    renderer.domElement.addEventListener('mousedown', mouse_down, false);
-    renderer.domElement.addEventListener('mousewheel', mouse_wheel, false);
-    document.addEventListener('keydown', key_down, false);
-    document.addEventListener('keyup', key_up, false);
-    mesh.children[0].geometry.computeBoundingBox();
-    var bb = mesh.children[0].geometry.boundingBox;
-    center = bb.min.add(bb.max).multiplyScalar(0.5);
-    //center = new THREE.Vector3(0,0,0);
-    camera.matrixAutoUpdate = false;
-    rot = new THREE.Matrix4();
-    scale = 1;
-    update_cam();
-  }
-
-  function initial_pos(tube, radius) {
-    var pos = tube.path.getPointAt(0);
-    radius = radius || 0.5;
-    var normal = tube.path.getTangentAt(0).cross(tube.binormals[0]);
-    return pos.add(normal.multiplyScalar(radius));
-  }
-
-  function animate() {
-    var now = Date.now();
-    var time_delta = now - last_time;
-    last_time = now;
-    var speed = 0.0040
-
-    var ds = vehicle.velocity.clone().multiplyScalar(time_delta*speed);
-    var new_pos = vehicle.position.clone().add(ds);
-
-    var min_distance = 100;
-    var closest_t_on_path, closest_p_on_path;
-    var min_i = 0;
-    for (var i=0; i<100; ++i) {
-      var p = tube.path.getPointAt(vehicle.last_t_on_path+i*0.00001);
-      var distance = p.clone().sub(new_pos).lengthSq();
-      if (distance<min_distance) {
-        closest_t_on_path = vehicle.last_t_on_path+i*0.00001;
-        closest_p_on_path = p;
-        min_distance = distance;
-        min_i = i;
-      }
-    }
-    var x = new_pos.clone().sub(closest_p_on_path);
-    x.normalize();
-    var left = x.clone().cross(tube.path.getTangentAt(closest_t_on_path));
-    left.normalize().multiplyScalar(0.1*speed*time_delta);
-    if (left_down) {
-      steer += 0.005*time_delta;
-    }
-    if (right_down) {
-      steer -= 0.005*time_delta;
-    }
-    steer = Math.max(-10, Math.min(10, steer));
-    steer*=0.95;
-    x.add(left.multiplyScalar(steer));
-    x.normalize();
-    var real_new_pos = closest_p_on_path.clone().add(x.multiplyScalar(0.5));
-    var real_ds = real_new_pos.clone().sub(vehicle.position);
-    real_ds.normalize().multiplyScalar(3.0);
-    real_ds.add(tube.path.getTangentAt(closest_t_on_path)).normalize();
-
-    vehicle.velocity = real_ds;
-    //light.position = real_new_pos.clone();
-    light.position = real_ds.clone().negate();
-    vehicle.last_t_on_path = closest_t_on_path;
-    vehicle.last_p_on_path = closest_p_on_path;
-
-    vehicle.position = real_new_pos;
-
-    if (!stop)
-      requestAnimationFrame(animate);
-
-      spline_camera.position = closest_p_on_path.clone()
-                                .sub(real_ds.clone().multiplyScalar(2.0))
-                                .add(x.clone().multiplyScalar(2.5));
-
-    var fwd = tube.path.getTangentAt(closest_t_on_path);
-    var up = x;
-    vehicle.matrixAutoUpdate = false;
-    var vehicle_mat = new THREE.Matrix4();
-    vehicle.matrix.identity();
-    vehicle.matrix.translate(vehicle.position);
-    vehicle_mat.lookAt(new THREE.Vector3(0,0,0), fwd, up);
-    vehicle.matrix.multiply(vehicle_mat);
-    spline_camera.matrix.lookAt(spline_camera.position, closest_p_on_path, x);
-    spline_camera.rotation.setEulerFromRotationMatrix(spline_camera.matrix, 
-                                                      spline_camera.eulerOrder);
-
-    render();
-
-    
-  }
-
-  function key_down(event) {
-    //event.preventDefault();
-    if (event.keyCode == 74) {
-      left_down = true;
-    }
-    if (event.keyCode == 75) {
-      right_down = true;
-    }
-    if (event.keyCode == 86) {
-      animation = !animation;
-    }
-    if (event.keyCode == 90) {
-      stop = true;
-    }
-  }
-
-  function key_up(event) {
-    if (event.keyCode == 74) {
-      left_down = false;
-    }
-    if (event.keyCode == 75) {
-      right_down = false;
-    }
-  }
-
-  function mouse_down(event) {
-    event.preventDefault();
-    renderer.domElement.addEventListener('mousemove', mouse_move, false);
-    renderer.domElement.addEventListener('mouseup', mouse_up, false);
-    renderer.domElement.addEventListener('mouseout', mouse_out, false);
-    last_mouse_pos = new THREE.Vector2(event.pageX, event.pageY);
-  }
-
-  function update_cam() {
-    var cam_matrix = new THREE.Matrix4();
-    cam_matrix.translate(center);
-    cam_matrix.multiplyMatrices(cam_matrix, rot);
-    var trans = new THREE.Vector3(0, 0, 30);
-    trans.multiplyScalar(scale);
-    cam_matrix.translate(trans);
-    camera.matrix = cam_matrix;
-    camera.updateMatrixWorld(true);
-  }
-
-
-  function mouse_wheel(event) {
-     var delta = 1+event.wheelDelta*0.0001;
-     scale *= delta;
-     update_cam();
-  }
-
-  function mouse_move(event) {
-    var new_mouse_pos = new THREE.Vector2(event.pageX, event.pageY);
-    var delta = last_mouse_pos.sub(new_mouse_pos);
-    var speed = 0.005;
-    rot.rotateByAxis(new THREE.Vector3(1, 0, 0), delta.y*speed);
-    rot.rotateByAxis(new THREE.Vector3(0, 1, 0), delta.x*speed);
-    update_cam();
-    last_mouse_pos =  new_mouse_pos;
-  }
-
-  function mouse_out(event) {}
-
-  function mouse_up(event) {
-    renderer.domElement.removeEventListener('mousemove', mouse_move, false);
-    renderer.domElement.removeEventListener('mouseup', mouse_up, false);
-    renderer.domElement.removeEventListener('mouseout', mouse_out, false);
-  }
-
-  function render() {
-    renderer.render(scene, animation ? spline_camera : camera);
-  }
-
-  init();
-  animate();
-
+    document.addEventListener('DOMContentLoaded', on_ready);
   </script>
 </body>
 </html>
