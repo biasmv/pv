@@ -46,9 +46,9 @@
 
    
     function on_ready() {
-      $.ajax({ url : 'pdbs/sh2.pdb', success : function(data) {
+      $.ajax({ url : 'pdbs/1jd2.pdb', success : function(data) {
         var structure = load_pdb(data);
-        pv.add(structure);
+        pv.add(structure.lines());
         pv.center_on(structure);
         pv.draw();
       }});

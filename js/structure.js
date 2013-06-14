@@ -1,13 +1,3 @@
-var LineStyle = function(structure) {
-  var self = {
-    params : {},
-    structure: {},
-  }
-  return {
-
-  };
-};
-
 function get_element_contents(element) {
   var contents = '';
   var k = element.firstChild;
@@ -19,6 +9,83 @@ function get_element_contents(element) {
   }
   return contents;
 }
+
+
+function color_for_element(ele, out) {
+  if (!out) {
+    out = vec4.create();
+  }
+  if (ele == 'C') {
+    vec4.set(out, 1, 1, 1, 1);
+    return out;
+  }
+  if (ele == 'N') {
+    vec4.set(out, 0, 0, 1, 1);
+    return out;
+  }
+  if (ele == 'O') {
+    vec4.set(out, 1, 0, 0, 1);
+    return out;
+  }
+  if (ele == 'S') {
+    vec4.set(out, 1, 1, 0, 1);
+    return out;
+  }
+  vec4.set(out, 1, 0, 1, 1);
+  return out;
+}
+
+var LineGeom = function() {
+  var self = {
+    data : [],
+    ready : false,
+    interleaved_buffer : gl.createBuffer(),
+    num_lines : 0,
+  };
+
+  return {
+    draw : function(shader_program) {
+      this.bind();
+      var vert_attrib = gl.getAttribLocation(shader_program, 'vertex_pos');
+      gl.enableVertexAttribArray(vert_attrib);
+      gl.vertexAttribPointer(vert_attrib, 3, gl.FLOAT, false, 6*4, 0*4);
+      var clr_attrib = gl.getAttribLocation(shader_program, 'vertex_color');
+      gl.vertexAttribPointer(clr_attrib, 3, gl.FLOAT, false, 6*4, 3*4);
+      gl.enableVertexAttribArray(clr_attrib);
+      gl.drawArrays(gl.LINES, 0, self.num_lines*2);
+    },
+
+    // prepare data for rendering. if the buffer data was modified, this synchronizes 
+    // the corresponding GL array buffers.
+    bind : function() {
+      gl.bindBuffer(gl.ARRAY_BUFFER, self.interleaved_buffer);
+      if (!self.ready) {
+        var float_array = new Float32Array(self.data);
+        gl.bufferData(gl.ARRAY_BUFFER, float_array, gl.STATIC_DRAW);
+        self.ready = true;
+        // clear original data. it's not used anymore
+        self.data = []
+      }
+    },
+    add_line : function(start_pos, start_color, end_pos, end_color) {
+     self.data.push(start_pos[0]); 
+     self.data.push(start_pos[1]); 
+     self.data.push(start_pos[2]); 
+     self.data.push(start_color[0]);
+     self.data.push(start_color[1]);
+     self.data.push(start_color[2]);
+
+     self.data.push(end_pos[0]); 
+     self.data.push(end_pos[1]); 
+     self.data.push(end_pos[2]); 
+     self.data.push(end_color[0]);
+     self.data.push(end_color[1]);
+     self.data.push(end_color[2]);
+     self.num_lines += 1;
+     self.ready = false;
+    }
+  };
+};
 
 var Cam = function() {
   var self = {
@@ -105,7 +172,7 @@ var PV = function(dom_element, width, height) {
 
   function init_gl() {
     // todo wrap in try-catch for browser which don't support WebGL
-    gl = self.dom_element.getContext('experimental-webgl');
+    gl = self.dom_element.getContext('experimental-webgl', { antialias: true });
     gl.viewportWidth = self.dom_element.width;
     gl.viewportHeight = self.dom_element.height;
 
@@ -162,114 +229,17 @@ var PV = function(dom_element, width, height) {
     gl.useProgram(shader_program);
   }
 
-  function color_for_element(ele, out) {
-    if (!out) {
-      out = vec4.create();
-    }
-    if (ele == 'C') {
-      vec4.set(out, 1, 1, 1, 1);
-      return out;
-    }
-    if (ele == 'N') {
-      vec4.set(out, 0, 0, 1, 1);
-      return out;
-    }
-    if (ele == 'O') {
-      vec4.set(out, 1, 0, 0, 1);
-      return out;
-    }
-    if (ele == 'S') {
-      vec4.set(out, 1, 1, 0, 1);
-      return out;
-    }
-    vec4.set(out, 1, 0, 1, 1);
-    return out;
-  }
 
   var pv = {
     add : function(stuff) {
-      var tb = gl.createBuffer();
-      var interleaved = [];
-      var mp = vec3.create();
-      var clr = vec4.create();
-      stuff.each_atom(function(atom) {
-        // for atoms without bonds, we draw a small cross, otherwise these atoms 
-        // would be invisible on the screen.
-        if (atom.bonds().length) {
-          atom.each_bond(function(bond) {
-            var pos = bond.atom_one().pos();
-            var clr_one = color_for_element(bond.atom_one().element(), clr);
-            interleaved.push(pos[0]);
-            interleaved.push(pos[1]);
-            interleaved.push(pos[2]);
-            interleaved.push(clr_one[0]);
-            interleaved.push(clr_one[1]);
-            interleaved.push(clr_one[2]);
-
-            bond.mid_point(mp);
-            interleaved.push(mp[0]);
-            interleaved.push(mp[1]);
-            interleaved.push(mp[2]);
-            interleaved.push(clr_one[0]);
-            interleaved.push(clr_one[1]);
-            interleaved.push(clr_one[2]);
-
-            var clr_two = color_for_element(bond.atom_two().element(), clr);
-            interleaved.push(mp[0]);
-            interleaved.push(mp[1]);
-            interleaved.push(mp[2]);
-            interleaved.push(clr_two[0]);
-            interleaved.push(clr_two[1]);
-            interleaved.push(clr_two[2]);
-
-            pos = bond.atom_two().pos();
-            interleaved.push(pos[0]);
-            interleaved.push(pos[1]);
-            interleaved.push(pos[2]);
-            interleaved.push(clr_two[0]);
-            interleaved.push(clr_two[1]);
-            interleaved.push(clr_two[2]);
-          });
-        } else {
-          var cs = 0.2;
-          var pos = atom.pos();
-          color_for_element(atom.element(), clr);
-          interleaved.push(pos[0]-cs); interleaved.push(pos[1]); interleaved.push(pos[2]);
-          interleaved.push(clr[0]); interleaved.push(clr[1]); interleaved.push(clr[2]);
-          interleaved.push(pos[0]+cs); interleaved.push(pos[1]); interleaved.push(pos[2]);
-          interleaved.push(clr[0]); interleaved.push(clr[1]); interleaved.push(clr[2]);
-
-          interleaved.push(pos[0]); interleaved.push(pos[1]-cs); interleaved.push(pos[2]);
-          interleaved.push(clr[0]); interleaved.push(clr[1]); interleaved.push(clr[2]);
-          interleaved.push(pos[0]); interleaved.push(pos[1]+cs); interleaved.push(pos[2]);
-          interleaved.push(clr[0]); interleaved.push(clr[1]); interleaved.push(clr[2]);
-
-          interleaved.push(pos[0]); interleaved.push(pos[1]); interleaved.push(pos[2]-cs);
-          interleaved.push(clr[0]); interleaved.push(clr[1]); interleaved.push(clr[2]);
-          interleaved.push(pos[0]); interleaved.push(pos[1]); interleaved.push(pos[2]+cs);
-          interleaved.push(clr[0]); interleaved.push(clr[1]); interleaved.push(clr[2]);
-        }
-      });
-      gl.bindBuffer(gl.ARRAY_BUFFER, tb);
-      var fa = new Float32Array(interleaved);
-      gl.bufferData(gl.ARRAY_BUFFER, fa, gl.STATIC_DRAW);
-
-      var data = { vert_buffer : tb, items : interleaved.length/6};
-      self.objects.push(data);
+      self.objects.push(stuff);
     },
 
     draw : function() {
       cam.bind(shader_program);
       gl.clear(gl.COLOR_BUFFER_BIT| gl.DEPTH_BUFFER_BIT);
       for (var i=0; i<self.objects.length; i+=1) {
-        gl.bindBuffer(gl.ARRAY_BUFFER, self.objects[i].vert_buffer);
-        var vert_attrib = gl.getAttribLocation(shader_program, 'vertex_pos');
-        gl.enableVertexAttribArray(vert_attrib);
-        gl.vertexAttribPointer(vert_attrib, 3, gl.FLOAT, false, 6*4, 0*4);
-        var clr_attrib = gl.getAttribLocation(shader_program, 'vertex_color');
-        gl.vertexAttribPointer(clr_attrib, 3, gl.FLOAT, false, 6*4, 3*4);
-        gl.enableVertexAttribArray(clr_attrib);
-        gl.drawArrays(gl.LINES, 0, self.objects[i].items);
+        self.objects[i].draw(shader_program);
       }
     },
     center_on : function(thing) {
@@ -339,11 +309,53 @@ var Structure = function() {
         self.chains[i].each_atom(callback);
       }
     },
-    /// render structure with the following style
-    render_as : function(style) {
-      if (style == 'lines') {
-        return LineStyle(this);
-      };
+
+    line_trace : function() {
+      var clr = vec3.fromValues(1,1,1,1);
+      var line_geom = LineGeom();
+      var prev_residue = false;
+      this.each_residue(function(residue) {
+        if (!residue.is_aminoacid()) {
+          prev_residue = false;
+          return;
+        }
+        if (!prev_residue) {
+          prev_residue = residue;
+          return;
+        }
+        var ca_prev = prev_residue.atom('CA');
+        var ca_this = residue.atom('CA');
+        prev_residue = residue;
+        line_geom.add_line(ca_prev.pos(), clr, ca_this.pos(), clr);
+      });
+      return line_geom;
+    },
+    lines : function() {
+      var mp = vec3.create();
+      var clr = vec4.create();
+      var line_geom = LineGeom();
+      this.each_atom(function(atom) {
+        // for atoms without bonds, we draw a small cross, otherwise these atoms 
+        // would be invisible on the screen.
+        if (atom.bonds().length) {
+          atom.each_bond(function(bond) {
+            bond.mid_point(mp); 
+            color_for_element(bond.atom_one().element(), clr);
+            line_geom.add_line(bond.atom_one().pos(), clr, mp, clr);
+            color_for_element(bond.atom_two().element(), clr);
+            line_geom.add_line(mp, clr, bond.atom_two().pos(), clr);
+
+          });
+        } else {
+          var cs = 0.2;
+          var pos = atom.pos();
+          color_for_element(atom.element(), clr);
+          line_geom.add_line([pos[0]-cs, pos[1], pos[2]], clr, [pos[0]+cs, pos[1], pos[2]], clr);
+          line_geom.add_line([pos[0], pos[1]-cs, pos[2]], clr, [pos[0], pos[1]+cs, pos[2]], clr);
+          line_geom.add_line([pos[0], pos[1], pos[2]-cs], clr, [pos[0], pos[1], pos[2]+cs], clr);
+        }
+      });
+      return line_geom;
     },
     center : function() {
       var sum = vec3.create();
@@ -366,7 +378,6 @@ var Structure = function() {
     // determine connectivity structure. for simplicity only connects atoms of the same 
     // residue and peptide bonds
     derive_connectivity : function() {
-
        var this_structure = this;
        var prev_residue;
        this.each_residue(function(res) {
@@ -459,7 +470,9 @@ var Residue = function(chain, name, num) {
       return self.atoms[index_or_name]; 
     },
 
-
+    is_aminoacid : function() { 
+      return this.atom('N') && this.atom('CA') && this.atom('C') && this.atom('O');
+    },
     structure : function() { return self.chain.structure(); }
   }
 }
