@@ -23,22 +23,27 @@
     precision mediump float;
 
     varying vec3 vert_color;
+    varying vec3 vert_normal;
 
     void main(void) {
-      gl_FragColor = vec4(vert_color, 1.0);
+      gl_FragColor = mix(vec4(vert_color, 1.0), vec4(0.2, 0.2, 0.2, 1.0), 
+                         max(0.0, dot(vert_normal, vec3(1.0, 0.0, 0.0))));
     }
 
   </script>
   <script type='x-shader/x-vertex' id='shader-vs'>
-    attribute vec3 vertex_pos;
-    attribute vec3 vertex_color;
+    attribute vec3 attr_pos;
+    attribute vec3 attr_color;
+    attribute vec3 attr_normal;
 
     uniform mat4 projection_mat;
     uniform mat4 modelview_mat;
     varying vec3 vert_color;
+    varying vec3 vert_normal;
     void main(void) {
-      gl_Position = projection_mat * modelview_mat * vec4(vertex_pos, 1.0);
-      vert_color = vertex_color;
+      gl_Position = projection_mat * modelview_mat * vec4(attr_pos, 1.0);
+      vert_normal = vec3(modelview_mat * vec4(attr_normal, 0.0));
+      vert_color = attr_color;
     }
   </script>
   <script>
@@ -46,9 +51,9 @@
 
    
     function on_ready() {
-      $.ajax({ url : 'pdbs/1jd2.pdb', success : function(data) {
+      $.ajax({ url : 'pdbs/sh2.pdb', success : function(data) {
         var structure = load_pdb(data);
-        pv.add(structure.lines());
+        pv.add(structure.trace());
         pv.center_on(structure);
         pv.draw();
       }});

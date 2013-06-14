@@ -10,6 +10,27 @@ function get_element_contents(element) {
   return contents;
 }
 
+var ortho_vec = (function() {
+  var tmp = vec3.create();
+  return function(out, vec) {
+    vec3.copy(tmp, vec);
+    if (Math.abs(vec[0]) < Math.abs(vec[1])) {
+      if (Math.abs(vec[0]) < Math.abs(vec[2])) {
+        tmp[0] += 1
+      } else {
+        tmp[2] += 1;
+      }
+    } else {
+      if (Math.abs(vec[1]) < Math.abs(vec[2])) {
+        tmp[1] += 1;
+      } else {
+        tmp[2] += 1;
+      }
+    }
+    return vec3.cross(out, vec, tmp);
+  };
+})();
+
 
 function color_for_element(ele, out) {
   if (!out) {
@@ -46,10 +67,10 @@ var LineGeom = function() {
   return {
     draw : function(shader_program) {
       this.bind();
-      var vert_attrib = gl.getAttribLocation(shader_program, 'vertex_pos');
+      var vert_attrib = gl.getAttribLocation(shader_program, 'attr_pos');
       gl.enableVertexAttribArray(vert_attrib);
       gl.vertexAttribPointer(vert_attrib, 3, gl.FLOAT, false, 6*4, 0*4);
-      var clr_attrib = gl.getAttribLocation(shader_program, 'vertex_color');
+      var clr_attrib = gl.getAttribLocation(shader_program, 'attr_color');
       gl.vertexAttribPointer(clr_attrib, 3, gl.FLOAT, false, 6*4, 3*4);
       gl.enableVertexAttribArray(clr_attrib);
       gl.drawArrays(gl.LINES, 0, self.num_lines*2);
@@ -87,13 +108,186 @@ var LineGeom = function() {
   };
 };
 
+var ProtoSphere  = function(stacks, arcs) {
+  var self = {
+    arcs : arcs,
+    stacks : stacks,
+    indices : new Uint16Array(3*arcs*stacks*2),
+    verts : new Float32Array(3*arcs*stacks),
+  };
+  var vert_angle = Math.PI/(stacks-1);
+  var horz_angle = Math.PI*2.0/arcs;
+  for (var i = 0; i < self.stacks; ++i) {
+    var radius = Math.sin(i*vert_angle);
+    console.log(radius);
+    var z = Math.cos(i*vert_angle);
+    for (var j = 0; j < self.arcs; ++j) {
+      var nx = radius*Math.cos(j*horz_angle);
+      var ny = radius*Math.sin(j*horz_angle);
+      self.verts[3*(j+i*self.arcs)+0] = nx;
+      self.verts[3*(j+i*self.arcs)+1] = ny;
+      self.verts[3*(j+i*self.arcs)+2] = z;
+    }
+  }
+  var index = 0;
+  for (var i = 0; i < self.stacks-1; ++i) {
+    for (var j = 0; j < self.arcs; ++j) {
+      
+      self.indices[index+0] = (i+0)*self.arcs+j+0;
+      self.indices[index+1] = (i+0)*self.arcs+((j+1) % self.arcs);
+      self.indices[index+2] = (i+1)*self.arcs+j+0;
+      index += 3;
+      
+      self.indices[index+0] = (i+0)*self.arcs+((j+1) % self.arcs);
+      self.indices[index+1] = (i+1)*self.arcs+j+0;
+      self.indices[index+2] = (i+1)*self.arcs+((j+1) % self.arcs);
+      index += 3;
+    }
+  }
+  return {
+    add_transformed : function(geom, center, radius) {
+      var base_index = geom.num_verts();
+      var pos = vec3.create(), normal = vec3.create(), color = vec3.fromValues(1, 1, 1);
+      for (var i = 0; i < self.stacks*self.arcs; ++i) {
+        vec3.set(normal, self.verts[3*i+0], self.verts[3*i+1], self.verts[3*i+2]);
+        vec3.copy(pos, normal);
+        vec3.scale(pos, pos, radius);
+        vec3.add(pos, pos, center);
+        geom.add_vertex(pos, normal, color);
+      }
+      console.log(self.indices.length);
+      for (var i = 0; i < self.indices.length/3; ++i) {
+        geom.add_triangle(base_index+self.indices[i*3+0], base_index+self.indices[i*3+1], 
+                          base_index+self.indices[i*3+2]);
+      }
+    }
+  };
+}
+var ProtoCylinder = function(arcs) {
+  var self = {
+    arcs : arcs,
+    indices : new Uint16Array(arcs*3*2),
+    verts : new Float32Array(3*arcs*2),
+    normals : new Float32Array(3*arcs*2),
+  };
+  var angle = Math.PI*2/self.arcs
+  for (var i = 0; i < self.arcs; ++i) {
+    var cos_angle = Math.cos(angle*i);
+    var sin_angle = Math.sin(angle*i);
+    self.verts[3*i+0] = cos_angle;
+    self.verts[3*i+1] = sin_angle;
+    self.verts[3*i+2] = -0.5;
+    self.verts[3*arcs+3*i+0] = cos_angle;
+    self.verts[3*arcs+3*i+1] = sin_angle;
+    self.verts[3*arcs+3*i+2] = 0.5;
+    self.normals[3*i+0] = cos_angle;
+    self.normals[3*i+1] = sin_angle;
+    self.normals[3*arcs+3*i+0] = cos_angle;
+    self.normals[3*arcs+3*i+1] = sin_angle;
+  }
+  for (var i = 0; i < self.arcs; ++i) {
+    self.indices[6*i+0] = (i+0) % self.arcs;
+    self.indices[6*i+1] = arcs+((i+1) % self.arcs);
+    self.indices[6*i+2] = (i+1) % self.arcs;
+
+    self.indices[6*i+3] = (i+0) % self.arcs;
+    self.indices[6*i+4] = arcs+((i+0) % self.arcs);
+    self.indices[6*i+5] = arcs+((i+1) % self.arcs);
+  }
+  return {
+    add_transformed : function(geom, center, length, radius, rotation) {
+      var base_index = geom.num_verts();
+      var pos = vec3.create(), normal = vec3.create(), color = vec3.fromValues(1, 1, 1);
+      for (var i = 0; i < 2*self.arcs; ++i) {
+        vec3.set(pos, radius*self.verts[3*i+0], radius*self.verts[3*i+1], 
+                 length*self.verts[3*i+2]);
+        vec3.transformMat3(pos, pos, rotation);
+        vec3.add(pos, pos, center);
+        vec3.set(normal, self.normals[3*i+0], self.normals[3*i+1], self.normals[3*i+2]);
+        vec3.transformMat3(normal, normal, rotation);
+        geom.add_vertex(pos, normal, color);
+      }
+      for (var i = 0; i < self.indices.length/3; ++i) {
+        geom.add_triangle(base_index+self.indices[i*3+0], base_index+self.indices[i*3+1], 
+                          base_index+self.indices[i*3+2]);
+      }
+    }
+  };
+};
+
+// an (indexed mesh geometry container.
+//
+// stores the vertex data in interleaved format. not doing so has severe performance penalties
+// in WebGL, and by severe I mean orders of magnitude slower than using an interleaved array.
+var MeshGeom = function() {
+  var self = {
+    interleaved_buffer : gl.createBuffer(),
+    index_buffer : gl.createBuffer(),
+    vert_data : [],
+    index_data : [],
+    num_triangles : 0,
+    num_verts : 0,
+    ready : false,
+  };
+
+  return {
+    num_verts : function() { return self.num_verts; },
+    draw: function(shader_program) {
+      this.bind();
+      var pos_attrib = gl.getAttribLocation(shader_program, 'attr_pos');
+      gl.enableVertexAttribArray(pos_attrib);
+      gl.vertexAttribPointer(pos_attrib, 3, gl.FLOAT, false, 9*4, 0*4);
+
+      var normal_attrib = gl.getAttribLocation(shader_program, 'attr_normal');
+      gl.enableVertexAttribArray(normal_attrib);
+      gl.vertexAttribPointer(normal_attrib, 3, gl.FLOAT, false, 9*4, 3*4);
+
+      var clr_attrib = gl.getAttribLocation(shader_program, 'attr_color');
+      gl.vertexAttribPointer(clr_attrib, 3, gl.FLOAT, false, 9*4, 6*4);
+      gl.enableVertexAttribArray(clr_attrib);
+      gl.drawElements(gl.TRIANGLES, self.num_triangles*3, gl.UNSIGNED_SHORT, 0);
+    },
+    add_vertex : function(pos, normal, color) {
+      self.vert_data.push(pos[0]);
+      self.vert_data.push(pos[1]);
+      self.vert_data.push(pos[2]);
+      self.vert_data.push(normal[0]);
+      self.vert_data.push(normal[1]);
+      self.vert_data.push(normal[2]);
+      self.vert_data.push(color[0]);
+      self.vert_data.push(color[1]);
+      self.vert_data.push(color[2]);
+      self.num_verts += 1;
+    },
+    add_triangle : function(idx1, idx2, idx3) {
+      self.index_data.push(idx1);
+      self.index_data.push(idx2);
+      self.index_data.push(idx3);
+      self.num_triangles +=1;
+    },
+    bind : function() {
+      gl.bindBuffer(gl.ARRAY_BUFFER, self.interleaved_buffer);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.index_buffer);
+      if (!self.ready) {
+        var float_array = new Float32Array(self.vert_data);
+        gl.bufferData(gl.ARRAY_BUFFER, float_array, gl.STATIC_DRAW);
+        var index_array = new Uint16Array(self.index_data);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, index_array, gl.STATIC_DRAW);
+        self.ready = true;
+        self.index_data = [];
+        self.vert_data = [];
+      }
+    },
+  };
+};
+
 var Cam = function() {
   var self = {
     projection : mat4.create(),
     modelview : mat4.create(),
 
     center : vec3.create(),
-    zoom : 40,
+    zoom : 50,
     rotation : mat4.create(),
     translation : mat4.create(),
     update_mat : true,
@@ -160,8 +354,8 @@ var Cam = function() {
 
 var PV = function(dom_element, width, height) {
   var canvas_element = document.createElement('canvas');
-  canvas_element.width = width || 500;
-  canvas_element.height = height || 500;
+  canvas_element.width = width || 800;
+  canvas_element.height = height || 800;
   dom_element.appendChild(canvas_element);
 
   var self = {
@@ -177,6 +371,7 @@ var PV = function(dom_element, width, height) {
     gl.viewportHeight = self.dom_element.height;
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    //gl.cullFace(gl.FRONT);
     gl.enable(gl.DEPTH_TEST);
   }
 
@@ -325,8 +520,11 @@ var Structure = function() {
         }
         var ca_prev = prev_residue.atom('CA');
         var ca_this = residue.atom('CA');
+        var dist_square = vec3.distSqr(ca_prev.pos(), ca_next.pos());
         prev_residue = residue;
-        line_geom.add_line(ca_prev.pos(), clr, ca_this.pos(), clr);
+        if (Math.abs(dist_square - 3.5*3.5) < 0.5) {
+          line_geom.add_line(ca_prev.pos(), clr, ca_this.pos(), clr);
+        }
       });
       return line_geom;
     },
@@ -356,6 +554,59 @@ var Structure = function() {
         }
       });
       return line_geom;
+    },
+    trace : function() {
+      var clr = vec3.fromValues(1,1,1,1);
+      var geom = MeshGeom();
+      var prev_residue = false;
+      var proto_cyl = ProtoCylinder(8);
+      var proto_sphere = ProtoSphere(8, 8);
+      var rotation = mat3.create();
+      var dir = vec3.create();
+      var left = vec3.create();
+      var up = vec3.create();
+      this.each_residue(function(residue) {
+        if (!residue.is_aminoacid()) {
+          prev_residue = false;
+          return;
+        }
+        proto_sphere.add_transformed(geom, residue.atom('CA').pos(), 0.3);
+        if (!prev_residue) {
+          prev_residue = residue;
+          return;
+        }
+        var ca_prev = prev_residue.atom('CA');
+        var ca_this = residue.atom('CA');
+        prev_residue = residue;
+        vec3.sub(dir, ca_this.pos(), ca_prev.pos());
+        var length = vec3.length(dir);
+
+        if (Math.abs(length - 3.5) > 0.5) {
+          prev_residue = residue;
+          return;
+        }
+        vec3.scale(dir, dir, 1.0/length);
+        ortho_vec(left, dir);
+        vec3.cross(up, dir, left);
+        vec3.normalize(up, up);
+        vec3.normalize(left, left);
+        rotation[0] = left[0];
+        rotation[1] = left[1];
+        rotation[2] = left[2];
+
+        rotation[3] = up[0];
+        rotation[4] = up[1];
+        rotation[5] = up[2];
+
+        rotation[6] = dir[0];
+        rotation[7] = dir[1];
+        rotation[8] = dir[2];
+        var mid_point = vec3.clone(ca_prev.pos());
+        vec3.add(mid_point, mid_point, ca_this.pos());
+        vec3.scale(mid_point, mid_point, 0.5);
+        proto_cyl.add_transformed(geom, mid_point, length, 0.3, rotation);
+      });
+      return geom;
     },
     center : function() {
       var sum = vec3.create();
