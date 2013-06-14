@@ -119,7 +119,6 @@ var ProtoSphere  = function(stacks, arcs) {
   var horz_angle = Math.PI*2.0/arcs;
   for (var i = 0; i < self.stacks; ++i) {
     var radius = Math.sin(i*vert_angle);
-    console.log(radius);
     var z = Math.cos(i*vert_angle);
     for (var j = 0; j < self.arcs; ++j) {
       var nx = radius*Math.cos(j*horz_angle);
@@ -155,7 +154,6 @@ var ProtoSphere  = function(stacks, arcs) {
         vec3.add(pos, pos, center);
         geom.add_vertex(pos, normal, color);
       }
-      console.log(self.indices.length);
       for (var i = 0; i < self.indices.length/3; ++i) {
         geom.add_triangle(base_index+self.indices[i*3+0], base_index+self.indices[i*3+1], 
                           base_index+self.indices[i*3+2]);
