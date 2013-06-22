@@ -1,13 +1,13 @@
 test( "structure tests", function() {
    var structure = Structure();
-   var chain = structure.addChain('A');
+   var chain = structure.add_chain('A');
    ok(chain.name() == 'A');
    ok(structure.chains().length ==1);
-   var res = chain.addResidue('GLY', 3);
+   var res = chain.add_residue('GLY', 3);
    ok(res.name() == 'GLY');
    ok(res.num() == 3);
    ok(chain.residues().length == 1);
-   var atm = res.addAtom('CA', [1,2,3], 'C');
+   var atm = res.add_atom('CA', [1,2,3], 'C');
    ok(res.atoms().length == 1);
    ok(atm.name()=='CA');
    ok(atm.element() == 'C');
