@@ -31,6 +31,81 @@ var ortho_vec = (function() {
   };
 })();
 
+function interpolate_color(colors, num) {
+  var out = new Float32Array((colors.length-3)*num);
+  var index = 0;
+  var bf = vec3.create(), af = vec3.create();
+  var delta = 1/num;
+  for (var i = 0; i < colors.length/3-1; ++i) {
+    vec3.set(bf, colors[3*i+0], colors[3*i+1], colors[3*i+2]);
+    vec3.set(af, colors[3*i+3], colors[3*i+4], colors[3*i+5]);
+    for (var j = 0; j < num; ++j) {
+      var t = delta * j;
+      out[index+0] = bf[0]*(1-t)+af[0]*t;
+      out[index+1] = bf[1]*(1-t)+af[1]*t;
+      out[index+2] = bf[2]*(1-t)+af[2]*t;
+      index+=3;
+    }
+  }
+  out[index+0] = af[0];
+  out[index+1] = af[1];
+  out[index+2] = af[2];
+  return out;
+}
+
+function even_odd(even, odd) {
+  return function(atom, out, index) {
+    if (atom.residue().num() % 2) {
+      out[index+0] = even[0];
+      out[index+1] = even[1];
+      out[index+2] = even[2];
+    } else {
+      out[index+0] = odd[0];
+      out[index+1] = odd[1];
+      out[index+2] = odd[2];
+    }
+  }
+}
+
+
+function uniform_color(color) {
+  return function(atom, out, index) {
+    out[index+0] = color[0];
+    out[index+1] = color[1];
+    out[index+2] = color[2];
+  }
+}
+
+function color_for_element(ele, out) {
+  if (!out) {
+    out = vec4.create();
+  }
+  if (ele == 'C') {
+    vec4.set(out, 0.5,0.5, 0.5, 1.0);
+    return out;
+  }
+  if (ele == 'N') {
+    vec4.set(out, 0, 0, 1, 1);
+    return out;
+  }
+  if (ele == 'O') {
+    vec4.set(out, 1, 0, 0, 1);
+    return out;
+  }
+  if (ele == 'S') {
+    vec4.set(out, 1, 1, 0, 1);
+    return out;
+  }
+  vec4.set(out, 1, 0, 1, 1);
+  return out;
+}
+
+function cpk_color() {
+  return function(atom, out, index) {
+    color_for_element(atom.element(), out);
+  }
+}
+
 
 var cubic_hermite_interpolate = (function() {
   var p = vec3.create();
@@ -91,29 +166,6 @@ function catmull_rom_spline(points, num, strength) {
   return out;
 }
 
-function color_for_element(ele, out) {
-  if (!out) {
-    out = vec4.create();
-  }
-  if (ele == 'C') {
-    vec4.set(out, 1, 1, 1, 1);
-    return out;
-  }
-  if (ele == 'N') {
-    vec4.set(out, 0, 0, 1, 1);
-    return out;
-  }
-  if (ele == 'O') {
-    vec4.set(out, 1, 0, 0, 1);
-    return out;
-  }
-  if (ele == 'S') {
-    vec4.set(out, 1, 1, 0, 1);
-    return out;
-  }
-  vec4.set(out, 1, 0, 1, 1);
-  return out;
-}
 
 var LineGeom = function() {
   var self = {
@@ -203,9 +255,9 @@ var ProtoSphere  = function(stacks, arcs) {
     }
   }
   return {
-    add_transformed : function(geom, center, radius) {
+    add_transformed : function(geom, center, radius, color) {
       var base_index = geom.num_verts();
-      var pos = vec3.create(), normal = vec3.create(), color = vec3.fromValues(1, 1, 1);
+      var pos = vec3.create(), normal = vec3.create();
       for (var i = 0; i < self.stacks*self.arcs; ++i) {
         vec3.set(normal, self.verts[3*i+0], self.verts[3*i+1], self.verts[3*i+2]);
         vec3.copy(pos, normal);
@@ -245,9 +297,9 @@ var ProtoCircle = function(arcs) {
     self.indices[6*i+5] = ((i+1) % self.arcs) + self.arcs;
   }
   return {
-    add_transformed : function(geom, center, radius, rotation, first) {
+    add_transformed : function(geom, center, radius, rotation, color, first) {
       var base_index = geom.num_verts() - self.arcs;
-      var pos = vec3.create(), normal = vec3.create(), color = vec3.fromValues(1, 1, 0);
+      var pos = vec3.create(), normal = vec3.create();
       for (var i = 0; i < self.arcs; ++i) {
         vec3.set(pos, radius*self.verts[3*i+0], radius*self.verts[3*i+1], 
                  0.0);
@@ -300,9 +352,9 @@ var ProtoCylinder = function(arcs) {
     self.indices[6*i+5] = arcs+((i+1) % self.arcs);
   }
   return {
-    add_transformed : function(geom, center, length, radius, rotation) {
+    add_transformed : function(geom, center, length, radius, rotation, clr_one, clr_two) {
       var base_index = geom.num_verts();
-      var pos = vec3.create(), normal = vec3.create(), color = vec3.fromValues(1, 1, 1);
+      var pos = vec3.create(), normal = vec3.create(), color;
       for (var i = 0; i < 2*self.arcs; ++i) {
         vec3.set(pos, radius*self.verts[3*i+0], radius*self.verts[3*i+1], 
                  length*self.verts[3*i+2]);
@@ -310,7 +362,7 @@ var ProtoCylinder = function(arcs) {
         vec3.add(pos, pos, center);
         vec3.set(normal, self.normals[3*i+0], self.normals[3*i+1], self.normals[3*i+2]);
         vec3.transformMat3(normal, normal, rotation);
-        geom.add_vertex(pos, normal, color);
+        geom.add_vertex(pos, normal, i < self.arcs ? clr_one : clr_two);
       }
       for (var i = 0; i < self.indices.length/3; ++i) {
         geom.add_triangle(base_index+self.indices[i*3+0], base_index+self.indices[i*3+1], 
@@ -476,6 +528,7 @@ var PV = function(dom_element, width, height) {
     gl.viewportHeight = self.dom_element.height;
 
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    gl.lineWidth(2.0);
     //gl.cullFace(gl.FRONT);
     gl.enable(gl.DEPTH_TEST);
   }
@@ -610,37 +663,54 @@ var Structure = function() {
       }
     },
 
-    line_trace : function() {
-      var clr = vec3.fromValues(1,1,0,1);
+    line_trace : function(opts) {
+      opts = opts || {};
+      var options = {
+        color : opts.color || uniform_color([1, 0, 1]),
+      }
+      var clr_one = vec3.create(), clr_two = vec3.create();
       var line_geom = LineGeom();
       var prev_residue = false;
       for (var ci  in self.chains) {
         var chain = self.chains[ci];
         chain.each_backbone_trace(function(trace) {
           for (var i = 1; i < trace.length; ++i) {
-            line_geom.add_line(trace[i-1].atom('CA').pos(), clr, 
-                               trace[i-0].atom('CA').pos(), clr);
+            options.color(trace[i-1].atom('CA'), clr_one, 0);
+            options.color(trace[i+0].atom('CA'), clr_two, 0);
+            line_geom.add_line(trace[i-1].atom('CA').pos(), clr_one, 
+                               trace[i-0].atom('CA').pos(), clr_two);
           }
         });
       }
       return line_geom;
     },
 
-    sline : function(strength) {
-      var clr = vec3.fromValues(0,0,0,1);
+    sline : function(opts) {
+      opts = opts || {};
+      var options = {
+        color : opts.color || uniform_color([1, 0, 1]),
+        spline_detail : opts.spline_detail || 8,
+        strength: opts.strength || 0.5,
+      };
       var line_geom = LineGeom();
       var pos_one = vec3.create(), pos_two = vec3.create();
+      var clr_one = vec3.create(), clr_two = vec3.create();
       for (var ci  in self.chains) {
         var chain = self.chains[ci];
         chain.each_backbone_trace(function(trace) {
           var positions = new Float32Array(trace.length*3);
+          var colors = new Float32Array(trace.length*3);
           for (var i = 0; i < trace.length; ++i) {
-            var p = trace[i].atom('CA').pos();
+            var atom = trace[i].atom('CA');
+            options.color(atom, colors, 3*i);
+            var p = atom.pos();
             positions[i*3+0] = p[0];
             positions[i*3+1] = p[1];
             positions[i*3+2] = p[2];
           }
-          var subdivided = catmull_rom_spline(positions, 4, strength);
+          var subdivided = catmull_rom_spline(positions, options.spline_detail, 
+                                              options.strength);
+          var interpolated_color = interpolate_color(colors, options.spline_detail);
           for (var i = 1, e = subdivided.length/3; i < e; ++i) {
             pos_one[0] = subdivided[3*(i-1)+0];
             pos_one[1] = subdivided[3*(i-1)+1];
@@ -648,20 +718,34 @@ var Structure = function() {
             pos_two[0] = subdivided[3*(i-0)+0];
             pos_two[1] = subdivided[3*(i-0)+1];
             pos_two[2] = subdivided[3*(i-0)+2];
-            line_geom.add_line(pos_one, clr, pos_two, clr);
+
+            clr_one[0] = interpolated_color[3*(i-1)+0];
+            clr_one[1] = interpolated_color[3*(i-1)+1];
+            clr_one[2] = interpolated_color[3*(i-1)+2];
+            clr_two[0] = interpolated_color[3*(i-0)+0];
+            clr_two[1] = interpolated_color[3*(i-0)+1];
+            clr_two[2] = interpolated_color[3*(i-0)+2];
+            line_geom.add_line(pos_one, clr_one, pos_two, clr_two);
           }
         });
       }
       return line_geom;
     },
-    tube : function(strength) {
-      var clr = vec3.fromValues(1,0,1,1);
+    tube : function(opts) {
+      opts = opts || {};
+      var options = {
+        color : opts.color || uniform_color([1, 0, 1]),
+        strength: opts.strength || 0.5,
+        spline_detail : opts.spline_detail || 4,
+        arc_detail : opts.arc_detail || 6,
+      }
       var geom = MeshGeom();
       var tangent = vec3.create(), pos = vec3.create(), left =vec3.create();
       var up = vec3.create();
       var rotation = mat3.create();
-      var proto_circle = ProtoCircle(8);
-      function tube_add(pos, tangent, first) {
+      var proto_circle = ProtoCircle(options.arc_detail);
+      var color = vec3.create();
+      function tube_add(pos, tangent, color, first) {
         if (first)
           ortho_vec(left, tangent);
         else
@@ -680,33 +764,38 @@ var Structure = function() {
         rotation[6] = tangent[0];
         rotation[7] = tangent[1];
         rotation[8] = tangent[2];
-        proto_circle.add_transformed(geom, pos, 0.2, rotation, first);
+        proto_circle.add_transformed(geom, pos, 0.2, rotation, color, first);
       }
       for (var ci  in self.chains) {
         var chain = self.chains[ci];
         chain.each_backbone_trace(function(trace) {
           var positions = new Float32Array(trace.length*3);
+          var colors = new Float32Array(trace.length*3);
           for (var i = 0; i < trace.length; ++i) {
             var p = trace[i].atom('CA').pos();
             positions[i*3+0] = p[0];
             positions[i*3+1] = p[1];
             positions[i*3+2] = p[2];
+            options.color(trace[i].atom('CA'), colors, i*3);
           }
-          var subdivided = catmull_rom_spline(positions, 8, strength);
-
+          var subdivided = catmull_rom_spline(positions, options.spline_detail, 
+                                              options.strength);
+          var interpolated_color = interpolate_color(colors, options.spline_detail);
           vec3.set(tangent, subdivided[3]-subdivided[0], subdivided[4]-subdivided[1],
                    subdivided[5]-subdivided[2]);
 
           vec3.set(pos, subdivided[0], subdivided[1], subdivided[2]);
           vec3.normalize(tangent, tangent);
-          tube_add(pos, tangent, true);
+          tube_add(pos, tangent, interpolated_color, true);
           for (var i = 1, e = subdivided.length/3 - 1; i < e; ++i) {
             vec3.set(pos, subdivided[3*i+0], subdivided[3*i+1], subdivided[3*i+2]);
             vec3.set(tangent, subdivided[3*(i+1)+0]-subdivided[3*(i-1)+0],
                      subdivided[3*(i+1)+1]-subdivided[3*(i-1)+1],
                      subdivided[3*(i+1)+2]-subdivided[3*(i-1)+2]);
             vec3.normalize(tangent, tangent);
-            tube_add(pos, tangent, false);
+            vec3.set(color, interpolated_color[i*3+0], interpolated_color[i*3+1],
+                    interpolated_color[i*3+2]);
+            tube_add(pos, tangent, color, false);
           }
           vec3.set(tangent, subdivided[subdivided.length-3]-subdivided[subdivided.length-6], 
                    subdivided[subdivided.length-2]-subdivided[subdivided.length-5],
@@ -715,31 +804,39 @@ var Structure = function() {
           vec3.set(pos, subdivided[subdivided.length-3], subdivided[subdivided.length-2], 
                    subdivided[subdivided.length-1]);
           vec3.normalize(tangent, tangent);
-          tube_add(pos, tangent, false);
+          vec3.set(color, interpolated_color[interpolated_color.length-3],
+                   interpolated_color[interpolated_color.length-2],
+                   interpolated_color[interpolated_color.length-1]);
+                    
+          tube_add(pos, tangent, color, false);
         });
       }
       return geom;
     },
-    lines : function() {
+    lines : function(opts) {
+      opts = opts || {};
+      var options = {
+        color : opts.color || cpk_color(),
+      };
       var mp = vec3.create();
-      var clr = vec4.create();
       var line_geom = LineGeom();
+      var clr = vec3.create();
       this.each_atom(function(atom) {
         // for atoms without bonds, we draw a small cross, otherwise these atoms 
         // would be invisible on the screen.
         if (atom.bonds().length) {
           atom.each_bond(function(bond) {
             bond.mid_point(mp); 
-            color_for_element(bond.atom_one().element(), clr);
+            options.color(bond.atom_one(), clr, 0);
             line_geom.add_line(bond.atom_one().pos(), clr, mp, clr);
-            color_for_element(bond.atom_two().element(), clr);
+            options.color(bond.atom_two(), clr, 0);
             line_geom.add_line(mp, clr, bond.atom_two().pos(), clr);
 
           });
         } else {
           var cs = 0.2;
           var pos = atom.pos();
-          color_for_element(atom.element(), clr);
+          options.color(atom, clr, 0);
           line_geom.add_line([pos[0]-cs, pos[1], pos[2]], clr, [pos[0]+cs, pos[1], pos[2]], clr);
           line_geom.add_line([pos[0], pos[1]-cs, pos[2]], clr, [pos[0], pos[1]+cs, pos[2]], clr);
           line_geom.add_line([pos[0], pos[1], pos[2]-cs], clr, [pos[0], pos[1], pos[2]+cs], clr);
@@ -747,8 +844,13 @@ var Structure = function() {
       });
       return line_geom;
     },
-    trace : function() {
-      var clr = vec3.fromValues(0,0,0,1);
+    trace : function(opts) {
+      opts = opts || {}
+      var options = {
+        color : opts.color || uniform_color([1, 0, 0]),
+        radius: opts.radius || 0.3
+      }
+      var clr_one = vec3.create(), clr_two = vec3.create();
       var geom = MeshGeom();
       var prev_residue = false;
       var proto_cyl = ProtoCylinder(8);
@@ -760,11 +862,15 @@ var Structure = function() {
       for (var ci in self.chains) {
         var chain = self.chains[ci];
         chain.each_backbone_trace(function(trace) {
-          proto_sphere.add_transformed(geom, trace[0].atom('CA').pos(), 0.3);
+          options.color(trace[0].atom('CA'), clr_one, 0);
+          proto_sphere.add_transformed(geom, trace[0].atom('CA').pos(), options.radius,
+                                       clr_one);
           for(var i = 1; i < trace.length; ++i) {
             var ca_prev_pos = trace[i-1].atom('CA').pos();
             var ca_this_pos = trace[i+0].atom('CA').pos();
-            proto_sphere.add_transformed(geom, ca_this_pos, 0.3);
+            options.color(trace[i].atom('CA'), clr_two, 0);
+            proto_sphere.add_transformed(geom, ca_this_pos, options.radius,
+                                         clr_two);
             vec3.sub(dir, ca_this_pos, ca_prev_pos);
             var length = vec3.length(dir);
 
@@ -787,7 +893,9 @@ var Structure = function() {
             var mid_point = vec3.clone(ca_prev_pos);
             vec3.add(mid_point, mid_point, ca_this_pos);
             vec3.scale(mid_point, mid_point, 0.5);
-            proto_cyl.add_transformed(geom, mid_point, length, 0.3, rotation);
+            proto_cyl.add_transformed(geom, mid_point, length, options.radius, rotation, 
+                                      clr_one, clr_two);
+            vec3.copy(clr_one, clr_two);
           }
         });
       }
@@ -962,6 +1070,7 @@ var Atom = function(residue, name, pos, element) {
     add_bond : function(bond) { self.bonds.push(bond); },
     bonds : function() { return self.bonds; },
     residue: function() { return self.residue; },
+    index : function() { return self.index; },
     structure : function() { return self.residue.structure(); },
     each_bond : function(callback) {
       for (var i = 0; i < self.bonds.length; ++i) {

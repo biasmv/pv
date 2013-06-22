@@ -26,8 +26,8 @@
     varying vec3 vert_normal;
 
     void main(void) {
-      gl_FragColor = mix(vec4(vert_color, 1.0), vec4(0.2, 0.2, 0.2, 1.0), 
-                         max(0.0, dot(vert_normal, vec3(1.0, 0.0, 0.0))));
+      float hemi = max(0.0, dot(vert_normal, vec3(0.0, 1.0, 0.0)))*0.5+0.5;
+      gl_FragColor = vec4(vert_color, 1.0)*hemi;
     }
 
   </script>
@@ -42,7 +42,7 @@
     varying vec3 vert_normal;
     void main(void) {
       gl_Position = projection_mat * modelview_mat * vec4(attr_pos, 1.0);
-      vert_normal = vec3(modelview_mat * vec4(attr_normal, 0.0));
+      vert_normal = normalize(vec3(modelview_mat * vec4(attr_normal, 0.0)));
       vert_color = attr_color;
     }
   </script>
@@ -53,7 +53,7 @@
     function on_ready() {
       $.ajax({ url : 'pdbs/1ake.pdb', success : function(data) {
         var structure = load_pdb(data);
-        pv.add(structure.tube(0.6));
+        pv.add(structure.sline({ color: even_odd([0.4, 0.4, 0], [0,0,0.8])}));
         pv.center_on(structure);
         pv.draw();
       }});
