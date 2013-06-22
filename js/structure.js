@@ -53,7 +53,8 @@ var cubic_hermite_interpolate = (function() {
 
 // interpolates the given list of points (stored in a Float32Array) with a Cubic 
 // Hermite spline using the method of Catmull and Rom to calculate the tangents.
-function catmull_rom_spline(points, num) {
+function catmull_rom_spline(points, num, strength) {
+  strength = strength || 0.5;
   var out = new Float32Array((points.length-3)*num);
   var index = 0;
   var delta_t = 1.0/num;
@@ -67,7 +68,7 @@ function catmull_rom_spline(points, num) {
   for (var i = 1, e = points.length/3-1; i < e; ++i) {
     vec3.set(p_kp3, points[3*(i+1)+0], points[3*(i+1)+1], points[3*(i+1)+2]);
     vec3.sub(m_kp1, p_kp3, p_kp1);
-    vec3.scale(m_kp1, m_kp1, 0.5);
+    vec3.scale(m_kp1, m_kp1, strength);
     for (var j = 0; j < num; ++j) {
       var t = delta_t*j;
       cubic_hermite_interpolate(out, p_kp1, m_k, p_kp2, m_kp1, t, index);
@@ -219,6 +220,54 @@ var ProtoSphere  = function(stacks, arcs) {
     }
   };
 }
+
+
+var ProtoCircle = function(arcs) {
+  var self = {
+    arcs : arcs,
+    indices : new Uint16Array(arcs*3*2),
+    verts : new Float32Array(arcs*3)
+  };
+  var angle = Math.PI*2/self.arcs
+  for (var i = 0; i < self.arcs; ++i) {
+    var cos_angle = Math.cos(angle*i);
+    var sin_angle = Math.sin(angle*i);
+    self.verts[i*3+0] = cos_angle;
+    self.verts[i*3+1] = sin_angle;
+    self.verts[i*3+2] = 0.0;
+  }
+  for (var i = 0; i < self.arcs; ++i) {
+    self.indices[6*i+0] = i;
+    self.indices[6*i+1] = i+self.arcs;
+    self.indices[6*i+2] = ((i+1) % self.arcs) + self.arcs;
+    self.indices[6*i+3] = i;
+    self.indices[6*i+4] = (i+1) % self.arcs;
+    self.indices[6*i+5] = ((i+1) % self.arcs) + self.arcs;
+  }
+  return {
+    add_transformed : function(geom, center, radius, rotation, first) {
+      var base_index = geom.num_verts() - self.arcs;
+      var pos = vec3.create(), normal = vec3.create(), color = vec3.fromValues(1, 1, 0);
+      for (var i = 0; i < self.arcs; ++i) {
+        vec3.set(pos, radius*self.verts[3*i+0], radius*self.verts[3*i+1], 
+                 0.0);
+        vec3.transformMat3(pos, pos, rotation);
+        vec3.add(pos, pos, center);
+        vec3.set(normal, self.verts[3*i+0], self.verts[3*i+1], self.verts[3*i+2]);
+        vec3.transformMat3(normal, normal, rotation);
+        geom.add_vertex(pos, normal, color);
+      }
+      if (first) {
+        return;
+      }
+      for (var i = 0; i < self.indices.length/3; ++i) {
+        geom.add_triangle(base_index+self.indices[i*3+0], base_index+self.indices[i*3+1], 
+                          base_index+self.indices[i*3+2]);
+      }
+    }
+  };
+}
+
 var ProtoCylinder = function(arcs) {
   var self = {
     arcs : arcs,
@@ -410,8 +459,8 @@ var Cam = function() {
 
 var PV = function(dom_element, width, height) {
   var canvas_element = document.createElement('canvas');
-  canvas_element.width = width || 500;
-  canvas_element.height = height || 500;
+  canvas_element.width = width || 800;
+  canvas_element.height = height || 800;
   dom_element.appendChild(canvas_element);
 
   var self = {
@@ -426,7 +475,7 @@ var PV = function(dom_element, width, height) {
     gl.viewportWidth = self.dom_element.width;
     gl.viewportHeight = self.dom_element.height;
 
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
+    gl.clearColor(1.0, 1.0, 1.0, 1.0);
     //gl.cullFace(gl.FRONT);
     gl.enable(gl.DEPTH_TEST);
   }
@@ -577,11 +626,10 @@ var Structure = function() {
       return line_geom;
     },
 
-    sline : function() {
-      var clr = vec3.fromValues(1,1,1,1);
+    sline : function(strength) {
+      var clr = vec3.fromValues(0,0,0,1);
       var line_geom = LineGeom();
       var pos_one = vec3.create(), pos_two = vec3.create();
-      var prev_residue = false;
       for (var ci  in self.chains) {
         var chain = self.chains[ci];
         chain.each_backbone_trace(function(trace) {
@@ -592,7 +640,7 @@ var Structure = function() {
             positions[i*3+1] = p[1];
             positions[i*3+2] = p[2];
           }
-          var subdivided = catmull_rom_spline(positions, 4);
+          var subdivided = catmull_rom_spline(positions, 4, strength);
           for (var i = 1, e = subdivided.length/3; i < e; ++i) {
             pos_one[0] = subdivided[3*(i-1)+0];
             pos_one[1] = subdivided[3*(i-1)+1];
@@ -605,6 +653,72 @@ var Structure = function() {
         });
       }
       return line_geom;
+    },
+    tube : function(strength) {
+      var clr = vec3.fromValues(1,0,1,1);
+      var geom = MeshGeom();
+      var tangent = vec3.create(), pos = vec3.create(), left =vec3.create();
+      var up = vec3.create();
+      var rotation = mat3.create();
+      var proto_circle = ProtoCircle(8);
+      function tube_add(pos, tangent, first) {
+        if (first)
+          ortho_vec(left, tangent);
+        else
+          vec3.cross(left, up, tangent);
+        vec3.cross(up, tangent, left);
+        vec3.normalize(up, up);
+        vec3.normalize(left, left);
+        rotation[0] = left[0];
+        rotation[1] = left[1];
+        rotation[2] = left[2];
+
+        rotation[3] = up[0];
+        rotation[4] = up[1];
+        rotation[5] = up[2];
+
+        rotation[6] = tangent[0];
+        rotation[7] = tangent[1];
+        rotation[8] = tangent[2];
+        proto_circle.add_transformed(geom, pos, 0.2, rotation, first);
+      }
+      for (var ci  in self.chains) {
+        var chain = self.chains[ci];
+        chain.each_backbone_trace(function(trace) {
+          var positions = new Float32Array(trace.length*3);
+          for (var i = 0; i < trace.length; ++i) {
+            var p = trace[i].atom('CA').pos();
+            positions[i*3+0] = p[0];
+            positions[i*3+1] = p[1];
+            positions[i*3+2] = p[2];
+          }
+          var subdivided = catmull_rom_spline(positions, 8, strength);
+
+          vec3.set(tangent, subdivided[3]-subdivided[0], subdivided[4]-subdivided[1],
+                   subdivided[5]-subdivided[2]);
+
+          vec3.set(pos, subdivided[0], subdivided[1], subdivided[2]);
+          vec3.normalize(tangent, tangent);
+          tube_add(pos, tangent, true);
+          for (var i = 1, e = subdivided.length/3 - 1; i < e; ++i) {
+            vec3.set(pos, subdivided[3*i+0], subdivided[3*i+1], subdivided[3*i+2]);
+            vec3.set(tangent, subdivided[3*(i+1)+0]-subdivided[3*(i-1)+0],
+                     subdivided[3*(i+1)+1]-subdivided[3*(i-1)+1],
+                     subdivided[3*(i+1)+2]-subdivided[3*(i-1)+2]);
+            vec3.normalize(tangent, tangent);
+            tube_add(pos, tangent, false);
+          }
+          vec3.set(tangent, subdivided[subdivided.length-3]-subdivided[subdivided.length-6], 
+                   subdivided[subdivided.length-2]-subdivided[subdivided.length-5],
+                   subdivided[subdivided.length-1]-subdivided[subdivided.length-4]);
+
+          vec3.set(pos, subdivided[subdivided.length-3], subdivided[subdivided.length-2], 
+                   subdivided[subdivided.length-1]);
+          vec3.normalize(tangent, tangent);
+          tube_add(pos, tangent, false);
+        });
+      }
+      return geom;
     },
     lines : function() {
       var mp = vec3.create();
@@ -634,7 +748,7 @@ var Structure = function() {
       return line_geom;
     },
     trace : function() {
-      var clr = vec3.fromValues(1,1,1,1);
+      var clr = vec3.fromValues(0,0,0,1);
       var geom = MeshGeom();
       var prev_residue = false;
       var proto_cyl = ProtoCylinder(8);
