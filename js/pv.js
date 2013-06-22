@@ -242,10 +242,10 @@ var ProtoSphere  = function(stacks, arcs) {
   var index = 0;
   for (var i = 0; i < self.stacks-1; ++i) {
     for (var j = 0; j < self.arcs; ++j) {
-      
       self.indices[index+0] = (i+0)*self.arcs+j+0;
-      self.indices[index+1] = (i+0)*self.arcs+((j+1) % self.arcs);
-      self.indices[index+2] = (i+1)*self.arcs+j+0;
+      self.indices[index+1] = (i+1)*self.arcs+j+0;
+      self.indices[index+2] = (i+0)*self.arcs+((j+1) % self.arcs);
+
       index += 3;
       
       self.indices[index+0] = (i+0)*self.arcs+((j+1) % self.arcs);
@@ -293,8 +293,8 @@ var ProtoCircle = function(arcs) {
     self.indices[6*i+1] = i+self.arcs;
     self.indices[6*i+2] = ((i+1) % self.arcs) + self.arcs;
     self.indices[6*i+3] = i;
-    self.indices[6*i+4] = (i+1) % self.arcs;
-    self.indices[6*i+5] = ((i+1) % self.arcs) + self.arcs;
+    self.indices[6*i+4] = ((i+1) % self.arcs) + self.arcs;
+    self.indices[6*i+5] = (i+1) % self.arcs;
   }
   return {
     add_transformed : function(geom, center, radius, rotation, color, first) {
@@ -305,7 +305,7 @@ var ProtoCircle = function(arcs) {
                  0.0);
         vec3.transformMat3(pos, pos, rotation);
         vec3.add(pos, pos, center);
-        vec3.set(normal, self.verts[3*i+0], self.verts[3*i+1], self.verts[3*i+2]);
+        vec3.set(normal, self.verts[3*i+0], self.verts[3*i+1], 0.0);
         vec3.transformMat3(normal, normal, rotation);
         geom.add_vertex(pos, normal, color);
       }
@@ -529,7 +529,8 @@ var PV = function(dom_element, width, height) {
 
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.lineWidth(2.0);
-    //gl.cullFace(gl.FRONT);
+    gl.cullFace(gl.FRONT);
+    gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
   }
 
@@ -737,7 +738,8 @@ var Structure = function() {
         color : opts.color || uniform_color([1, 0, 1]),
         strength: opts.strength || 0.5,
         spline_detail : opts.spline_detail || 4,
-        arc_detail : opts.arc_detail || 6,
+        arc_detail : opts.arc_detail || 8,
+        radius : opts.radius || 0.3,
       }
       var geom = MeshGeom();
       var tangent = vec3.create(), pos = vec3.create(), left =vec3.create();
@@ -764,7 +766,7 @@ var Structure = function() {
         rotation[6] = tangent[0];
         rotation[7] = tangent[1];
         rotation[8] = tangent[2];
-        proto_circle.add_transformed(geom, pos, 0.2, rotation, color, first);
+        proto_circle.add_transformed(geom, pos, opts.radius, rotation, color, first);
       }
       for (var ci  in self.chains) {
         var chain = self.chains[ci];
