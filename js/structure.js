@@ -32,6 +32,64 @@ var ortho_vec = (function() {
 })();
 
 
+var cubic_hermite_interpolate = (function() {
+  var p = vec3.create();
+  return function (out, p_k, m_k, p_kp1, m_kp1, t, index) {
+    var h00 = 2*t*t*t - 3*t*t+1;
+    var h10 = t*t*t - 2*t*t+t;
+    var h01 = -2*t*t*t + 3*t*t;
+    var h11 = t*t*t - t*t;
+    vec3.copy(p, p_k);
+    vec3.scale(p, p, h00);
+    vec3.scaleAndAdd(p, p, m_k, h10);
+    vec3.scaleAndAdd(p, p, p_kp1, h01);
+    vec3.scaleAndAdd(p, p, m_kp1, h11);
+    out[index+0] = p[0];
+    out[index+1] = p[1];
+    out[index+2] = p[2];
+}
+})();
+
+
+// interpolates the given list of points (stored in a Float32Array) with a Cubic 
+// Hermite spline using the method of Catmull and Rom to calculate the tangents.
+function catmull_rom_spline(points, num) {
+  var out = new Float32Array((points.length-3)*num);
+  var index = 0;
+  var delta_t = 1.0/num;
+  var m_k = vec3.create(), m_kp1 = vec3.create(); // tangents at k-1 and k+1
+  var p_k = vec3.create(), p_kp1 = vec3.create(), 
+      p_kp2 = vec3.create(), p_kp3 = vec3.create(); 
+  vec3.set(p_k,   points[0], points[1], points[2]);
+  vec3.set(p_kp1, points[0], points[1], points[2]);
+  vec3.set(p_kp2, points[3], points[4], points[5]);
+  vec3.set(m_k, 0, 0, 0);
+  for (var i = 1, e = points.length/3-1; i < e; ++i) {
+    vec3.set(p_kp3, points[3*(i+1)+0], points[3*(i+1)+1], points[3*(i+1)+2]);
+    vec3.sub(m_kp1, p_kp3, p_kp1);
+    vec3.scale(m_kp1, m_kp1, 0.5);
+    for (var j = 0; j < num; ++j) {
+      var t = delta_t*j;
+      cubic_hermite_interpolate(out, p_kp1, m_k, p_kp2, m_kp1, t, index);
+      index+=3;
+    }
+    vec3.copy(p_k, p_kp1);
+    vec3.copy(p_kp1, p_kp2);
+    vec3.copy(p_kp2, p_kp3);
+    vec3.copy(m_k, m_kp1);
+  }
+  vec3.set(m_kp1, 0, 0, 0);
+  for (var j = 0; j < num; ++j) {
+    var t = delta_t*j;
+    cubic_hermite_interpolate(out, p_kp1, m_k, p_kp2, m_kp1, t, index);
+    index+=3;
+  }
+  out[index+0] = points[points.length-3];
+  out[index+1] = points[points.length-2];
+  out[index+2] = points[points.length-1];
+  return out;
+}
+
 function color_for_element(ele, out) {
   if (!out) {
     out = vec4.create();
@@ -352,8 +410,8 @@ var Cam = function() {
 
 var PV = function(dom_element, width, height) {
   var canvas_element = document.createElement('canvas');
-  canvas_element.width = width || 800;
-  canvas_element.height = height || 800;
+  canvas_element.width = width || 500;
+  canvas_element.height = height || 500;
   dom_element.appendChild(canvas_element);
 
   var self = {
@@ -504,26 +562,48 @@ var Structure = function() {
     },
 
     line_trace : function() {
-      var clr = vec3.fromValues(1,1,1,1);
+      var clr = vec3.fromValues(1,1,0,1);
       var line_geom = LineGeom();
       var prev_residue = false;
-      this.each_residue(function(residue) {
-        if (!residue.is_aminoacid()) {
-          prev_residue = false;
-          return;
-        }
-        if (!prev_residue) {
-          prev_residue = residue;
-          return;
-        }
-        var ca_prev = prev_residue.atom('CA');
-        var ca_this = residue.atom('CA');
-        var dist_square = vec3.distSqr(ca_prev.pos(), ca_next.pos());
-        prev_residue = residue;
-        if (Math.abs(dist_square - 3.5*3.5) < 0.5) {
-          line_geom.add_line(ca_prev.pos(), clr, ca_this.pos(), clr);
-        }
-      });
+      for (var ci  in self.chains) {
+        var chain = self.chains[ci];
+        chain.each_backbone_trace(function(trace) {
+          for (var i = 1; i < trace.length; ++i) {
+            line_geom.add_line(trace[i-1].atom('CA').pos(), clr, 
+                               trace[i-0].atom('CA').pos(), clr);
+          }
+        });
+      }
+      return line_geom;
+    },
+
+    sline : function() {
+      var clr = vec3.fromValues(1,1,1,1);
+      var line_geom = LineGeom();
+      var pos_one = vec3.create(), pos_two = vec3.create();
+      var prev_residue = false;
+      for (var ci  in self.chains) {
+        var chain = self.chains[ci];
+        chain.each_backbone_trace(function(trace) {
+          var positions = new Float32Array(trace.length*3);
+          for (var i = 0; i < trace.length; ++i) {
+            var p = trace[i].atom('CA').pos();
+            positions[i*3+0] = p[0];
+            positions[i*3+1] = p[1];
+            positions[i*3+2] = p[2];
+          }
+          var subdivided = catmull_rom_spline(positions, 4);
+          for (var i = 1, e = subdivided.length/3; i < e; ++i) {
+            pos_one[0] = subdivided[3*(i-1)+0];
+            pos_one[1] = subdivided[3*(i-1)+1];
+            pos_one[2] = subdivided[3*(i-1)+2];
+            pos_two[0] = subdivided[3*(i-0)+0];
+            pos_two[1] = subdivided[3*(i-0)+1];
+            pos_two[2] = subdivided[3*(i-0)+2];
+            line_geom.add_line(pos_one, clr, pos_two, clr);
+          }
+        });
+      }
       return line_geom;
     },
     lines : function() {
@@ -563,47 +643,40 @@ var Structure = function() {
       var dir = vec3.create();
       var left = vec3.create();
       var up = vec3.create();
-      this.each_residue(function(residue) {
-        if (!residue.is_aminoacid()) {
-          prev_residue = false;
-          return;
-        }
-        proto_sphere.add_transformed(geom, residue.atom('CA').pos(), 0.3);
-        if (!prev_residue) {
-          prev_residue = residue;
-          return;
-        }
-        var ca_prev = prev_residue.atom('CA');
-        var ca_this = residue.atom('CA');
-        prev_residue = residue;
-        vec3.sub(dir, ca_this.pos(), ca_prev.pos());
-        var length = vec3.length(dir);
+      for (var ci in self.chains) {
+        var chain = self.chains[ci];
+        chain.each_backbone_trace(function(trace) {
+          proto_sphere.add_transformed(geom, trace[0].atom('CA').pos(), 0.3);
+          for(var i = 1; i < trace.length; ++i) {
+            var ca_prev_pos = trace[i-1].atom('CA').pos();
+            var ca_this_pos = trace[i+0].atom('CA').pos();
+            proto_sphere.add_transformed(geom, ca_this_pos, 0.3);
+            vec3.sub(dir, ca_this_pos, ca_prev_pos);
+            var length = vec3.length(dir);
 
-        if (Math.abs(length - 3.5) > 0.5) {
-          prev_residue = residue;
-          return;
-        }
-        vec3.scale(dir, dir, 1.0/length);
-        ortho_vec(left, dir);
-        vec3.cross(up, dir, left);
-        vec3.normalize(up, up);
-        vec3.normalize(left, left);
-        rotation[0] = left[0];
-        rotation[1] = left[1];
-        rotation[2] = left[2];
+            vec3.scale(dir, dir, 1.0/length);
+            ortho_vec(left, dir);
+            vec3.cross(up, dir, left);
+            vec3.normalize(up, up);
+            vec3.normalize(left, left);
+            rotation[0] = left[0];
+            rotation[1] = left[1];
+            rotation[2] = left[2];
 
-        rotation[3] = up[0];
-        rotation[4] = up[1];
-        rotation[5] = up[2];
+            rotation[3] = up[0];
+            rotation[4] = up[1];
+            rotation[5] = up[2];
 
-        rotation[6] = dir[0];
-        rotation[7] = dir[1];
-        rotation[8] = dir[2];
-        var mid_point = vec3.clone(ca_prev.pos());
-        vec3.add(mid_point, mid_point, ca_this.pos());
-        vec3.scale(mid_point, mid_point, 0.5);
-        proto_cyl.add_transformed(geom, mid_point, length, 0.3, rotation);
-      });
+            rotation[6] = dir[0];
+            rotation[7] = dir[1];
+            rotation[8] = dir[2];
+            var mid_point = vec3.clone(ca_prev_pos);
+            vec3.add(mid_point, mid_point, ca_this_pos);
+            vec3.scale(mid_point, mid_point, 0.5);
+            proto_cyl.add_transformed(geom, mid_point, length, 0.3, rotation);
+          }
+        });
+      }
       return geom;
     },
     center : function() {
@@ -681,7 +754,40 @@ var Chain = function(structure, name) {
       }
     },
     residues : function() { return self.residues; },
-    structure : function() { return self.structure; } 
+    structure : function() { return self.structure; },
+
+    // invokes a callback for each connected stretch of amino acids. these stretches are used 
+    // for all trace-based rendering styles, e.g. sline, line_trace, cartoon etc. 
+    each_backbone_trace : function(callback) {
+      var  stretch = [];
+      for (var i = 0; i < self.residues.length; i+=1) {
+        var residue = self.residues[i];
+        if (!residue.is_aminoacid()) {
+          if (stretch.length > 1) {
+            callback(stretch);
+            stretch = [];
+          }
+          continue;
+        }
+        if (stretch.length == 0) {
+          stretch.push(residue);
+          continue;
+        }
+        var ca_prev = self.residues[i-1].atom('C');
+        var n_this = residue.atom('N');
+        if (Math.abs(vec3.sqrDist(ca_prev.pos(), n_this.pos()) - 1.5*1.5) < 1) {
+          stretch.push(residue);
+        } else {
+          if (stretch.length > 1) {
+            callback(stretch);
+            stretch = [];
+          }
+        }
+      }
+      if (stretch.length > 1) {
+        callback(stretch);
+      }
+    }
   };
 }
 

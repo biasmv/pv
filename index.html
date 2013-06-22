@@ -53,7 +53,8 @@
     function on_ready() {
       $.ajax({ url : 'pdbs/1ake.pdb', success : function(data) {
         var structure = load_pdb(data);
-        pv.add(structure.trace());
+        pv.add(structure.sline());
+        //pv.add(structure.line_trace());
         pv.center_on(structure);
         pv.draw();
       }});
