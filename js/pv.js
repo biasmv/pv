@@ -68,6 +68,29 @@ function even_odd(even, odd) {
 }
 
 
+function ss() {
+  return function(atom, out, index) {
+    switch (atom.residue().ss()) {
+      case 'C':
+        out[index+0] = 0.5;
+        out[index+1] = 0.5;
+        out[index+2] = 0.5;
+        return;
+      case 'H':
+        out[index+0] = 1.0;
+        out[index+1] = 0.0;
+        out[index+2] = 0.0;
+        return;
+      case 'E':
+        out[index+0] = 0.0;
+        out[index+1] = 1.0;
+        out[index+2] = 0.0;
+        return;
+    }
+  }
+}
+
+
 function uniform_color(color) {
   return function(atom, out, index) {
     out[index+0] = color[0];
@@ -372,7 +395,7 @@ var ProtoCylinder = function(arcs) {
   };
 };
 
-// an (indexed mesh geometry container.
+// an (indexed) mesh geometry container.
 //
 // stores the vertex data in interleaved format. not doing so has severe performance penalties
 // in WebGL, and by severe I mean orders of magnitude slower than using an interleaved array.
@@ -653,6 +676,15 @@ var Structure = function() {
       return next_index; 
     },
     chains : function() { return self.chains; },
+
+    chain : function(name) { 
+      for (var i = 0; i < self.chains.length; ++i) {
+        if (self.chains[i].name() == name) {
+          return self.chains[i];
+        }
+      }
+      return null;
+    },
     each_residue : function(callback) {
       for (var i = 0; i < self.chains.length; i+=1) {
         self.chains[i].each_residue(callback);
@@ -663,7 +695,6 @@ var Structure = function() {
         self.chains[i].each_atom(callback);
       }
     },
-
     line_trace : function(opts) {
       opts = opts || {};
       var options = {
@@ -817,7 +848,7 @@ var Structure = function() {
       console.timeEnd('Structure.tube');
       return geom;
     },
-    tube : function(opts) {
+    cartoon : function(opts) {
       console.time('Structure.tube');
       opts = opts || {};
       var options = {
@@ -901,6 +932,14 @@ var Structure = function() {
       }
       console.timeEnd('Structure.tube');
       return geom;
+    },
+
+    // renders the protein using a smoothly interpolated tube, essentially identical to the
+    // cartoon render mode, but without special treatment for helices and strands.
+    tube : function(opts) {
+      opts = opts || {};
+      opts.force_tube = true;
+      return this.cartoon(opts);
     },
     lines : function(opts) {
       opts = opts || {};
@@ -1064,11 +1103,23 @@ var Chain = function(structure, name) {
         callback(self.residues[i]);
       }
     },
+    // assigns secondary structure to residues in range from_num to to_num.
+    assign_ss : function(from_num, to_num, ss) {
+      // FIXME: when the chain numbers are completely ordered, perform binary search 
+      // to identify range of residues to assign secondary structure to.
+      for (var i = 0; i < self.residues.length; ++i) {
+        var res = self.residues[i];
+        if (res.num() < from_num || res.num() > to_num) {
+          continue;
+        }
+        res.set_ss(ss);
+      }
+    },
     residues : function() { return self.residues; },
     structure : function() { return self.structure; },
 
     // invokes a callback for each connected stretch of amino acids. these stretches are used 
-    // for all trace-based rendering styles, e.g. sline, line_trace, cartoon etc. 
+    // for all trace-based rendering styles, e.g. sline, line_trace, tube, cartoon etc. 
     each_backbone_trace : function(callback) {
       var  stretch = [];
       for (var i = 0; i < self.residues.length; i+=1) {
@@ -1107,7 +1158,8 @@ var Residue = function(chain, name, num) {
        name : name,
        num : num,
        atoms : [],
-       chain: chain
+       chain: chain,
+       ss : 'C',
   };
 
   return {
@@ -1123,6 +1175,10 @@ var Residue = function(chain, name, num) {
         callback(self.atoms[i]);
       }
     },
+
+    ss : function() { return self.ss; },
+    set_ss : function(ss) { self.ss = ss; },
+
     atoms : function() { return self.atoms; },
     chain : function() { return self.chain; },
     atom : function(index_or_name) { 
@@ -1196,8 +1252,26 @@ var Bond = function(atom_a, atom_b) {
 var load_pdb_from_element = function(element) {
   return load_pdb(get_element_contents(element));
 }
+
+
+function parse_helix_record(line) {
+  // FIXME: handle insertion codes
+  var frst_num = parseInt(line.substr(21, 4));
+  var last_num = parseInt(line.substr(33, 4));
+  var chain_name = line[19];
+  return { first : frst_num, last : last_num, chain_name : chain_name };
+}
+
+function parse_sheet_record(line) {
+  // FIXME: handle insertion codes
+  var frst_num = parseInt(line.substr(22, 4));
+  var last_num = parseInt(line.substr(33, 4));
+  var chain_name = line[21];
+  return { first : frst_num, last : last_num, chain_name : chain_name };
+}
+
 // a truly minimalistic PDB parser. It will die as soon as the input is 
-// not well-formed. it only reas ATOM and HETATM records, everyting else 
+// not well-formed. it only reas ATOM and HETATM records, everything else 
 // is ignored. in case of multi-model files, only the first model is read.
 var load_pdb = function(text) {
   
@@ -1206,6 +1280,8 @@ var load_pdb = function(text) {
   var curr_res = null;
   var curr_atom = null;
   
+  var helices = [];
+  var sheets = [];
   function parse_and_add_atom(line, hetatm) {
     var alt_loc = line[16];
     if (alt_loc!=' ' && alt_loc!='A') {
@@ -1237,7 +1313,6 @@ var load_pdb = function(text) {
     }
     curr_res.add_atom(atom_name, pos, line.substr(77, 2).trim());
   }
-
   var lines = text.split(/\r\n|\r|\n/g);
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i];
@@ -1248,8 +1323,28 @@ var load_pdb = function(text) {
     if (line.substr(0, 6) == 'HETATM') {
       parse_and_add_atom(line, true);
     }
+    if (line.substr(0, 6) == 'HELIX ') {
+      helices.push(parse_helix_record(line));
+    }
+    if (line.substr(0, 6) == 'SHEET ') {
+      sheets.push(parse_sheet_record(line));
+    }
     if (line.substr(0, 3) == 'END') {
       break;
+    }
+  }
+  for (var i = 0; i < sheets.length; ++i) {
+    var sheet = sheets[i];
+    var chain = structure.chain(sheet.chain_name);
+    if (chain) {
+      chain.assign_ss(sheet.first, sheet.last, 'E');
+    }
+  }
+  for (var i = 0; i < helices.length; ++i) {
+    var helix = helices[i];
+    var chain = structure.chain(helix.chain_name);
+    if (chain) {
+      chain.assign_ss(helix.first, helix.last, 'H');
     }
   }
   structure.derive_connectivity();
