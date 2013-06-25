@@ -802,7 +802,7 @@ var Structure = function() {
         rotation[8] = tangent[2];
         proto_circle.add_transformed(geom, pos, opts.radius, rotation, color, first);
       }
-      for (var ci  in self.chains) {
+      for (var ci = 0; ci < self.chains.length; ++ci) {
         var chain = self.chains[ci];
         chain.each_backbone_trace(function(trace) {
           var positions = new Float32Array(trace.length*3);
@@ -903,7 +903,7 @@ var Structure = function() {
       var dir = vec3.create();
       var left = vec3.create();
       var up = vec3.create();
-      for (var ci in self.chains) {
+      for (var ci = 0; ci < self.chains.length; ++ci) {
         var chain = self.chains[ci];
         chain.each_backbone_trace(function(trace) {
           options.color(trace[0].atom('CA'), clr_one, 0);
