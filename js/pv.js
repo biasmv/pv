@@ -1,3 +1,7 @@
+"use strict";
+
+var gl;
+var last_mouse_pos;
 function get_element_contents(element) {
   var contents = '';
   var k = element.firstChild;
@@ -666,7 +670,7 @@ var Structure = function() {
 
   return {
     add_chain : function(name) {
-      chain = Chain(this, name);
+      var chain = Chain(this, name);
       self.chains.push(chain);
       return chain;
     },
@@ -1137,8 +1141,7 @@ var Atom = function(residue, name, pos, element) {
       for (var i = 0; i < self.bonds.length; ++i) {
         callback(self.bonds[i]);
       }
-    },
-    index : function() { return self.index; }
+    }
   };
 }
 
