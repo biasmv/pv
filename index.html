@@ -55,7 +55,7 @@
     function on_ready() {
       $.ajax({ url : 'pdbs/1ake.pdb', success : function(data) {
         var structure = load_pdb(data);
-        pv.add(structure.tube({ radius : 0.4, arc_detail : 4, spline_detail : 2,
+        pv.add(structure.tube({ radius : 0.4, arc_detail : 8, spline_detail : 4,
                                 color: ss()}));
         pv.center_on(structure);
         pv.draw();

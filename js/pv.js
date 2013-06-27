@@ -325,10 +325,10 @@ var ProtoCircle = function(arcs) {
   }
   var pos = vec3.create(), normal = vec3.create();
   return {
-    add_transformed : function(geom, center, radius, rotation, color, first) {
+    add_transformed : function(geom, center, radius, radius2, rotation, color, first) {
       var base_index = geom.num_verts() - self.arcs;
       for (var i = 0; i < self.arcs; ++i) {
-        vec3.set(pos, radius*self.verts[3*i+0], radius*self.verts[3*i+1], 
+        vec3.set(pos, radius2*self.verts[3*i+0], radius*self.verts[3*i+1], 
                  0.0);
         vec3.transformMat3(pos, pos, rotation);
         vec3.add(pos, pos, center);
@@ -785,12 +785,36 @@ var Structure = function() {
       var rotation = mat3.create();
       var proto_circle = ProtoCircle(options.arc_detail);
       var color = vec3.create();
-      function tube_add(pos, tangent, color, first) {
-        if (first)
+      var tmp = vec3.create();
+      var clr = vec3.fromValues(0.3, 0.3, 0.3);
+      var sheet_dir = 1;
+      var lr = null;
+      function tube_add(pos, res, tangent, color, first) {
+        var ss = res.ss();
+        var radius2 = options.radius;
+        var radius1 = options.radius;
+        if (first) {
           ortho_vec(left, tangent);
-        else
+        } else if (ss == 'H') {
+          radius2 *= 3;
+          vec3.sub(left, res.atom('O').pos(), res.atom('C').pos());
+        } else if (ss == 'E') {
+          radius2 *= 3;
+          if (lr != res) {
+            sheet_dir*=-1;
+            lr = res;
+          }
+          if (sheet_dir==1) {
+            vec3.sub(left, res.atom('O').pos(), res.atom('C').pos());
+          } else {
+            vec3.sub(left, res.atom('C').pos(), res.atom('O').pos());
+          }
+        } else {
           vec3.cross(left, up, tangent);
+        }
         vec3.cross(up, tangent, left);
+
+        vec3.add(tmp, pos, up);
         vec3.normalize(up, up);
         vec3.normalize(left, left);
         rotation[0] = left[0];
@@ -804,7 +828,8 @@ var Structure = function() {
         rotation[6] = tangent[0];
         rotation[7] = tangent[1];
         rotation[8] = tangent[2];
-        proto_circle.add_transformed(geom, pos, opts.radius, rotation, color, first);
+        proto_circle.add_transformed(geom, pos, radius1, radius2,
+                                     rotation, color, first);
       }
       for (var ci = 0; ci < self.chains.length; ++ci) {
         var chain = self.chains[ci];
@@ -826,7 +851,7 @@ var Structure = function() {
 
           vec3.set(pos, subdivided[0], subdivided[1], subdivided[2]);
           vec3.normalize(tangent, tangent);
-          tube_add(pos, tangent, interpolated_color, true);
+          tube_add(pos, trace[0], tangent, interpolated_color, true);
           for (var i = 1, e = subdivided.length/3 - 1; i < e; ++i) {
             vec3.set(pos, subdivided[3*i+0], subdivided[3*i+1], subdivided[3*i+2]);
             vec3.set(tangent, subdivided[3*(i+1)+0]-subdivided[3*(i-1)+0],
@@ -835,7 +860,8 @@ var Structure = function() {
             vec3.normalize(tangent, tangent);
             vec3.set(color, interpolated_color[i*3+0], interpolated_color[i*3+1],
                     interpolated_color[i*3+2]);
-            tube_add(pos, tangent, color, false);
+            tube_add(pos, trace[Math.floor(i/options.spline_detail)], 
+                     tangent, color, false);
           }
           vec3.set(tangent, subdivided[subdivided.length-3]-subdivided[subdivided.length-6], 
                    subdivided[subdivided.length-2]-subdivided[subdivided.length-5],
@@ -848,7 +874,7 @@ var Structure = function() {
                    interpolated_color[interpolated_color.length-2],
                    interpolated_color[interpolated_color.length-1]);
                     
-          tube_add(pos, tangent, color, false);
+          tube_add(pos, trace[trace.length-1], tangent, color, false);
         });
       }
       console.timeEnd('Structure.cartoon');
