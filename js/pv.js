@@ -795,10 +795,10 @@ var Structure = function() {
         var radius1 = options.radius;
         if (first) {
           ortho_vec(left, tangent);
-        } else if (ss == 'H') {
+        } else if (ss == 'H' && !options.force_tube) {
           radius2 *= 3;
           vec3.sub(left, res.atom('O').pos(), res.atom('C').pos());
-        } else if (ss == 'E') {
+        } else if (ss == 'E' && !options.force_tube) {
           radius2 *= 3;
           if (lr != res) {
             sheet_dir*=-1;
