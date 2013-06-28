@@ -76,9 +76,9 @@ function ss() {
   return function(atom, out, index) {
     switch (atom.residue().ss()) {
       case 'C':
-        out[index+0] = 0.5;
-        out[index+1] = 0.5;
-        out[index+2] = 0.5;
+        out[index+0] = 0.3;
+        out[index+1] = 0.3;
+        out[index+2] = 0.3;
         return;
       case 'H':
         out[index+0] = 1.0;
@@ -160,7 +160,11 @@ var cubic_hermite_interpolate = (function() {
 function catmull_rom_spline(points, num, strength, circular) {
   circular = circular || false;
   strength = strength || 0.5;
-  var out = new Float32Array((points.length-3)*num);
+  if (circular) {
+    var out = new Float32Array(points.length*num);
+  } else {
+    var out = new Float32Array((points.length-3)*num);
+  }
   var index = 0;
   var delta_t = 1.0/num;
   var m_k = vec3.create(), m_kp1 = vec3.create(); // tangents at k-1 and k+1
@@ -170,12 +174,13 @@ function catmull_rom_spline(points, num, strength, circular) {
   vec3.set(p_kp1, points[0], points[1], points[2]);
   vec3.set(p_kp2, points[3], points[4], points[5]);
   if (circular) {
-    vec3.set(p_k,   points[0], points[1], points[2]);
-    vec3.set(m_k, 0, 0, 0);
-  } else {
     vec3.set(p_k,  points[points.length-3], points[points.length-2], 
              points[points.length-1]);
     vec3.sub(m_k, p_kp2, p_k);
+    vec3.scale(m_k, m_k, strength);
+  } else {
+    vec3.set(p_k,   points[0], points[1], points[2]);
+    vec3.set(m_k, 0, 0, 0);
   }
   for (var i = 1, e = points.length/3-1; i < e; ++i) {
     vec3.set(p_kp3, points[3*(i+1)+0], points[3*(i+1)+1], points[3*(i+1)+2]);
@@ -192,7 +197,9 @@ function catmull_rom_spline(points, num, strength, circular) {
     vec3.copy(m_k, m_kp1);
   }
   if (circular) {
-    vec3.sub(m_kp1, points, p_kp2);
+    vec3.set(p_kp3, points[0], points[1], points[3]);
+    vec3.sub(m_kp1, p_kp3, p_kp1);
+    vec3.scale(m_kp1, m_kp1, strength);
   } else {
     vec3.set(m_kp1, 0, 0, 0);
   }
@@ -201,9 +208,24 @@ function catmull_rom_spline(points, num, strength, circular) {
     cubic_hermite_interpolate(out, p_kp1, m_k, p_kp2, m_kp1, t, index);
     index+=3;
   }
-  out[index+0] = points[points.length-3];
-  out[index+1] = points[points.length-2];
-  out[index+2] = points[points.length-1];
+  if (!circular) {
+    out[index+0] = points[points.length-3];
+    out[index+1] = points[points.length-2];
+    out[index+2] = points[points.length-1];
+    return out;
+  }
+  vec3.copy(p_k, p_kp1);
+  vec3.copy(p_kp1, p_kp2);
+  vec3.copy(p_kp2, p_kp3);
+  vec3.copy(m_k, m_kp1);
+  vec3.set(p_kp3, points[3], points[4], points[5]);
+  vec3.sub(m_kp1, p_kp3, p_kp1);
+  vec3.scale(m_kp1, m_kp1, strength);
+  for (var j = 0; j < num; ++j) {
+    var t = delta_t*j;
+    cubic_hermite_interpolate(out, p_kp1, m_k, p_kp2, m_kp1, t, index);
+    index+=3;
+  }
   return out;
 }
 
@@ -359,6 +381,72 @@ var ProtoCircle = function(arcs) {
     }
   };
 }
+
+// A tube profile is a cross-section of a tube, e.g. a circle or a 'flat' square. They
+// are used to control the style of helices, strands and coils for the cartoon
+// render mode. 
+var TubeProfile = function(points, num, strength) {
+  var interpolated = catmull_rom_spline(points, num, strength, true);
+  var self = {
+    indices : new Uint16Array(interpolated.length*2),
+    verts : interpolated,
+    arcs : interpolated.length/3,
+  };
+  var v = vec3.create();
+  console.log('begin')
+  for (var i = 0; i < self.arcs; ++i) {
+    vec3.set(v, self.verts[3*i+0], self.verts[3*i+1], self.verts[3*i+2]);
+    console.log(vec3.str(v));
+
+  }
+  for (var i = 0; i < self.arcs; ++i) {
+    self.indices[6*i+0] = i;
+    self.indices[6*i+1] = i+self.arcs;
+    self.indices[6*i+2] = ((i+1) % self.arcs) + self.arcs;
+    self.indices[6*i+3] = i;
+    self.indices[6*i+4] = ((i+1) % self.arcs) + self.arcs;
+    self.indices[6*i+5] = (i+1) % self.arcs;
+  }
+  var pos = vec3.create(), normal = vec3.create();
+  return {
+    add_transformed : function(geom, center, radius, rotation, color, first) {
+      var base_index = geom.num_verts() - self.arcs;
+      for (var i = 0; i < self.arcs; ++i) {
+        vec3.set(pos, radius*self.verts[3*i+0], radius*self.verts[3*i+1], 
+                 0.0);
+        vec3.transformMat3(pos, pos, rotation);
+        vec3.add(pos, pos, center);
+        vec3.set(normal, self.verts[3*i+0], self.verts[3*i+1], 0.0);
+        vec3.normalize(normal, normal);
+        vec3.transformMat3(normal, normal, rotation);
+        geom.add_vertex(pos, normal, color);
+      }
+      if (first) {
+        return;
+      }
+      for (var i = 0; i < self.indices.length/3; ++i) {
+        geom.add_triangle(base_index+self.indices[i*3+0], base_index+self.indices[i*3+1], 
+                          base_index+self.indices[i*3+2]);
+      }
+    }
+  };
+}
+
+var R = 0.7071;
+var COIL_POINTS = [
+  -R, -R, 0,
+   R, -R, 0,
+   R, R, 0,
+  -R,  R, 0
+];
+
+
+var HELIX_POINTS = [
+  -2*R, -0.5*R, 0,
+   2*R, -0.5*R, 0,
+   2*R, 0.5*R, 0,
+  -2*R,  0.5*R, 0
+];
 
 var ProtoCylinder = function(arcs) {
   var self = {
@@ -570,7 +658,7 @@ var PV = function(dom_element, width, height) {
     gl.clearColor(1.0, 1.0, 1.0, 1.0);
     gl.lineWidth(2.0);
     gl.cullFace(gl.FRONT);
-    gl.enable(gl.CULL_FACE);
+    //gl.enable(gl.CULL_FACE);
     gl.enable(gl.DEPTH_TEST);
   }
 
@@ -796,7 +884,8 @@ var Structure = function() {
       var tangent = vec3.create(), pos = vec3.create(), left =vec3.create();
       var up = vec3.create();
       var rotation = mat3.create();
-      var proto_circle = ProtoCircle(options.arc_detail);
+      var coil_profile = TubeProfile(COIL_POINTS, options.arc_detail, 0.0);
+      var heli_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.0);
       var color = vec3.create();
       var tmp = vec3.create();
       var clr = vec3.fromValues(0.3, 0.3, 0.3);
@@ -806,13 +895,13 @@ var Structure = function() {
         var ss = res.ss();
         var radius2 = options.radius;
         var radius1 = options.radius;
+        var prof = coil_profile
         if (first) {
           ortho_vec(left, tangent);
         } else if (ss == 'H' && !options.force_tube) {
-          radius2 *= 3;
+          prof = heli_profile;
           vec3.sub(left, res.atom('O').pos(), res.atom('C').pos());
         } else if (ss == 'E' && !options.force_tube) {
-          radius2 *= 3;
           if (lr != res) {
             sheet_dir*=-1;
             lr = res;
@@ -841,8 +930,7 @@ var Structure = function() {
         rotation[6] = tangent[0];
         rotation[7] = tangent[1];
         rotation[8] = tangent[2];
-        proto_circle.add_transformed(geom, pos, radius1, radius2,
-                                     rotation, color, first);
+        prof.add_transformed(geom, pos, radius1, rotation, color, first);
       }
       for (var ci = 0; ci < self.chains.length; ++ci) {
         var chain = self.chains[ci];
