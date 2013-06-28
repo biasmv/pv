@@ -156,7 +156,8 @@ var cubic_hermite_interpolate = (function() {
 
 // interpolates the given list of points (stored in a Float32Array) with a Cubic 
 // Hermite spline using the method of Catmull and Rom to calculate the tangents.
-function catmull_rom_spline(points, num, strength) {
+function catmull_rom_spline(points, num, strength, circular) {
+  circular = circular || false;
   strength = strength || 0.5;
   var out = new Float32Array((points.length-3)*num);
   var index = 0;
@@ -164,10 +165,17 @@ function catmull_rom_spline(points, num, strength) {
   var m_k = vec3.create(), m_kp1 = vec3.create(); // tangents at k-1 and k+1
   var p_k = vec3.create(), p_kp1 = vec3.create(), 
       p_kp2 = vec3.create(), p_kp3 = vec3.create(); 
-  vec3.set(p_k,   points[0], points[1], points[2]);
+
   vec3.set(p_kp1, points[0], points[1], points[2]);
   vec3.set(p_kp2, points[3], points[4], points[5]);
-  vec3.set(m_k, 0, 0, 0);
+  if (circular) {
+    vec3.set(p_k,   points[0], points[1], points[2]);
+    vec3.set(m_k, 0, 0, 0);
+  } else {
+    vec3.set(p_k,  points[points.length-3], points[points.length-2], 
+             points[points.length-1]);
+    vec3.sub(m_k, p_kp2, p_k);
+  }
   for (var i = 1, e = points.length/3-1; i < e; ++i) {
     vec3.set(p_kp3, points[3*(i+1)+0], points[3*(i+1)+1], points[3*(i+1)+2]);
     vec3.sub(m_kp1, p_kp3, p_kp1);
@@ -182,7 +190,11 @@ function catmull_rom_spline(points, num, strength) {
     vec3.copy(p_kp2, p_kp3);
     vec3.copy(m_k, m_kp1);
   }
-  vec3.set(m_kp1, 0, 0, 0);
+  if (circular) {
+    vec3.sub(m_kp1, points, p_kp2);
+  } else {
+    vec3.set(m_kp1, 0, 0, 0);
+  }
   for (var j = 0; j < num; ++j) {
     var t = delta_t*j;
     cubic_hermite_interpolate(out, p_kp1, m_k, p_kp2, m_kp1, t, index);
@@ -300,7 +312,6 @@ var ProtoSphere  = function(stacks, arcs) {
     }
   };
 }
-
 
 var ProtoCircle = function(arcs) {
   var self = {
@@ -746,7 +757,7 @@ var Structure = function() {
             positions[i*3+2] = p[2];
           }
           var subdivided = catmull_rom_spline(positions, options.spline_detail, 
-                                              options.strength);
+                                              options.strength, false);
           var interpolated_color = interpolate_color(colors, options.spline_detail);
           for (var i = 1, e = subdivided.length/3; i < e; ++i) {
             pos_one[0] = subdivided[3*(i-1)+0];
@@ -845,7 +856,7 @@ var Structure = function() {
             options.color(trace[i].atom('CA'), colors, i*3);
           }
           var subdivided = catmull_rom_spline(positions, options.spline_detail, 
-                                              options.strength);
+                                              options.strength, false);
           var interpolated_color = interpolate_color(colors, options.spline_detail);
           vec3.set(tangent, subdivided[3]-subdivided[0], subdivided[4]-subdivided[1],
                    subdivided[5]-subdivided[2]);
