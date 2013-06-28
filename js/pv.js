@@ -336,52 +336,6 @@ var ProtoSphere  = function(stacks, arcs) {
   };
 }
 
-var ProtoCircle = function(arcs) {
-  var self = {
-    arcs : arcs,
-    indices : new Uint16Array(arcs*3*2),
-    verts : new Float32Array(arcs*3)
-  };
-  var angle = Math.PI*2/self.arcs
-  for (var i = 0; i < self.arcs; ++i) {
-    var cos_angle = Math.cos(angle*i);
-    var sin_angle = Math.sin(angle*i);
-    self.verts[i*3+0] = cos_angle;
-    self.verts[i*3+1] = sin_angle;
-    self.verts[i*3+2] = 0.0;
-  }
-  for (var i = 0; i < self.arcs; ++i) {
-    self.indices[6*i+0] = i;
-    self.indices[6*i+1] = i+self.arcs;
-    self.indices[6*i+2] = ((i+1) % self.arcs) + self.arcs;
-    self.indices[6*i+3] = i;
-    self.indices[6*i+4] = ((i+1) % self.arcs) + self.arcs;
-    self.indices[6*i+5] = (i+1) % self.arcs;
-  }
-  var pos = vec3.create(), normal = vec3.create();
-  return {
-    add_transformed : function(geom, center, radius, radius2, rotation, color, first) {
-      var base_index = geom.num_verts() - self.arcs;
-      for (var i = 0; i < self.arcs; ++i) {
-        vec3.set(pos, radius2*self.verts[3*i+0], radius*self.verts[3*i+1], 
-                 0.0);
-        vec3.transformMat3(pos, pos, rotation);
-        vec3.add(pos, pos, center);
-        vec3.set(normal, self.verts[3*i+0], self.verts[3*i+1], 0.0);
-        vec3.transformMat3(normal, normal, rotation);
-        geom.add_vertex(pos, normal, color);
-      }
-      if (first) {
-        return;
-      }
-      for (var i = 0; i < self.indices.length/3; ++i) {
-        geom.add_triangle(base_index+self.indices[i*3+0], base_index+self.indices[i*3+1], 
-                          base_index+self.indices[i*3+2]);
-      }
-    }
-  };
-}
-
 // A tube profile is a cross-section of a tube, e.g. a circle or a 'flat' square. They
 // are used to control the style of helices, strands and coils for the cartoon
 // render mode. 
@@ -392,13 +346,6 @@ var TubeProfile = function(points, num, strength) {
     verts : interpolated,
     arcs : interpolated.length/3,
   };
-  var v = vec3.create();
-  console.log('begin')
-  for (var i = 0; i < self.arcs; ++i) {
-    vec3.set(v, self.verts[3*i+0], self.verts[3*i+1], self.verts[3*i+2]);
-    console.log(vec3.str(v));
-
-  }
   for (var i = 0; i < self.arcs; ++i) {
     self.indices[6*i+0] = i;
     self.indices[6*i+1] = i+self.arcs;
@@ -442,10 +389,10 @@ var COIL_POINTS = [
 
 
 var HELIX_POINTS = [
-  -2*R, -0.5*R, 0,
-   2*R, -0.5*R, 0,
-   2*R, 0.5*R, 0,
-  -2*R,  0.5*R, 0
+  -3*R, -0.8*R, 0,
+   3*R, -0.8*R, 0,
+   3*R, 0.8*R, 0,
+  -3*R,  0.8*R, 0
 ];
 
 var ProtoCylinder = function(arcs) {
@@ -884,7 +831,7 @@ var Structure = function() {
       var tangent = vec3.create(), pos = vec3.create(), left =vec3.create();
       var up = vec3.create();
       var rotation = mat3.create();
-      var coil_profile = TubeProfile(COIL_POINTS, options.arc_detail, 0.0);
+      var coil_profile = TubeProfile(COIL_POINTS, options.arc_detail, 1.0);
       var heli_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.0);
       var color = vec3.create();
       var tmp = vec3.create();
