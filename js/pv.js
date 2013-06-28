@@ -137,10 +137,11 @@ function cpk_color() {
 var cubic_hermite_interpolate = (function() {
   var p = vec3.create();
   return function (out, p_k, m_k, p_kp1, m_kp1, t, index) {
-    var h00 = 2*t*t*t - 3*t*t+1;
-    var h10 = t*t*t - 2*t*t+t;
-    var h01 = -2*t*t*t + 3*t*t;
-    var h11 = t*t*t - t*t;
+    var tt = t*t;
+    var h00 = tt*(2.0*t - 3.0)+1.0;
+    var h10 = tt*(t - 2.0)+t;
+    var h01 = tt*(3.0-2.0*t);
+    var h11 = tt*(t - 1.0);
     vec3.copy(p, p_k);
     vec3.scale(p, p, h00);
     vec3.scaleAndAdd(p, p, m_k, h10);
