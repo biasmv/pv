@@ -138,9 +138,10 @@ var cubic_hermite_interpolate = (function() {
   var p = vec3.create();
   return function (out, p_k, m_k, p_kp1, m_kp1, t, index) {
     var tt = t*t;
-    var h00 = tt*(2.0*t - 3.0)+1.0;
+    var three_minus_two_t = 3.0 - 2.0*t;
+    var h01 = tt*three_minus_two_t;
+    var h00 = 1.0 - h01;
     var h10 = tt*(t - 2.0)+t;
-    var h01 = tt*(3.0-2.0*t);
     var h11 = tt*(t - 1.0);
     vec3.copy(p, p_k);
     vec3.scale(p, p, h00);
