@@ -405,10 +405,10 @@ var COIL_POINTS = [
 
 
 var HELIX_POINTS = [
-  -3*R, -0.8*R, 0,
-   3*R, -0.8*R, 0,
-   3*R, 0.8*R, 0,
-  -3*R,  0.8*R, 0
+  -3*R, -1.0*R, 0,
+   3*R, -1.0*R, 0,
+   3*R, 1.0*R, 0,
+  -3*R,  1.0*R, 0
 ];
 
 var ProtoCylinder = function(arcs) {
@@ -1067,30 +1067,32 @@ var Structure = function() {
     // determine connectivity structure. for simplicity only connects atoms of the same 
     // residue and peptide bonds
     derive_connectivity : function() {
-       var this_structure = this;
-       var prev_residue;
-       this.each_residue(function(res) {
-         var d = vec3.create();
-         for (var i = 0; i < res.atoms().length; i+=1) {
-          for (var j = 0; j < i; j+=1) {
-            var sqr_dist = vec3.sqrDist(res.atom(i).pos(), res.atom(j).pos());
-            if (sqr_dist < 1.6*1.6) {
-               this_structure.connect(res.atom(i), res.atom(j));
-            }
+      console.time('Structure.derive_connectivity');
+      var this_structure = this;
+      var prev_residue;
+      this.each_residue(function(res) {
+        var d = vec3.create();
+        for (var i = 0; i < res.atoms().length; i+=1) {
+        for (var j = 0; j < i; j+=1) {
+          var sqr_dist = vec3.sqrDist(res.atom(i).pos(), res.atom(j).pos());
+          if (sqr_dist < 1.6*1.6) {
+              this_structure.connect(res.atom(i), res.atom(j));
           }
-         }
-         if (prev_residue) {
-          var c_atom = prev_residue.atom('C');
-          var n_atom = res.atom('N');
-          if (c_atom && n_atom) {
-            var sqr_dist = vec3.sqrDist(c_atom.pos(), n_atom.pos());
-            if (sqr_dist < 1.6*1.6) {
-              this_structure.connect(n_atom, c_atom);
-            }
+        }
+        }
+        if (prev_residue) {
+        var c_atom = prev_residue.atom('C');
+        var n_atom = res.atom('N');
+        if (c_atom && n_atom) {
+          var sqr_dist = vec3.sqrDist(c_atom.pos(), n_atom.pos());
+          if (sqr_dist < 1.6*1.6) {
+            this_structure.connect(n_atom, c_atom);
           }
-         }
-         prev_residue = res;
-       });
+        }
+        }
+        prev_residue = res;
+      });
+      console.timeEnd('Structure.derive_connectivity');
     }
   };
 }
@@ -1290,7 +1292,7 @@ function parse_sheet_record(line) {
 // not well-formed. it only reas ATOM and HETATM records, everything else 
 // is ignored. in case of multi-model files, only the first model is read.
 var load_pdb = function(text) {
-  
+  console.time('load_pdb'); 
   var structure = Structure();
   var curr_chain = null;
   var curr_res = null;
@@ -1323,29 +1325,34 @@ var load_pdb = function(text) {
     if (update_residue) {
       curr_res = curr_chain.add_residue(res_name, rnum_num);
     }
-    var pos = [];
+    var pos = vec3.create();
     for (var i=0;i<3;++i) {
-      pos.push(parseFloat(line.substr(30+i*8, 8)));
+      pos[i] = (parseFloat(line.substr(30+i*8, 8)));
     }
     curr_res.add_atom(atom_name, pos, line.substr(77, 2).trim());
   }
   var lines = text.split(/\r\n|\r|\n/g);
   for (var i = 0; i < lines.length; i++) {
     var line = lines[i];
+    var record_name = line.substr(0, 6);
 
-    if (line.substr(0, 6) == 'ATOM  ') {
+    if (record_name == 'ATOM  ') {
       parse_and_add_atom(line, false);
+      continue;
     }
-    if (line.substr(0, 6) == 'HETATM') {
+    if (record_name == 'HETATM') {
       parse_and_add_atom(line, true);
+      continue;
     }
-    if (line.substr(0, 6) == 'HELIX ') {
+    if (record_name == 'HELIX ') {
       helices.push(parse_helix_record(line));
+      continue;
     }
-    if (line.substr(0, 6) == 'SHEET ') {
+    if (record_name == 'SHEET ') {
       sheets.push(parse_sheet_record(line));
+      continue;
     }
-    if (line.substr(0, 3) == 'END') {
+    if (record_name == 'END') {
       break;
     }
   }
@@ -1364,5 +1371,7 @@ var load_pdb = function(text) {
     }
   }
   structure.derive_connectivity();
+  console.timeEnd('load_pdb');
+
   return structure;
 };
