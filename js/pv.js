@@ -340,12 +340,28 @@ var ProtoSphere  = function(stacks, arcs) {
 // are used to control the style of helices, strands and coils for the cartoon
 // render mode. 
 var TubeProfile = function(points, num, strength) {
+
   var interpolated = catmull_rom_spline(points, num, strength, true);
+
   var self = {
     indices : new Uint16Array(interpolated.length*2),
     verts : interpolated,
+    normals : new Float32Array(interpolated.length),
     arcs : interpolated.length/3,
   };
+
+  var normal = vec3.create();
+  for (var i = 0; i < self.arcs; ++i) {
+    var i_prev = i == 0 ? self.arcs-1 : i-1;
+    var i_next = i == self.arcs-1 ? 0 : i+1;
+    normal[0] = self.verts[3*i_next+1] - self.verts[3*i_prev+1];
+    normal[1] = self.verts[3*i_prev+0] - self.verts[3*i_next+0];
+    vec3.normalize(normal, normal);
+    self.normals[3*i+0] = normal[0];
+    self.normals[3*i+1] = normal[1];
+    self.normals[3*i+2] = normal[2];
+  }
+
   for (var i = 0; i < self.arcs; ++i) {
     self.indices[6*i+0] = i;
     self.indices[6*i+1] = i+self.arcs;
@@ -354,6 +370,7 @@ var TubeProfile = function(points, num, strength) {
     self.indices[6*i+4] = ((i+1) % self.arcs) + self.arcs;
     self.indices[6*i+5] = (i+1) % self.arcs;
   }
+
   var pos = vec3.create(), normal = vec3.create();
   return {
     add_transformed : function(geom, center, radius, rotation, color, first) {
@@ -363,8 +380,7 @@ var TubeProfile = function(points, num, strength) {
                  0.0);
         vec3.transformMat3(pos, pos, rotation);
         vec3.add(pos, pos, center);
-        vec3.set(normal, self.verts[3*i+0], self.verts[3*i+1], 0.0);
-        vec3.normalize(normal, normal);
+        vec3.set(normal, self.normals[3*i+0], self.normals[3*i+1], 0.0);
         vec3.transformMat3(normal, normal, rotation);
         geom.add_vertex(pos, normal, color);
       }
@@ -586,8 +602,8 @@ var Cam = function() {
 
 var PV = function(dom_element, width, height) {
   var canvas_element = document.createElement('canvas');
-  canvas_element.width = width || 800;
-  canvas_element.height = height || 800;
+  canvas_element.width = width || 500;
+  canvas_element.height = height || 500;
   dom_element.appendChild(canvas_element);
 
   var self = {
@@ -709,6 +725,40 @@ var PV = function(dom_element, width, height) {
   document.addEventListener('DOMContentLoaded', init_pv);
   return pv;
 };
+
+
+// derive a rotation matrix which rotates the z-axis onto tangent. when
+// left is given and use_hint is true, x-axis is chosen to be as close
+// as possible to left.
+//
+// upon returning, left will be modified to contain the updated left
+// direction.
+var build_rotation = (function() {
+
+
+  return function(rotation, tangent, left, up, use_left_hint) {
+    if (use_left_hint) {
+      vec3.cross(up, tangent, left);
+    } else {
+      ortho_vec(up, tangent);
+    }
+
+    vec3.cross(left, up, tangent);
+    vec3.normalize(up, up);
+    vec3.normalize(left, left);
+    rotation[0] = left[0];
+    rotation[1] = left[1];
+    rotation[2] = left[2];
+
+    rotation[3] = up[0];
+    rotation[4] = up[1];
+    rotation[5] = up[2];
+
+    rotation[6] = tangent[0];
+    rotation[7] = tangent[1];
+    rotation[8] = tangent[2];
+  }
+})();
 
 var Structure = function() {
   var  self = {
@@ -861,22 +911,9 @@ var Structure = function() {
         } else {
           vec3.cross(left, up, tangent);
         }
-        vec3.cross(up, tangent, left);
 
-        vec3.add(tmp, pos, up);
-        vec3.normalize(up, up);
-        vec3.normalize(left, left);
-        rotation[0] = left[0];
-        rotation[1] = left[1];
-        rotation[2] = left[2];
+        build_rotation(rotation, tangent, left, up, true);
 
-        rotation[3] = up[0];
-        rotation[4] = up[1];
-        rotation[5] = up[2];
-
-        rotation[6] = tangent[0];
-        rotation[7] = tangent[1];
-        rotation[8] = tangent[2];
         prof.add_transformed(geom, pos, radius1, rotation, color, first);
       }
       for (var ci = 0; ci < self.chains.length; ++ci) {
@@ -997,21 +1034,9 @@ var Structure = function() {
             var length = vec3.length(dir);
 
             vec3.scale(dir, dir, 1.0/length);
-            ortho_vec(left, dir);
-            vec3.cross(up, dir, left);
-            vec3.normalize(up, up);
-            vec3.normalize(left, left);
-            rotation[0] = left[0];
-            rotation[1] = left[1];
-            rotation[2] = left[2];
 
-            rotation[3] = up[0];
-            rotation[4] = up[1];
-            rotation[5] = up[2];
+            build_rotation(rotation, dir, left, up, false);
 
-            rotation[6] = dir[0];
-            rotation[7] = dir[1];
-            rotation[8] = dir[2];
             var mid_point = vec3.clone(ca_prev_pos);
             vec3.add(mid_point, mid_point, ca_this_pos);
             vec3.scale(mid_point, mid_point, 0.5);
