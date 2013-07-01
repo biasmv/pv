@@ -76,9 +76,9 @@ function ss() {
   return function(atom, out, index) {
     switch (atom.residue().ss()) {
       case 'C':
-        out[index+0] = 0.3;
-        out[index+1] = 0.3;
-        out[index+2] = 0.3;
+        out[index+0] = 0.8;
+        out[index+1] = 0.8;
+        out[index+2] = 0.8;
         return;
       case 'H':
         out[index+0] = 1.0;
@@ -602,8 +602,8 @@ var Cam = function() {
 
 var PV = function(dom_element, width, height) {
   var canvas_element = document.createElement('canvas');
-  canvas_element.width = width || 500;
-  canvas_element.height = height || 500;
+  canvas_element.width = width || 1000;
+  canvas_element.height = height || 1000;
   dom_element.appendChild(canvas_element);
 
   var self = {
@@ -883,8 +883,9 @@ var Structure = function() {
       var rotation = mat3.create();
       var coil_profile = TubeProfile(COIL_POINTS, options.arc_detail, 1.0);
       var heli_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.0);
+      var strand_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.0);
       var color = vec3.create();
-      var tmp = vec3.create();
+      var last_left = vec3.create();
       var clr = vec3.fromValues(0.3, 0.3, 0.3);
       var sheet_dir = 1;
       var lr = null;
@@ -899,18 +900,15 @@ var Structure = function() {
           prof = heli_profile;
           vec3.sub(left, res.atom('O').pos(), res.atom('C').pos());
         } else if (ss == 'E' && !options.force_tube) {
-          if (lr != res) {
-            sheet_dir*=-1;
-            lr = res;
-          }
-          if (sheet_dir==1) {
-            vec3.sub(left, res.atom('O').pos(), res.atom('C').pos());
-          } else {
-            vec3.sub(left, res.atom('C').pos(), res.atom('O').pos());
-          }
+          prof = strand_profile;
+          vec3.sub(left, res.atom('O').pos(), res.atom('C').pos());
         } else {
           vec3.cross(left, up, tangent);
         }
+        if (vec3.dot(left, last_left) < 0.0) {
+          vec3.negate(left, left);
+        }
+        vec3.copy(last_left, left);
 
         build_rotation(rotation, tangent, left, up, true);
 

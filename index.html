@@ -53,11 +53,11 @@
 
    
     function on_ready() {
-      $.ajax({ url : 'pdbs/1crn.pdb', success : function(data) {
+      $.ajax({ url : 'pdbs/1ake.pdb', success : function(data) {
         var structure = load_pdb(data);
         //pv.add(structure.trace());
         pv.add(structure.cartoon({ radius : 0.5, arc_detail : 4, spline_detail : 4,
-                                   color: ss()}));
+                                   color: ss(), strength : 1}));
         pv.center_on(structure);
         pv.draw();
       }});
