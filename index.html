@@ -54,11 +54,16 @@
    
     function on_ready() {
       $.ajax({ url : 'pdbs/1ake.pdb', success : function(data) {
-        var structure = load_pdb(data);
-        //pv.add(structure.trace());
-        pv.add(structure.cartoon({ radius : 0.5, arc_detail : 1, spline_detail : 4,
-                                   color: ss(), strength : 1.0}));
-        pv.center_on(structure);
+        var mol = load_pdb(data);
+        
+        var water = mol.select('water');
+
+        var ligand = mol.select('ligand');
+        pv.add(mol.cartoon({ radius : 0.5, arc_detail : 1, spline_detail : 4,
+                             strength : 1.0}));
+        //pv.add(water.lines());
+        pv.add(ligand.spheres({ color : cpk_color() }));
+        pv.center_on(mol);
         pv.draw();
       }});
     }

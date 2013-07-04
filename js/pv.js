@@ -120,6 +120,7 @@ function interpolate_normals(normals, num) {
   out[index+2] = af[2];
   return out;
 }
+
 function interpolate_color(colors, num) {
   var out = new Float32Array((colors.length-3)*num);
   var index = 0;
@@ -187,6 +188,191 @@ function uniform_color(color) {
     out[index+2] = color[2];
   }
 }
+
+
+function MolBase() {
+
+};
+
+function Mol() {
+}
+
+function MolView(mol) {
+ this._mol = mol; 
+ this._chains = [];
+}
+
+
+MolView.prototype = new MolBase();
+
+
+function ChainBase() {
+}
+
+ChainBase.prototype.each_atom = function(callback) {
+  for (var i = 0; i< this._residues.length; i+=1) {
+    this._residues[i].each_atom(callback);
+  }
+}
+ChainBase.prototype.each_residue = function(callback) {
+  for (var i = 0; i < this._residues.length; i+=1) {
+    callback(this._residues[i]);
+  }
+}
+
+ChainBase.prototype.residues = function() { return this._residues; }
+ChainBase.prototype.structure = function() { return this._structure; }
+
+// invokes a callback for each connected stretch of amino acids. these stretches are used 
+// for all trace-based rendering styles, e.g. sline, line_trace, tube, cartoon etc. 
+ChainBase.prototype.each_backbone_trace = function(callback) {
+  var  stretch = [];
+  for (var i = 0; i < this._residues.length; i+=1) {
+    var residue = this._residues[i];
+    if (!residue.is_aminoacid()) {
+      if (stretch.length > 1) {
+        callback(stretch);
+        stretch = [];
+      }
+      continue;
+    }
+    if (stretch.length == 0) {
+      stretch.push(residue);
+      continue;
+    }
+    var ca_prev = this._residues[i-1].atom('C');
+    var n_this = residue.atom('N');
+    if (Math.abs(vec3.sqrDist(ca_prev.pos(), n_this.pos()) - 1.5*1.5) < 1) {
+      stretch.push(residue);
+    } else {
+      if (stretch.length > 1) {
+        callback(stretch);
+        stretch = [];
+      }
+    }
+  }
+  if (stretch.length > 1) {
+    callback(stretch);
+  }
+}
+
+function ChainView(mol_view, chain) {
+  this._chain = chain;
+  this._residues = [];
+  this._mol_view = mol_view;
+
+}
+
+
+ChainView.prototype = new ChainBase();
+
+ChainView.prototype.add_residue = function(residue, recurse) {
+  var res_view = new ResidueView(this, residue);
+  this._residues.push(res_view);
+  if (recurse) {
+    var atoms = residue.atoms();
+    for (var i = 0; i < atoms.length; ++i) {
+      res_view.add_atom(atoms[i]);
+    }
+  }
+  return res_view;
+}
+
+
+function ResidueBase() {
+
+}
+
+ResidueBase.prototype.is_water = function() {
+  return this.name() == 'HOH' || this.name() == 'DOD';
+}
+
+ResidueBase.prototype.each_atom = function(callback) {
+  for (var i =0; i< this._atoms.length; i+=1) {
+    callback(this._atoms[i]);
+  }
+}
+ResidueBase.prototype.atom = function(index_or_name) { 
+  if (typeof index_or_name == 'string') {
+    for (var i =0; i < this._atoms.length; ++i) {
+     if (this._atoms[i].name() == index_or_name) {
+       return this._atoms[i];
+     }
+    }
+  }
+  return this._atoms[index_or_name]; 
+}
+
+
+ResidueBase.prototype.is_aminoacid = function() { 
+  return this.atom('N') && this.atom('CA') && this.atom('C') && this.atom('O');
+}
+
+
+
+function ResidueView(chain_view, residue) {
+  this._chain_view = chain_view;
+  this._atoms = [];
+  this._residue = residue;
+}
+
+ResidueView.prototype = new ResidueBase();
+
+ResidueView.prototype.add_atom = function(atom) {
+  var atom_view = new AtomView(this, atom);
+  this._atoms.push(atom_view);
+}
+function AtomView(res_view, atom) {
+  this._res_view = res_view;
+  this._atom = atom;
+  this._bonds = [];
+}
+
+
+AtomView.prototype = new AtomBase();
+AtomView.prototype.name = function() { return this._atom.name(); }
+AtomView.prototype.pos = function() { return this._atom.pos(); }
+AtomView.prototype.element = function() { return this._atom.element(); }
+AtomView.prototype.bonds = function() { return this._bonds; }
+
+
+function Chain(structure, name) {
+  this._structure = structure;
+  this._name = name;
+  this._residues = [];
+}
+
+
+
+Chain.prototype = new ChainBase();
+
+Chain.prototype.name = function() { return this._name; }
+
+Chain.prototype.add_residue = function(name, num) {
+  var residue = new Residue(this, name, num);
+  this._residues.push(residue);
+  return residue;
+}
+
+// assigns secondary structure to residues in range from_num to to_num.
+Chain.prototype.assign_ss = function(from_num, to_num, ss) {
+  // FIXME: when the chain numbers are completely ordered, perform binary search 
+  // to identify range of residues to assign secondary structure to.
+  for (var i = 0; i < this._residues.length; ++i) {
+    var res = this._residues[i];
+    // FIXME: we currently don't set the secondary structure of the first and 
+    // last residue of helices and sheets. that takes care of better 
+    // transitions between coils and helices. ideally, this should be done
+    // in the cartoon renderer, NOT in this function.
+    if (res.num() <=  from_num || res.num() >= to_num) {
+      continue;
+    }
+    res.set_ss(ss);
+  }
+},
+
+
+ChainView.prototype.name = function () { return this._chain.name(); }
 
 function color_for_element(ele, out) {
   if (!out) {
@@ -333,6 +519,8 @@ var LineGeom = function() {
       gl.vertexAttribPointer(clr_attrib, 3, gl.FLOAT, false, 6*4, 3*4);
       gl.enableVertexAttribArray(clr_attrib);
       gl.drawArrays(gl.LINES, 0, self.num_lines*2);
+      gl.disableVertexAttribArray(vert_attrib);
+      gl.disableVertexAttribArray(clr_attrib);
     },
 
     // prepare data for rendering. if the buffer data was modified, this synchronizes 
@@ -579,6 +767,9 @@ var MeshGeom = function() {
       gl.vertexAttribPointer(clr_attrib, 3, gl.FLOAT, false, 9*4, 6*4);
       gl.enableVertexAttribArray(clr_attrib);
       gl.drawElements(gl.TRIANGLES, self.num_triangles*3, gl.UNSIGNED_SHORT, 0);
+      gl.disableVertexAttribArray(pos_attrib);
+      gl.disableVertexAttribArray(clr_attrib);
+      gl.disableVertexAttribArray(normal_attrib);
     },
     add_vertex : function(pos, normal, color) {
       self.vert_data.push(pos[0]);
@@ -845,535 +1036,514 @@ var build_rotation = (function() {
   }
 })();
 
-
-var Structure = function() {
-  var  self = {
-    chains : [],
-    next_atom_index : 0,
-  };
-
-  return {
-    add_chain : function(name) {
-      var chain = Chain(this, name);
-      self.chains.push(chain);
-      return chain;
-    },
-    // a really simplistic function to select subsets of atoms 
-    // of the structure. 
-    select : function(what, options) {
-      options = options || { }
-      if (what == 'protein') {
-        return this.select_protein(options);
-      }
-      if (what == 'ligands') {
-        return this.select_ligands(options);
-      }
-      // what might be a dictionary itself.
-    },
-    next_atom_index : function() { 
-      var next_index = self.next_atom_index; 
-      self.next_atom_index+=1; 
-      return next_index; 
-    },
-    chains : function() { return self.chains; },
-
-    chain : function(name) { 
-      for (var i = 0; i < self.chains.length; ++i) {
-        if (self.chains[i].name() == name) {
-          return self.chains[i];
-        }
-      }
-      return null;
-    },
-    each_residue : function(callback) {
-      for (var i = 0; i < self.chains.length; i+=1) {
-        self.chains[i].each_residue(callback);
-      }
-    },
-    each_atom : function(callback) {
-      for (var i = 0; i < self.chains.length; i+=1) {
-        self.chains[i].each_atom(callback);
-      }
-    },
-    line_trace : function(opts) {
-      opts = opts || {};
-      var options = {
-        color : opts.color || uniform_color([1, 0, 1]),
-      }
-      var clr_one = vec3.create(), clr_two = vec3.create();
-      var line_geom = LineGeom();
-      var prev_residue = false;
-      for (var ci  in self.chains) {
-        var chain = self.chains[ci];
-        chain.each_backbone_trace(function(trace) {
-          for (var i = 1; i < trace.length; ++i) {
-            options.color(trace[i-1].atom('CA'), clr_one, 0);
-            options.color(trace[i+0].atom('CA'), clr_two, 0);
-            line_geom.add_line(trace[i-1].atom('CA').pos(), clr_one, 
-                               trace[i-0].atom('CA').pos(), clr_two);
-          }
-        });
-      }
-      return line_geom;
-    },
-
-    sline : function(opts) {
-      opts = opts || {};
-      var options = {
-        color : opts.color || uniform_color([1, 0, 1]),
-        spline_detail : opts.spline_detail || 8,
-        strength: opts.strength || 0.5,
-      };
-      var line_geom = LineGeom();
-      var pos_one = vec3.create(), pos_two = vec3.create();
-      var clr_one = vec3.create(), clr_two = vec3.create();
-      for (var ci  in self.chains) {
-        var chain = self.chains[ci];
-        chain.each_backbone_trace(function(trace) {
-          var positions = new Float32Array(trace.length*3);
-          var colors = new Float32Array(trace.length*3);
-          for (var i = 0; i < trace.length; ++i) {
-            var atom = trace[i].atom('CA');
-            options.color(atom, colors, 3*i);
-            var p = atom.pos();
-            positions[i*3+0] = p[0];
-            positions[i*3+1] = p[1];
-            positions[i*3+2] = p[2];
-          }
-          var subdivided = catmull_rom_spline(positions, options.spline_detail, 
-                                              options.strength, false);
-          var interpolated_color = interpolate_color(colors, options.spline_detail);
-          for (var i = 1, e = subdivided.length/3; i < e; ++i) {
-            pos_one[0] = subdivided[3*(i-1)+0];
-            pos_one[1] = subdivided[3*(i-1)+1];
-            pos_one[2] = subdivided[3*(i-1)+2];
-            pos_two[0] = subdivided[3*(i-0)+0];
-            pos_two[1] = subdivided[3*(i-0)+1];
-            pos_two[2] = subdivided[3*(i-0)+2];
-
-            clr_one[0] = interpolated_color[3*(i-1)+0];
-            clr_one[1] = interpolated_color[3*(i-1)+1];
-            clr_one[2] = interpolated_color[3*(i-1)+2];
-            clr_two[0] = interpolated_color[3*(i-0)+0];
-            clr_two[1] = interpolated_color[3*(i-0)+1];
-            clr_two[2] = interpolated_color[3*(i-0)+2];
-            line_geom.add_line(pos_one, clr_one, pos_two, clr_two);
-          }
-        });
-      }
-      return line_geom;
-    },
-    // FIXME: refactoring into smaller pieces.
-    cartoon : function(opts) {
-      console.time('Structure.cartoon');
-      opts = opts || {};
-
-      var options = {
-        color : opts.color || uniform_color([1, 0, 1]),
-        strength: opts.strength || 0.5,
-        spline_detail : opts.spline_detail || 4,
-        arc_detail : opts.arc_detail || 8,
-        radius : opts.radius || 0.3,
-        force_tube: opts.force_tube || false,
-      }
-      var geom = MeshGeom();
-      var tangent = vec3.create(), pos = vec3.create(), left =vec3.create();
-      var up = vec3.create();
-      var rotation = mat3.create();
-      var coil_profile = TubeProfile(COIL_POINTS, options.arc_detail, 1.0);
-      var heli_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.0);
-      var strand_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.0);
-      var color = vec3.create();
-      var normal = vec3.create();
-      var last_left = vec3.create();
-      var clr = vec3.fromValues(0.3, 0.3, 0.3);
-      var sheet_dir = 1;
-      var prev_normal = vec3.create();
-      var lr = null;
-      function tube_add(pos, left, res, tangent, color, first) {
-        var ss = res.ss();
-        var radius2 = options.radius;
-        var radius1 = options.radius;
-        var prof = coil_profile
-        if (ss == 'H' && !options.force_tube) {
-          prof = heli_profile;
-        } else if (ss == 'E' && !options.force_tube) {
-          prof = strand_profile;
-        } else {
-          vec3.cross(left, up, tangent);
-        }
-        vec3.copy(last_left, left);
-
-        build_rotation(rotation, tangent, left, up, true);
-
-        prof.add_transformed(geom, pos, radius1, rotation, color, first);
-      }
-      for (var ci = 0; ci < self.chains.length; ++ci) {
-        var chain = self.chains[ci];
-        chain.each_backbone_trace(function(trace) {
-          var positions = new Float32Array(trace.length*3);
-          var colors = new Float32Array(trace.length*3);
-          var normals = new Float32Array(trace.length*3);
-
-          var strand_start = null;
-          var strand_end = null;
-          for (var i = 0; i < trace.length; ++i) {
-            var p = trace[i].atom('CA').pos();
-            var o = trace[i].atom('O').pos();
-            if (trace[i].ss() == 'E') {
-              if (strand_start === null) {
-                strand_start = i;
-              }
-              strand_end = i;
-            } else {
-              if (strand_start !== null) {
-                inplace_smooth(positions, strand_start-1, strand_end+1);
-                strand_start = null;
-                strand_end = null;
-              }
-            }
-            positions[i*3+0] = p[0];
-            positions[i*3+1] = p[1];
-            positions[i*3+2] = p[2];
-            var dx = o[0] - p[0];
-            var dy = o[1] - p[1];
-            var dz = o[2] - p[2];
-            var div = 1.0/Math.sqrt(dx*dx+dy*dy+dz*dz);
-            normals[i*3+0] = dx * div;
-            normals[i*3+1] = dy * div;
-            normals[i*3+2] = dz * div;
-            options.color(trace[i].atom('CA'), colors, i*3);
-          }
-          var subdivided = catmull_rom_spline(positions, options.spline_detail, 
-                                              options.strength, false);
-          var smooth_normals = interpolate_normals(normals, options.spline_detail);
-          var interpolated_color = interpolate_color(colors, options.spline_detail);
-          vec3.set(tangent, subdivided[3]-subdivided[0], subdivided[4]-subdivided[1],
-                   subdivided[5]-subdivided[2]);
-
-          vec3.set(pos, subdivided[0], subdivided[1], subdivided[2]);
-          vec3.set(normal, smooth_normals[0], smooth_normals[1], smooth_normals[2]);
-          vec3.normalize(tangent, tangent);
-          tube_add(pos, normal, trace[0], tangent, interpolated_color, true);
-          for (var i = 1, e = subdivided.length/3 - 1; i < e; ++i) {
-            vec3.set(pos, subdivided[3*i+0], subdivided[3*i+1], subdivided[3*i+2]);
-            vec3.set(normal, smooth_normals[3*i+0], smooth_normals[3*i+1], 
-                     smooth_normals[3*i+2]);
-            vec3.set(tangent, subdivided[3*(i+1)+0]-subdivided[3*(i-1)+0],
-                     subdivided[3*(i+1)+1]-subdivided[3*(i-1)+1],
-                     subdivided[3*(i+1)+2]-subdivided[3*(i-1)+2]);
-            vec3.normalize(tangent, tangent);
-            vec3.set(color, interpolated_color[i*3+0], interpolated_color[i*3+1],
-                    interpolated_color[i*3+2]);
-            tube_add(pos, normal, trace[Math.floor(i/options.spline_detail)], 
-                     tangent, color, false);
-          }
-          vec3.set(tangent, 
-                   subdivided[subdivided.length-3]-subdivided[subdivided.length-6], 
-                   subdivided[subdivided.length-2]-subdivided[subdivided.length-5],
-                   subdivided[subdivided.length-1]-subdivided[subdivided.length-4]);
-
-          vec3.set(pos, subdivided[subdivided.length-3], subdivided[subdivided.length-2], 
-                   subdivided[subdivided.length-1]);
-          vec3.set(normal, smooth_normals[smooth_normals.length-3],
-                   smooth_normals[smooth_normals.length-2],
-                   smooth_normals[smooth_normals.length-1]);
-          vec3.normalize(tangent, tangent);
-          vec3.set(color, interpolated_color[interpolated_color.length-3],
-                   interpolated_color[interpolated_color.length-2],
-                   interpolated_color[interpolated_color.length-1]);
-                    
-          tube_add(pos, normal, trace[trace.length-1], tangent, color, false);
-        });
-      }
-      console.timeEnd('Structure.cartoon');
-      return geom;
-    },
-    // renders the protein using a smoothly interpolated tube, essentially identical to the
-    // cartoon render mode, but without special treatment for helices and strands.
-    tube : function(opts) {
-      opts = opts || {};
-      opts.force_tube = true;
-      return this.cartoon(opts);
-    },
-    lines : function(opts) {
-      opts = opts || {};
-      var options = {
-        color : opts.color || cpk_color(),
-      };
-      var mp = vec3.create();
-      var line_geom = LineGeom();
-      var clr = vec3.create();
-      this.each_atom(function(atom) {
-        // for atoms without bonds, we draw a small cross, otherwise these atoms 
-        // would be invisible on the screen.
-        if (atom.bonds().length) {
-          atom.each_bond(function(bond) {
-            bond.mid_point(mp); 
-            options.color(bond.atom_one(), clr, 0);
-            line_geom.add_line(bond.atom_one().pos(), clr, mp, clr);
-            options.color(bond.atom_two(), clr, 0);
-            line_geom.add_line(mp, clr, bond.atom_two().pos(), clr);
-
-          });
-        } else {
-          var cs = 0.2;
-          var pos = atom.pos();
-          options.color(atom, clr, 0);
-          line_geom.add_line([pos[0]-cs, pos[1], pos[2]], clr, [pos[0]+cs, pos[1], pos[2]], clr);
-          line_geom.add_line([pos[0], pos[1]-cs, pos[2]], clr, [pos[0], pos[1]+cs, pos[2]], clr);
-          line_geom.add_line([pos[0], pos[1], pos[2]-cs], clr, [pos[0], pos[1], pos[2]+cs], clr);
-        }
-      });
-      return line_geom;
-    },
-    trace : function(opts) {
-      opts = opts || {}
-      var options = {
-        color : opts.color || uniform_color([1, 0, 0]),
-        radius: opts.radius || 0.3
-      }
-      var clr_one = vec3.create(), clr_two = vec3.create();
-      var geom = MeshGeom();
-      var prev_residue = false;
-      var proto_cyl = ProtoCylinder(8);
-      var proto_sphere = ProtoSphere(8, 8);
-      var rotation = mat3.create();
-      var dir = vec3.create();
-      var left = vec3.create();
-      var up = vec3.create();
-      for (var ci = 0; ci < self.chains.length; ++ci) {
-        var chain = self.chains[ci];
-        chain.each_backbone_trace(function(trace) {
-          options.color(trace[0].atom('CA'), clr_one, 0);
-          proto_sphere.add_transformed(geom, trace[0].atom('CA').pos(), options.radius,
-                                       clr_one);
-          for(var i = 1; i < trace.length; ++i) {
-            var ca_prev_pos = trace[i-1].atom('CA').pos();
-            var ca_this_pos = trace[i+0].atom('CA').pos();
-            options.color(trace[i].atom('CA'), clr_two, 0);
-            proto_sphere.add_transformed(geom, ca_this_pos, options.radius,
-                                         clr_two);
-            vec3.sub(dir, ca_this_pos, ca_prev_pos);
-            var length = vec3.length(dir);
-
-            vec3.scale(dir, dir, 1.0/length);
-
-            build_rotation(rotation, dir, left, up, false);
-
-            var mid_point = vec3.clone(ca_prev_pos);
-            vec3.add(mid_point, mid_point, ca_this_pos);
-            vec3.scale(mid_point, mid_point, 0.5);
-            proto_cyl.add_transformed(geom, mid_point, length, options.radius, rotation, 
-                                      clr_one, clr_two);
-            vec3.copy(clr_one, clr_two);
-          }
-        });
-      }
-      return geom;
-    },
-    center : function() {
-      var sum = vec3.create();
-      var count = 1;
-      this.each_atom(function(atom) {
-        vec3.add(sum, sum, atom.pos());
-        count+=1;
-      });
-      if (count) {
-        vec3.scale(sum, sum, 1/count);
-      }
-      return sum;
-    },
-    connect : function(atom_a, atom_b) {
-      var bond = new Bond(atom_a, atom_b);
-      atom_a.add_bond(bond);
-      atom_b.add_bond(bond);
-      return bond;
-    },
-    // determine connectivity structure. for simplicity only connects atoms of the same 
-    // residue and peptide bonds
-    derive_connectivity : function() {
-      console.time('Structure.derive_connectivity');
-      var this_structure = this;
-      var prev_residue;
-      this.each_residue(function(res) {
-        var d = vec3.create();
-        for (var i = 0; i < res.atoms().length; i+=1) {
-        for (var j = 0; j < i; j+=1) {
-          var sqr_dist = vec3.sqrDist(res.atom(i).pos(), res.atom(j).pos());
-          if (sqr_dist < 1.6*1.6) {
-              this_structure.connect(res.atom(i), res.atom(j));
-          }
-        }
-        }
-        if (prev_residue) {
-        var c_atom = prev_residue.atom('C');
-        var n_atom = res.atom('N');
-        if (c_atom && n_atom) {
-          var sqr_dist = vec3.sqrDist(c_atom.pos(), n_atom.pos());
-          if (sqr_dist < 1.6*1.6) {
-            this_structure.connect(n_atom, c_atom);
-          }
-        }
-        }
-        prev_residue = res;
-      });
-      console.timeEnd('Structure.derive_connectivity');
-    }
-  };
+function Mol() {
+  this._chains = [];
+  this._next_atom_index = 0;
 }
 
-
-var Chain = function(structure, name) {
-  var self = {
-    name : name,
-    residues: [],
-    structure : structure
-  };
-  return {
-    name : function() { return self.name; },
-
-    add_residue : function(name, num) {
-      var residue = Residue(this, name, num);
-      self.residues.push(residue);
-      return residue;
-    },
-    each_atom : function(callback) {
-      for (var i = 0; i< self.residues.length; i+=1) {
-        self.residues[i].each_atom(callback);
-      }
-    },
-    each_residue : function(callback) {
-      for (var i = 0; i < self.residues.length; i+=1) {
-        callback(self.residues[i]);
-      }
-    },
-    // assigns secondary structure to residues in range from_num to to_num.
-    assign_ss : function(from_num, to_num, ss) {
-      // FIXME: when the chain numbers are completely ordered, perform binary search 
-      // to identify range of residues to assign secondary structure to.
-      for (var i = 0; i < self.residues.length; ++i) {
-        var res = self.residues[i];
-        // FIXME: we currently don't set the secondary structure of the first and 
-        // last residue of helices and sheets. that takes care of better 
-        // transitions between coils and helices. ideally, this should be done
-        // in the cartoon renderer, NOT in this function.
-        if (res.num() <=  from_num || res.num() >= to_num) {
-          continue;
-        }
-        res.set_ss(ss);
-      }
-    },
-    residues : function() { return self.residues; },
-    structure : function() { return self.structure; },
-
-    // invokes a callback for each connected stretch of amino acids. these stretches are used 
-    // for all trace-based rendering styles, e.g. sline, line_trace, tube, cartoon etc. 
-    each_backbone_trace : function(callback) {
-      var  stretch = [];
-      for (var i = 0; i < self.residues.length; i+=1) {
-        var residue = self.residues[i];
-        if (!residue.is_aminoacid()) {
-          if (stretch.length > 1) {
-            callback(stretch);
-            stretch = [];
-          }
-          continue;
-        }
-        if (stretch.length == 0) {
-          stretch.push(residue);
-          continue;
-        }
-        var ca_prev = self.residues[i-1].atom('C');
-        var n_this = residue.atom('N');
-        if (Math.abs(vec3.sqrDist(ca_prev.pos(), n_this.pos()) - 1.5*1.5) < 1) {
-          stretch.push(residue);
-        } else {
-          if (stretch.length > 1) {
-            callback(stretch);
-            stretch = [];
-          }
-        }
-      }
-      if (stretch.length > 1) {
-        callback(stretch);
-      }
-    }
-  };
+function MolBase() {
 }
 
-var Residue = function(chain, name, num) {
-  var self = {
-       name : name,
-       num : num,
-       atoms : [],
-       chain: chain,
-       ss : 'C',
-  };
-
-  return {
-    name : function() { return self.name; },
-    num : function() { return self.num; },
-    add_atom : function(name, pos, element) {
-      var atom = Atom(this, name, pos, element);
-      self.atoms.push(atom);
-      return atom;
-    },
-    each_atom : function(callback) {
-      for (var i =0; i< self.atoms.length; i+=1) {
-        callback(self.atoms[i]);
-      }
-    },
-
-    ss : function() { return self.ss; },
-    set_ss : function(ss) { self.ss = ss; },
-
-    atoms : function() { return self.atoms; },
-    chain : function() { return self.chain; },
-    atom : function(index_or_name) { 
-      if (typeof index_or_name == 'string') {
-        for (var i =0; i < self.atoms.length; ++i) {
-          if (self.atoms[i].name() == index_or_name) {
-            return self.atoms[i];
-          }
-        }
-      }
-      return self.atoms[index_or_name]; 
-    },
-
-    is_aminoacid : function() { 
-      return this.atom('N') && this.atom('CA') && this.atom('C') && this.atom('O');
-    },
-    structure : function() { return self.chain.structure(); }
+MolBase.prototype.each_residue = function(callback) {
+  for (var i = 0; i < this._chains.length; i+=1) {
+    this._chains[i].each_residue(callback);
   }
 }
 
-var Atom = function(residue, name, pos, element) {
-  var self = {
-     name : name,
-     pos : pos,
-     element : element,
-     bonds : [],
-     index : residue.structure().next_atom_index(),
-     residue: residue,
-  };
-  return {
-    name : function() { return self.name; },
-    pos : function() { return self.pos; },
-    element : function() { return self.element; },
-    add_bond : function(bond) { self.bonds.push(bond); },
-    bonds : function() { return self.bonds; },
-    residue: function() { return self.residue; },
-    index : function() { return self.index; },
-    structure : function() { return self.residue.structure(); },
-    each_bond : function(callback) {
-      for (var i = 0; i < self.bonds.length; ++i) {
-        callback(self.bonds[i]);
-      }
-    }
-  };
+MolBase.prototype.each_atom = function(callback) {
+  for (var i = 0; i < this._chains.length; i+=1) {
+    this._chains[i].each_atom(callback);
+  }
 }
 
+MolBase.prototype.line_trace = function(opts) {
+  opts = opts || {};
+  var options = {
+    color : opts.color || uniform_color([1, 0, 1]),
+  }
+  var clr_one = vec3.create(), clr_two = vec3.create();
+  var line_geom = LineGeom();
+  var prev_residue = false;
+  for (var ci  in this._chains) {
+    var chain = this._chains[ci];
+    chain.each_backbone_trace(function(trace) {
+      for (var i = 1; i < trace.length; ++i) {
+        options.color(trace[i-1].atom('CA'), clr_one, 0);
+        options.color(trace[i+0].atom('CA'), clr_two, 0);
+        line_geom.add_line(trace[i-1].atom('CA').pos(), clr_one, 
+                           trace[i-0].atom('CA').pos(), clr_two);
+      }
+    });
+  }
+  return line_geom;
+}
+
+
+MolBase.prototype.spheres = function(opts) {
+  console.time('MolBase.spheres');
+  opts = opts || {};
+  var options = {
+    color : opts.color || uniform_color([1, 0, 1]),
+  }
+  var clr = vec3.create();
+  var geom = MeshGeom();
+  var proto_sphere = ProtoSphere(8, 8);
+  this.each_atom(function(atom) {
+    options.color(atom, clr, 0);
+    proto_sphere.add_transformed(geom, atom.pos(), 1.5, clr);
+  });
+  console.timeEnd('MolBase.spheres');
+  return geom;
+}
+
+MolBase.prototype.sline = function(opts) {
+  console.time('MolBase.sline');
+  opts = opts || {};
+  var options = {
+    color : opts.color || uniform_color([1, 0, 1]),
+    spline_detail : opts.spline_detail || 8,
+    strength: opts.strength || 0.5,
+  };
+  var line_geom = LineGeom();
+  var pos_one = vec3.create(), pos_two = vec3.create();
+  var clr_one = vec3.create(), clr_two = vec3.create();
+  for (var ci  in this._chains) {
+    var chain = this._chains[ci];
+    chain.each_backbone_trace(function(trace) {
+      var positions = new Float32Array(trace.length*3);
+      var colors = new Float32Array(trace.length*3);
+      for (var i = 0; i < trace.length; ++i) {
+        var atom = trace[i].atom('CA');
+        options.color(atom, colors, 3*i);
+        var p = atom.pos();
+        positions[i*3+0] = p[0];
+        positions[i*3+1] = p[1];
+        positions[i*3+2] = p[2];
+      }
+      var subdivided = catmull_rom_spline(positions, options.spline_detail, 
+                                          options.strength, false);
+      var interpolated_color = interpolate_color(colors, options.spline_detail);
+      for (var i = 1, e = subdivided.length/3; i < e; ++i) {
+        pos_one[0] = subdivided[3*(i-1)+0];
+        pos_one[1] = subdivided[3*(i-1)+1];
+        pos_one[2] = subdivided[3*(i-1)+2];
+        pos_two[0] = subdivided[3*(i-0)+0];
+        pos_two[1] = subdivided[3*(i-0)+1];
+        pos_two[2] = subdivided[3*(i-0)+2];
+
+        clr_one[0] = interpolated_color[3*(i-1)+0];
+        clr_one[1] = interpolated_color[3*(i-1)+1];
+        clr_one[2] = interpolated_color[3*(i-1)+2];
+        clr_two[0] = interpolated_color[3*(i-0)+0];
+        clr_two[1] = interpolated_color[3*(i-0)+1];
+        clr_two[2] = interpolated_color[3*(i-0)+2];
+        line_geom.add_line(pos_one, clr_one, pos_two, clr_two);
+      }
+    });
+  }
+  console.timeEnd('MolBase.sline');
+  return line_geom;
+},
+
+// FIXME: refactoring into smaller pieces.
+MolBase.prototype.cartoon = function(opts) {
+  console.time('Mol.cartoon');
+  opts = opts || {};
+
+  var options = {
+    color : opts.color || uniform_color([1, 0, 1]),
+    strength: opts.strength || 0.5,
+    spline_detail : opts.spline_detail || 4,
+    arc_detail : opts.arc_detail || 8,
+    radius : opts.radius || 0.3,
+    force_tube: opts.force_tube || false,
+  }
+  var geom = MeshGeom();
+  var tangent = vec3.create(), pos = vec3.create(), left =vec3.create();
+  var up = vec3.create();
+  var rotation = mat3.create();
+  var coil_profile = TubeProfile(COIL_POINTS, options.arc_detail, 1.0);
+  var heli_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.0);
+  var strand_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.0);
+  var color = vec3.create();
+  var normal = vec3.create();
+  var last_left = vec3.create();
+  var clr = vec3.fromValues(0.3, 0.3, 0.3);
+  var sheet_dir = 1;
+  var prev_normal = vec3.create();
+  var lr = null;
+  function tube_add(pos, left, res, tangent, color, first) {
+    var ss = res.ss();
+    var radius2 = options.radius;
+    var radius1 = options.radius;
+    var prof = coil_profile
+    if (ss == 'H' && !options.force_tube) {
+      prof = heli_profile;
+    } else if (ss == 'E' && !options.force_tube) {
+      prof = strand_profile;
+    } else {
+      vec3.cross(left, up, tangent);
+    }
+    vec3.copy(last_left, left);
+
+    build_rotation(rotation, tangent, left, up, true);
+
+    prof.add_transformed(geom, pos, radius1, rotation, color, first);
+  }
+  for (var ci = 0; ci < this._chains.length; ++ci) {
+    var chain = this._chains[ci];
+    chain.each_backbone_trace(function(trace) {
+      var positions = new Float32Array(trace.length*3);
+      var colors = new Float32Array(trace.length*3);
+      var normals = new Float32Array(trace.length*3);
+
+      var strand_start = null;
+      var strand_end = null;
+      for (var i = 0; i < trace.length; ++i) {
+        var p = trace[i].atom('CA').pos();
+        var o = trace[i].atom('O').pos();
+        if (trace[i].ss() == 'E') {
+          if (strand_start === null) {
+            strand_start = i;
+          }
+          strand_end = i;
+        } else {
+          if (strand_start !== null) {
+            inplace_smooth(positions, strand_start-1, strand_end+1);
+            strand_start = null;
+            strand_end = null;
+          }
+        }
+        positions[i*3+0] = p[0];
+        positions[i*3+1] = p[1];
+        positions[i*3+2] = p[2];
+        var dx = o[0] - p[0];
+        var dy = o[1] - p[1];
+        var dz = o[2] - p[2];
+        var div = 1.0/Math.sqrt(dx*dx+dy*dy+dz*dz);
+        normals[i*3+0] = dx * div;
+        normals[i*3+1] = dy * div;
+        normals[i*3+2] = dz * div;
+        options.color(trace[i].atom('CA'), colors, i*3);
+      }
+      var subdivided = catmull_rom_spline(positions, options.spline_detail, 
+                                          options.strength, false);
+      var smooth_normals = interpolate_normals(normals, options.spline_detail);
+      var interpolated_color = interpolate_color(colors, options.spline_detail);
+      vec3.set(tangent, subdivided[3]-subdivided[0], subdivided[4]-subdivided[1],
+                subdivided[5]-subdivided[2]);
+
+      vec3.set(pos, subdivided[0], subdivided[1], subdivided[2]);
+      vec3.set(normal, smooth_normals[0], smooth_normals[1], smooth_normals[2]);
+      vec3.normalize(tangent, tangent);
+      tube_add(pos, normal, trace[0], tangent, interpolated_color, true);
+      for (var i = 1, e = subdivided.length/3 - 1; i < e; ++i) {
+        vec3.set(pos, subdivided[3*i+0], subdivided[3*i+1], subdivided[3*i+2]);
+        vec3.set(normal, smooth_normals[3*i+0], smooth_normals[3*i+1], 
+                  smooth_normals[3*i+2]);
+        vec3.set(tangent, subdivided[3*(i+1)+0]-subdivided[3*(i-1)+0],
+                  subdivided[3*(i+1)+1]-subdivided[3*(i-1)+1],
+                  subdivided[3*(i+1)+2]-subdivided[3*(i-1)+2]);
+        vec3.normalize(tangent, tangent);
+        vec3.set(color, interpolated_color[i*3+0], interpolated_color[i*3+1],
+                interpolated_color[i*3+2]);
+        tube_add(pos, normal, trace[Math.floor(i/options.spline_detail)], 
+                  tangent, color, false);
+      }
+      vec3.set(tangent, 
+                subdivided[subdivided.length-3]-subdivided[subdivided.length-6], 
+                subdivided[subdivided.length-2]-subdivided[subdivided.length-5],
+                subdivided[subdivided.length-1]-subdivided[subdivided.length-4]);
+
+      vec3.set(pos, subdivided[subdivided.length-3], subdivided[subdivided.length-2], 
+                subdivided[subdivided.length-1]);
+      vec3.set(normal, smooth_normals[smooth_normals.length-3],
+                smooth_normals[smooth_normals.length-2],
+                smooth_normals[smooth_normals.length-1]);
+      vec3.normalize(tangent, tangent);
+      vec3.set(color, interpolated_color[interpolated_color.length-3],
+                interpolated_color[interpolated_color.length-2],
+                interpolated_color[interpolated_color.length-1]);
+                
+      tube_add(pos, normal, trace[trace.length-1], tangent, color, false);
+    });
+  }
+  console.timeEnd('Mol.cartoon');
+  return geom;
+}
+// renders the protein using a smoothly interpolated tube, essentially identical to the
+// cartoon render mode, but without special treatment for helices and strands.
+MolBase.prototype.tube = function(opts) {
+  opts = opts || {};
+  opts.force_tube = true;
+  return this.cartoon(opts);
+}
+
+MolBase.prototype.lines = function(opts) {
+  console.time('MolBase.lines');
+  opts = opts || {};
+  var options = {
+    color : opts.color || cpk_color(),
+  };
+  var mp = vec3.create();
+  var line_geom = LineGeom();
+  var clr = vec3.create();
+  this.each_atom(function(atom) {
+    // for atoms without bonds, we draw a small cross, otherwise these atoms 
+    // would be invisible on the screen.
+    if (atom.bonds().length) {
+      atom.each_bond(function(bond) {
+        bond.mid_point(mp); 
+        options.color(bond.atom_one(), clr, 0);
+        line_geom.add_line(bond.atom_one().pos(), clr, mp, clr);
+        options.color(bond.atom_two(), clr, 0);
+        line_geom.add_line(mp, clr, bond.atom_two().pos(), clr);
+
+      });
+    } else {
+      var cs = 0.2;
+      var pos = atom.pos();
+      options.color(atom, clr, 0);
+      line_geom.add_line([pos[0]-cs, pos[1], pos[2]], clr, [pos[0]+cs, pos[1], pos[2]], clr);
+      line_geom.add_line([pos[0], pos[1]-cs, pos[2]], clr, [pos[0], pos[1]+cs, pos[2]], clr);
+      line_geom.add_line([pos[0], pos[1], pos[2]-cs], clr, [pos[0], pos[1], pos[2]+cs], clr);
+    }
+  });
+  console.timeEnd('MolBase.lines');
+  return line_geom;
+}
+
+MolBase.prototype.trace = function(opts) {
+  opts = opts || {}
+  var options = {
+    color : opts.color || uniform_color([1, 0, 0]),
+    radius: opts.radius || 0.3
+  }
+  var clr_one = vec3.create(), clr_two = vec3.create();
+  var geom = MeshGeom();
+  var prev_residue = false;
+  var proto_cyl = ProtoCylinder(8);
+  var proto_sphere = ProtoSphere(8, 8);
+  var rotation = mat3.create();
+  var dir = vec3.create();
+  var left = vec3.create();
+  var up = vec3.create();
+  for (var ci = 0; ci < self.chains.length; ++ci) {
+    var chain = self.chains[ci];
+    chain.each_backbone_trace(function(trace) {
+      options.color(trace[0].atom('CA'), clr_one, 0);
+      proto_sphere.add_transformed(geom, trace[0].atom('CA').pos(), options.radius,
+                                    clr_one);
+      for(var i = 1; i < trace.length; ++i) {
+        var ca_prev_pos = trace[i-1].atom('CA').pos();
+        var ca_this_pos = trace[i+0].atom('CA').pos();
+        options.color(trace[i].atom('CA'), clr_two, 0);
+        proto_sphere.add_transformed(geom, ca_this_pos, options.radius,
+                                      clr_two);
+        vec3.sub(dir, ca_this_pos, ca_prev_pos);
+        var length = vec3.length(dir);
+
+        vec3.scale(dir, dir, 1.0/length);
+
+        build_rotation(rotation, dir, left, up, false);
+
+        var mid_point = vec3.clone(ca_prev_pos);
+        vec3.add(mid_point, mid_point, ca_this_pos);
+        vec3.scale(mid_point, mid_point, 0.5);
+        proto_cyl.add_transformed(geom, mid_point, length, options.radius, rotation, 
+                                  clr_one, clr_two);
+        vec3.copy(clr_one, clr_two);
+      }
+    });
+  }
+  return geom;
+}
+
+MolBase.prototype.center = function() {
+  var sum = vec3.create();
+  var count = 1;
+  this.each_atom(function(atom) {
+    vec3.add(sum, sum, atom.pos());
+    count+=1;
+  });
+  if (count) {
+    vec3.scale(sum, sum, 1/count);
+  }
+  return sum;
+}
+
+Mol.prototype = new MolBase()
+
+Mol.prototype.chains = function() { return this._chains; }
+
+Mol.prototype.residue_select = function(predicate) {
+  console.time('Mol.residue_select');
+  var view = new MolView(this);
+  for (var ci = 0; ci < this._chains.length; ++ci) {
+    var chain = this._chains[ci];
+    var chain_view = null;
+    var residues = chain.residues();
+    for (var ri = 0; ri < residues.length; ++ri) {
+      if (predicate(residues[ri])) {
+        if (!chain_view) {
+          chain_view = view.add_chain(chain, false);
+        }
+        chain_view.add_residue(residues[ri], true);
+      }
+    }
+  }
+  console.timeEnd('Mol.residue_select')
+  return view;
+}
+Mol.prototype.select = function(what) {
+
+  if (what == 'protein') {
+    return this.residue_select(function(r) { return r.is_aminoacid(); });
+  }
+  if (what == 'water') {
+    return this.residue_select(function(r) { return r.is_water(); });
+  }
+  if (what == 'ligand') {
+    return this.residue_select(function(r) { 
+      return !r.is_aminoacid() && !r.is_water();
+    });
+  }
+  return view;
+}
+
+Mol.prototype.chain = function(name) { 
+  for (var i = 0; i < this._chains.length; ++i) {
+    if (this._chains[i].name() == name) {
+      return this._chains[i];
+    }
+  }
+  return null;
+}
+
+Mol.prototype.next_atom_index = function() {
+  var next_index = this._next_atom_index; 
+  this._next_atom_index+=1; 
+  return next_index; 
+}
+
+Mol.prototype.add_chain = function(name) {
+  var chain = new Chain(this, name);
+  this._chains.push(chain);
+  return chain;
+}
+
+
+Mol.prototype.connect = function(atom_a, atom_b) {
+  var bond = new Bond(atom_a, atom_b);
+  atom_a.add_bond(bond);
+  atom_b.add_bond(bond);
+  return bond;
+}
+
+// determine connectivity structure. for simplicity only connects atoms of the same 
+// residue and peptide bonds
+Mol.prototype.derive_connectivity = function() {
+  console.time('Mol.derive_connectivity');
+  var this_structure = this;
+  var prev_residue;
+  this.each_residue(function(res) {
+    var d = vec3.create();
+    for (var i = 0; i < res.atoms().length; i+=1) {
+    for (var j = 0; j < i; j+=1) {
+      var sqr_dist = vec3.sqrDist(res.atom(i).pos(), res.atom(j).pos());
+      if (sqr_dist < 1.6*1.6) {
+          this_structure.connect(res.atom(i), res.atom(j));
+      }
+    }
+    }
+    if (prev_residue) {
+    var c_atom = prev_residue.atom('C');
+    var n_atom = res.atom('N');
+    if (c_atom && n_atom) {
+      var sqr_dist = vec3.sqrDist(c_atom.pos(), n_atom.pos());
+      if (sqr_dist < 1.6*1.6) {
+        this_structure.connect(n_atom, c_atom);
+      }
+    }
+    }
+    prev_residue = res;
+  });
+  console.timeEnd('Mol.derive_connectivity');
+}
+
+// add chain to view
+MolView.prototype.add_chain = function(chain, recurse) {
+  var chain_view = new ChainView(this, chain);
+  this._chains.push(chain_view);
+  if (recurse) {
+    var residues = chain.residues();
+    for (var i = 0; i< residues.length; ++i) {
+      chain_view.add_residue(residues[i], true);
+    }
+  }
+  return chain_view;
+}
+
+
+function Residue(chain, name, num) {
+  this._name = name
+  this._num = num;
+  this._atoms = [];
+  this._ss = 'C';
+  this._chain = chain;
+}
+
+Residue.prototype = new ResidueBase();
+
+Residue.prototype.name = function() { return this._name; }
+
+Residue.prototype.num = function() { return this._num; }
+
+Residue.prototype.add_atom = function(name, pos, element) {
+  var atom = new Atom(this, name, pos, element);
+  this._atoms.push(atom);
+  return atom;
+}
+
+Residue.prototype.ss = function() { return this._ss; }
+Residue.prototype.set_ss = function(ss) { this._ss = ss; }
+
+Residue.prototype.atoms = function() { return this._atoms; }
+Residue.prototype.chain = function() { return this._chain; }
+
+
+Residue.prototype.structure = function() { 
+  return this._chain.structure(); 
+}
+
+function AtomBase() {
+}
+
+AtomBase.prototype.name = function() { return this._name; },
+AtomBase.prototype.pos = function() { return this._pos; },
+AtomBase.prototype.element = function() { return this._element; },
+AtomBase.prototype.index = function() { return this._index; },
+AtomBase.prototype.each_bond = function(callback) {
+  for (var i = 0; i < this._bonds.length; ++i) {
+    callback(this._bonds[i]);
+  }
+}
+
+function Atom(residue, name, pos, element) {
+  this._residue = residue;
+  this._bonds = [];
+  this._name = name;
+  this._pos = pos;
+  this._element = element;
+}
+
+Atom.prototype = new AtomBase();
+
+Atom.prototype.add_bond = function(bond) { this._bonds.push(bond); },
+Atom.prototype.name = function() { return this._name; },
+Atom.prototype.bonds = function() { return this._bonds; }
+Atom.prototype.residue = function() { return this._residue; }
+Atom.prototype.structure = function() { return this._residue.structure(); }
 
 var Bond = function(atom_a, atom_b) {
   var self = {
@@ -1429,7 +1599,7 @@ function parse_sheet_record(line) {
 // that's not really a problem...
 var load_pdb = function(text) {
   console.time('load_pdb'); 
-  var structure = Structure();
+  var structure = new Mol();
   var curr_chain = null;
   var curr_res = null;
   var curr_atom = null;
@@ -1511,3 +1681,29 @@ var load_pdb = function(text) {
 
   return structure;
 };
+
+/*
+var N = 100000;
+
+function test_vec3_pool() {
+  console.time('vec3_pool');
+  var ab = new ArrayBuffer(N*3*4);
+  var l = []
+  for (var i = 0; i < N; ++i) {
+    l.push(new Float32Array(ab, 3*i*4, 3));
+  }
+  console.timeEnd('vec3_pool');
+}
+
+function test_vec3_create() {
+  console.time('vec3_create');
+  var l = []
+  for (var i = 0; i < N; ++i) {
+    l.push(vec3.create());
+  }
+  console.timeEnd('vec3_create');
+}
+
+test_vec3_pool();
+test_vec3_create();
+*/
