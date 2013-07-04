@@ -379,7 +379,7 @@ function color_for_element(ele, out) {
     out = vec4.create();
   }
   if (ele == 'C') {
-    vec4.set(out, 0.5,0.5, 0.5, 1.0);
+    vec4.set(out, 0.8,0.8, 0.8, 1.0);
     return out;
   }
   if (ele == 'N') {
@@ -391,7 +391,12 @@ function color_for_element(ele, out) {
     return out;
   }
   if (ele == 'S') {
-    vec4.set(out, 1, 1, 0, 1);
+    vec4.set(out, 0.8, 0.8, 0, 1);
+    return out;
+  }
+  console.log(ele);
+  if (ele == 'CA') {
+    vec4.set(out, 0.533, 0.533, 0.666, 1);
     return out;
   }
   vec4.set(out, 1, 0, 1, 1);
@@ -1635,7 +1640,7 @@ var load_pdb = function(text) {
     for (var i=0;i<3;++i) {
       pos[i] = (parseFloat(line.substr(30+i*8, 8)));
     }
-    curr_res.add_atom(atom_name, pos, line.substr(77, 2).trim());
+    curr_res.add_atom(atom_name, pos, line.substr(76, 2).trim());
   }
   var lines = text.split(/\r\n|\r|\n/g);
   for (var i = 0; i < lines.length; i++) {
