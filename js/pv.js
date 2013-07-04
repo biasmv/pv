@@ -394,7 +394,6 @@ function color_for_element(ele, out) {
     vec4.set(out, 0.8, 0.8, 0, 1);
     return out;
   }
-  console.log(ele);
   if (ele == 'CA') {
     vec4.set(out, 0.533, 0.533, 0.666, 1);
     return out;
@@ -814,7 +813,11 @@ var Cam = function() {
   var self = {
     projection : mat4.create(),
     modelview : mat4.create(),
-
+    near : 0.1,
+    far : 400.0,
+    fog_near : 20,
+    fog_far : 100,
+    fog_color : vec3.fromValues(1, 1, 1),
     center : vec3.create(),
     zoom : 50,
     rotation : mat4.create(),
@@ -838,7 +841,7 @@ var Cam = function() {
   }
 
   mat4.perspective(self.projection, 45.0, gl.viewportWidth / gl.viewportHeight, 
-                   0.1, 400.0);
+                   self.near, self.far);
   mat4.translate(self.modelview, self.modelview, [0, 0, -20]);
   return {
 
@@ -876,6 +879,12 @@ var Cam = function() {
       shader.modelview = gl.getUniformLocation(shader, 'modelview_mat');
       gl.uniformMatrix4fv(shader.projection, false, self.projection);
       gl.uniformMatrix4fv(shader.modelview, false, self.modelview);
+      gl.uniform1f(gl.getUniformLocation(shader, 'fog_far'),
+                    self.fog_far);
+      gl.uniform1f(gl.getUniformLocation(shader, 'fog_near'),
+                    self.fog_near);
+      gl.uniform3fv(gl.getUniformLocation(shader, 'fog_color'),
+                    self.fog_color);
     }
   };
 };

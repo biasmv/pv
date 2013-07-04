@@ -24,11 +24,18 @@
 
     varying vec3 vert_color;
     varying vec3 vert_normal;
+    uniform float fog_near;
+    uniform float fog_far;
+    uniform vec3 fog_color;
 
     void main(void) {
       float dp = dot(vert_normal, vec3(0.0, 0.0, 1.0));
       float hemi = max(0.0, dp)*0.5+0.5;
       gl_FragColor = vec4(vert_color*hemi, 1.0);
+      float depth = gl_FragCoord.z / gl_FragCoord.w;
+      float fog_factor = smoothstep(fog_near, fog_far, depth);
+      gl_FragColor = mix(gl_FragColor, vec4(fog_color, gl_FragColor.w), 
+                         fog_factor);
     }
 
   </script>
@@ -53,7 +60,7 @@
 
    
     function on_ready() {
-      $.ajax({ url : 'pdbs/2por.pdb', success : function(data) {
+      $.ajax({ url : 'pdbs/1ake.pdb', success : function(data) {
         var mol = load_pdb(data);
         
         var water = mol.select('water');
