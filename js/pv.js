@@ -66,6 +66,23 @@ mat3.axisRotation = function(out, axis, angle) {
   return out;
 }
 
+
+var inplace_smooth = (function() {
+  var bf = vec3.create();
+  var af = vec3.create();
+  var smooth_factor = 0.5;
+  return function(positions, from, to) {
+    vec3.set(bf, positions[3*from+0], positions[3*from+1], positions[3*from+2]);
+    for (var i = from; i < to; ++i) {
+      vec3.set(af, positions[3*i+0], positions[3*i+1], positions[3*i+2]);
+      positions[3*i+0] = af[0]*smooth_factor + bf[0]*(1.0 - smooth_factor);
+      positions[3*i+1] = af[1]*smooth_factor + bf[1]*(1.0 - smooth_factor);
+      positions[3*i+2] = af[2]*smooth_factor + bf[2]*(1.0 - smooth_factor);
+      vec3.copy(bf, af);
+    }
+  }
+})();
+
 // calculates intermediate normals on the smooth tube (or ribbon) from
 // residues normals given for each residue. the interpolated normals
 // are obtained by "rotating" the normal of the previous residue onto
@@ -670,8 +687,8 @@ var Cam = function() {
 
 var PV = function(dom_element, width, height) {
   var canvas_element = document.createElement('canvas');
-  canvas_element.width = width || 500;
-  canvas_element.height = height || 500;
+  canvas_element.width = width || 800;
+  canvas_element.height = height || 800;
   dom_element.appendChild(canvas_element);
 
   var self = {
@@ -998,9 +1015,23 @@ var Structure = function() {
           var colors = new Float32Array(trace.length*3);
           var normals = new Float32Array(trace.length*3);
 
+          var strand_start = null;
+          var strand_end = null;
           for (var i = 0; i < trace.length; ++i) {
             var p = trace[i].atom('CA').pos();
             var o = trace[i].atom('O').pos();
+            if (trace[i].ss() == 'E') {
+              if (strand_start === null) {
+                strand_start = i;
+              }
+              strand_end = i;
+            } else {
+              if (strand_start !== null) {
+                inplace_smooth(positions, strand_start-1, strand_end+1);
+                strand_start = null;
+                strand_end = null;
+              }
+            }
             positions[i*3+0] = p[0];
             positions[i*3+1] = p[1];
             positions[i*3+2] = p[2];
