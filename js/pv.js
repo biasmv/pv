@@ -35,6 +35,74 @@ var ortho_vec = (function() {
   };
 })();
 
+
+// assumes that axis is normalized. don't expect 
+// to get meaningful results if it's not
+mat3.axisRotation = function(out, axis, angle) {
+
+  var sa = Math.sin(angle);
+  var ca = Math.cos(angle);
+
+  var x = axis[0];
+  var y = axis[1];
+  var z = axis[2];
+  var xx = x*x;
+  var xy = x*y;
+  var xz = x*z;
+  var yy = y*y;
+  var yz = y*z;
+  var zz =z*z;
+
+
+  out[0] = xx+ca-xx*ca;
+  out[1] = xy-ca*xy-sa*z;
+  out[2] = xz-ca*xz+sa*y;
+  out[3] = xy-ca*xy+sa*z;
+  out[4] = yy+ca-ca*yy;
+  out[5] = yz-ca*yz-sa*x;
+  out[6] = xz-ca*xz-sa*y;
+  out[7] = yz-ca*yz+sa*x;
+  out[8] = zz+ca-ca*zz;
+  return out;
+}
+
+// calculates intermediate normals on the smooth tube (or ribbon) from
+// residues normals given for each residue. the interpolated normals
+// are obtained by "rotating" the normal of the previous residue onto
+// the normal of the next residue. consecutive normals are flipped when
+// the angle between them is larger than 180 degrees.
+function interpolate_normals(normals, num) {
+  var out = new Float32Array((normals.length-3)*num);
+  var index = 0;
+  var m = mat3.create();
+  var bf = vec3.create(), af = vec3.create();
+  var cross = vec3.create();
+  var delta = 1/num;
+  vec3.set(bf, normals[3*i+0], normals[3*i+1], normals[3*i+2]);
+  for (var i = 0, e = normals.length/3-1;  i < e; ++i) {
+    vec3.set(af, normals[3*i+3], normals[3*i+4], normals[3*i+5]);
+    if (vec3.dot(af, bf) < 0) {
+      vec3.negate(af, af);
+    }
+    var delta_angle = vec3.dot(af, bf)/num;
+    vec3.cross(cross, af, bf);
+    mat3.axisRotation(m, cross, delta_angle);
+
+    for (var j = 0; j < num; ++j) {
+      var t = delta * j;
+      vec3.transformMat3(bf, bf, m);
+      out[index+0] = bf[0];
+      out[index+1] = bf[1];
+      out[index+2] = bf[2];
+      index+=3;
+    }
+    vec3.copy(bf, af);
+  }
+  out[index+0] = af[0];
+  out[index+1] = af[1];
+  out[index+2] = af[2];
+  return out;
+}
 function interpolate_color(colors, num) {
   var out = new Float32Array((colors.length-3)*num);
   var index = 0;
@@ -602,8 +670,8 @@ var Cam = function() {
 
 var PV = function(dom_element, width, height) {
   var canvas_element = document.createElement('canvas');
-  canvas_element.width = width || 1000;
-  canvas_element.height = height || 1000;
+  canvas_element.width = width || 500;
+  canvas_element.height = height || 500;
   dom_element.appendChild(canvas_element);
 
   var self = {
@@ -614,7 +682,7 @@ var PV = function(dom_element, width, height) {
 
   function init_gl() {
     // todo wrap in try-catch for browser which don't support WebGL
-    gl = self.dom_element.getContext('experimental-webgl', { antialias: false });
+    gl = self.dom_element.getContext('experimental-webgl', { antialias: true });
     gl.viewportWidth = self.dom_element.width;
     gl.viewportHeight = self.dom_element.height;
 
@@ -760,6 +828,7 @@ var build_rotation = (function() {
   }
 })();
 
+
 var Structure = function() {
   var  self = {
     chains : [],
@@ -771,6 +840,18 @@ var Structure = function() {
       var chain = Chain(this, name);
       self.chains.push(chain);
       return chain;
+    },
+    // a really simplistic function to select subsets of atoms 
+    // of the structure. 
+    select : function(what, options) {
+      options = options || { }
+      if (what == 'protein') {
+        return this.select_protein(options);
+      }
+      if (what == 'ligands') {
+        return this.select_ligands(options);
+      }
+      // what might be a dictionary itself.
     },
     next_atom_index : function() { 
       var next_index = self.next_atom_index; 
@@ -865,6 +946,7 @@ var Structure = function() {
       }
       return line_geom;
     },
+    // FIXME: refactoring into smaller pieces.
     cartoon : function(opts) {
       console.time('Structure.cartoon');
       opts = opts || {};
@@ -885,28 +967,23 @@ var Structure = function() {
       var heli_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.0);
       var strand_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.0);
       var color = vec3.create();
+      var normal = vec3.create();
       var last_left = vec3.create();
       var clr = vec3.fromValues(0.3, 0.3, 0.3);
       var sheet_dir = 1;
+      var prev_normal = vec3.create();
       var lr = null;
-      function tube_add(pos, res, tangent, color, first) {
+      function tube_add(pos, left, res, tangent, color, first) {
         var ss = res.ss();
         var radius2 = options.radius;
         var radius1 = options.radius;
         var prof = coil_profile
-        if (first) {
-          ortho_vec(left, tangent);
-        } else if (ss == 'H' && !options.force_tube) {
+        if (ss == 'H' && !options.force_tube) {
           prof = heli_profile;
-          vec3.sub(left, res.atom('O').pos(), res.atom('C').pos());
         } else if (ss == 'E' && !options.force_tube) {
           prof = strand_profile;
-          vec3.sub(left, res.atom('O').pos(), res.atom('C').pos());
         } else {
           vec3.cross(left, up, tangent);
-        }
-        if (vec3.dot(left, last_left) < 0.0) {
-          vec3.negate(left, left);
         }
         vec3.copy(last_left, left);
 
@@ -919,45 +996,63 @@ var Structure = function() {
         chain.each_backbone_trace(function(trace) {
           var positions = new Float32Array(trace.length*3);
           var colors = new Float32Array(trace.length*3);
+          var normals = new Float32Array(trace.length*3);
+
           for (var i = 0; i < trace.length; ++i) {
             var p = trace[i].atom('CA').pos();
+            var o = trace[i].atom('O').pos();
             positions[i*3+0] = p[0];
             positions[i*3+1] = p[1];
             positions[i*3+2] = p[2];
+            var dx = o[0] - p[0];
+            var dy = o[1] - p[1];
+            var dz = o[2] - p[2];
+            var div = 1.0/Math.sqrt(dx*dx+dy*dy+dz*dz);
+            normals[i*3+0] = dx * div;
+            normals[i*3+1] = dy * div;
+            normals[i*3+2] = dz * div;
             options.color(trace[i].atom('CA'), colors, i*3);
           }
           var subdivided = catmull_rom_spline(positions, options.spline_detail, 
                                               options.strength, false);
+          var smooth_normals = interpolate_normals(normals, options.spline_detail);
           var interpolated_color = interpolate_color(colors, options.spline_detail);
           vec3.set(tangent, subdivided[3]-subdivided[0], subdivided[4]-subdivided[1],
                    subdivided[5]-subdivided[2]);
 
           vec3.set(pos, subdivided[0], subdivided[1], subdivided[2]);
+          vec3.set(normal, smooth_normals[0], smooth_normals[1], smooth_normals[2]);
           vec3.normalize(tangent, tangent);
-          tube_add(pos, trace[0], tangent, interpolated_color, true);
+          tube_add(pos, normal, trace[0], tangent, interpolated_color, true);
           for (var i = 1, e = subdivided.length/3 - 1; i < e; ++i) {
             vec3.set(pos, subdivided[3*i+0], subdivided[3*i+1], subdivided[3*i+2]);
+            vec3.set(normal, smooth_normals[3*i+0], smooth_normals[3*i+1], 
+                     smooth_normals[3*i+2]);
             vec3.set(tangent, subdivided[3*(i+1)+0]-subdivided[3*(i-1)+0],
                      subdivided[3*(i+1)+1]-subdivided[3*(i-1)+1],
                      subdivided[3*(i+1)+2]-subdivided[3*(i-1)+2]);
             vec3.normalize(tangent, tangent);
             vec3.set(color, interpolated_color[i*3+0], interpolated_color[i*3+1],
                     interpolated_color[i*3+2]);
-            tube_add(pos, trace[Math.floor(i/options.spline_detail)], 
+            tube_add(pos, normal, trace[Math.floor(i/options.spline_detail)], 
                      tangent, color, false);
           }
-          vec3.set(tangent, subdivided[subdivided.length-3]-subdivided[subdivided.length-6], 
+          vec3.set(tangent, 
+                   subdivided[subdivided.length-3]-subdivided[subdivided.length-6], 
                    subdivided[subdivided.length-2]-subdivided[subdivided.length-5],
                    subdivided[subdivided.length-1]-subdivided[subdivided.length-4]);
 
           vec3.set(pos, subdivided[subdivided.length-3], subdivided[subdivided.length-2], 
                    subdivided[subdivided.length-1]);
+          vec3.set(normal, smooth_normals[smooth_normals.length-3],
+                   smooth_normals[smooth_normals.length-2],
+                   smooth_normals[smooth_normals.length-1]);
           vec3.normalize(tangent, tangent);
           vec3.set(color, interpolated_color[interpolated_color.length-3],
                    interpolated_color[interpolated_color.length-2],
                    interpolated_color[interpolated_color.length-1]);
                     
-          tube_add(pos, trace[trace.length-1], tangent, color, false);
+          tube_add(pos, normal, trace[trace.length-1], tangent, color, false);
         });
       }
       console.timeEnd('Structure.cartoon');
@@ -1128,7 +1223,11 @@ var Chain = function(structure, name) {
       // to identify range of residues to assign secondary structure to.
       for (var i = 0; i < self.residues.length; ++i) {
         var res = self.residues[i];
-        if (res.num() < from_num || res.num() > to_num) {
+        // FIXME: we currently don't set the secondary structure of the first and 
+        // last residue of helices and sheets. that takes care of better 
+        // transitions between coils and helices. ideally, this should be done
+        // in the cartoon renderer, NOT in this function.
+        if (res.num() <=  from_num || res.num() >= to_num) {
           continue;
         }
         res.set_ss(ss);
@@ -1291,6 +1390,12 @@ function parse_sheet_record(line) {
 // a truly minimalistic PDB parser. It will die as soon as the input is 
 // not well-formed. it only reas ATOM and HETATM records, everything else 
 // is ignored. in case of multi-model files, only the first model is read.
+//
+// FIXME: load PDB currently spends a substantial amount of time creating
+// the vec3 instances for the atom positions. it's possible that it's
+// cheaper to initialize a bulk buffer once and create buffer views to
+// that data for each atom position. since all atoms are released at once,
+// that's not really a problem...
 var load_pdb = function(text) {
   console.time('load_pdb'); 
   var structure = Structure();
