@@ -815,8 +815,8 @@ var Cam = function() {
     modelview : mat4.create(),
     near : 0.1,
     far : 400.0,
-    fog_near : 20,
-    fog_far : 100,
+    fog_near : -5,
+    fog_far : 10,
     fog_color : vec3.fromValues(1, 1, 1),
     center : vec3.create(),
     zoom : 50,
@@ -880,9 +880,9 @@ var Cam = function() {
       gl.uniformMatrix4fv(shader.projection, false, self.projection);
       gl.uniformMatrix4fv(shader.modelview, false, self.modelview);
       gl.uniform1f(gl.getUniformLocation(shader, 'fog_far'),
-                    self.fog_far);
+                    self.fog_far+self.zoom);
       gl.uniform1f(gl.getUniformLocation(shader, 'fog_near'),
-                    self.fog_near);
+                    self.fog_near+self.zoom);
       gl.uniform3fv(gl.getUniformLocation(shader, 'fog_color'),
                     self.fog_color);
     }
