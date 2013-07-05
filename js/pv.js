@@ -1,12 +1,18 @@
+var pv = (function(){
 "use strict";
 
-var gl;
-var last_mouse_pos;
+
+
+function bind(obj, fn) { 
+  return function() { return fn.apply(obj, arguments); };
+}
+
+
 function get_element_contents(element) {
-  var contents = '';
-  var k = element.firstChild;
+  var contents = '', 
+      k = element.firstChild;
   while (k) {
-    if (k.nodeType == 3) {
+    if (k.nodeType === 3) {
       contents += k.textContent;
     }
     k = k.nextSibling;
@@ -14,7 +20,16 @@ function get_element_contents(element) {
   return contents;
 }
 
-var ortho_vec = (function() {
+var requestAnimFrame = (function(){
+  return  window.requestAnimationFrame       ||
+          window.webkitRequestAnimationFrame ||
+          window.mozRequestAnimationFrame    ||
+          function( callback ){
+            window.setTimeout(callback, 1000 / 60);
+          };
+})();
+
+vec3.ortho = (function() {
   var tmp = vec3.create();
   return function(out, vec) {
     vec3.copy(tmp, vec);
@@ -39,21 +54,11 @@ var ortho_vec = (function() {
 // assumes that axis is normalized. don't expect 
 // to get meaningful results if it's not
 mat3.axisRotation = function(out, axis, angle) {
-
-  var sa = Math.sin(angle);
-  var ca = Math.cos(angle);
-
-  var x = axis[0];
-  var y = axis[1];
-  var z = axis[2];
-  var xx = x*x;
-  var xy = x*y;
-  var xz = x*z;
-  var yy = y*y;
-  var yz = y*z;
-  var zz =z*z;
-
-
+  var sa = Math.sin(angle),
+      ca = Math.cos(angle),
+      x  = axis[0], y  = axis[1], z = axis[2],
+      xx = x*x, xy = x*y, xz = x*z, yy = y*y,
+      yz = y*z, zz =z*z;
   out[0] = xx+ca-xx*ca;
   out[1] = xy-ca*xy-sa*z;
   out[2] = xz-ca*xz+sa*y;
@@ -68,9 +73,8 @@ mat3.axisRotation = function(out, axis, angle) {
 
 
 var inplace_smooth = (function() {
-  var bf = vec3.create();
-  var af = vec3.create();
-  var smooth_factor = 0.5;
+  var bf = vec3.create(), af = vec3.create(),
+      smooth_factor = 0.5;
   return function(positions, from, to) {
     vec3.set(bf, positions[3*from+0], positions[3*from+1], positions[3*from+2]);
     for (var i = from; i < to; ++i) {
@@ -89,15 +93,17 @@ var inplace_smooth = (function() {
 // the normal of the next residue. consecutive normals are flipped when
 // the angle between them is larger than 180 degrees.
 function interpolate_normals(normals, num) {
-  var out = new Float32Array((normals.length-3)*num);
-  var index = 0;
-  var m = mat3.create();
-  var bf = vec3.create(), af = vec3.create();
-  var cross = vec3.create();
-  var delta = 1/num;
-  vec3.set(bf, normals[3*i+0], normals[3*i+1], normals[3*i+2]);
+  var out = new Float32Array((normals.length-3)*num),
+      index = 0,
+      m = mat3.create(),
+      bf = vec3.create(),
+      af = vec3.create(),
+      cross = vec3.create(),
+      delta = 1.0/num;
+
+  vec3.set(bf, normals[0], normals[1], normals[2]);
   for (var i = 0, e = normals.length/3-1;  i < e; ++i) {
-    vec3.set(af, normals[3*i+3], normals[3*i+4], normals[3*i+5]);
+    vec3.set(af, normals[3*(i+1)+3], normals[3*(i+1)+4], normals[3*(i+1)+5]);
     if (vec3.dot(af, bf) < 0) {
       vec3.negate(af, af);
     }
@@ -199,6 +205,7 @@ function Mol() {
 
 function MolView(mol) {
  this._mol = mol; 
+ this._pv = mol._pv;
  this._chains = [];
 }
 
@@ -358,7 +365,7 @@ Chain.prototype.add_residue = function(name, num) {
 Chain.prototype.assign_ss = function(from_num, to_num, ss) {
   // FIXME: when the chain numbers are completely ordered, perform binary search 
   // to identify range of residues to assign secondary structure to.
-  for (var i = 0; i < this._residues.length; ++i) {
+  for (var i = 1; i < this._residues.length-1; ++i) {
     var res = this._residues[i];
     // FIXME: we currently don't set the secondary structure of the first and 
     // last residue of helices and sheets. that takes care of better 
@@ -376,29 +383,29 @@ ChainView.prototype.name = function () { return this._chain.name(); }
 
 function color_for_element(ele, out) {
   if (!out) {
-    out = vec4.create();
+    out = vec3.create();
   }
   if (ele == 'C') {
-    vec4.set(out, 0.8,0.8, 0.8, 1.0);
+    vec3.set(out, 0.8,0.8, 0.8);
     return out;
   }
   if (ele == 'N') {
-    vec4.set(out, 0, 0, 1, 1);
+    vec3.set(out, 0, 0, 1);
     return out;
   }
   if (ele == 'O') {
-    vec4.set(out, 1, 0, 0, 1);
+    vec3.set(out, 1, 0, 0);
     return out;
   }
   if (ele == 'S') {
-    vec4.set(out, 0.8, 0.8, 0, 1);
+    vec3.set(out, 0.8, 0.8, 0);
     return out;
   }
   if (ele == 'CA') {
-    vec4.set(out, 0.533, 0.533, 0.666, 1);
+    vec3.set(out, 0.533, 0.533, 0.666);
     return out;
   }
-  vec4.set(out, 1, 0, 1, 1);
+  vec3.set(out, 1, 0, 1);
   return out;
 }
 
@@ -505,12 +512,12 @@ function catmull_rom_spline(points, num, strength, circular) {
 }
 
 
-var LineGeom = function() {
+var LineGeom = function(gl) {
   var self = {
     data : [],
     ready : false,
     interleaved_buffer : gl.createBuffer(),
-    num_lines : 0,
+    num_lines : 0
   };
 
   return {
@@ -564,7 +571,7 @@ var ProtoSphere  = function(stacks, arcs) {
     arcs : arcs,
     stacks : stacks,
     indices : new Uint16Array(3*arcs*stacks*2),
-    verts : new Float32Array(3*arcs*stacks),
+    verts : new Float32Array(3*arcs*stacks)
   };
   var vert_angle = Math.PI/(stacks-1);
   var horz_angle = Math.PI*2.0/arcs;
@@ -609,7 +616,9 @@ var ProtoSphere  = function(stacks, arcs) {
         geom.add_triangle(base_index+self.indices[i*3+0], base_index+self.indices[i*3+1], 
                           base_index+self.indices[i*3+2]);
       }
-    }
+    },
+    num_indices : function() { return self.indices.length; },
+    num_vertices : function() { return self.verts.length; }
   };
 }
 
@@ -624,7 +633,7 @@ var TubeProfile = function(points, num, strength) {
     indices : new Uint16Array(interpolated.length*2),
     verts : interpolated,
     normals : new Float32Array(interpolated.length),
-    arcs : interpolated.length/3,
+    arcs : interpolated.length/3
   };
 
   var normal = vec3.create();
@@ -682,10 +691,10 @@ var COIL_POINTS = [
 
 
 var HELIX_POINTS = [
-  -3*R, -1.0*R, 0,
-   3*R, -1.0*R, 0,
-   3*R, 1.0*R, 0,
-  -3*R,  1.0*R, 0
+  -6*R, -1.5*R, 0,
+   6*R, -1.5*R, 0,
+   6*R, 1.5*R, 0,
+  -6*R,  1.5*R, 0
 ];
 
 var ProtoCylinder = function(arcs) {
@@ -693,7 +702,7 @@ var ProtoCylinder = function(arcs) {
     arcs : arcs,
     indices : new Uint16Array(arcs*3*2),
     verts : new Float32Array(3*arcs*2),
-    normals : new Float32Array(3*arcs*2),
+    normals : new Float32Array(3*arcs*2)
   };
   var angle = Math.PI*2/self.arcs
   for (var i = 0; i < self.arcs; ++i) {
@@ -744,7 +753,7 @@ var ProtoCylinder = function(arcs) {
 //
 // stores the vertex data in interleaved format. not doing so has severe performance penalties
 // in WebGL, and by severe I mean orders of magnitude slower than using an interleaved array.
-var MeshGeom = function() {
+var MeshGeom = function(gl) {
   var self = {
     interleaved_buffer : gl.createBuffer(),
     index_buffer : gl.createBuffer(),
@@ -752,7 +761,7 @@ var MeshGeom = function() {
     index_data : [],
     num_triangles : 0,
     num_verts : 0,
-    ready : false,
+    ready : false
   };
 
   return {
@@ -776,21 +785,16 @@ var MeshGeom = function() {
       gl.disableVertexAttribArray(normal_attrib);
     },
     add_vertex : function(pos, normal, color) {
-      self.vert_data.push(pos[0]);
-      self.vert_data.push(pos[1]);
-      self.vert_data.push(pos[2]);
-      self.vert_data.push(normal[0]);
-      self.vert_data.push(normal[1]);
-      self.vert_data.push(normal[2]);
-      self.vert_data.push(color[0]);
-      self.vert_data.push(color[1]);
-      self.vert_data.push(color[2]);
+      // pushing all values at once seems to be more efficient than pushing
+      // separately. resizing the vert_data prior and setting the elements
+      // is substantially slower.
+      self.vert_data.push(pos[0], pos[1], pos[2], 
+                          normal[0], normal[1], normal[2],
+                          color[0], color[1], color[2]);
       self.num_verts += 1;
     },
     add_triangle : function(idx1, idx2, idx3) {
-      self.index_data.push(idx1);
-      self.index_data.push(idx2);
-      self.index_data.push(idx3);
+      self.index_data.push(idx1, idx2, idx3)
       self.num_triangles +=1;
     },
     bind : function() {
@@ -805,11 +809,11 @@ var MeshGeom = function() {
         self.index_data = [];
         self.vert_data = [];
       }
-    },
+    }
   };
 };
 
-var Cam = function() {
+var Cam = function(gl) {
   var self = {
     projection : mat4.create(),
     modelview : mat4.create(),
@@ -822,7 +826,7 @@ var Cam = function() {
     zoom : 50,
     rotation : mat4.create(),
     translation : mat4.create(),
-    update_mat : true,
+    update_mat : true
   }; 
 
 
@@ -890,132 +894,283 @@ var Cam = function() {
 };
 
 
-var PV = function(dom_element, width, height) {
-  var canvas_element = document.createElement('canvas');
-  canvas_element.width = width || 800;
-  canvas_element.height = height || 800;
-  dom_element.appendChild(canvas_element);
+function PV(dom_element, opts) {
+  opts = opts || {}
+  this._options = {
+    width : opts.width || 500,
+    height: opts.height || 500,
+    antialias : opts.antialias || false,
+    quality : opts.quality || 'low'
+  }
+  this.quality(this._options.quality);
+  this._canvas = document.createElement('canvas');
+  this._canvas.width = this._options.width;
+  this._canvas.height = this._options.height;
+  dom_element.appendChild(this._canvas);
+  this._mouse_move_listener = bind(this, this._mouse_move);
+  this._mouse_up_listener = bind(this, this._mouse_up);
+  this._canvas.addEventListener('mousewheel', bind(this, this._mouse_wheel), false);
+  this._canvas.addEventListener('mousedown', bind(this, this._mouse_down), false);
 
-  var self = {
-    dom_element : canvas_element,
-    objects : [],
-  };
+  document.addEventListener('DOMContentLoaded', 
+                            bind(this, this._init_pv));
+}
+
+PV.prototype.gl = function() { return this._gl; }
 
 
-  function init_gl() {
+PV.prototype.options = function(opt_name) {
+  return this._options[opt_name];
+}
+
+PV.prototype.quality = function(qual) {
+  this._options.quality = qual;
+  if (qual == 'high') {
+    this._options.arc_detail = 4;
+    this._options.sphere_detail = 16;
+    this._options.spline_detail = 8;
+    return;
+  } 
+  if (qual == 'medium') {
+    this._options.arc_detail = 2;
+    this._options.sphere_detail = 10;
+    this._options.spline_detail = 4;
+    return;
+  }
+  if (qual == 'low') {
+    this._options.arc_detail = 1;
+    this._options.sphere_detail = 8;
+    this._options.spline_detail = 2;
+    return;
+  }
+  console.log('invalid quality argument', qual);
+}
+
+PV.prototype._initGL = function () {
     // todo wrap in try-catch for browser which don't support WebGL
-    gl = self.dom_element.getContext('experimental-webgl', { antialias: true });
-    gl.viewportWidth = self.dom_element.width;
-    gl.viewportHeight = self.dom_element.height;
+    this._gl = this._canvas.getContext('experimental-webgl', 
+                                      { antialias: this._options.antialias });
+    this._gl.viewportWidth = this._options.width;
+    this._gl.viewportHeight = this._options.height;
 
-    gl.clearColor(1.0, 1.0, 1.0, 1.0);
-    gl.lineWidth(2.0);
-    gl.cullFace(gl.FRONT);
+    this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
+    this._gl.lineWidth(2.0);
+    this._gl.cullFace(this._gl.FRONT);
     //gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
+    this._gl.enable(this._gl.DEPTH_TEST);
   }
 
-  function shader_from_element(gl, element) {
-    var shader_code = get_element_contents(element);
-    var shader;
-    if (element.type == 'x-shader/x-fragment') {
-      shader = gl.createShader(gl.FRAGMENT_SHADER);
-    } else if (element.type == 'x-shader/x-vertex') {
-      shader = gl.createShader(gl.VERTEX_SHADER);
-    } else {
-      console.error('could not determine type for shader');
-      return null;
-    }
-    gl.shaderSource(shader, shader_code);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      console.error(gl.getShaderInfoLog(shader));
-      return null;
-    }
-    return shader;
+PV.prototype._shader_from_element = function(element) {
+  var shader_code = get_element_contents(element);
+  var shader;
+  if (element.type == 'x-shader/x-fragment') {
+    shader = this._gl.createShader(this._gl.FRAGMENT_SHADER);
+  } else if (element.type == 'x-shader/x-vertex') {
+    shader = this._gl.createShader(this._gl.VERTEX_SHADER);
+  } else {
+    console.error('could not determine type for shader');
+    return null;
   }
-
-  function init_shader() {
-    var frag_shader = shader_from_element(gl, document.getElementById('shader-fs'));
-    var vert_shader = shader_from_element(gl, document.getElementById('shader-vs'));
-    var shader_program = gl.createProgram();
-    gl.attachShader(shader_program, vert_shader);
-    gl.attachShader(shader_program, frag_shader);
-    gl.linkProgram(shader_program);
-    if (!gl.getProgramParameter(shader_program, gl.LINK_STATUS)) {
-      console.error('could not initialise shaders')
-    }
-    return shader_program;
-  };
-
-  function mouse_up(event) {
-    self.dom_element.removeEventListener('mousemove', mouse_move, false);
-    self.dom_element.removeEventListener('mouseup', mouse_up, false);
-    self.dom_element.removeEventListener('mouseout', mouse_out, false);
-    document.removeEventListener('mousemove', mouse_move);
+  this._gl.shaderSource(shader, shader_code);
+  this._gl.compileShader(shader);
+  if (!this._gl.getShaderParameter(shader, this._gl.COMPILE_STATUS)) {
+    console.error(this._gl.getShaderInfoLog(shader));
+    return null;
   }
-  var shader_program;
-  var cam;
-  
-  function init_pv() {
-    init_gl();
-    cam = Cam();
-    shader_program = init_shader();
-    gl.useProgram(shader_program);
+  return shader;
+}
+
+PV.prototype._init_shader = function() {
+  var frag_shader = this._shader_from_element(document.getElementById('shader-fs'));
+  var vert_shader = this._shader_from_element(document.getElementById('shader-vs'));
+  var shader_program = this._gl.createProgram();
+  this._gl.attachShader(shader_program, vert_shader);
+  this._gl.attachShader(shader_program, frag_shader);
+  this._gl.linkProgram(shader_program);
+  if (!this._gl.getProgramParameter(shader_program, this._gl.LINK_STATUS)) {
+    console.error('could not initialise shaders')
   }
-
-
-  var pv = {
-    add : function(stuff) {
-      self.objects.push(stuff);
-    },
-
-    draw : function() {
-      cam.bind(shader_program);
-      gl.clear(gl.COLOR_BUFFER_BIT| gl.DEPTH_BUFFER_BIT);
-      for (var i=0; i<self.objects.length; i+=1) {
-        self.objects[i].draw(shader_program);
-      }
-    },
-    center_on : function(thing) {
-      cam.set_center(thing.center());
-    }
-  };
-  function mouse_wheel(event) {
-    cam.zoom(event.wheelDelta*0.05);
-    pv.draw();
-  }
-  function mouse_down(event) {
-    event.preventDefault();
-    self.dom_element.addEventListener('mousemove', mouse_move, false);
-    document.addEventListener('mousemove', mouse_move, false);
-    self.dom_element.addEventListener('mouseup', mouse_up, false);
-    document.addEventListener('mouseup', mouse_up, false);
-    self.dom_element.addEventListener('mouseout', mouse_out, false);
-    last_mouse_pos = { x: event.pageX, y: event.pageY };
-  }
-
-
-  function mouse_move(event) {
-    var new_mouse_pos = { x : event.pageX, y : event.pageY };
-    var delta = { x : new_mouse_pos.x - last_mouse_pos.x,
-                  y : new_mouse_pos.y - last_mouse_pos.y};
-                  
-    var speed = 0.005;
-    cam.rotate_x(speed*delta.y);
-    cam.rotate_y(speed*delta.x);
-    last_mouse_pos = new_mouse_pos;
-    pv.draw();
-  }
-
-  function mouse_out(event) {}
-  self.dom_element.addEventListener('mousewheel', mouse_wheel, false);
-  self.dom_element.addEventListener('mousedown', mouse_down, false);
-
-  document.addEventListener('DOMContentLoaded', init_pv);
-  return pv;
+  return shader_program;
 };
 
+PV.prototype._mouse_up = function(event) {
+  this._canvas.removeEventListener('mousemove', this._mouse_move_listener, false);
+  this._canvas.removeEventListener('mouseup', this._mouse_up_listener, false);
+  document.removeEventListener('mousemove', this._mouse_move_listener);
+}
+
+
+PV.prototype._init_pv = function() {
+  this._initGL();
+  this._cam = Cam(this._gl);
+  this._shader_program = this._init_shader();
+  this._gl.useProgram(this._shader_program);
+}
+
+PV.prototype._add = function(what) {
+  this._objects.push(what);
+  this.requestRedraw();
+}
+
+PV.prototype.requestRedraw = function() {
+  requestAnimFrame(bind(this, this._draw));
+}
+
+PV.prototype._draw = function() {
+  this._cam.bind(this._shader_program);
+  this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
+  for (var i=0; i<this._objects.length; i+=1) {
+    this._objects[i].draw(this._shader_program);
+  }
+}
+
+
+
+PV.prototype.center_on = function(what) {
+  this._cam.set_center(what.center());
+}
+
+PV.prototype.clear = function() {
+  this._objects = [];
+}
+
+PV.prototype._parse_helix_record = function(line) {
+  // FIXME: handle insertion codes
+  var frst_num = parseInt(line.substr(21, 4));
+  var last_num = parseInt(line.substr(33, 4));
+  var chain_name = line[19];
+  return { first : frst_num, last : last_num, chain_name : chain_name };
+}
+
+PV.prototype._parse_sheet_record = function(line) {
+  // FIXME: handle insertion codes
+  var frst_num = parseInt(line.substr(22, 4));
+  var last_num = parseInt(line.substr(33, 4));
+  var chain_name = line[21];
+  return { first : frst_num, last : last_num, chain_name : chain_name };
+}
+
+// a truly minimalistic PDB parser. It will die as soon as the input is 
+// not well-formed. it only reas ATOM and HETATM records, everything else 
+// is ignored. in case of multi-model files, only the first model is read.
+//
+// FIXME: load PDB currently spends a substantial amount of time creating
+// the vec3 instances for the atom positions. it's possible that it's
+// cheaper to initialize a bulk buffer once and create buffer views to
+// that data for each atom position. since all atoms are released at once,
+// that's not really a problem...
+PV.prototype.pdb = function(text) {
+  console.time('PV.pdb'); 
+  var structure = new Mol(this);
+  var curr_chain = null;
+  var curr_res = null;
+  var curr_atom = null;
+  
+  var helices = [];
+  var sheets = [];
+  
+  function parse_and_add_atom(line, hetatm) {
+    var alt_loc = line[16];
+    if (alt_loc!=' ' && alt_loc!='A') {
+      return;
+    }
+    var chain_name = line[21];
+    var res_name = line.substr(17, 3);
+    var atom_name = line.substr(12, 4).trim();
+    var rnum_num = parseInt(line.substr(22, 4));
+    var ins_code = line[26];
+    var update_residue = false;
+    var update_chain = false;
+    if (!curr_chain || curr_chain.name() != chain_name) {
+      update_chain = true;
+      update_residue = true;
+    }
+    if (!curr_res || curr_res.num() != rnum_num) {
+      update_residue = true;
+    }
+    if (update_chain) {
+      curr_chain = structure.add_chain(chain_name);
+    }
+    if (update_residue) {
+      curr_res = curr_chain.add_residue(res_name, rnum_num);
+    }
+    var pos = vec3.create();
+    for (var i=0;i<3;++i) {
+      pos[i] = (parseFloat(line.substr(30+i*8, 8)));
+    }
+    curr_res.add_atom(atom_name, pos, line.substr(76, 2).trim());
+  }
+  var lines = text.split(/\r\n|\r|\n/g);
+  for (var i = 0; i < lines.length; i++) {
+    var line = lines[i];
+    var record_name = line.substr(0, 6);
+
+    if (record_name == 'ATOM  ') {
+      parse_and_add_atom(line, false);
+      continue;
+    }
+    if (record_name == 'HETATM') {
+      parse_and_add_atom(line, true);
+      continue;
+    }
+    if (record_name == 'HELIX ') {
+      helices.push(this._parse_helix_record(line));
+      continue;
+    }
+    if (record_name == 'SHEET ') {
+      sheets.push(this._parse_sheet_record(line));
+      continue;
+    }
+    if (record_name == 'END') {
+      break;
+    }
+  }
+  for (var i = 0; i < sheets.length; ++i) {
+    var sheet = sheets[i];
+    var chain = structure.chain(sheet.chain_name);
+    if (chain) {
+      chain.assign_ss(sheet.first, sheet.last, 'E');
+    }
+  }
+  for (var i = 0; i < helices.length; ++i) {
+    var helix = helices[i];
+    var chain = structure.chain(helix.chain_name);
+    if (chain) {
+      chain.assign_ss(helix.first, helix.last, 'H');
+    }
+  }
+  structure.derive_connectivity();
+  console.timeEnd('PV.pdb');
+
+  return structure;
+};
+
+
+PV.prototype._mouse_wheel = function(event) {
+  this._cam.zoom(event.wheelDelta*0.05);
+  this.requestRedraw();
+}
+
+PV.prototype._mouse_down = function(event) {
+  event.preventDefault();
+  this._canvas.addEventListener('mousemove', this._mouse_move_listener, false);
+  document.addEventListener('mousemove', this._mouse_move_listener, false);
+  this._canvas.addEventListener('mouseup', this._mouse_up_listener, false);
+  document.addEventListener('mouseup', this._mouse_up_listener, false);
+  this._last_mouse_pos = { x: event.pageX, y: event.pageY };
+}
+
+PV.prototype._mouse_move = function(event) {
+  var new_mouse_pos = { x : event.pageX, y : event.pageY };
+  var delta = { x : new_mouse_pos.x - this._last_mouse_pos.x,
+                y : new_mouse_pos.y - this._last_mouse_pos.y};
+                
+  var speed = 0.005;
+  this._cam.rotate_x(speed*delta.y);
+  this._cam.rotate_y(speed*delta.x);
+  this._last_mouse_pos = new_mouse_pos;
+  this.requestRedraw();
+}
 
 // derive a rotation matrix which rotates the z-axis onto tangent. when
 // left is given and use_hint is true, x-axis is chosen to be as close
@@ -1030,7 +1185,7 @@ var build_rotation = (function() {
     if (use_left_hint) {
       vec3.cross(up, tangent, left);
     } else {
-      ortho_vec(up, tangent);
+      vec3.ortho(up, tangent);
     }
 
     vec3.cross(left, up, tangent);
@@ -1050,8 +1205,9 @@ var build_rotation = (function() {
   }
 })();
 
-function Mol() {
+function Mol(pv) {
   this._chains = [];
+  this._pv = pv;
   this._next_atom_index = 0;
 }
 
@@ -1071,12 +1227,13 @@ MolBase.prototype.each_atom = function(callback) {
 }
 
 MolBase.prototype.line_trace = function(opts) {
+  console.time('MolBase.line_trace');
   opts = opts || {};
   var options = {
-    color : opts.color || uniform_color([1, 0, 1]),
+    color : opts.color || uniform_color([1, 0, 1])
   }
   var clr_one = vec3.create(), clr_two = vec3.create();
-  var line_geom = LineGeom();
+  var line_geom = LineGeom(this._pv.gl());
   var prev_residue = false;
   for (var ci  in this._chains) {
     var chain = this._chains[ci];
@@ -1089,6 +1246,8 @@ MolBase.prototype.line_trace = function(opts) {
       }
     });
   }
+  this._pv._add(line_geom);
+  console.time('MolBase.line_trace');
   return line_geom;
 }
 
@@ -1097,16 +1256,18 @@ MolBase.prototype.spheres = function(opts) {
   console.time('MolBase.spheres');
   opts = opts || {};
   var options = {
-    color : opts.color || uniform_color([1, 0, 1]),
+    color : opts.color || cpk_color()
   }
   var clr = vec3.create();
-  var geom = MeshGeom();
-  var proto_sphere = ProtoSphere(8, 8);
+  var geom = MeshGeom(this._pv.gl());
+  var sphere_detail = this._pv.options('sphere_detail');
+  var proto_sphere = ProtoSphere(sphere_detail, sphere_detail);
   this.each_atom(function(atom) {
     options.color(atom, clr, 0);
     proto_sphere.add_transformed(geom, atom.pos(), 1.5, clr);
   });
   console.timeEnd('MolBase.spheres');
+  this._pv._add(geom);
   return geom;
 }
 
@@ -1115,10 +1276,10 @@ MolBase.prototype.sline = function(opts) {
   opts = opts || {};
   var options = {
     color : opts.color || uniform_color([1, 0, 1]),
-    spline_detail : opts.spline_detail || 8,
-    strength: opts.strength || 0.5,
+    spline_detail : opts.spline_detail || this._pv.options('spline_detail'),
+    strength: opts.strength || 0.5
   };
-  var line_geom = LineGeom();
+  var line_geom = LineGeom(this._pv.gl());
   var pos_one = vec3.create(), pos_two = vec3.create();
   var clr_one = vec3.create(), clr_two = vec3.create();
   for (var ci  in this._chains) {
@@ -1156,6 +1317,7 @@ MolBase.prototype.sline = function(opts) {
     });
   }
   console.timeEnd('MolBase.sline');
+  this._pv._add(line_geom);
   return line_geom;
 },
 
@@ -1165,44 +1327,40 @@ MolBase.prototype.cartoon = function(opts) {
   opts = opts || {};
 
   var options = {
-    color : opts.color || uniform_color([1, 0, 1]),
+    color : opts.color || ss(),
     strength: opts.strength || 0.5,
-    spline_detail : opts.spline_detail || 4,
-    arc_detail : opts.arc_detail || 8,
+    spline_detail : opts.spline_detail || this._pv.options('spline_detail'),
+    arc_detail : opts.arc_detail || this._pv.options('arc_detail'),
     radius : opts.radius || 0.3,
-    force_tube: opts.force_tube || false,
+    force_tube: opts.force_tube || false
   }
-  var geom = MeshGeom();
+  var geom = MeshGeom(this._pv.gl());
   var tangent = vec3.create(), pos = vec3.create(), left =vec3.create();
   var up = vec3.create();
   var rotation = mat3.create();
   var coil_profile = TubeProfile(COIL_POINTS, options.arc_detail, 1.0);
-  var heli_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.0);
-  var strand_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.0);
+  var heli_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.1);
+  var strand_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.1);
   var color = vec3.create();
   var normal = vec3.create();
-  var last_left = vec3.create();
-  var clr = vec3.fromValues(0.3, 0.3, 0.3);
-  var sheet_dir = 1;
-  var prev_normal = vec3.create();
-  var lr = null;
   function tube_add(pos, left, res, tangent, color, first) {
     var ss = res.ss();
-    var radius2 = options.radius;
-    var radius1 = options.radius;
     var prof = coil_profile
     if (ss == 'H' && !options.force_tube) {
       prof = heli_profile;
     } else if (ss == 'E' && !options.force_tube) {
       prof = strand_profile;
     } else {
-      vec3.cross(left, up, tangent);
+      if (first) {
+        vec3.ortho(left, tangent);
+      } else {
+        vec3.cross(left, up, tangent);
+      }
     }
-    vec3.copy(last_left, left);
 
     build_rotation(rotation, tangent, left, up, true);
 
-    prof.add_transformed(geom, pos, radius1, rotation, color, first);
+    prof.add_transformed(geom, pos, options.radius, rotation, color, first);
   }
   for (var ci = 0; ci < this._chains.length; ++ci) {
     var chain = this._chains[ci];
@@ -1222,7 +1380,7 @@ MolBase.prototype.cartoon = function(opts) {
           }
           strand_end = i;
         } else {
-          if (strand_start !== null) {
+          if (strand_start !== null && !options.force_tube) {
             inplace_smooth(positions, strand_start-1, strand_end+1);
             strand_start = null;
             strand_end = null;
@@ -1250,7 +1408,9 @@ MolBase.prototype.cartoon = function(opts) {
       vec3.set(pos, subdivided[0], subdivided[1], subdivided[2]);
       vec3.set(normal, smooth_normals[0], smooth_normals[1], smooth_normals[2]);
       vec3.normalize(tangent, tangent);
-      tube_add(pos, normal, trace[0], tangent, interpolated_color, true);
+      vec3.set(color, interpolated_color[0], interpolated_color[1],
+               interpolated_color[2]);
+      tube_add(pos, normal, trace[0], tangent, color, true);
       for (var i = 1, e = subdivided.length/3 - 1; i < e; ++i) {
         vec3.set(pos, subdivided[3*i+0], subdivided[3*i+1], subdivided[3*i+2]);
         vec3.set(normal, smooth_normals[3*i+0], smooth_normals[3*i+1], 
@@ -1283,6 +1443,7 @@ MolBase.prototype.cartoon = function(opts) {
     });
   }
   console.timeEnd('Mol.cartoon');
+  this._pv._add(geom);
   return geom;
 }
 // renders the protein using a smoothly interpolated tube, essentially identical to the
@@ -1297,10 +1458,10 @@ MolBase.prototype.lines = function(opts) {
   console.time('MolBase.lines');
   opts = opts || {};
   var options = {
-    color : opts.color || cpk_color(),
+    color : opts.color || cpk_color()
   };
   var mp = vec3.create();
-  var line_geom = LineGeom();
+  var line_geom = LineGeom(this._pv.gl());
   var clr = vec3.create();
   this.each_atom(function(atom) {
     // for atoms without bonds, we draw a small cross, otherwise these atoms 
@@ -1324,6 +1485,7 @@ MolBase.prototype.lines = function(opts) {
     }
   });
   console.timeEnd('MolBase.lines');
+  this._pv._add(line_geom);
   return line_geom;
 }
 
@@ -1331,19 +1493,21 @@ MolBase.prototype.trace = function(opts) {
   opts = opts || {}
   var options = {
     color : opts.color || uniform_color([1, 0, 0]),
-    radius: opts.radius || 0.3
+    radius: opts.radius || 0.3,
+    arc_detail : (opts.arc_detail || this._pv.options('arc_detail'))*4,
+    sphere_detail : opts.sphere_detail || this._pv.options('sphere_detail')
   }
   var clr_one = vec3.create(), clr_two = vec3.create();
-  var geom = MeshGeom();
+  var geom = MeshGeom(this._pv.gl());
   var prev_residue = false;
-  var proto_cyl = ProtoCylinder(8);
-  var proto_sphere = ProtoSphere(8, 8);
+  var proto_cyl = ProtoCylinder(options.arc_detail);
+  var proto_sphere = ProtoSphere(options.sphere_detail, options.sphere_detail);
   var rotation = mat3.create();
   var dir = vec3.create();
   var left = vec3.create();
   var up = vec3.create();
-  for (var ci = 0; ci < self.chains.length; ++ci) {
-    var chain = self.chains[ci];
+  for (var ci = 0; ci < this._chains.length; ++ci) {
+    var chain = this._chains[ci];
     chain.each_backbone_trace(function(trace) {
       options.color(trace[0].atom('CA'), clr_one, 0);
       proto_sphere.add_transformed(geom, trace[0].atom('CA').pos(), options.radius,
@@ -1370,6 +1534,7 @@ MolBase.prototype.trace = function(opts) {
       }
     });
   }
+  this._pv._add(geom);
   return geom;
 }
 
@@ -1562,7 +1727,7 @@ Atom.prototype.structure = function() { return this._residue.structure(); }
 var Bond = function(atom_a, atom_b) {
   var self = {
     atom_one : atom_a,
-    atom_two : atom_b,
+    atom_two : atom_b
   };
   return {
     atom_one : function() { return self.atom_one; },
@@ -1580,144 +1745,6 @@ var Bond = function(atom_a, atom_b) {
   };
 }
 
+return { Viewer: function(options) { return new PV(options); }};
+})();
 
-var load_pdb_from_element = function(element) {
-  return load_pdb(get_element_contents(element));
-}
-
-
-function parse_helix_record(line) {
-  // FIXME: handle insertion codes
-  var frst_num = parseInt(line.substr(21, 4));
-  var last_num = parseInt(line.substr(33, 4));
-  var chain_name = line[19];
-  return { first : frst_num, last : last_num, chain_name : chain_name };
-}
-
-function parse_sheet_record(line) {
-  // FIXME: handle insertion codes
-  var frst_num = parseInt(line.substr(22, 4));
-  var last_num = parseInt(line.substr(33, 4));
-  var chain_name = line[21];
-  return { first : frst_num, last : last_num, chain_name : chain_name };
-}
-
-// a truly minimalistic PDB parser. It will die as soon as the input is 
-// not well-formed. it only reas ATOM and HETATM records, everything else 
-// is ignored. in case of multi-model files, only the first model is read.
-//
-// FIXME: load PDB currently spends a substantial amount of time creating
-// the vec3 instances for the atom positions. it's possible that it's
-// cheaper to initialize a bulk buffer once and create buffer views to
-// that data for each atom position. since all atoms are released at once,
-// that's not really a problem...
-var load_pdb = function(text) {
-  console.time('load_pdb'); 
-  var structure = new Mol();
-  var curr_chain = null;
-  var curr_res = null;
-  var curr_atom = null;
-  
-  var helices = [];
-  var sheets = [];
-  function parse_and_add_atom(line, hetatm) {
-    var alt_loc = line[16];
-    if (alt_loc!=' ' && alt_loc!='A') {
-      return;
-    }
-    var chain_name = line[21];
-    var res_name = line.substr(17, 3);
-    var atom_name = line.substr(12, 4).trim();
-    var rnum_num = parseInt(line.substr(22, 4));
-    var ins_code = line[26];
-    var update_residue = false;
-    var update_chain = false;
-    if (!curr_chain || curr_chain.name() != chain_name) {
-      update_chain = true;
-      update_residue = true;
-    }
-    if (!curr_res || curr_res.num() != rnum_num) {
-      update_residue = true;
-    }
-    if (update_chain) {
-      curr_chain = structure.add_chain(chain_name);
-    }
-    if (update_residue) {
-      curr_res = curr_chain.add_residue(res_name, rnum_num);
-    }
-    var pos = vec3.create();
-    for (var i=0;i<3;++i) {
-      pos[i] = (parseFloat(line.substr(30+i*8, 8)));
-    }
-    curr_res.add_atom(atom_name, pos, line.substr(76, 2).trim());
-  }
-  var lines = text.split(/\r\n|\r|\n/g);
-  for (var i = 0; i < lines.length; i++) {
-    var line = lines[i];
-    var record_name = line.substr(0, 6);
-
-    if (record_name == 'ATOM  ') {
-      parse_and_add_atom(line, false);
-      continue;
-    }
-    if (record_name == 'HETATM') {
-      parse_and_add_atom(line, true);
-      continue;
-    }
-    if (record_name == 'HELIX ') {
-      helices.push(parse_helix_record(line));
-      continue;
-    }
-    if (record_name == 'SHEET ') {
-      sheets.push(parse_sheet_record(line));
-      continue;
-    }
-    if (record_name == 'END') {
-      break;
-    }
-  }
-  for (var i = 0; i < sheets.length; ++i) {
-    var sheet = sheets[i];
-    var chain = structure.chain(sheet.chain_name);
-    if (chain) {
-      chain.assign_ss(sheet.first, sheet.last, 'E');
-    }
-  }
-  for (var i = 0; i < helices.length; ++i) {
-    var helix = helices[i];
-    var chain = structure.chain(helix.chain_name);
-    if (chain) {
-      chain.assign_ss(helix.first, helix.last, 'H');
-    }
-  }
-  structure.derive_connectivity();
-  console.timeEnd('load_pdb');
-
-  return structure;
-};
-
-/*
-var N = 100000;
-
-function test_vec3_pool() {
-  console.time('vec3_pool');
-  var ab = new ArrayBuffer(N*3*4);
-  var l = []
-  for (var i = 0; i < N; ++i) {
-    l.push(new Float32Array(ab, 3*i*4, 3));
-  }
-  console.timeEnd('vec3_pool');
-}
-
-function test_vec3_create() {
-  console.time('vec3_create');
-  var l = []
-  for (var i = 0; i < N; ++i) {
-    l.push(vec3.create());
-  }
-  console.timeEnd('vec3_create');
-}
-
-test_vec3_pool();
-test_vec3_create();
-*/

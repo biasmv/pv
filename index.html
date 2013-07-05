@@ -14,10 +14,42 @@
       margin: 0px;
       overflow: hidden;
     }
+    #gl {
+      float: left;
+    }
+    #inspector {
+      float : right;
+      background-color:#eee;
+      padding:10px;
+    }
+
+    #inspector ul {
+      padding:0px;
+    }
+
+    #inspector ul li {
+      list-style:none;
+      cursor: pointer;
+      color:#660000
+    }
+    #inspector ul li:hover {
+      color:#662200;
+    }
     </style>
     </head>
 <body>
   <div id=gl>
+  </div>
+  <div id=inspector>
+    <ul>
+      <li id=preset>Preset</li>
+      <li id=cartoon>Cartoon</li>
+      <li id=tube>Tube</li>
+      <li id=lines>Lines</li>
+      <li id=line-trace>Line Trace</li>
+      <li id=sline>Smooth Line Trace</li>
+      <li id=trace>Trace</li>
+    </ul>
   </div>
   <script type='x-shader/x-fragment' id='shader-fs'>
     precision mediump float;
@@ -56,22 +88,54 @@
     }
   </script>
   <script>
-    var pv = PV(document.getElementById('gl'));
+    var pv = pv.Viewer(document.getElementById('gl'));
+    var mol;
+    function lines() {
+      pv.clear();
+      mol.lines();
+    }
+    function cartoon() {
+      pv.clear();
+      mol.cartoon();
+    }
+    function line_trace() {
+      pv.clear();
+      mol.line_trace();
+    }
+    function sline() {
+      pv.clear();
+      mol.sline();
+    }
 
-   
+    function tube() {
+      pv.clear();
+      mol.tube();
+    }
+
+    function trace() {
+      pv.clear();
+      mol.trace();
+    }
+    function preset() {
+      pv.clear();
+      var ligand = mol.select('ligand');
+      mol.cartoon();
+      ligand.spheres();
+    }
+
+    $('#cartoon').click(cartoon);
+    $('#line-trace').click(line_trace);
+    $('#preset').click(preset);
+    $('#lines').click(lines);
+    $('#trace').click(trace);
+    $('#sline').click(sline);
+    $('#tube').click(tube);
+
     function on_ready() {
-      $.ajax({ url : 'pdbs/2por.pdb', success : function(data) {
-        var mol = load_pdb(data);
-        
-        var water = mol.select('water');
-
-        var ligand = mol.select('ligand');
-        pv.add(mol.cartoon({ radius : 0.5, arc_detail : 1, spline_detail : 4,
-                             strength : 1.0, color : ss()}));
-        //pv.add(water.lines());
-        pv.add(ligand.spheres({ color : cpk_color() }));
+      $.ajax({ url : 'pdbs/1ake.pdb', success : function(data) {
+        mol = pv.pdb(data);
+        preset();
         pv.center_on(mol);
-        pv.draw();
       }});
     }
     document.addEventListener('DOMContentLoaded', on_ready);
