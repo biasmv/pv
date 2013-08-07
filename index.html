@@ -88,7 +88,8 @@
     }
   </script>
   <script>
-    var pv = pv.Viewer(document.getElementById('gl'));
+    var pv = pv.Viewer(document.getElementById('gl'), 
+                       { quality : 'medium' });
     var mol;
     function lines() {
       pv.clear();

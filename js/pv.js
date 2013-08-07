@@ -73,16 +73,23 @@ mat3.axisRotation = function(out, axis, angle) {
 
 
 var inplace_smooth = (function() {
-  var bf = vec3.create(), af = vec3.create(),
+  var bf = vec3.create(), af = vec3.create(), cf = vec3.create(),
       smooth_factor = 0.5;
   return function(positions, from, to) {
     vec3.set(bf, positions[3*from+0], positions[3*from+1], positions[3*from+2]);
+    vec3.set(cf, positions[3*from+0], positions[3*from+1], positions[3*from+2]);
     for (var i = from; i < to; ++i) {
       vec3.set(af, positions[3*i+0], positions[3*i+1], positions[3*i+2]);
-      positions[3*i+0] = af[0]*smooth_factor + bf[0]*(1.0 - smooth_factor);
-      positions[3*i+1] = af[1]*smooth_factor + bf[1]*(1.0 - smooth_factor);
-      positions[3*i+2] = af[2]*smooth_factor + bf[2]*(1.0 - smooth_factor);
-      vec3.copy(bf, af);
+      /*
+      positions[3*i+0] = af[0]*0.33 + cf[0]*0.33 + bf[0]*0.33;
+      positions[3*i+1] = af[1]*0.33 + cf[1]*0.33 + bf[1]*0.33;
+      positions[3*i+2] = af[2]*0.33 + cf[2]*0.33 + bf[2]*0.33;
+      */
+      positions[3*i+0] = af[0]*0.25 + cf[0]*0.50 + bf[0]*0.25;
+      positions[3*i+1] = af[1]*0.25 + cf[1]*0.50 + bf[1]*0.25;
+      positions[3*i+2] = af[2]*0.25 + cf[2]*0.50 + bf[2]*0.25;
+      vec3.copy(bf, cf);
+      vec3.copy(cf, af);
     }
   }
 })();
@@ -925,6 +932,7 @@ PV.prototype.options = function(opt_name) {
 
 PV.prototype.quality = function(qual) {
   this._options.quality = qual;
+  console.info('setting quality to', qual);
   if (qual == 'high') {
     this._options.arc_detail = 4;
     this._options.sphere_detail = 16;
@@ -1303,7 +1311,7 @@ MolBase.prototype.sline = function(opts) {
   var options = {
     color : opts.color || uniform_color([1, 0, 1]),
     spline_detail : opts.spline_detail || this._pv.options('spline_detail'),
-    strength: opts.strength || 0.5
+    strength: opts.strength || 0.5,
   };
   var line_geom = LineGeom(this._pv.gl());
   var pos_one = vec3.create(), pos_two = vec3.create();
@@ -1358,7 +1366,7 @@ MolBase.prototype.cartoon = function(opts) {
     spline_detail : opts.spline_detail || this._pv.options('spline_detail'),
     arc_detail : opts.arc_detail || this._pv.options('arc_detail'),
     radius : opts.radius || 0.3,
-    force_tube: opts.force_tube || false
+    force_tube: opts.force_tube || false,
   }
   var geom = MeshGeom(this._pv.gl());
   var tangent = vec3.create(), pos = vec3.create(), left =vec3.create();
@@ -1399,6 +1407,7 @@ MolBase.prototype.cartoon = function(opts) {
       var strand_end = null;
       for (var i = 0; i < trace.length; ++i) {
         var p = trace[i].atom('CA').pos();
+        var c = trace[i].atom('C').pos();
         var o = trace[i].atom('O').pos();
         if (trace[i].ss() == 'E') {
           if (strand_start === null) {
@@ -1415,9 +1424,9 @@ MolBase.prototype.cartoon = function(opts) {
         positions[i*3+0] = p[0];
         positions[i*3+1] = p[1];
         positions[i*3+2] = p[2];
-        var dx = o[0] - p[0];
-        var dy = o[1] - p[1];
-        var dz = o[2] - p[2];
+        var dx = o[0] - c[0];
+        var dy = o[1] - c[1];
+        var dz = o[2] - c[2];
         var div = 1.0/Math.sqrt(dx*dx+dy*dy+dz*dz);
         normals[i*3+0] = dx * div;
         normals[i*3+1] = dy * div;
@@ -1772,6 +1781,6 @@ var Bond = function(atom_a, atom_b) {
   };
 }
 
-return { Viewer: function(options) { return new PV(options); }};
+return { Viewer: function(elem, options) { return new PV(elem, options); }};
 })();
 
