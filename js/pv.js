@@ -899,7 +899,7 @@ function PV(dom_element, opts) {
   this._options = {
     width : opts.width || 500,
     height: opts.height || 500,
-    antialias : opts.antialias || false,
+    antialias : opts.antialias || true,
     quality : opts.quality || 'low'
   }
   this.quality(this._options.quality);
@@ -1051,14 +1051,16 @@ PV.prototype._parse_sheet_record = function(line) {
 }
 
 // a truly minimalistic PDB parser. It will die as soon as the input is 
-// not well-formed. it only reas ATOM and HETATM records, everything else 
-// is ignored. in case of multi-model files, only the first model is read.
+// not well-formed. it only reas ATOM, HETATM, HELIX and SHEET records, 
+// everything else is ignored. in case of multi-model files, only the 
+// first model is read.
 //
 // FIXME: load PDB currently spends a substantial amount of time creating
 // the vec3 instances for the atom positions. it's possible that it's
 // cheaper to initialize a bulk buffer once and create buffer views to
-// that data for each atom position. since all atoms are released at once,
-// that's not really a problem...
+// that data for each atom position. since the atom's lifetime is bound to
+// the parent structure, the buffer could be managed on that level and
+// released once the structure is deleted.
 PV.prototype.pdb = function(text) {
   console.time('PV.pdb'); 
   var structure = new Mol(this);
@@ -1574,6 +1576,7 @@ Mol.prototype.residue_select = function(predicate) {
   console.timeEnd('Mol.residue_select')
   return view;
 }
+
 Mol.prototype.select = function(what) {
 
   if (what == 'protein') {
