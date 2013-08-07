@@ -1273,6 +1273,30 @@ MolBase.prototype.spheres = function(opts) {
   return geom;
 }
 
+MolBase.prototype.RENDER_MODES = [
+  'sline', 'line', 'trace', 'line_trace', 'cartoon', 'tube',
+  'spheres'
+]
+
+
+/// simple dispatcher which allows to render using a certain style.
+//  will bail out if the render mode does not exist.
+MolBase.prototype.render_as = function(mode, opts) {
+  var found = false;
+  for (var i = 0; i < this.RENDER_MODES.length; ++i) {
+    if (this.RENDER_MODES[i] === mode) {
+      found = true;
+      break;
+    }
+  }
+  if (!found) {
+    console.error('render mode', mode, 'not supported');
+    return;
+  }
+  return this[mode](opts);
+
+}
+
 MolBase.prototype.sline = function(opts) {
   console.time('MolBase.sline');
   opts = opts || {};
