@@ -51,45 +51,10 @@
       <li id=trace>Trace</li>
     </ul>
   </div>
-  <script type='x-shader/x-fragment' id='shader-fs'>
-    precision mediump float;
-
-    varying vec3 vert_color;
-    varying vec3 vert_normal;
-    uniform float fog_near;
-    uniform float fog_far;
-    uniform vec3 fog_color;
-
-    void main(void) {
-      float dp = dot(vert_normal, vec3(0.0, 0.0, 1.0));
-      float hemi = max(0.0, dp)*0.5+0.5;
-      gl_FragColor = vec4(vert_color*hemi, 1.0);
-      float depth = gl_FragCoord.z / gl_FragCoord.w;
-      float fog_factor = smoothstep(fog_near, fog_far, depth);
-      gl_FragColor = mix(gl_FragColor, vec4(fog_color, gl_FragColor.w), 
-                         fog_factor);
-    }
-
-  </script>
-  <script type='x-shader/x-vertex' id='shader-vs'>
-    attribute vec3 attr_pos;
-    attribute vec3 attr_color;
-    attribute vec3 attr_normal;
-
-    uniform mat4 projection_mat;
-    uniform mat4 modelview_mat;
-    varying vec3 vert_color;
-    varying vec3 vert_normal;
-    void main(void) {
-      gl_Position = projection_mat * modelview_mat * vec4(attr_pos, 1.0);
-      vec4 n = (modelview_mat * vec4(attr_normal, 0.0));
-      vert_normal = n.xyz;
-      vert_color = attr_color;
-    }
   </script>
   <script>
     var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'high', width: 400, height : 400 });
+                       { quality : 'medium', width: 400, height : 400 });
     var mol;
     function lines() {
       pv.clear();
@@ -135,7 +100,7 @@
     function on_ready() {
       $.ajax({ url : 'pdbs/1ake.pdb', success : function(data) {
         mol = pv.pdb(data);
-        trace();
+        tube();
         pv.center_on(mol);
       }});
     }

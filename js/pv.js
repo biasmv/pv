@@ -2,23 +2,80 @@ var pv = (function(){
 "use strict";
 
 
+var HEMILIGHT_FS = '                                                   \n\
+precision mediump float;                                               \n\
+                                                                       \n\
+varying vec3 vert_color;                                               \n\
+varying vec3 vert_normal;                                              \n\
+uniform float fog_near;                                                \n\
+uniform float fog_far;                                                 \n\
+uniform vec3 fog_color;                                                \n\
+                                                                       \n\
+void main(void) {                                                      \n\
+  float dp = dot(vert_normal, vec3(0.0, 0.0, 1.0));                    \n\
+  float hemi = max(0.0, dp)*0.5+0.5;                                   \n\
+  gl_FragColor = vec4(vert_color*hemi, 1.0);                           \n\
+  float depth = gl_FragCoord.z / gl_FragCoord.w;                       \n\
+  float fog_factor = smoothstep(fog_near, fog_far, depth);             \n\
+  gl_FragColor = mix(gl_FragColor, vec4(fog_color, gl_FragColor.w),    \n\
+                      fog_factor);                                     \n\
+}                                                                      \n\
+'
+
+var HEMILIGHT_VS = '                                                   \n\
+attribute vec3 attr_pos;                                               \n\
+attribute vec3 attr_color;                                             \n\
+attribute vec3 attr_normal;                                            \n\
+                                                                       \n\
+uniform mat4 projection_mat;                                           \n\
+uniform mat4 modelview_mat;                                            \n\
+varying vec3 vert_color;                                               \n\
+varying vec3 vert_normal;                                              \n\
+void main(void) {                                                      \n\
+  gl_Position = projection_mat * modelview_mat * vec4(attr_pos, 1.0);  \n\
+  vec4 n = (modelview_mat * vec4(attr_normal, 0.0));                   \n\
+  vert_normal = n.xyz;                                                 \n\
+  vert_color = attr_color;                                             \n\
+}                                                                      \n\
+'
+
+var OUTLINE_FS = '                                                     \n\
+precision mediump float;                                               \n\
+                                                                       \n\
+uniform vec3 outline_color;                                            \n\
+uniform float fog_near;                                                \n\
+uniform float fog_far;                                                 \n\
+uniform vec3 fog_color;                                                \n\
+                                                                       \n\
+void main() {                                                          \n\
+  gl_FragColor = vec4(outline_color, 1.0);                             \n\
+  float depth = gl_FragCoord.z / gl_FragCoord.w;                       \n\
+  float fog_factor = smoothstep(fog_near, fog_far, depth);             \n\
+  gl_FragColor = mix(gl_FragColor, vec4(fog_color, gl_FragColor.w),    \n\
+                      fog_factor);                                     \n\
+}                                                                      \n\
+'
+
+var OUTLINE_VS = '                                                     \n\
+                                                                       \n\
+attribute vec3 attr_pos;                                               \n\
+attribute vec3 attr_normal;                                            \n\
+                                                                       \n\
+uniform vec3 outline_color;                                            \n\
+uniform mat4 projection_mat;                                           \n\
+uniform mat4 modelview_mat;                                            \n\
+                                                                       \n\
+void main(void) {                                                      \n\
+  gl_Position = projection_mat * modelview_mat * vec4(attr_pos, 1.0);  \n\
+  vec4 normal = modelview_mat * vec4(attr_normal, 0.0);                \n\
+  gl_Position.xy += normal.xy*0.060;                                   \n\
+}                                                                      \n\
+'
 
 function bind(obj, fn) { 
   return function() { return fn.apply(obj, arguments); };
 }
 
-
-function get_element_contents(element) {
-  var contents = '', 
-      k = element.firstChild;
-  while (k) {
-    if (k.nodeType === 3) {
-      contents += k.textContent;
-    }
-    k = k.nextSibling;
-  }
-  return contents;
-}
 
 var requestAnimFrame = (function(){
   return  window.requestAnimationFrame       ||
@@ -913,6 +970,7 @@ var Cam = function(gl) {
 
     bind : function(shader) {
       update_if_needed();
+      gl.useProgram(shader);
       gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
       shader.projection = gl.getUniformLocation(shader, 'projection_mat');
       shader.modelview = gl.getUniformLocation(shader, 'modelview_mat');
@@ -992,16 +1050,15 @@ PV.prototype._initGL = function () {
     this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
     this._gl.lineWidth(2.0);
     this._gl.cullFace(this._gl.FRONT);
-    //gl.enable(gl.CULL_FACE);
+    this._gl.enable(gl.CULL_FACE);
     this._gl.enable(this._gl.DEPTH_TEST);
   }
 
-PV.prototype._shader_from_element = function(element) {
-  var shader_code = get_element_contents(element);
+PV.prototype._shader_from_string = function(shader_code, type) {
   var shader;
-  if (element.type == 'x-shader/x-fragment') {
+  if (type === 'fragment') {
     shader = this._gl.createShader(this._gl.FRAGMENT_SHADER);
-  } else if (element.type == 'x-shader/x-vertex') {
+  } else if (type === 'vertex') {
     shader = this._gl.createShader(this._gl.VERTEX_SHADER);
   } else {
     console.error('could not determine type for shader');
@@ -1016,9 +1073,9 @@ PV.prototype._shader_from_element = function(element) {
   return shader;
 }
 
-PV.prototype._init_shader = function() {
-  var frag_shader = this._shader_from_element(document.getElementById('shader-fs'));
-  var vert_shader = this._shader_from_element(document.getElementById('shader-vs'));
+PV.prototype._init_shader = function(vert_shader, frag_shader) {
+  var frag_shader = this._shader_from_string(frag_shader, 'fragment');
+  var vert_shader = this._shader_from_string(vert_shader, 'vertex');
   var shader_program = this._gl.createProgram();
   this._gl.attachShader(shader_program, vert_shader);
   this._gl.attachShader(shader_program, frag_shader);
@@ -1039,8 +1096,8 @@ PV.prototype._mouse_up = function(event) {
 PV.prototype._init_pv = function() {
   this._initGL();
   this._cam = Cam(this._gl);
-  this._shader_program = this._init_shader();
-  this._gl.useProgram(this._shader_program);
+  this._hemilight_shader = this._init_shader(HEMILIGHT_VS, HEMILIGHT_FS);
+  this._outline_shader = this._init_shader(OUTLINE_VS, OUTLINE_FS);
 }
 
 PV.prototype._add = function(what) {
@@ -1053,10 +1110,20 @@ PV.prototype.requestRedraw = function() {
 }
 
 PV.prototype._draw = function() {
-  this._cam.bind(this._shader_program);
+
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
+
+  this._cam.bind(this._hemilight_shader);
+  this._gl.cullFace(this._gl.FRONT);
+  this._gl.enable(this._gl.CULL_FACE);
   for (var i=0; i<this._objects.length; i+=1) {
-    this._objects[i].draw(this._shader_program);
+    this._objects[i].draw(this._hemilight_shader);
+  }
+  this._cam.bind(this._outline_shader);
+  this._gl.cullFace(this._gl.BACK);
+  this._gl.enable(this._gl.CULL_FACE);
+  for (var i=0; i<this._objects.length; i+=1) {
+    this._objects[i].draw(this._outline_shader);
   }
 }
 
@@ -1641,6 +1708,7 @@ ChainBase.prototype._trace_for_chain = (function() {
     return geom;
   }
 })();
+
 MolBase.prototype.trace = function(opts) {
   opts = opts || {}
   var options = {
