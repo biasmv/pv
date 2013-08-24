@@ -270,6 +270,16 @@ ChainBase.prototype.each_backbone_trace = function(callback) {
   }
 }
 
+
+// returns all connected stretches of amino acids found in this chain as 
+// a list.
+ChainBase.prototype.backbone_traces = function() {
+  var traces = [];
+  this.each_backbone_trace(function(trace) { traces.push(trace); });
+  return traces;
+
+}
+
 function ChainView(mol_view, chain) {
   this._chain = chain;
   this._residues = [];
@@ -756,10 +766,29 @@ var ProtoCylinder = function(arcs) {
   };
 };
 
+
+// A scene node holds a set of child nodes to be rendered on screen. Later on, 
+// the SceneNode might grow additional functionality commonly found in a scene 
+// graph, e.g. coordinate transformations.
+function SceneNode() {
+  this._children = [];
+}
+
+SceneNode.prototype.add = function(node) {
+  this._children.push(node);
+}
+
+SceneNode.prototype.draw = function(shader_program) {
+  for (var i = 0; i < this._children.length; ++i) {
+    this._children[i].draw(shader_program);
+  }
+}
+
 // an (indexed) mesh geometry container.
 //
-// stores the vertex data in interleaved format. not doing so has severe performance penalties
-// in WebGL, and by severe I mean orders of magnitude slower than using an interleaved array.
+// stores the vertex data in interleaved format. not doing so has severe 
+// performance penalties in WebGL, and by severe I mean orders of magnitude 
+// slower than using an interleaved array.
 var MeshGeom = function(gl) {
   var self = {
     interleaved_buffer : gl.createBuffer(),
@@ -1059,7 +1088,7 @@ PV.prototype._parse_sheet_record = function(line) {
 }
 
 // a truly minimalistic PDB parser. It will die as soon as the input is 
-// not well-formed. it only reas ATOM, HETATM, HELIX and SHEET records, 
+// not well-formed. it only reads ATOM, HETATM, HELIX and SHEET records, 
 // everything else is ignored. in case of multi-model files, only the 
 // first model is read.
 //
@@ -1329,23 +1358,23 @@ MolBase.prototype.sline = function(opts) {
         positions[i*3+1] = p[1];
         positions[i*3+2] = p[2];
       }
-      var subdivided = catmull_rom_spline(positions, options.spline_detail, 
+      var sdiv = catmull_rom_spline(positions, options.spline_detail, 
                                           options.strength, false);
-      var interpolated_color = interpolate_color(colors, options.spline_detail);
-      for (var i = 1, e = subdivided.length/3; i < e; ++i) {
-        pos_one[0] = subdivided[3*(i-1)+0];
-        pos_one[1] = subdivided[3*(i-1)+1];
-        pos_one[2] = subdivided[3*(i-1)+2];
-        pos_two[0] = subdivided[3*(i-0)+0];
-        pos_two[1] = subdivided[3*(i-0)+1];
-        pos_two[2] = subdivided[3*(i-0)+2];
+      var interp_colors = interpolate_color(colors, options.spline_detail);
+      for (var i = 1, e = sdiv.length/3; i < e; ++i) {
+        pos_one[0] = sdiv[3*(i-1)+0];
+        pos_one[1] = sdiv[3*(i-1)+1];
+        pos_one[2] = sdiv[3*(i-1)+2];
+        pos_two[0] = sdiv[3*(i-0)+0];
+        pos_two[1] = sdiv[3*(i-0)+1];
+        pos_two[2] = sdiv[3*(i-0)+2];
 
-        clr_one[0] = interpolated_color[3*(i-1)+0];
-        clr_one[1] = interpolated_color[3*(i-1)+1];
-        clr_one[2] = interpolated_color[3*(i-1)+2];
-        clr_two[0] = interpolated_color[3*(i-0)+0];
-        clr_two[1] = interpolated_color[3*(i-0)+1];
-        clr_two[2] = interpolated_color[3*(i-0)+2];
+        clr_one[0] = interp_colors[3*(i-1)+0];
+        clr_one[1] = interp_colors[3*(i-1)+1];
+        clr_one[2] = interp_colors[3*(i-1)+2];
+        clr_two[0] = interp_colors[3*(i-0)+0];
+        clr_two[1] = interp_colors[3*(i-0)+1];
+        clr_two[2] = interp_colors[3*(i-0)+2];
         line_geom.add_line(pos_one, clr_one, pos_two, clr_two);
       }
     });
@@ -1353,37 +1382,20 @@ MolBase.prototype.sline = function(opts) {
   console.timeEnd('MolBase.sline');
   this._pv._add(line_geom);
   return line_geom;
-},
+}
 
-// FIXME: refactoring into smaller pieces.
-MolBase.prototype.cartoon = function(opts) {
-  console.time('Mol.cartoon');
-  opts = opts || {};
 
-  var options = {
-    color : opts.color || ss(),
-    strength: opts.strength || 0.5,
-    spline_detail : opts.spline_detail || this._pv.options('spline_detail'),
-    arc_detail : opts.arc_detail || this._pv.options('arc_detail'),
-    radius : opts.radius || 0.3,
-    force_tube: opts.force_tube || false,
-  }
-  var geom = MeshGeom(this._pv.gl());
-  var tangent = vec3.create(), pos = vec3.create(), left =vec3.create();
-  var up = vec3.create();
+MolBase.prototype._cartoon_add_tube = (function() {
   var rotation = mat3.create();
-  var coil_profile = TubeProfile(COIL_POINTS, options.arc_detail, 1.0);
-  var heli_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.1);
-  var strand_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.1);
-  var color = vec3.create();
-  var normal = vec3.create();
-  function tube_add(pos, left, res, tangent, color, first) {
+  var up = vec3.create();
+
+  return function(geom, pos, left, res, tangent, color, first, options) {
     var ss = res.ss();
-    var prof = coil_profile
+    var prof = options.coil_profile
     if (ss == 'H' && !options.force_tube) {
-      prof = heli_profile;
+      prof = options.helix_profile;
     } else if (ss == 'E' && !options.force_tube) {
-      prof = strand_profile;
+      prof = options.strand_profile;
     } else {
       if (first) {
         vec3.ortho(left, tangent);
@@ -1396,90 +1408,147 @@ MolBase.prototype.cartoon = function(opts) {
 
     prof.add_transformed(geom, pos, options.radius, rotation, color, first);
   }
-  for (var ci = 0; ci < this._chains.length; ++ci) {
-    var chain = this._chains[ci];
-    chain.each_backbone_trace(function(trace) {
+})();
+
+
+// INTERNAL: fills positions, normals and colors from the information found in 
+// trace. The 3 arrays must already have the correct size (3*trace.length).
+MolBase.prototype._color_pos_normals_from_trace = function(trace, colors, 
+                                                           positions, normals, 
+                                                           options) {
+  var strand_start = null;
+  var strand_end = null;
+  for (var i = 0; i < trace.length; ++i) {
+    var p = trace[i].atom('CA').pos();
+    var c = trace[i].atom('C').pos();
+    var o = trace[i].atom('O').pos();
+    if (trace[i].ss() == 'E') {
+      if (strand_start === null) {
+        strand_start = i;
+      }
+      strand_end = i;
+    } else {
+      if (strand_start !== null && !options.force_tube) {
+        inplace_smooth(positions, strand_start-1, strand_end+1);
+        strand_start = null;
+        strand_end = null;
+      }
+    }
+    positions[i*3+0] = p[0]; positions[i*3+1] = p[1]; positions[i*3+2] = p[2];
+
+    var dx = o[0] - c[0], dy = o[1] - c[1], dz = o[2] - c[2];
+
+    var div = 1.0/Math.sqrt(dx*dx+dy*dy+dz*dz);
+
+    normals[i*3+0] = dx*div; normals[i*3+1] = dy*div; normals[i*3+2] = dz*div;
+    options.color(trace[i].atom('CA'), colors, i*3);
+  }
+}
+
+MolBase.prototype._cartoon_for_chain = (function() {
+
+  var tangent = vec3.create(), pos = vec3.create(), left =vec3.create(),
+      color = vec3.create(), normal = vec3.create();
+
+  return function(chain, gl, options) {
+
+    var traces = chain.backbone_traces();
+    if (traces.length === 0) {
+      return null;
+    }
+    var geom = MeshGeom(gl);
+
+    for (var ti = 0; ti < traces.length; ++ti) {
+      var trace = traces[ti];
+
       var positions = new Float32Array(trace.length*3);
       var colors = new Float32Array(trace.length*3);
       var normals = new Float32Array(trace.length*3);
 
-      var strand_start = null;
-      var strand_end = null;
-      for (var i = 0; i < trace.length; ++i) {
-        var p = trace[i].atom('CA').pos();
-        var c = trace[i].atom('C').pos();
-        var o = trace[i].atom('O').pos();
-        if (trace[i].ss() == 'E') {
-          if (strand_start === null) {
-            strand_start = i;
-          }
-          strand_end = i;
-        } else {
-          if (strand_start !== null && !options.force_tube) {
-            inplace_smooth(positions, strand_start-1, strand_end+1);
-            strand_start = null;
-            strand_end = null;
-          }
-        }
-        positions[i*3+0] = p[0];
-        positions[i*3+1] = p[1];
-        positions[i*3+2] = p[2];
-        var dx = o[0] - c[0];
-        var dy = o[1] - c[1];
-        var dz = o[2] - c[2];
-        var div = 1.0/Math.sqrt(dx*dx+dy*dy+dz*dz);
-        normals[i*3+0] = dx * div;
-        normals[i*3+1] = dy * div;
-        normals[i*3+2] = dz * div;
-        options.color(trace[i].atom('CA'), colors, i*3);
-      }
-      var subdivided = catmull_rom_spline(positions, options.spline_detail, 
-                                          options.strength, false);
+      mol._color_pos_normals_from_trace(trace, colors, positions, normals, 
+                                        options);
+      var sdiv = catmull_rom_spline(positions, options.spline_detail, 
+                                    options.strength, false);
       var smooth_normals = interpolate_normals(normals, options.spline_detail);
-      var interpolated_color = interpolate_color(colors, options.spline_detail);
-      vec3.set(tangent, subdivided[3]-subdivided[0], subdivided[4]-subdivided[1],
-                subdivided[5]-subdivided[2]);
+      var interp_colors = interpolate_color(colors, options.spline_detail);
 
-      vec3.set(pos, subdivided[0], subdivided[1], subdivided[2]);
+      // handle start of trace. this could be moved inside the for-loop, but
+      // at the expense of a conditional inside the loop. unrolling is 
+      // slightly faster.
+      vec3.set(tangent, sdiv[3]-sdiv[0], sdiv[4]-sdiv[1], sdiv[5]-sdiv[2]);
+      vec3.set(pos, sdiv[0], sdiv[1], sdiv[2]);
       vec3.set(normal, smooth_normals[0], smooth_normals[1], smooth_normals[2]);
       vec3.normalize(tangent, tangent);
-      vec3.set(color, interpolated_color[0], interpolated_color[1],
-               interpolated_color[2]);
-      tube_add(pos, normal, trace[0], tangent, color, true);
-      for (var i = 1, e = subdivided.length/3 - 1; i < e; ++i) {
-        vec3.set(pos, subdivided[3*i+0], subdivided[3*i+1], subdivided[3*i+2]);
+      vec3.set(color, interp_colors[0], interp_colors[1], interp_colors[2]);
+
+      this._cartoon_add_tube(geom, pos, normal, trace[0], tangent, color, 
+                             true, options);
+
+      // handle the bulk of the trace
+      for (var i = 1, e = sdiv.length/3 - 1; i < e; ++i) {
+        vec3.set(pos, sdiv[3*i+0], sdiv[3*i+1], sdiv[3*i+2]);
         vec3.set(normal, smooth_normals[3*i+0], smooth_normals[3*i+1], 
                   smooth_normals[3*i+2]);
-        vec3.set(tangent, subdivided[3*(i+1)+0]-subdivided[3*(i-1)+0],
-                  subdivided[3*(i+1)+1]-subdivided[3*(i-1)+1],
-                  subdivided[3*(i+1)+2]-subdivided[3*(i-1)+2]);
+        vec3.set(tangent, sdiv[3*(i+1)+0]-sdiv[3*(i-1)+0],
+                  sdiv[3*(i+1)+1]-sdiv[3*(i-1)+1],
+                  sdiv[3*(i+1)+2]-sdiv[3*(i-1)+2]);
         vec3.normalize(tangent, tangent);
-        vec3.set(color, interpolated_color[i*3+0], interpolated_color[i*3+1],
-                interpolated_color[i*3+2]);
-        tube_add(pos, normal, trace[Math.floor(i/options.spline_detail)], 
-                  tangent, color, false);
+        vec3.set(color, interp_colors[i*3+0], interp_colors[i*3+1],
+                interp_colors[i*3+2]);
+        this._cartoon_add_tube(geom, pos, normal, 
+                               trace[Math.floor(i/options.spline_detail)], 
+                               tangent, color, false, options);
       }
-      vec3.set(tangent, 
-                subdivided[subdivided.length-3]-subdivided[subdivided.length-6], 
-                subdivided[subdivided.length-2]-subdivided[subdivided.length-5],
-                subdivided[subdivided.length-1]-subdivided[subdivided.length-4]);
+      // finish trace off, again unrolled for efficiency.
+      vec3.set(tangent, sdiv[sdiv.length-3]-sdiv[sdiv.length-6], 
+                sdiv[sdiv.length-2]-sdiv[sdiv.length-5],
+                sdiv[sdiv.length-1]-sdiv[sdiv.length-4]);
 
-      vec3.set(pos, subdivided[subdivided.length-3], subdivided[subdivided.length-2], 
-                subdivided[subdivided.length-1]);
+      vec3.set(pos, sdiv[sdiv.length-3], sdiv[sdiv.length-2], 
+                sdiv[sdiv.length-1]);
       vec3.set(normal, smooth_normals[smooth_normals.length-3],
                 smooth_normals[smooth_normals.length-2],
                 smooth_normals[smooth_normals.length-1]);
       vec3.normalize(tangent, tangent);
-      vec3.set(color, interpolated_color[interpolated_color.length-3],
-                interpolated_color[interpolated_color.length-2],
-                interpolated_color[interpolated_color.length-1]);
+      vec3.set(color, interp_colors[interp_colors.length-3],
+                interp_colors[interp_colors.length-2],
+                interp_colors[interp_colors.length-1]);
                 
-      tube_add(pos, normal, trace[trace.length-1], tangent, color, false);
-    });
+      this._cartoon_add_tube(geom, pos, normal, trace[trace.length-1], tangent, 
+                             color, false, options);
+    }
+    return geom;
+  }
+})();
+
+MolBase.prototype.cartoon = function(opts) {
+  console.time('Mol.cartoon');
+  opts = opts || {};
+
+
+  var options = {
+    color : opts.color || ss(),
+    strength: opts.strength || 0.5,
+    spline_detail : opts.spline_detail || this._pv.options('spline_detail'),
+    arc_detail : opts.arc_detail || this._pv.options('arc_detail'),
+    radius : opts.radius || 0.3,
+    force_tube: opts.force_tube || false,
+  };
+  options.coil_profile = TubeProfile(COIL_POINTS, options.arc_detail, 1.0);
+  options.helix_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.1);
+  options.strand_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.1);
+
+  var node = new SceneNode();
+  for (var i = 0; i < this._chains.length; ++i) {
+    var geom = this._cartoon_for_chain(this._chains[i], this._pv.gl(), options);
+    // check that there is anything to be added...
+    if (geom) {
+      node.add(geom);
+    }
   }
   console.timeEnd('Mol.cartoon');
-  this._pv._add(geom);
-  return geom;
+  this._pv._add(node);
+  return node;
 }
 // renders the protein using a smoothly interpolated tube, essentially identical to the
 // cartoon render mode, but without special treatment for helices and strands.
