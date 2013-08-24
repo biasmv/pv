@@ -116,14 +116,14 @@ function interpolate_normals(normals, num) {
     for (var j = 0; j < num; ++j) {
       var t = delta * j;
       vec3.transformMat3(bf, bf, m);
-      out[index+0] = bf[0];
+      out[index] = bf[0];
       out[index+1] = bf[1];
       out[index+2] = bf[2];
       index+=3;
     }
     vec3.copy(bf, af);
   }
-  out[index+0] = af[0];
+  out[index] = af[0];
   out[index+1] = af[1];
   out[index+2] = af[2];
   return out;
@@ -135,17 +135,17 @@ function interpolate_color(colors, num) {
   var bf = vec3.create(), af = vec3.create();
   var delta = 1/num;
   for (var i = 0; i < colors.length/3-1; ++i) {
-    vec3.set(bf, colors[3*i+0], colors[3*i+1], colors[3*i+2]);
+    vec3.set(bf, colors[3*i], colors[3*i+1], colors[3*i+2]);
     vec3.set(af, colors[3*i+3], colors[3*i+4], colors[3*i+5]);
     for (var j = 0; j < num; ++j) {
       var t = delta * j;
-      out[index+0] = bf[0]*(1-t)+af[0]*t;
+      out[index] = bf[0]*(1-t)+af[0]*t;
       out[index+1] = bf[1]*(1-t)+af[1]*t;
       out[index+2] = bf[2]*(1-t)+af[2]*t;
       index+=3;
     }
   }
-  out[index+0] = af[0];
+  out[index] = af[0];
   out[index+1] = af[1];
   out[index+2] = af[2];
   return out;
@@ -154,11 +154,11 @@ function interpolate_color(colors, num) {
 function even_odd(even, odd) {
   return function(atom, out, index) {
     if (atom.residue().num() % 2) {
-      out[index+0] = even[0];
+      out[index] = even[0];
       out[index+1] = even[1];
       out[index+2] = even[2];
     } else {
-      out[index+0] = odd[0];
+      out[index] = odd[0];
       out[index+1] = odd[1];
       out[index+2] = odd[2];
     }
@@ -170,17 +170,17 @@ function ss() {
   return function(atom, out, index) {
     switch (atom.residue().ss()) {
       case 'C':
-        out[index+0] = 0.8;
+        out[index] = 0.8;
         out[index+1] = 0.8;
         out[index+2] = 0.8;
         return;
       case 'H':
-        out[index+0] = 1.0;
+        out[index] = 1.0;
         out[index+1] = 0.0;
         out[index+2] = 0.0;
         return;
       case 'E':
-        out[index+0] = 0.0;
+        out[index] = 0.0;
         out[index+1] = 1.0;
         out[index+2] = 0.0;
         return;
@@ -191,7 +191,7 @@ function ss() {
 
 function uniform_color(color) {
   return function(atom, out, index) {
-    out[index+0] = color[0];
+    out[index] = color[0];
     out[index+1] = color[1];
     out[index+2] = color[2];
   }
@@ -443,7 +443,7 @@ var cubic_hermite_interpolate = (function() {
     vec3.scaleAndAdd(p, p, m_k, h10);
     vec3.scaleAndAdd(p, p, p_kp1, h01);
     vec3.scaleAndAdd(p, p, m_kp1, h11);
-    out[index+0] = p[0];
+    out[index] = p[0];
     out[index+1] = p[1];
     out[index+2] = p[2];
 }
@@ -479,7 +479,7 @@ function catmull_rom_spline(points, num, strength, circular) {
     vec3.set(m_k, 0, 0, 0);
   }
   for (var i = 1, e = points.length/3-1; i < e; ++i) {
-    vec3.set(p_kp3, points[3*(i+1)+0], points[3*(i+1)+1], points[3*(i+1)+2]);
+    vec3.set(p_kp3, points[3*(i+1)], points[3*(i+1)+1], points[3*(i+1)+2]);
     vec3.sub(m_kp1, p_kp3, p_kp1);
     vec3.scale(m_kp1, m_kp1, strength);
     for (var j = 0; j < num; ++j) {
@@ -505,7 +505,7 @@ function catmull_rom_spline(points, num, strength, circular) {
     index+=3;
   }
   if (!circular) {
-    out[index+0] = points[points.length-3];
+    out[index] = points[points.length-3];
     out[index+1] = points[points.length-2];
     out[index+2] = points[points.length-1];
     return out;
@@ -595,7 +595,7 @@ var ProtoSphere  = function(stacks, arcs) {
     for (var j = 0; j < self.arcs; ++j) {
       var nx = radius*Math.cos(j*horz_angle);
       var ny = radius*Math.sin(j*horz_angle);
-      self.verts[3*(j+i*self.arcs)+0] = nx;
+      self.verts[3*(j+i*self.arcs)] = nx;
       self.verts[3*(j+i*self.arcs)+1] = ny;
       self.verts[3*(j+i*self.arcs)+2] = z;
     }
@@ -603,14 +603,14 @@ var ProtoSphere  = function(stacks, arcs) {
   var index = 0;
   for (var i = 0; i < self.stacks-1; ++i) {
     for (var j = 0; j < self.arcs; ++j) {
-      self.indices[index+0] = (i+0)*self.arcs+j+0;
-      self.indices[index+1] = (i+1)*self.arcs+j+0;
-      self.indices[index+2] = (i+0)*self.arcs+((j+1) % self.arcs);
+      self.indices[index] = (i)*self.arcs+j;
+      self.indices[index+1] = (i+1)*self.arcs+j;
+      self.indices[index+2] = (i)*self.arcs+((j+1) % self.arcs);
 
       index += 3;
       
-      self.indices[index+0] = (i+0)*self.arcs+((j+1) % self.arcs);
-      self.indices[index+1] = (i+1)*self.arcs+j+0;
+      self.indices[index] = (i)*self.arcs+((j+1) % self.arcs);
+      self.indices[index+1] = (i+1)*self.arcs+j;
       self.indices[index+2] = (i+1)*self.arcs+((j+1) % self.arcs);
       index += 3;
     }
@@ -657,15 +657,15 @@ var TubeProfile = function(points, num, strength) {
     var i_prev = i == 0 ? self.arcs-1 : i-1;
     var i_next = i == self.arcs-1 ? 0 : i+1;
     normal[0] = self.verts[3*i_next+1] - self.verts[3*i_prev+1];
-    normal[1] = self.verts[3*i_prev+0] - self.verts[3*i_next+0];
+    normal[1] = self.verts[3*i_prev] - self.verts[3*i_next];
     vec3.normalize(normal, normal);
-    self.normals[3*i+0] = normal[0];
+    self.normals[3*i] = normal[0];
     self.normals[3*i+1] = normal[1];
     self.normals[3*i+2] = normal[2];
   }
 
   for (var i = 0; i < self.arcs; ++i) {
-    self.indices[6*i+0] = i;
+    self.indices[6*i] = i;
     self.indices[6*i+1] = i+self.arcs;
     self.indices[6*i+2] = ((i+1) % self.arcs) + self.arcs;
     self.indices[6*i+3] = i;
@@ -678,11 +678,11 @@ var TubeProfile = function(points, num, strength) {
     add_transformed : function(geom, center, radius, rotation, color, first) {
       var base_index = geom.num_verts() - self.arcs;
       for (var i = 0; i < self.arcs; ++i) {
-        vec3.set(pos, radius*self.verts[3*i+0], radius*self.verts[3*i+1], 
+        vec3.set(pos, radius*self.verts[3*i], radius*self.verts[3*i+1], 
                  0.0);
         vec3.transformMat3(pos, pos, rotation);
         vec3.add(pos, pos, center);
-        vec3.set(normal, self.normals[3*i+0], self.normals[3*i+1], 0.0);
+        vec3.set(normal, self.normals[3*i], self.normals[3*i+1], 0.0);
         vec3.transformMat3(normal, normal, rotation);
         geom.add_vertex(pos, normal, color);
       }
@@ -690,7 +690,7 @@ var TubeProfile = function(points, num, strength) {
         return;
       }
       for (var i = 0; i < self.indices.length/3; ++i) {
-        geom.add_triangle(base_index+self.indices[i*3+0], base_index+self.indices[i*3+1], 
+        geom.add_triangle(base_index+self.indices[i*3], base_index+self.indices[i*3+1], 
                           base_index+self.indices[i*3+2]);
       }
     }
@@ -724,24 +724,24 @@ var ProtoCylinder = function(arcs) {
   for (var i = 0; i < self.arcs; ++i) {
     var cos_angle = Math.cos(angle*i);
     var sin_angle = Math.sin(angle*i);
-    self.verts[3*i+0] = cos_angle;
+    self.verts[3*i] = cos_angle;
     self.verts[3*i+1] = sin_angle;
     self.verts[3*i+2] = -0.5;
-    self.verts[3*arcs+3*i+0] = cos_angle;
+    self.verts[3*arcs+3*i] = cos_angle;
     self.verts[3*arcs+3*i+1] = sin_angle;
     self.verts[3*arcs+3*i+2] = 0.5;
-    self.normals[3*i+0] = cos_angle;
+    self.normals[3*i] = cos_angle;
     self.normals[3*i+1] = sin_angle;
-    self.normals[3*arcs+3*i+0] = cos_angle;
+    self.normals[3*arcs+3*i] = cos_angle;
     self.normals[3*arcs+3*i+1] = sin_angle;
   }
   for (var i = 0; i < self.arcs; ++i) {
-    self.indices[6*i+0] = (i+0) % self.arcs;
+    self.indices[6*i] = (i) % self.arcs;
     self.indices[6*i+1] = arcs+((i+1) % self.arcs);
     self.indices[6*i+2] = (i+1) % self.arcs;
 
-    self.indices[6*i+3] = (i+0) % self.arcs;
-    self.indices[6*i+4] = arcs+((i+0) % self.arcs);
+    self.indices[6*i+3] = (i) % self.arcs;
+    self.indices[6*i+4] = arcs+((i) % self.arcs);
     self.indices[6*i+5] = arcs+((i+1) % self.arcs);
   }
   return {
@@ -749,16 +749,16 @@ var ProtoCylinder = function(arcs) {
       var base_index = geom.num_verts();
       var pos = vec3.create(), normal = vec3.create(), color;
       for (var i = 0; i < 2*self.arcs; ++i) {
-        vec3.set(pos, radius*self.verts[3*i+0], radius*self.verts[3*i+1], 
+        vec3.set(pos, radius*self.verts[3*i], radius*self.verts[3*i+1], 
                  length*self.verts[3*i+2]);
         vec3.transformMat3(pos, pos, rotation);
         vec3.add(pos, pos, center);
-        vec3.set(normal, self.normals[3*i+0], self.normals[3*i+1], self.normals[3*i+2]);
+        vec3.set(normal, self.normals[3*i], self.normals[3*i+1], self.normals[3*i+2]);
         vec3.transformMat3(normal, normal, rotation);
         geom.add_vertex(pos, normal, i < self.arcs ? clr_one : clr_two);
       }
       for (var i = 0; i < self.indices.length/3; ++i) {
-        geom.add_triangle(base_index+self.indices[i*3+0], base_index+self.indices[i*3+1], 
+        geom.add_triangle(base_index+self.indices[i*3], base_index+self.indices[i*3+1], 
                           base_index+self.indices[i*3+2]);
       }
     }
@@ -1277,7 +1277,7 @@ MolBase.prototype.line_trace = function(opts) {
     chain.each_backbone_trace(function(trace) {
       for (var i = 1; i < trace.length; ++i) {
         options.color(trace[i-1].atom('CA'), clr_one, 0);
-        options.color(trace[i+0].atom('CA'), clr_two, 0);
+        options.color(trace[i].atom('CA'), clr_two, 0);
         line_geom.add_line(trace[i-1].atom('CA').pos(), clr_one, 
                            trace[i-0].atom('CA').pos(), clr_two);
       }
@@ -1352,7 +1352,7 @@ MolBase.prototype.sline = function(opts) {
         var atom = trace[i].atom('CA');
         options.color(atom, colors, 3*i);
         var p = atom.pos();
-        positions[i*3+0] = p[0];
+        positions[i*3] = p[0];
         positions[i*3+1] = p[1];
         positions[i*3+2] = p[2];
       }
@@ -1360,17 +1360,17 @@ MolBase.prototype.sline = function(opts) {
                                           options.strength, false);
       var interp_colors = interpolate_color(colors, options.spline_detail);
       for (var i = 1, e = sdiv.length/3; i < e; ++i) {
-        pos_one[0] = sdiv[3*(i-1)+0];
+        pos_one[0] = sdiv[3*(i-1)];
         pos_one[1] = sdiv[3*(i-1)+1];
         pos_one[2] = sdiv[3*(i-1)+2];
-        pos_two[0] = sdiv[3*(i-0)+0];
+        pos_two[0] = sdiv[3*(i-0)];
         pos_two[1] = sdiv[3*(i-0)+1];
         pos_two[2] = sdiv[3*(i-0)+2];
 
-        clr_one[0] = interp_colors[3*(i-1)+0];
+        clr_one[0] = interp_colors[3*(i-1)];
         clr_one[1] = interp_colors[3*(i-1)+1];
         clr_one[2] = interp_colors[3*(i-1)+2];
-        clr_two[0] = interp_colors[3*(i-0)+0];
+        clr_two[0] = interp_colors[3*(i-0)];
         clr_two[1] = interp_colors[3*(i-0)+1];
         clr_two[2] = interp_colors[3*(i-0)+2];
         line_geom.add_line(pos_one, clr_one, pos_two, clr_two);
@@ -1432,13 +1432,13 @@ MolBase.prototype._color_pos_normals_from_trace = function(trace, colors,
         strand_end = null;
       }
     }
-    positions[i*3+0] = p[0]; positions[i*3+1] = p[1]; positions[i*3+2] = p[2];
+    positions[i*3] = p[0]; positions[i*3+1] = p[1]; positions[i*3+2] = p[2];
 
     var dx = o[0] - c[0], dy = o[1] - c[1], dz = o[2] - c[2];
 
     var div = 1.0/Math.sqrt(dx*dx+dy*dy+dz*dz);
 
-    normals[i*3+0] = dx*div; normals[i*3+1] = dy*div; normals[i*3+2] = dz*div;
+    normals[i*3] = dx*div; normals[i*3+1] = dy*div; normals[i*3+2] = dz*div;
     options.color(trace[i].atom('CA'), colors, i*3);
   }
 }
@@ -1484,14 +1484,14 @@ MolBase.prototype._cartoon_for_chain = (function() {
 
       // handle the bulk of the trace
       for (var i = 1, e = sdiv.length/3 - 1; i < e; ++i) {
-        vec3.set(pos, sdiv[3*i+0], sdiv[3*i+1], sdiv[3*i+2]);
-        vec3.set(normal, smooth_normals[3*i+0], smooth_normals[3*i+1], 
+        vec3.set(pos, sdiv[3*i], sdiv[3*i+1], sdiv[3*i+2]);
+        vec3.set(normal, smooth_normals[3*i], smooth_normals[3*i+1], 
                   smooth_normals[3*i+2]);
-        vec3.set(tangent, sdiv[3*(i+1)+0]-sdiv[3*(i-1)+0],
+        vec3.set(tangent, sdiv[3*(i+1)]-sdiv[3*(i-1)],
                   sdiv[3*(i+1)+1]-sdiv[3*(i-1)+1],
                   sdiv[3*(i+1)+2]-sdiv[3*(i-1)+2]);
         vec3.normalize(tangent, tangent);
-        vec3.set(color, interp_colors[i*3+0], interp_colors[i*3+1],
+        vec3.set(color, interp_colors[i*3], interp_colors[i*3+1],
                 interp_colors[i*3+2]);
         this._cartoon_add_tube(geom, pos, normal, 
                                trace[Math.floor(i/options.spline_detail)], 
@@ -1618,7 +1618,7 @@ ChainBase.prototype._trace_for_chain = (function() {
                                            options.radius, clr_one);
       for (var i = 1; i < trace.length; ++i) {
         var ca_prev_pos = trace[i-1].atom('CA').pos();
-        var ca_this_pos = trace[i+0].atom('CA').pos();
+        var ca_this_pos = trace[i].atom('CA').pos();
         options.color(trace[i].atom('CA'), clr_two, 0);
         options.proto_sphere.add_transformed(geom, ca_this_pos, options.radius, 
                                              clr_two);
