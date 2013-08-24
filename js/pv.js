@@ -76,16 +76,11 @@ var inplace_smooth = (function() {
   var bf = vec3.create(), af = vec3.create(), cf = vec3.create(),
       smooth_factor = 0.5;
   return function(positions, from, to) {
-    vec3.set(bf, positions[3*from+0], positions[3*from+1], positions[3*from+2]);
-    vec3.set(cf, positions[3*from+0], positions[3*from+1], positions[3*from+2]);
+    vec3.set(bf, positions[3*from], positions[3*from+1], positions[3*from+2]);
+    vec3.set(cf, positions[3*from], positions[3*from+1], positions[3*from+2]);
     for (var i = from; i < to; ++i) {
-      vec3.set(af, positions[3*i+0], positions[3*i+1], positions[3*i+2]);
-      /*
-      positions[3*i+0] = af[0]*0.33 + cf[0]*0.33 + bf[0]*0.33;
-      positions[3*i+1] = af[1]*0.33 + cf[1]*0.33 + bf[1]*0.33;
-      positions[3*i+2] = af[2]*0.33 + cf[2]*0.33 + bf[2]*0.33;
-      */
-      positions[3*i+0] = af[0]*0.25 + cf[0]*0.50 + bf[0]*0.25;
+      vec3.set(af, positions[3*i], positions[3*i+1], positions[3*i+2]);
+      positions[3*i]   = af[0]*0.25 + cf[0]*0.50 + bf[0]*0.25;
       positions[3*i+1] = af[1]*0.25 + cf[1]*0.50 + bf[1]*0.25;
       positions[3*i+2] = af[2]*0.25 + cf[2]*0.50 + bf[2]*0.25;
       vec3.copy(bf, cf);
@@ -237,8 +232,9 @@ ChainBase.prototype.each_residue = function(callback) {
 ChainBase.prototype.residues = function() { return this._residues; }
 ChainBase.prototype.structure = function() { return this._structure; }
 
-// invokes a callback for each connected stretch of amino acids. these stretches are used 
-// for all trace-based rendering styles, e.g. sline, line_trace, tube, cartoon etc. 
+// invokes a callback for each connected stretch of amino acids. these 
+// stretches are used for all trace-based rendering styles, e.g. sline, 
+// line_trace, tube, cartoon etc. 
 ChainBase.prototype.each_backbone_trace = function(callback) {
   var  stretch = [];
   for (var i = 0; i < this._residues.length; i+=1) {
@@ -380,8 +376,8 @@ Chain.prototype.add_residue = function(name, num) {
 
 // assigns secondary structure to residues in range from_num to to_num.
 Chain.prototype.assign_ss = function(from_num, to_num, ss) {
-  // FIXME: when the chain numbers are completely ordered, perform binary search 
-  // to identify range of residues to assign secondary structure to.
+  // FIXME: when the chain numbers are completely ordered, perform binary 
+  // search to identify range of residues to assign secondary structure to.
   for (var i = 1; i < this._residues.length-1; ++i) {
     var res = this._residues[i];
     // FIXME: we currently don't set the secondary structure of the first and 
@@ -454,8 +450,9 @@ var cubic_hermite_interpolate = (function() {
 })();
 
 
-// interpolates the given list of points (stored in a Float32Array) with a Cubic 
-// Hermite spline using the method of Catmull and Rom to calculate the tangents.
+// interpolates the given list of points (stored in a Float32Array) with a 
+// Cubic Hermite spline using the method of Catmull and Rom to calculate the 
+// tangents.
 function catmull_rom_spline(points, num, strength, circular) {
   circular = circular || false;
   strength = strength || 0.5;
@@ -551,8 +548,8 @@ var LineGeom = function(gl) {
       gl.disableVertexAttribArray(clr_attrib);
     },
 
-    // prepare data for rendering. if the buffer data was modified, this synchronizes 
-    // the corresponding GL array buffers.
+    // prepare data for rendering. if the buffer data was modified, this 
+    // synchronizes the corresponding GL array buffers.
     bind : function() {
       gl.bindBuffer(gl.ARRAY_BUFFER, self.interleaved_buffer);
       if (!self.ready) {
@@ -623,14 +620,16 @@ var ProtoSphere  = function(stacks, arcs) {
     add_transformed : function(geom, center, radius, color) {
       var base_index = geom.num_verts();
       for (var i = 0; i < self.stacks*self.arcs; ++i) {
-        vec3.set(normal, self.verts[3*i+0], self.verts[3*i+1], self.verts[3*i+2]);
+        vec3.set(normal, self.verts[3*i], self.verts[3*i+1], 
+                 self.verts[3*i+2]);
         vec3.copy(pos, normal);
         vec3.scale(pos, pos, radius);
         vec3.add(pos, pos, center);
         geom.add_vertex(pos, normal, color);
       }
       for (var i = 0; i < self.indices.length/3; ++i) {
-        geom.add_triangle(base_index+self.indices[i*3+0], base_index+self.indices[i*3+1], 
+        geom.add_triangle(base_index+self.indices[i*3], 
+                          base_index+self.indices[i*3+1], 
                           base_index+self.indices[i*3+2]);
       }
     },
@@ -1513,8 +1512,8 @@ MolBase.prototype._cartoon_for_chain = (function() {
                 interp_colors[interp_colors.length-2],
                 interp_colors[interp_colors.length-1]);
                 
-      this._cartoon_add_tube(geom, pos, normal, trace[trace.length-1], tangent, 
-                             color, false, options);
+      this._cartoon_add_tube(geom, pos, normal, trace[trace.length-1], 
+                             tangent, color, false, options);
     }
     return geom;
   }
@@ -1539,7 +1538,8 @@ MolBase.prototype.cartoon = function(opts) {
 
   var node = new SceneNode();
   for (var i = 0; i < this._chains.length; ++i) {
-    var geom = this._cartoon_for_chain(this._chains[i], this._pv.gl(), options);
+    var geom = this._cartoon_for_chain(this._chains[i], this._pv.gl(), 
+                                       options);
     // check that there is anything to be added...
     if (geom) {
       node.add(geom);
@@ -1550,8 +1550,9 @@ MolBase.prototype.cartoon = function(opts) {
   return node;
 }
 
-// renders the protein using a smoothly interpolated tube, essentially identical to the
-// cartoon render mode, but without special treatment for helices and strands.
+// renders the protein using a smoothly interpolated tube, essentially 
+// identical to the cartoon render mode, but without special treatment for 
+// helices and strands.
 MolBase.prototype.tube = function(opts) {
   opts = opts || {};
   opts.force_tube = true;
@@ -1583,9 +1584,12 @@ MolBase.prototype.lines = function(opts) {
       var cs = 0.2;
       var pos = atom.pos();
       options.color(atom, clr, 0);
-      line_geom.add_line([pos[0]-cs, pos[1], pos[2]], clr, [pos[0]+cs, pos[1], pos[2]], clr);
-      line_geom.add_line([pos[0], pos[1]-cs, pos[2]], clr, [pos[0], pos[1]+cs, pos[2]], clr);
-      line_geom.add_line([pos[0], pos[1], pos[2]-cs], clr, [pos[0], pos[1], pos[2]+cs], clr);
+      line_geom.add_line([pos[0]-cs, pos[1], pos[2]], clr, 
+                         [pos[0]+cs, pos[1], pos[2]], clr);
+      line_geom.add_line([pos[0], pos[1]-cs, pos[2]], clr, 
+                         [pos[0], pos[1]+cs, pos[2]], clr);
+      line_geom.add_line([pos[0], pos[1], pos[2]-cs], clr, 
+                         [pos[0], pos[1], pos[2]+cs], clr);
     }
   });
   console.timeEnd('MolBase.lines');
@@ -1742,8 +1746,8 @@ Mol.prototype.connect = function(atom_a, atom_b) {
   return bond;
 }
 
-// determine connectivity structure. for simplicity only connects atoms of the same 
-// residue and peptide bonds
+// determine connectivity structure. for simplicity only connects atoms of the 
+// same residue and peptide bonds
 Mol.prototype.derive_connectivity = function() {
   console.time('Mol.derive_connectivity');
   var this_structure = this;
