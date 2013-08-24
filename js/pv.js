@@ -661,14 +661,14 @@ var ProtoSphere  = function(stacks, arcs) {
   for (var i = 0; i < self.stacks-1; ++i) {
     for (var j = 0; j < self.arcs; ++j) {
       self.indices[index] = (i)*self.arcs+j;
-      self.indices[index+1] = (i+1)*self.arcs+j;
-      self.indices[index+2] = (i)*self.arcs+((j+1) % self.arcs);
+      self.indices[index+1] = (i)*self.arcs+((j+1) % self.arcs);
+      self.indices[index+2] = (i+1)*self.arcs+j;
 
       index += 3;
       
       self.indices[index] = (i)*self.arcs+((j+1) % self.arcs);
-      self.indices[index+1] = (i+1)*self.arcs+j;
-      self.indices[index+2] = (i+1)*self.arcs+((j+1) % self.arcs);
+      self.indices[index+1] = (i+1)*self.arcs+((j+1) % self.arcs);
+      self.indices[index+2] = (i+1)*self.arcs+j;
       index += 3;
     }
   }
