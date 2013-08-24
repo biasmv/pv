@@ -89,7 +89,7 @@
   </script>
   <script>
     var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'medium', width: 400, height : 400 });
+                       { quality : 'high', width: 400, height : 400 });
     var mol;
     function lines() {
       pv.clear();
@@ -135,7 +135,7 @@
     function on_ready() {
       $.ajax({ url : 'pdbs/1ake.pdb', success : function(data) {
         mol = pv.pdb(data);
-        preset();
+        trace();
         pv.center_on(mol);
       }});
     }

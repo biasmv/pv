@@ -1273,7 +1273,6 @@ MolBase.prototype.line_trace = function(opts) {
   }
   var clr_one = vec3.create(), clr_two = vec3.create();
   var line_geom = LineGeom(this._pv.gl());
-  var prev_residue = false;
   for (var ci  in this._chains) {
     var chain = this._chains[ci];
     chain.each_backbone_trace(function(trace) {
@@ -1550,6 +1549,7 @@ MolBase.prototype.cartoon = function(opts) {
   this._pv._add(node);
   return node;
 }
+
 // renders the protein using a smoothly interpolated tube, essentially identical to the
 // cartoon render mode, but without special treatment for helices and strands.
 MolBase.prototype.tube = function(opts) {
@@ -1593,35 +1593,31 @@ MolBase.prototype.lines = function(opts) {
   return line_geom;
 }
 
-MolBase.prototype.trace = function(opts) {
-  opts = opts || {}
-  var options = {
-    color : opts.color || uniform_color([1, 0, 0]),
-    radius: opts.radius || 0.3,
-    arc_detail : (opts.arc_detail || this._pv.options('arc_detail'))*4,
-    sphere_detail : opts.sphere_detail || this._pv.options('sphere_detail')
-  }
-  var clr_one = vec3.create(), clr_two = vec3.create();
-  var geom = MeshGeom(this._pv.gl());
-  var prev_residue = false;
-  var proto_cyl = ProtoCylinder(options.arc_detail);
-  var proto_sphere = ProtoSphere(options.sphere_detail, options.sphere_detail);
+ChainBase.prototype._trace_for_chain = (function() {
+
   var rotation = mat3.create();
-  var dir = vec3.create();
-  var left = vec3.create();
-  var up = vec3.create();
-  for (var ci = 0; ci < this._chains.length; ++ci) {
-    var chain = this._chains[ci];
-    chain.each_backbone_trace(function(trace) {
+
+  var dir = vec3.create(), left = vec3.create(), up = vec3.create();
+  var clr_one = vec3.create(), clr_two = vec3.create();
+
+  return function(gl, options) {
+    var traces = this.backbone_traces();
+    if (traces.length === 0) {
+      return null;
+    }
+    var geom = MeshGeom(gl);
+    for (var ti = 0; ti < traces.length; ++ti) {
+      var trace = traces[ti];
+
       options.color(trace[0].atom('CA'), clr_one, 0);
-      proto_sphere.add_transformed(geom, trace[0].atom('CA').pos(), options.radius,
-                                    clr_one);
-      for(var i = 1; i < trace.length; ++i) {
+      options.proto_sphere.add_transformed(geom, trace[0].atom('CA').pos(), 
+                                           options.radius, clr_one);
+      for (var i = 1; i < trace.length; ++i) {
         var ca_prev_pos = trace[i-1].atom('CA').pos();
         var ca_this_pos = trace[i+0].atom('CA').pos();
         options.color(trace[i].atom('CA'), clr_two, 0);
-        proto_sphere.add_transformed(geom, ca_this_pos, options.radius,
-                                      clr_two);
+        options.proto_sphere.add_transformed(geom, ca_this_pos, options.radius, 
+                                             clr_two);
         vec3.sub(dir, ca_this_pos, ca_prev_pos);
         var length = vec3.length(dir);
 
@@ -1632,14 +1628,36 @@ MolBase.prototype.trace = function(opts) {
         var mid_point = vec3.clone(ca_prev_pos);
         vec3.add(mid_point, mid_point, ca_this_pos);
         vec3.scale(mid_point, mid_point, 0.5);
-        proto_cyl.add_transformed(geom, mid_point, length, options.radius, rotation, 
-                                  clr_one, clr_two);
+        options.proto_cyl.add_transformed(geom, mid_point, length, 
+                                          options.radius, rotation, 
+                                          clr_one, clr_two);
         vec3.copy(clr_one, clr_two);
       }
-    });
+    }
+    return geom;
   }
-  this._pv._add(geom);
-  return geom;
+})();
+MolBase.prototype.trace = function(opts) {
+  opts = opts || {}
+  var options = {
+    color : opts.color || uniform_color([1, 0, 0]),
+    radius: opts.radius || 0.3,
+    arc_detail : (opts.arc_detail || this._pv.options('arc_detail'))*4,
+    sphere_detail : opts.sphere_detail || this._pv.options('sphere_detail')
+  }
+  var node = new SceneNode();
+  options.proto_cyl = ProtoCylinder(options.arc_detail);
+  options.proto_sphere = ProtoSphere(options.sphere_detail, 
+                                     options.sphere_detail);
+  for (var ci = 0; ci < this._chains.length; ++ci) {
+    var chain = this._chains[ci];
+    var geom = this._chains[ci]._trace_for_chain(this._pv.gl(), options);
+    if (geom) {
+      node.add(geom);
+    }
+  }
+  this._pv._add(node);
+  return node;
 }
 
 MolBase.prototype.center = function() {
