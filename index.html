@@ -54,7 +54,8 @@
   </script>
   <script>
     var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'medium', width: 400, height : 400 });
+                       { quality : 'medium', width: 400, height : 400,
+                         antialias : false});
     var mol;
     function lines() {
       pv.clear();

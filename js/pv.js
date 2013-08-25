@@ -2,6 +2,17 @@ var pv = (function(){
 "use strict";
 
 
+var WEBGL_NOT_SUPPORTED = '\
+<div style="vertical-align:middle; text-align:center;">\
+<h1>Oink</h1><p>Your browser does not support WebGL. \
+You might want to try Chrome, Firefox, IE 10 or newer versions of Safari\
+</p>\
+<p>If you are using a recent version of one of the above browsers, your \
+graphic card might be blocked. Check the browser documentation for details\
+</p>\
+</div>';
+
+// hemilight fragment shader
 var HEMILIGHT_FS = '                                                   \n\
 precision mediump float;                                               \n\
                                                                        \n\
@@ -22,6 +33,7 @@ void main(void) {                                                      \n\
 }                                                                      \n\
 '
 
+// hemilight vertex shader
 var HEMILIGHT_VS = '                                                   \n\
 attribute vec3 attr_pos;                                               \n\
 attribute vec3 attr_color;                                             \n\
@@ -38,7 +50,7 @@ void main(void) {                                                      \n\
   vert_color = attr_color;                                             \n\
 }                                                                      \n\
 '
-
+// outline shader. mixes outline_color with fog_color
 var OUTLINE_FS = '                                                     \n\
 precision mediump float;                                               \n\
                                                                        \n\
@@ -55,7 +67,8 @@ void main() {                                                          \n\
                       fog_factor);                                     \n\
 }                                                                      \n\
 '
-
+// outline vertex shader. expands vertices along the (in-screen) xy
+// components of the normals.
 var OUTLINE_VS = '                                                     \n\
                                                                        \n\
 attribute vec3 attr_pos;                                               \n\
@@ -108,23 +121,18 @@ vec3.ortho = (function() {
 })();
 
 
-// assumes that axis is normalized. don't expect 
-// to get meaningful results if it's not
+// assumes that axis is normalized. don't expect  to get meaningful results 
+// if it's not
 mat3.axisRotation = function(out, axis, angle) {
   var sa = Math.sin(angle),
       ca = Math.cos(angle),
       x  = axis[0], y  = axis[1], z = axis[2],
       xx = x*x, xy = x*y, xz = x*z, yy = y*y,
       yz = y*z, zz =z*z;
-  out[0] = xx+ca-xx*ca;
-  out[1] = xy-ca*xy-sa*z;
-  out[2] = xz-ca*xz+sa*y;
-  out[3] = xy-ca*xy+sa*z;
-  out[4] = yy+ca-ca*yy;
-  out[5] = yz-ca*yz-sa*x;
-  out[6] = xz-ca*xz-sa*y;
-  out[7] = yz-ca*yz+sa*x;
-  out[8] = zz+ca-ca*zz;
+
+  out[0] = xx+ca-xx*ca;   out[1] = xy-ca*xy-sa*z; out[2] = xz-ca*xz+sa*y;
+  out[3] = xy-ca*xy+sa*z; out[4] = yy+ca-ca*yy;   out[5] = yz-ca*yz-sa*x;
+  out[6] = xz-ca*xz-sa*y; out[7] = yz-ca*yz+sa*x; out[8] = zz+ca-ca*zz;
   return out;
 }
 
@@ -186,6 +194,8 @@ function interpolate_normals(normals, num) {
   return out;
 }
 
+// linearly interpolates the array of colors and returns it as a Float32Array
+// color must be an array containing a sequence of R,G,B triples.
 function interpolate_color(colors, num) {
   var out = new Float32Array((colors.length-3)*num);
   var index = 0;
@@ -865,16 +875,22 @@ var MeshGeom = function(gl) {
       gl.vertexAttribPointer(pos_attrib, 3, gl.FLOAT, false, 9*4, 0*4);
 
       var normal_attrib = gl.getAttribLocation(shader_program, 'attr_normal');
-      gl.enableVertexAttribArray(normal_attrib);
-      gl.vertexAttribPointer(normal_attrib, 3, gl.FLOAT, false, 9*4, 3*4);
+      if (normal_attrib !== -1) {
+        gl.enableVertexAttribArray(normal_attrib);
+        gl.vertexAttribPointer(normal_attrib, 3, gl.FLOAT, false, 9*4, 3*4);
+      }
 
       var clr_attrib = gl.getAttribLocation(shader_program, 'attr_color');
-      gl.vertexAttribPointer(clr_attrib, 3, gl.FLOAT, false, 9*4, 6*4);
-      gl.enableVertexAttribArray(clr_attrib);
+      if (clr_attrib !== -1) {
+        gl.vertexAttribPointer(clr_attrib, 3, gl.FLOAT, false, 9*4, 6*4);
+        gl.enableVertexAttribArray(clr_attrib);
+      }
       gl.drawElements(gl.TRIANGLES, self.num_triangles*3, gl.UNSIGNED_SHORT, 0);
       gl.disableVertexAttribArray(pos_attrib);
-      gl.disableVertexAttribArray(clr_attrib);
-      gl.disableVertexAttribArray(normal_attrib);
+      if (clr_attrib !==-1)
+        gl.disableVertexAttribArray(clr_attrib);
+      if (normal_attrib !== -1)
+        gl.disableVertexAttribArray(normal_attrib);
     },
     add_vertex : function(pos, normal, color) {
       // pushing all values at once seems to be more efficient than pushing
@@ -995,21 +1011,21 @@ function PV(dom_element, opts) {
     antialias : opts.antialias || true,
     quality : opts.quality || 'low'
   }
+  this._ok = false;
   this.quality(this._options.quality);
   this._canvas = document.createElement('canvas');
   this._canvas.width = this._options.width;
   this._canvas.height = this._options.height;
-  dom_element.appendChild(this._canvas);
-  this._mouse_move_listener = bind(this, this._mouse_move);
-  this._mouse_up_listener = bind(this, this._mouse_up);
-  this._canvas.addEventListener('mousewheel', bind(this, this._mouse_wheel), false);
-  this._canvas.addEventListener('mousedown', bind(this, this._mouse_down), false);
+  this._dom_element = dom_element
+  this._dom_element.appendChild(this._canvas);
 
   document.addEventListener('DOMContentLoaded', 
                             bind(this, this._init_pv));
 }
 
 PV.prototype.gl = function() { return this._gl; }
+
+PV.prototype.ok = function() { return this._ok; }
 
 
 PV.prototype.options = function(opt_name) {
@@ -1044,15 +1060,20 @@ PV.prototype._initGL = function () {
     // todo wrap in try-catch for browser which don't support WebGL
     this._gl = this._canvas.getContext('experimental-webgl', 
                                       { antialias: this._options.antialias });
+    if (!this._gl) {
+      console.error('WebGL not supported');
+      return false;
+    }
     this._gl.viewportWidth = this._options.width;
     this._gl.viewportHeight = this._options.height;
 
     this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
     this._gl.lineWidth(2.0);
     this._gl.cullFace(this._gl.FRONT);
-    this._gl.enable(gl.CULL_FACE);
+    this._gl.enable(this._gl.CULL_FACE);
     this._gl.enable(this._gl.DEPTH_TEST);
-  }
+    return true;
+}
 
 PV.prototype._shader_from_string = function(shader_code, type) {
   var shader;
@@ -1087,17 +1108,32 @@ PV.prototype._init_shader = function(vert_shader, frag_shader) {
 };
 
 PV.prototype._mouse_up = function(event) {
-  this._canvas.removeEventListener('mousemove', this._mouse_move_listener, false);
+  this._canvas.removeEventListener('mousemove', this._mouse_move_listener, 
+                                   false);
   this._canvas.removeEventListener('mouseup', this._mouse_up_listener, false);
   document.removeEventListener('mousemove', this._mouse_move_listener);
 }
 
 
 PV.prototype._init_pv = function() {
-  this._initGL();
+  if (!this._initGL()) {
+    this._dom_element.removeChild(this._canvas);
+    this._dom_element.innerHTML = WEBGL_NOT_SUPPORTED;
+    this._dom_element.style.width = this._options.width+'px';
+    this._dom_element.style.height = this._options.height+'px';
+    return false; 
+  }
+  this._ok = true;
   this._cam = Cam(this._gl);
   this._hemilight_shader = this._init_shader(HEMILIGHT_VS, HEMILIGHT_FS);
   this._outline_shader = this._init_shader(OUTLINE_VS, OUTLINE_FS);
+  this._mouse_move_listener = bind(this, this._mouse_move);
+  this._mouse_up_listener = bind(this, this._mouse_up);
+  this._canvas.addEventListener('mousewheel', bind(this, this._mouse_wheel), 
+                                false);
+  this._canvas.addEventListener('mousedown', bind(this, this._mouse_down), 
+                                false);
+  return true;
 }
 
 PV.prototype._add = function(what) {
@@ -1165,6 +1201,10 @@ PV.prototype._parse_sheet_record = function(line) {
 // the parent structure, the buffer could be managed on that level and
 // released once the structure is deleted.
 PV.prototype.pdb = function(text) {
+  if (!this._ok) {
+    console.error('can not load PDB. Viewer not properly initialized');
+    return false;
+  }
   console.time('PV.pdb'); 
   var structure = new Mol(this);
   var curr_chain = null;
