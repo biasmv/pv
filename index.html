@@ -54,7 +54,7 @@
   </script>
   <script>
     var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'medium', width: 400, height : 400,
+                       { quality : 'medium', width: 600, height : 600,
                          antialias : true});
     var mol;
     function lines() {
@@ -101,7 +101,7 @@
     function on_ready() {
       $.ajax({ url : 'pdbs/1ake.pdb', success : function(data) {
         mol = pv.pdb(data);
-        tube();
+        cartoon();
         pv.center_on(mol);
       }});
     }

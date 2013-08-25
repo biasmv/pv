@@ -137,62 +137,23 @@ mat3.axisRotation = function(out, axis, angle) {
 }
 
 
+// performs an in-place smoothing over 3 consecutive positions.
 var inplace_smooth = (function() {
-  var bf = vec3.create(), af = vec3.create(), cf = vec3.create(),
-      smooth_factor = 0.5;
+  var bf = vec3.create(), af = vec3.create(), cf = vec3.create();
   return function(positions, from, to) {
-    vec3.set(bf, positions[3*from], positions[3*from+1], positions[3*from+2]);
+    vec3.set(bf, positions[3*(from-1)], positions[3*(from-1)+1], 
+             positions[3*(from-1)+2]);
     vec3.set(cf, positions[3*from], positions[3*from+1], positions[3*from+2]);
-    for (var i = from; i < to; ++i) {
+    for (var i = from+1; i < to; ++i) {
       vec3.set(af, positions[3*i], positions[3*i+1], positions[3*i+2]);
-      positions[3*i]   = af[0]*0.25 + cf[0]*0.50 + bf[0]*0.25;
-      positions[3*i+1] = af[1]*0.25 + cf[1]*0.50 + bf[1]*0.25;
-      positions[3*i+2] = af[2]*0.25 + cf[2]*0.50 + bf[2]*0.25;
+      positions[3*(i-1)]   = af[0]*0.25 + cf[0]*0.50 + bf[0]*0.25;
+      positions[3*(i-1)+1] = af[1]*0.25 + cf[1]*0.50 + bf[1]*0.25;
+      positions[3*(i-1)+2] = af[2]*0.25 + cf[2]*0.50 + bf[2]*0.25;
       vec3.copy(bf, cf);
       vec3.copy(cf, af);
     }
   }
 })();
-
-// calculates intermediate normals on the smooth tube (or ribbon) from
-// residues normals given for each residue. the interpolated normals
-// are obtained by "rotating" the normal of the previous residue onto
-// the normal of the next residue. consecutive normals are flipped when
-// the angle between them is larger than 180 degrees.
-function interpolate_normals(normals, num) {
-  var out = new Float32Array((normals.length-3)*num),
-      index = 0,
-      m = mat3.create(),
-      bf = vec3.create(),
-      af = vec3.create(),
-      cross = vec3.create(),
-      delta = 1.0/num;
-
-  vec3.set(bf, normals[0], normals[1], normals[2]);
-  for (var i = 0, e = normals.length/3-1;  i < e; ++i) {
-    vec3.set(af, normals[3*(i+1)+3], normals[3*(i+1)+4], normals[3*(i+1)+5]);
-    if (vec3.dot(af, bf) < 0) {
-      vec3.negate(af, af);
-    }
-    var delta_angle = vec3.dot(af, bf)/num;
-    vec3.cross(cross, af, bf);
-    mat3.axisRotation(m, cross, delta_angle);
-
-    for (var j = 0; j < num; ++j) {
-      var t = delta * j;
-      vec3.transformMat3(bf, bf, m);
-      out[index] = bf[0];
-      out[index+1] = bf[1];
-      out[index+2] = bf[2];
-      index+=3;
-    }
-    vec3.copy(bf, af);
-  }
-  out[index] = af[0];
-  out[index+1] = af[1];
-  out[index+2] = af[2];
-  return out;
-}
 
 // linearly interpolates the array of colors and returns it as a Float32Array
 // color must be an array containing a sequence of R,G,B triples.
@@ -1477,7 +1438,7 @@ MolBase.prototype.sline = function(opts) {
         positions[i*3+2] = p[2];
       }
       var sdiv = catmull_rom_spline(positions, options.spline_detail, 
-                                          options.strength, false);
+                                    options.strength, false);
       var interp_colors = interpolate_color(colors, options.spline_detail);
       for (var i = 1, e = sdiv.length/3; i < e; ++i) {
         pos_one[0] = sdiv[3*(i-1)];
@@ -1533,36 +1494,38 @@ MolBase.prototype._cartoon_add_tube = (function() {
 // trace. The 3 arrays must already have the correct size (3*trace.length).
 MolBase.prototype._color_pos_normals_from_trace = function(trace, colors, 
                                                            positions, normals, 
-                                                           options) {
-  var strand_start = null;
-  var strand_end = null;
+                                                           strengths, options) {
+  var last_x = 0, last_y = 0, last_z = 0;
   for (var i = 0; i < trace.length; ++i) {
     var p = trace[i].atom('CA').pos();
     var c = trace[i].atom('C').pos();
     var o = trace[i].atom('O').pos();
-    if (trace[i].ss() == 'E') {
-      if (strand_start === null) {
-        strand_start = i;
-      }
-      strand_end = i;
-    } else {
-      if (strand_start !== null && !options.force_tube) {
-        inplace_smooth(positions, strand_start-1, strand_end+1);
-        strand_start = null;
-        strand_end = null;
-      }
-    }
+    strengths[i] = trace[i].ss() === 'E' ? 0.5 : 1.0;
     positions[i*3] = p[0]; positions[i*3+1] = p[1]; positions[i*3+2] = p[2];
 
     var dx = o[0] - c[0], dy = o[1] - c[1], dz = o[2] - c[2];
 
     var div = 1.0/Math.sqrt(dx*dx+dy*dy+dz*dz);
 
-    normals[i*3] = dx*div; normals[i*3+1] = dy*div; normals[i*3+2] = dz*div;
+    if (i > 0) {
+      if (last_x*dx+last_y*dy+last_z*dz < 0) {
+        dx *= -1;
+        dy *= -1;
+        dz *= -1;
+      }
+    }
+    last_x = dx;
+    last_y = dy;
+    last_z = dz;
+    normals[i*3]   = positions[3*i]+dx*div; 
+    normals[i*3+1] = positions[3*i+1]+dy*div; 
+    normals[i*3+2] = positions[3*i+2]+dz*div;
     options.color(trace[i].atom('CA'), colors, i*3);
   }
 }
 
+// constructs a cartoon representation for all consecutive backbone traces found
+// in the given chain. 
 MolBase.prototype._cartoon_for_chain = (function() {
 
   var tangent = vec3.create(), pos = vec3.create(), left =vec3.create(),
@@ -1582,21 +1545,29 @@ MolBase.prototype._cartoon_for_chain = (function() {
       var positions = new Float32Array(trace.length*3);
       var colors = new Float32Array(trace.length*3);
       var normals = new Float32Array(trace.length*3);
+      var strenghts = new Float32Array(trace.length);
 
       mol._color_pos_normals_from_trace(trace, colors, positions, normals, 
-                                        options);
+                                        strenghts, options);
       var sdiv = catmull_rom_spline(positions, options.spline_detail, 
                                     options.strength, false);
-      var smooth_normals = interpolate_normals(normals, options.spline_detail);
+      var normal_sdiv = catmull_rom_spline(normals, options.spline_detail,
+                                           options.strength, false);
       var interp_colors = interpolate_color(colors, options.spline_detail);
 
       // handle start of trace. this could be moved inside the for-loop, but
       // at the expense of a conditional inside the loop. unrolling is 
       // slightly faster.
+      //
+      // we repeat the following steps for the start, central section and end 
+      // of the profile: (a) assign position, normal, tangent and color, (b)
+      // add tube (or rectangular profile for helices and strands).
       vec3.set(tangent, sdiv[3]-sdiv[0], sdiv[4]-sdiv[1], sdiv[5]-sdiv[2]);
       vec3.set(pos, sdiv[0], sdiv[1], sdiv[2]);
-      vec3.set(normal, smooth_normals[0], smooth_normals[1], smooth_normals[2]);
+      vec3.set(normal, normal_sdiv[0]-sdiv[0], 
+               normal_sdiv[1]-sdiv[0], normal_sdiv[2]-sdiv[2]);
       vec3.normalize(tangent, tangent);
+      vec3.normalize(normal, normal);
       vec3.set(color, interp_colors[0], interp_colors[1], interp_colors[2]);
 
       this._cartoon_add_tube(geom, pos, normal, trace[0], tangent, color, 
@@ -1605,8 +1576,11 @@ MolBase.prototype._cartoon_for_chain = (function() {
       // handle the bulk of the trace
       for (var i = 1, e = sdiv.length/3 - 1; i < e; ++i) {
         vec3.set(pos, sdiv[3*i], sdiv[3*i+1], sdiv[3*i+2]);
-        vec3.set(normal, smooth_normals[3*i], smooth_normals[3*i+1], 
-                  smooth_normals[3*i+2]);
+        vec3.set(normal, normal_sdiv[3*i]-sdiv[3*i], 
+                 normal_sdiv[3*i+1]-sdiv[3*i+1],
+                 normal_sdiv[3*i+2]-sdiv[3*i+2]);
+
+        vec3.normalize(normal, normal);
         vec3.set(tangent, sdiv[3*(i+1)]-sdiv[3*(i-1)],
                   sdiv[3*(i+1)+1]-sdiv[3*(i-1)+1],
                   sdiv[3*(i+1)+2]-sdiv[3*(i-1)+2]);
@@ -1617,16 +1591,18 @@ MolBase.prototype._cartoon_for_chain = (function() {
                                trace[Math.floor(i/options.spline_detail)], 
                                tangent, color, false, options);
       }
+      var i = sdiv.length;
       // finish trace off, again unrolled for efficiency.
-      vec3.set(tangent, sdiv[sdiv.length-3]-sdiv[sdiv.length-6], 
-                sdiv[sdiv.length-2]-sdiv[sdiv.length-5],
-                sdiv[sdiv.length-1]-sdiv[sdiv.length-4]);
+      vec3.set(tangent, sdiv[3*i-3]-sdiv[3*i-6], 
+                sdiv[3*i-2]-sdiv[3*i-5],
+                sdiv[3*i-1]-sdiv[3*i-4]);
 
-      vec3.set(pos, sdiv[sdiv.length-3], sdiv[sdiv.length-2], 
-                sdiv[sdiv.length-1]);
-      vec3.set(normal, smooth_normals[smooth_normals.length-3],
-                smooth_normals[smooth_normals.length-2],
-                smooth_normals[smooth_normals.length-1]);
+      vec3.set(pos, sdiv[3*i-3], sdiv[3*i-2], 
+                sdiv[3*i-1]);
+      vec3.set(normal, normal_sdiv[3*i]-sdiv[3*i], 
+                normal_sdiv[3*i-3]-sdiv[3*i-3],
+                normal_sdiv[3*i-2]-sdiv[3*i-2]);
+      vec3.normalize(normal, normal);
       vec3.normalize(tangent, tangent);
       vec3.set(color, interp_colors[interp_colors.length-3],
                 interp_colors[interp_colors.length-2],
