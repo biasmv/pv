@@ -1053,7 +1053,7 @@ PV.prototype.quality = function(qual) {
     this._options.spline_detail = 2;
     return;
   }
-  console.log('invalid quality argument', qual);
+  console.error('invalid quality argument', qual);
 }
 
 PV.prototype._initGL = function () {
@@ -1129,8 +1129,16 @@ PV.prototype._init_pv = function() {
   this._outline_shader = this._init_shader(OUTLINE_VS, OUTLINE_FS);
   this._mouse_move_listener = bind(this, this._mouse_move);
   this._mouse_up_listener = bind(this, this._mouse_up);
-  this._canvas.addEventListener('mousewheel', bind(this, this._mouse_wheel), 
-                                false);
+  // Firefox responds to the wheel event, whereas other browsers listen to
+  // the mousewheel event. Register different event handlers, depending on
+  // what properties are available.
+  if ('onwheel' in this._canvas) {
+    this._canvas.addEventListener('wheel', bind(this, this._mouse_wheel_ff), 
+                                  false);
+  } else {
+    this._canvas.addEventListener('mousewheel', bind(this, this._mouse_wheel), 
+                                  false);
+  }
   this._canvas.addEventListener('mousedown', bind(this, this._mouse_down), 
                                 false);
   return true;
@@ -1293,6 +1301,11 @@ PV.prototype.pdb = function(text) {
 
 PV.prototype._mouse_wheel = function(event) {
   this._cam.zoom(event.wheelDelta*0.05);
+  this.requestRedraw();
+}
+
+PV.prototype._mouse_wheel_ff = function(event) {
+  this._cam.zoom(-event.deltaY*0.05);
   this.requestRedraw();
 }
 
