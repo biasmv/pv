@@ -1003,13 +1003,13 @@ PV.prototype.quality = function(qual) {
     return;
   } 
   if (qual == 'medium') {
-    this._options.arc_detail = 2;
+    this._options.arc_detail = 3;
     this._options.sphere_detail = 10;
     this._options.spline_detail = 4;
     return;
   }
   if (qual == 'low') {
-    this._options.arc_detail = 1;
+    this._options.arc_detail = 2;
     this._options.sphere_detail = 8;
     this._options.spline_detail = 2;
     return;
@@ -1507,12 +1507,18 @@ MolBase.prototype._color_pos_normals_from_trace = function(trace, colors,
 
     var div = 1.0/Math.sqrt(dx*dx+dy*dy+dz*dz);
 
+    dx *= div;
+    dy *= div;
+    dz *= div;
+
     if (i > 0) {
-      if (last_x*dx+last_y*dy+last_z*dz < 0) {
+      var dot = last_x*dx+last_y*dy+last_z*dz; 
+      if (dot < 0) {
         dx *= -1;
         dy *= -1;
         dz *= -1;
       }
+      console.log(trace[i].num(), trace[i].ss(), dot);
     }
     last_x = dx;
     last_y = dy;
