@@ -1,7 +1,14 @@
-var pv = (function(){
+ var pv = (function(){
 "use strict";
 
 
+// FIXME: Browser vendors tend to block quite a few graphic cards. Instead
+//   of showing this very generic message, implement a per-browser 
+//   diagnostic. For example, when we detect that we are running a recent
+//   Chrome and Webgl is not available, we should say that the user is
+//   supposed to check chrome://gpu for details on why WebGL is not
+//   available. Similar troubleshooting pages are available for other
+//   browsers.
 var WEBGL_NOT_SUPPORTED = '\
 <div style="vertical-align:middle; text-align:center;">\
 <h1>Oink</h1><p>Your browser does not support WebGL. \
@@ -97,6 +104,16 @@ var requestAnimFrame = (function(){
           function( callback ){
             window.setTimeout(callback, 1000 / 60);
           };
+})();
+
+// calculates the signed angle of vectors a and b with respect to
+// the reference normal c. 
+vec3.signedAngle = (function() {
+  var tmp = vec3.create();
+  return function (a, b, c) {
+    vec3.cross(tmp, a, b);
+    return Math.atan2(vec3.dot(tmp, c), vec3.dot(a, b));
+  }
 })();
 
 vec3.ortho = (function() {
@@ -667,9 +684,9 @@ var ProtoSphere  = function(stacks, arcs) {
   };
 }
 
-// A tube profile is a cross-section of a tube, e.g. a circle or a 'flat' square. They
-// are used to control the style of helices, strands and coils for the cartoon
-// render mode. 
+// A tube profile is a cross-section of a tube, e.g. a circle or a 'flat' square.
+// They are used to control the style of helices, strands and coils for the 
+// cartoon render mode. 
 var TubeProfile = function(points, num, strength) {
 
   var interpolated = catmull_rom_spline(points, num, strength, true);
@@ -704,7 +721,8 @@ var TubeProfile = function(points, num, strength) {
 
   var pos = vec3.create(), normal = vec3.create();
   return {
-    add_transformed : function(geom, center, radius, rotation, color, first) {
+    add_transformed : function(geom, center, radius, rotation, color, first,
+                               offset) {
       var base_index = geom.num_verts() - self.arcs;
       for (var i = 0; i < self.arcs; ++i) {
         vec3.set(pos, radius*self.verts[3*i], radius*self.verts[3*i+1], 
@@ -718,10 +736,24 @@ var TubeProfile = function(points, num, strength) {
       if (first) {
         return;
       }
-      for (var i = 0; i < self.indices.length/3; ++i) {
-        geom.add_triangle(base_index+self.indices[i*3], base_index+self.indices[i*3+1], 
-                          base_index+self.indices[i*3+2]);
+      if (offset === 0) {
+        // that's what happens most of the time, thus is has been optimized.
+        for (var i = 0; i < self.indices.length/3; ++i) {
+          geom.add_triangle(base_index+self.indices[i*3], 
+                            base_index+self.indices[i*3+1], 
+                            base_index+self.indices[i*3+2]);
+        }
+        return;
       }
+      for (var i = 0; i < self.arcs; ++i) {
+        geom.add_triangle(base_index+((i+offset) % self.arcs),
+                          base_index+i+self.arcs,
+                          base_index+((i+1) % self.arcs) + self.arcs);
+        geom.add_triangle(base_index+(i+offset) % self.arcs,
+                          base_index+((i+1) % self.arcs) + self.arcs,
+                          base_index+((i+1+offset) % self.arcs));
+      }
+
     }
   };
 }
@@ -736,10 +768,10 @@ var COIL_POINTS = [
 
 
 var HELIX_POINTS = [
-  -6*R, -1.5*R, 0,
-   6*R, -1.5*R, 0,
-   6*R, 1.5*R, 0,
-  -6*R,  1.5*R, 0
+  -6*R, -1.2*R, 0,
+   6*R, -1.2*R, 0,
+   6*R, 1.2*R, 0,
+  -6*R,  1.2*R, 0
 ];
 
 var ProtoCylinder = function(arcs) {
@@ -774,7 +806,8 @@ var ProtoCylinder = function(arcs) {
     self.indices[6*i+5] = arcs+((i+1) % self.arcs);
   }
   return {
-    add_transformed : function(geom, center, length, radius, rotation, clr_one, clr_two) {
+    add_transformed : function(geom, center, length, radius, rotation, clr_one, 
+                               clr_two) {
       var base_index = geom.num_verts();
       var pos = vec3.create(), normal = vec3.create(), color;
       for (var i = 0; i < 2*self.arcs; ++i) {
@@ -782,12 +815,14 @@ var ProtoCylinder = function(arcs) {
                  length*self.verts[3*i+2]);
         vec3.transformMat3(pos, pos, rotation);
         vec3.add(pos, pos, center);
-        vec3.set(normal, self.normals[3*i], self.normals[3*i+1], self.normals[3*i+2]);
+        vec3.set(normal, self.normals[3*i], self.normals[3*i+1], 
+                 self.normals[3*i+2]);
         vec3.transformMat3(normal, normal, rotation);
         geom.add_vertex(pos, normal, i < self.arcs ? clr_one : clr_two);
       }
       for (var i = 0; i < self.indices.length/3; ++i) {
-        geom.add_triangle(base_index+self.indices[i*3], base_index+self.indices[i*3+1], 
+        geom.add_triangle(base_index+self.indices[i*3], 
+                          base_index+self.indices[i*3+1], 
                           base_index+self.indices[i*3+2]);
       }
     }
@@ -973,7 +1008,12 @@ function PV(dom_element, opts) {
     width : opts.width || 500,
     height: opts.height || 500,
     antialias : opts.antialias || true,
-    quality : opts.quality || 'low'
+    quality : opts.quality || 'low',
+  }
+  if ('outline' in opts) {
+    this._options.outline = opts.outline;
+  } else {
+    this._options.outline = true;
   }
   this._ok = false;
   this.quality(this._options.quality);
@@ -1126,6 +1166,9 @@ PV.prototype._draw = function() {
   this._gl.enable(this._gl.CULL_FACE);
   for (var i=0; i<this._objects.length; i+=1) {
     this._objects[i].draw(this._hemilight_shader, false);
+  }
+  if (!this._options.outline) {
+    return;
   }
   this._cam.bind(this._outline_shader);
   this._gl.cullFace(this._gl.BACK);
@@ -1471,7 +1514,8 @@ MolBase.prototype._cartoon_add_tube = (function() {
   var rotation = mat3.create();
   var up = vec3.create();
 
-  return function(geom, pos, left, res, tangent, color, first, options) {
+  return function(geom, pos, left, res, tangent, color, first, options, 
+                  offset) {
     var ss = res.ss();
     var prof = options.coil_profile
     if (ss == 'H' && !options.force_tube) {
@@ -1487,8 +1531,8 @@ MolBase.prototype._cartoon_add_tube = (function() {
     }
 
     build_rotation(rotation, tangent, left, up, true);
-
-    prof.add_transformed(geom, pos, options.radius, rotation, color, first);
+    prof.add_transformed(geom, pos, options.radius, rotation, color, first, 
+                         offset);
   }
 })();
 
@@ -1525,9 +1569,9 @@ MolBase.prototype._color_pos_normals_from_trace = function(trace, colors,
     last_x = dx;
     last_y = dy;
     last_z = dz;
-    normals[i*3]   = positions[3*i]+dx*div; 
-    normals[i*3+1] = positions[3*i+1]+dy*div; 
-    normals[i*3+2] = positions[3*i+2]+dz*div;
+    normals[i*3]   = positions[3*i]+dx; 
+    normals[i*3+1] = positions[3*i+1]+dy; 
+    normals[i*3+2] = positions[3*i+2]+dz;
     options.color(trace[i].atom('CA'), colors, i*3);
   }
 }
@@ -1537,7 +1581,8 @@ MolBase.prototype._color_pos_normals_from_trace = function(trace, colors,
 MolBase.prototype._cartoon_for_chain = (function() {
 
   var tangent = vec3.create(), pos = vec3.create(), left =vec3.create(),
-      color = vec3.create(), normal = vec3.create();
+      color = vec3.create(), normal = vec3.create(), normal2 = vec3.create(),
+      rot = mat3.create();
 
   return function(chain, gl, options) {
 
@@ -1579,25 +1624,64 @@ MolBase.prototype._cartoon_for_chain = (function() {
       vec3.set(color, interp_colors[0], interp_colors[1], interp_colors[2]);
 
       this._cartoon_add_tube(geom, pos, normal, trace[0], tangent, color, 
-                             true, options);
+                             true, options, 0);
 
       // handle the bulk of the trace
       for (var i = 1, e = sdiv.length/3 - 1; i < e; ++i) {
-        vec3.set(pos, sdiv[3*i], sdiv[3*i+1], sdiv[3*i+2]);
-        vec3.set(normal, normal_sdiv[3*i]-sdiv[3*i], 
-                 normal_sdiv[3*i+1]-sdiv[3*i+1],
-                 normal_sdiv[3*i+2]-sdiv[3*i+2]);
+        // compute 3*i, 3*(i-1), 3*(i+1) once and reuse
+        var ix3 = 3*i, ipox3 = 3*(i+1), imox3  = 3*(i-1);
 
-        vec3.normalize(normal, normal);
-        vec3.set(tangent, sdiv[3*(i+1)]-sdiv[3*(i-1)],
-                  sdiv[3*(i+1)+1]-sdiv[3*(i-1)+1],
-                  sdiv[3*(i+1)+2]-sdiv[3*(i-1)+2]);
+        vec3.set(pos, sdiv[ix3], sdiv[ix3+1], sdiv[ix3+2]);
+
+        vec3.set(tangent, sdiv[ipox3]-sdiv[imox3],
+                  sdiv[ipox3+1]-sdiv[imox3+1],
+                  sdiv[ipox3+2]-sdiv[imox3+2]);
         vec3.normalize(tangent, tangent);
-        vec3.set(color, interp_colors[i*3], interp_colors[i*3+1],
-                interp_colors[i*3+2]);
-        this._cartoon_add_tube(geom, pos, normal, 
-                               trace[Math.floor(i/options.spline_detail)], 
-                               tangent, color, false, options);
+        vec3.set(color, interp_colors[ix3], interp_colors[ix3+1],
+                interp_colors[ix3+2]);
+
+        var offset = 0; // <- set special handling of coil to helix,strand
+                        //    transitions.
+        var trace_index = Math.floor(i/options.spline_detail);
+        var prev_trace_index = Math.floor((i-1)/options.spline_detail);
+        if (trace_index != prev_trace_index) {
+          // for helix and strand regions, we can't base the left vector
+          // of the current residue on the previous one, since it determines
+          // the orientation of the strand and helix profiles.
+          //
+          // frequently, the transition regions from coil to strand and helix
+          // contain strong twists which severely hamper visual quality. there
+          // is not problem however when transitioning from helix or strand
+          // to coil or inside a helix or strand.
+          //
+          // to avoid these visual artifacts, we calculate the best fit between
+          // the normal "after" which gives us an offset for stitching the two
+          // parts together. we try to avoid this kind of stitching in general
+          // since we no longer can precalculate the triangle indices.
+          if (trace[prev_trace_index].ss() === 'C' &&
+              (trace[trace_index].ss() === 'H' ||
+               trace[trace_index].ss() === 'E')) {
+            // we don't want to generate holes, so we have to make sure
+            // the vertices of the rotated profile align with the previous
+            // profile.
+            vec3.set(normal2, normal_sdiv[imox3]-sdiv[imox3], 
+                    normal_sdiv[imox3+1]-sdiv[imox3+1],
+                    normal_sdiv[imox3+2]-sdiv[imox3+2]);
+            vec3.normalize(normal2, normal2);
+            var  arc_angle = 2*Math.PI/(options.arc_detail*4);
+            var signed_angle = vec3.signedAngle(normal, normal2, tangent);
+            offset = Math.round(signed_angle/arc_angle);
+            offset = (offset + options.arc_detail*4) % (options.arc_detail*4);
+          }
+        }
+        // only set normal *after* handling the coil -> helix,strand
+        // transition, since we depend on the normal of the previous step.
+        vec3.set(normal, normal_sdiv[3*i]-sdiv[ix3], 
+                 normal_sdiv[ix3+1]-sdiv[ix3+1],
+                 normal_sdiv[ix3+2]-sdiv[ix3+2]);
+        vec3.normalize(normal, normal);
+        this._cartoon_add_tube(geom, pos, normal, trace[trace_index], 
+                              tangent, color, false, options, offset);
       }
       var i = sdiv.length;
       // finish trace off, again unrolled for efficiency.
@@ -1617,7 +1701,7 @@ MolBase.prototype._cartoon_for_chain = (function() {
                 interp_colors[interp_colors.length-1]);
                 
       this._cartoon_add_tube(geom, pos, normal, trace[trace.length-1], 
-                             tangent, color, false, options);
+                             tangent, color, false, options, 0);
     }
     return geom;
   }
