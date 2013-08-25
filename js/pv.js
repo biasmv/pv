@@ -1646,7 +1646,7 @@ MolBase.prototype.cartoon = function(opts) {
 
   var options = {
     color : opts.color || ss(),
-    strength: opts.strength || 0.5,
+    strength: opts.strength || 1.0,
     spline_detail : opts.spline_detail || this._pv.options('spline_detail'),
     arc_detail : opts.arc_detail || this._pv.options('arc_detail'),
     radius : opts.radius || 0.3,
