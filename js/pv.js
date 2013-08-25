@@ -81,7 +81,7 @@ uniform mat4 modelview_mat;                                            \n\
 void main(void) {                                                      \n\
   gl_Position = projection_mat * modelview_mat * vec4(attr_pos, 1.0);  \n\
   vec4 normal = modelview_mat * vec4(attr_normal, 0.0);                \n\
-  gl_Position.xy += normal.xy*0.060;                                   \n\
+  gl_Position.xy += normal.xy*0.200;                                   \n\
 }                                                                      \n\
 '
 
