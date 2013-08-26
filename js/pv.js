@@ -1419,7 +1419,7 @@ MolBase.prototype.sline = function(opts) {
   var options = {
     color : opts.color || uniform_color([1, 0, 1]),
     spline_detail : opts.spline_detail || this._pv.options('spline_detail'),
-    strength: opts.strength || 0.5,
+    strength: opts.strength || 0.5
   };
   var line_geom = LineGeom(this._pv.gl());
   var pos_one = vec3.create(), pos_two = vec3.create();
@@ -1632,7 +1632,7 @@ MolBase.prototype.cartoon = function(opts) {
     spline_detail : opts.spline_detail || this._pv.options('spline_detail'),
     arc_detail : opts.arc_detail || this._pv.options('arc_detail'),
     radius : opts.radius || 0.3,
-    force_tube: opts.force_tube || false,
+    force_tube: opts.force_tube || false
   };
   options.coil_profile = TubeProfile(COIL_POINTS, options.arc_detail, 1.0);
   options.helix_profile = TubeProfile(HELIX_POINTS, options.arc_detail, 0.1);
