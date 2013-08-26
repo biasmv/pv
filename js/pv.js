@@ -13,76 +13,76 @@ graphic card might be blocked. Check the browser documentation for details\
 </div>';
 
 // hemilight fragment shader
-var HEMILIGHT_FS = '                                                   \n\
-precision mediump float;                                               \n\
-                                                                       \n\
-varying vec3 vert_color;                                               \n\
-varying vec3 vert_normal;                                              \n\
-uniform float fog_near;                                                \n\
-uniform float fog_far;                                                 \n\
-uniform vec3 fog_color;                                                \n\
-                                                                       \n\
-void main(void) {                                                      \n\
-  float dp = dot(vert_normal, vec3(0.0, 0.0, 1.0));                    \n\
-  float hemi = max(0.0, dp)*0.5+0.5;                                   \n\
-  gl_FragColor = vec4(vert_color*hemi, 1.0);                           \n\
-  float depth = gl_FragCoord.z / gl_FragCoord.w;                       \n\
-  float fog_factor = smoothstep(fog_near, fog_far, depth);             \n\
-  gl_FragColor = mix(gl_FragColor, vec4(fog_color, gl_FragColor.w),    \n\
-                      fog_factor);                                     \n\
-}                                                                      \n\
+var HEMILIGHT_FS = '\n\
+precision mediump float;\n\
+\n\
+varying vec3 vert_color;\n\
+varying vec3 vert_normal;\n\
+uniform float fog_near;\n\
+uniform float fog_far;\n\
+uniform vec3 fog_color;\n\
+\n\
+void main(void) {\n\
+  float dp = dot(vert_normal, vec3(0.0, 0.0, 1.0));\n\
+  float hemi = max(0.0, dp)*0.5+0.5;\n\
+  gl_FragColor = vec4(vert_color*hemi, 1.0);\n\
+  float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
+  float fog_factor = smoothstep(fog_near, fog_far, depth);\n\
+  gl_FragColor = mix(gl_FragColor, vec4(fog_color, gl_FragColor.w),\n\
+                      fog_factor);\n\
+}\n\
 '
 
 // hemilight vertex shader
-var HEMILIGHT_VS = '                                                   \n\
-attribute vec3 attr_pos;                                               \n\
-attribute vec3 attr_color;                                             \n\
-attribute vec3 attr_normal;                                            \n\
-                                                                       \n\
-uniform mat4 projection_mat;                                           \n\
-uniform mat4 modelview_mat;                                            \n\
-varying vec3 vert_color;                                               \n\
-varying vec3 vert_normal;                                              \n\
-void main(void) {                                                      \n\
-  gl_Position = projection_mat * modelview_mat * vec4(attr_pos, 1.0);  \n\
-  vec4 n = (modelview_mat * vec4(attr_normal, 0.0));                   \n\
-  vert_normal = n.xyz;                                                 \n\
-  vert_color = attr_color;                                             \n\
-}                                                                      \n\
+var HEMILIGHT_VS = '\n\
+attribute vec3 attr_pos;\n\
+attribute vec3 attr_color;\n\
+attribute vec3 attr_normal;\n\
+\n\
+uniform mat4 projection_mat;\n\
+uniform mat4 modelview_mat;\n\
+varying vec3 vert_color;\n\
+varying vec3 vert_normal;\n\
+void main(void) {\n\
+  gl_Position = projection_mat * modelview_mat * vec4(attr_pos, 1.0);\n\
+  vec4 n = (modelview_mat * vec4(attr_normal, 0.0));\n\
+  vert_normal = n.xyz;\n\
+  vert_color = attr_color;\n\
+}\n\
 '
 // outline shader. mixes outline_color with fog_color
-var OUTLINE_FS = '                                                     \n\
-precision mediump float;                                               \n\
-                                                                       \n\
-uniform vec3 outline_color;                                            \n\
-uniform float fog_near;                                                \n\
-uniform float fog_far;                                                 \n\
-uniform vec3 fog_color;                                                \n\
-                                                                       \n\
-void main() {                                                          \n\
-  gl_FragColor = vec4(outline_color, 1.0);                             \n\
-  float depth = gl_FragCoord.z / gl_FragCoord.w;                       \n\
-  float fog_factor = smoothstep(fog_near, fog_far, depth);             \n\
-  gl_FragColor = mix(gl_FragColor, vec4(fog_color, gl_FragColor.w),    \n\
-                      fog_factor);                                     \n\
-}                                                                      \n\
+var OUTLINE_FS = '\n\
+precision mediump float;\n\
+\n\
+uniform vec3 outline_color;\n\
+uniform float fog_near;\n\
+uniform float fog_far;\n\
+uniform vec3 fog_color;\n\
+\n\
+void main() {\n\
+  gl_FragColor = vec4(outline_color, 1.0);\n\
+  float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
+  float fog_factor = smoothstep(fog_near, fog_far, depth);\n\
+  gl_FragColor = mix(gl_FragColor, vec4(fog_color, gl_FragColor.w),\n\
+                      fog_factor);\n\
+}\n\
 '
 // outline vertex shader. expands vertices along the (in-screen) xy
 // components of the normals.
-var OUTLINE_VS = '                                                     \n\
+var OUTLINE_VS = '\n\
+\n\
+attribute vec3 attr_pos;\n\
+attribute vec3 attr_normal;\n\
                                                                        \n\
-attribute vec3 attr_pos;                                               \n\
-attribute vec3 attr_normal;                                            \n\
-                                                                       \n\
-uniform vec3 outline_color;                                            \n\
-uniform mat4 projection_mat;                                           \n\
-uniform mat4 modelview_mat;                                            \n\
-                                                                       \n\
-void main(void) {                                                      \n\
-  gl_Position = projection_mat * modelview_mat * vec4(attr_pos, 1.0);  \n\
-  vec4 normal = modelview_mat * vec4(attr_normal, 0.0);                \n\
-  gl_Position.xy += normal.xy*0.200;                                   \n\
-}                                                                      \n\
+uniform vec3 outline_color;\n\
+uniform mat4 projection_mat;\n\
+uniform mat4 modelview_mat;\n\
+\n\
+void main(void) {\n\
+  gl_Position = projection_mat * modelview_mat * vec4(attr_pos, 1.0);\n\
+  vec4 normal = modelview_mat * vec4(attr_normal, 0.0);\n\
+  gl_Position.xy += normal.xy*0.200;\n\
+}\n\
 '
 
 function bind(obj, fn) { 
