@@ -5,7 +5,7 @@ var pv = (function(){
 var WEBGL_NOT_SUPPORTED = '\
 <div style="vertical-align:middle; text-align:center;">\
 <h1>Oink</h1><p>Your browser does not support WebGL. \
-You might want to try Chrome, Firefox, IE 10 or newer versions of Safari\
+You might want to try Chrome, Firefox, IE 11, or newer versions of Safari\
 </p>\
 <p>If you are using a recent version of one of the above browsers, your \
 graphic card might be blocked. Check the browser documentation for details\
