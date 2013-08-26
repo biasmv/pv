@@ -576,6 +576,7 @@ var LineGeom = function(gl) {
       gl.disableVertexAttribArray(clr_attrib);
     },
 
+    requires_outline_pass : function() { return false; },
     // prepare data for rendering. if the buffer data was modified, this 
     // synchronizes the corresponding GL array buffers.
     bind : function() {
@@ -805,9 +806,10 @@ SceneNode.prototype.add = function(node) {
   this._children.push(node);
 }
 
-SceneNode.prototype.draw = function(shader_program) {
+SceneNode.prototype.draw = function(shader_program, outline_pass) {
   for (var i = 0; i < this._children.length; ++i) {
-    this._children[i].draw(shader_program);
+    if (!outline_pass || this._children[i].requires_outline_pass())
+      this._children[i].draw(shader_program, outline_pass);
   }
 }
 
@@ -829,6 +831,7 @@ var MeshGeom = function(gl) {
 
   return {
     num_verts : function() { return self.num_verts; },
+    requires_outline_pass : function() { return true; },
     draw: function(shader_program) {
       this.bind();
       var pos_attrib = gl.getAttribLocation(shader_program, 'attr_pos');
@@ -1122,13 +1125,13 @@ PV.prototype._draw = function() {
   this._gl.cullFace(this._gl.FRONT);
   this._gl.enable(this._gl.CULL_FACE);
   for (var i=0; i<this._objects.length; i+=1) {
-    this._objects[i].draw(this._hemilight_shader);
+    this._objects[i].draw(this._hemilight_shader, false);
   }
   this._cam.bind(this._outline_shader);
   this._gl.cullFace(this._gl.BACK);
   this._gl.enable(this._gl.CULL_FACE);
   for (var i=0; i<this._objects.length; i+=1) {
-    this._objects[i].draw(this._outline_shader);
+    this._objects[i].draw(this._outline_shader, true);
   }
 }
 
@@ -1518,7 +1521,6 @@ MolBase.prototype._color_pos_normals_from_trace = function(trace, colors,
         dy *= -1;
         dz *= -1;
       }
-      console.log(trace[i].num(), trace[i].ss(), dot);
     }
     last_x = dx;
     last_y = dy;
