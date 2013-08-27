@@ -220,14 +220,14 @@ function ss() {
         out[index+2] = 0.8;
         return;
       case 'H':
-        out[index] = 1.0;
-        out[index+1] = 0.0;
-        out[index+2] = 0.0;
+        out[index] = 0.3;
+        out[index+1] = 0.3;
+        out[index+2] = 0.8;
         return;
       case 'E':
-        out[index] = 0.0;
-        out[index+1] = 1.0;
-        out[index+2] = 0.0;
+        out[index] = 0.2;
+        out[index+1] = 0.8;
+        out[index+2] = 0.2;
         return;
     }
   }
@@ -1312,7 +1312,7 @@ PV.prototype._mouse_wheel = function(event) {
 }
 
 PV.prototype._mouse_wheel_ff = function(event) {
-  this._cam.zoom(-event.deltaY*0.05);
+  this._cam.zoom(-event.deltaY*0.10);
   this.requestRedraw();
 }
 
