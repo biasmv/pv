@@ -1062,8 +1062,13 @@ PV.prototype.quality = function(qual) {
 
 PV.prototype._initGL = function () {
     // todo wrap in try-catch for browser which don't support WebGL
-    this._gl = this._canvas.getContext('experimental-webgl', 
-                                      { antialias: this._options.antialias });
+    try {
+      this._gl = this._canvas.getContext('experimental-webgl', 
+                                        { antialias: this._options.antialias });
+    } catch (err) {
+      console.error('WebGL not supported', err);
+      return false;
+    }
     if (!this._gl) {
       console.error('WebGL not supported');
       return false;
