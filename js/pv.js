@@ -1312,7 +1312,7 @@ PV.prototype._mouse_wheel = function(event) {
 }
 
 PV.prototype._mouse_wheel_ff = function(event) {
-  this._cam.zoom(-event.deltaY*0.10);
+  this._cam.zoom(-event.deltaY*0.60);
   this.requestRedraw();
 }
 
