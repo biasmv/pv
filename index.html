@@ -5,9 +5,9 @@
     <title>pv - JavaScript protein viewer</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-    <script src='http://raw.github.com/biasmv/pv/master/js/jquery-2.0.2.min.js'></script>
-    <script src='http://raw.github.com/biasmv/pv/master/js/gl-matrix.js'></script>
-    <script src='http://raw.github.com/biasmv/pv/master/js/pv.js'></script>
+    <script src='https://raw.github.com/biasmv/pv/master/js/jquery-2.0.2.min.js'></script>
+    <script src='https://raw.github.com/biasmv/pv/master/js/gl-matrix.js'></script>
+    <script src='https://raw.github.com/biasmv/pv/master/js/pv.js'></script>
     <style>
     body {
       font-family: Monospace;
@@ -100,12 +100,13 @@
     $('#tube').click(tube);
 
     function on_ready() {
-      $.ajax({ url : 'http://raw.github.com/biasmv/pv/master/pdbs/1r6a.pdb', success : function(data) {
+      $.ajax({ url : 'https://raw.github.com/biasmv/pv/master/pdbs/1r6a.pdb', 
+               success : function(data) {
         console.log('loading');
         mol = pv.pdb(data);
         cartoon();
         pv.center_on(mol);
-      }});
+    }, error : function(a, b, c) { console.error(a, b, c);}});
     }
     document.addEventListener('DOMContentLoaded', on_ready);
   </script>
