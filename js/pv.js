@@ -93,6 +93,15 @@ function bind(obj, fn) {
 }
 
 
+function fulfills_predicates(obj, predicates) {
+  for (var i = 0; i < predicates.length; ++i) {
+    if (!predicates[i](obj)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 var requestAnimFrame = (function(){
   return  window.requestAnimationFrame       ||
           window.webkitRequestAnimationFrame ||

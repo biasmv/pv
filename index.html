@@ -9,8 +9,9 @@
     <script src='js/pv.js'></script>
     <style>
     body {
-      font-family: Monospace;
+      font-family: Helvetica;
       background-color: #fff;/*#f0f0f0;*/
+      font-weight: lighter;
       margin: 0px;
       overflow: hidden;
     }
@@ -19,8 +20,8 @@
     }
     #inspector {
       float : right;
-      background-color:#eee;
-      padding:10px;
+      background-color:#fafafa;
+      padding:15px;
     }
 
     #inspector ul {
@@ -28,12 +29,19 @@
     }
 
     #inspector ul li {
+      margin-left:5px;
+      margin-right:5px;
+      margin-bottom:5px;
       list-style:none;
       cursor: pointer;
       color:#660000
     }
+
     #inspector ul li:hover {
       color:#994444;
+    }
+    #inspector span {
+      font-weight:normal;
     }
     </style>
     </head>
@@ -42,6 +50,7 @@
   </div>
   <div id=inspector>
     <ul>
+      <span>Render Style</span>
       <li id=preset>Preset</li>
       <li id=cartoon>Cartoon</li>
       <li id=tube>Tube</li>
@@ -49,6 +58,13 @@
       <li id=line-trace>Line Trace</li>
       <li id=sline>Smooth Line Trace</li>
       <li id=trace>Trace</li>
+    </ul>
+     <ul>
+      <span>Molecule</span>
+       <li id=1r6a>Methyl transferase</li>
+       <li id=1ake>Adenylate kinase</li>
+       <li id=1crn>Crambin</li>
+       <li id=2por>Porin</li>
     </ul>
   </div>
   </script>
@@ -89,6 +105,23 @@
       mol.cartoon();
       ligand.spheres();
     }
+    function load(pdb_id) {
+      $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
+        mol = pv.pdb(data);
+        cartoon();
+        pv.center_on(mol);
+      }});
+    }
+    function kinase() {
+      load('1ake');
+    }
+    function crambin() {
+      load('1crn');
+    }
+    function transferase() {
+      load('1r6a');
+    }
+    function porin() { load('2por'); }
 
     $('#cartoon').click(cartoon);
     $('#line-trace').click(line_trace);
@@ -97,15 +130,12 @@
     $('#trace').click(trace);
     $('#sline').click(sline);
     $('#tube').click(tube);
+    $('#1ake').click(kinase);
+    $('#1r6a').click(transferase);
+    $('#1crn').click(crambin);
+    $('#2por').click(porin);
 
-    function on_ready() {
-      $.ajax({ url : 'pdbs/1r6a.pdb', success : function(data) {
-        mol = pv.pdb(data);
-        cartoon();
-        pv.center_on(mol);
-      }});
-    }
-    document.addEventListener('DOMContentLoaded', on_ready);
+    document.addEventListener('DOMContentLoaded', transferase);
   </script>
 </body>
 </html>
