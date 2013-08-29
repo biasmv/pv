@@ -100,7 +100,7 @@
     $('#tube').click(tube);
 
     function on_ready() {
-      $.ajax({ url : 'https://raw.github.com/biasmv/pv/master/pdbs/1r6a.pdb', 
+      $.ajax({ url : 'https://biasmv.github.io/pv/pdbs/1r6a.pdb', 
                success : function(data) {
         console.log('loading');
         mol = pv.pdb(data);
