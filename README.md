@@ -9,6 +9,8 @@ pv has been implemented with maximum performance in mind. There is nothing worse
 Trying it out
 -----------------------------------------
 
+You can try the [online demo](http://biasmv.github.io/pv/) or run it locally on your computer.
+
 Clone this repository
 
 ```bash
