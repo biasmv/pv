@@ -1,132 +1,113 @@
+
 <!DOCTYPE html>
 <html>
   <head>
-    <script src='js/three.min.js'></script>
-    <script src='js/mkmesh.js'></script>
-    <script src='pdbs/1ake.json'></script>
-    <title>kinky kinase</title>
+    <title>pv - JavaScript protein viewer</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <script src='http://raw.github.com/biasmv/pv/master/js/jquery-2.0.2.min.js'></script>
+    <script src='http://raw.github.com/biasmv/pv/master/js/gl-matrix.js'></script>
+    <script src='http://raw.github.com/biasmv/pv/master/js/pv.js'></script>
     <style>
     body {
       font-family: Monospace;
-      background-color: #f0f0f0;
+      background-color: #fff;/*#f0f0f0;*/
       margin: 0px;
       overflow: hidden;
+    }
+    #gl {
+      float: left;
+    }
+    #inspector {
+      float : right;
+      background-color:#eee;
+      padding:10px;
+    }
+
+    #inspector ul {
+      padding:0px;
+    }
+
+    #inspector ul li {
+      list-style:none;
+      cursor: pointer;
+      color:#660000
+    }
+    #inspector ul li:hover {
+      color:#994444;
     }
     </style>
     </head>
 <body>
+  <div id=gl>
+  </div>
+  <div id=inspector>
+    <ul>
+      <li id=preset>Preset</li>
+      <li id=cartoon>Cartoon</li>
+      <li id=tube>Tube</li>
+      <li id=lines>Lines</li>
+      <li id=line-trace>Line Trace</li>
+      <li id=sline>Smooth Line Trace</li>
+      <li id=trace>Trace</li>
+    </ul>
+  </div>
+  </script>
   <script>
-  var camera, scene, renderer;
-
-  var container;
-  var parent;
-  function init() {
-    container = document.createElement('div');
-    document.body.appendChild(container);
-
-    var aspect = window.innerWidth/window.innerHeight;
-    camera = new THREE.PerspectiveCamera(50, aspect,
-                                         1, 1000);
-
-    scene = new THREE.Scene();
-
-    var  light = new THREE.DirectionalLight(0xffffff);
-    light.position.set(0, 0, 1);
-    scene.add(light);
-
-    parent = new THREE.Object3D();
-    scene.add(parent);
-
-    function add_geometry(geometry, color, x, y, z, rx, ry, rz, s) {
-      // to be written...
-      var materials = [
-      new THREE.MeshLambertMaterial({ color: color, opacity : 0.2, 
-                                      transparent : true }),
-      new THREE.MeshBasicMaterial({color: 0x000000, wireframe : true, 
-                                   opacity : 0.3})
-      ]
-      var mesh = THREE.SceneUtils.createMultiMaterialObject(geometry, 
-                                                            materials);
-      mesh.position.set(x, y, z);
-      mesh.scale.set(s, s, s);
-      mesh.rotation.set(rx, ry, rz);
-      parent.add(mesh);
-      return mesh;
+    var pv = pv.Viewer(document.getElementById('gl'), 
+                       { quality : 'medium', width: 8000, height : 800,
+                         antialias : true, outline : true});
+    var mol;
+    function lines() {
+      pv.clear();
+      mol.lines();
+    }
+    function cartoon() {
+      pv.clear();
+      mol.cartoon();
+    }
+    function line_trace() {
+      pv.clear();
+      mol.line_trace();
+    }
+    function sline() {
+      pv.clear();
+      mol.sline();
     }
 
-    var tube = make_mesh(KINASE);
-    var mesh = add_geometry(tube, 0xff1100, 0, 0, 0, 0, 0, 0, 1);
-    renderer = new THREE.WebGLRenderer( { antialias: true } );
-    renderer.setSize( window.innerWidth, window.innerHeight );
+    function tube() {
+      pv.clear();
+      mol.tube();
+    }
 
-    container.appendChild(renderer.domElement);
-    renderer.domElement.addEventListener('mousedown', mouse_down, false);
-    renderer.domElement.addEventListener('mousewheel', mouse_wheel, false);
-    mesh.children[0].geometry.computeBoundingBox();
-    var bb = mesh.children[0].geometry.boundingBox;
-    center = bb.min.add(bb.max).multiplyScalar(0.5);
-    camera.matrixAutoUpdate = false;
-    rot = new THREE.Matrix4();
-    scale = 1;
-    update_cam();
-  }
+    function trace() {
+      pv.clear();
+      mol.trace();
+    }
+    function preset() {
+      pv.clear();
+      var ligand = mol.select('ligand');
+      mol.cartoon();
+      ligand.spheres();
+    }
 
-  function animate() {
-    requestAnimationFrame(animate);
-    render();
-  }
+    $('#cartoon').click(cartoon);
+    $('#line-trace').click(line_trace);
+    $('#preset').click(preset);
+    $('#lines').click(lines);
+    $('#trace').click(trace);
+    $('#sline').click(sline);
+    $('#tube').click(tube);
 
-  function mouse_down(event) {
-    event.preventDefault();
-    renderer.domElement.addEventListener('mousemove', mouse_move, false);
-    renderer.domElement.addEventListener('mouseup', mouse_up, false);
-    renderer.domElement.addEventListener('mouseout', mouse_out, false);
-    last_mouse_pos = new THREE.Vector2(event.pageX, event.pageY);
-  }
-  function update_cam() {
-    var cam_matrix = new THREE.Matrix4();
-    cam_matrix.translate(center);
-    cam_matrix.multiplyMatrices(cam_matrix, rot);
-    var trans = new THREE.Vector3(0, 0, 100);
-    trans.multiplyScalar(scale);
-    cam_matrix.translate(trans);
-    camera.matrix = cam_matrix;
-    camera.updateMatrixWorld(true);
-  }
-
-  function mouse_wheel(event) {
-     var delta = 1+event.wheelDelta*0.0001;
-     scale *= delta;
-     update_cam();
-  }
-
-  function mouse_move(event) {
-    var new_mouse_pos = new THREE.Vector2(event.pageX, event.pageY);
-    var delta = last_mouse_pos.sub(new_mouse_pos);
-    var speed = 0.005;
-    rot.rotateByAxis(new THREE.Vector3(1, 0, 0), delta.y*speed);
-    rot.rotateByAxis(new THREE.Vector3(0, 1, 0), delta.x*speed);
-    update_cam();
-    last_mouse_pos =  new_mouse_pos;
-  }
-
-  function mouse_out(event) {}
-
-  function mouse_up(event) {
-    renderer.domElement.removeEventListener('mousemove', mouse_move, false);
-    renderer.domElement.removeEventListener('mouseup', mouse_up, false);
-    renderer.domElement.removeEventListener('mouseout', mouse_out, false);
-  }
-
-  function render() {
-    renderer.render(scene, camera);
-  }
-
-  init();
-  animate();
-
+    function on_ready() {
+      $.ajax({ url : 'http://raw.github.com/biasmv/pv/master/pdbs/1r6a.pdb', success : function(data) {
+        console.log('loading');
+        mol = pv.pdb(data);
+        cartoon();
+        pv.center_on(mol);
+      }});
+    }
+    document.addEventListener('DOMContentLoaded', on_ready);
   </script>
 </body>
 </html>
