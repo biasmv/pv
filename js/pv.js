@@ -1005,11 +1005,13 @@ var Cam = function(gl) {
 function PV(dom_element, opts) {
   opts = opts || {}
   this._options = {
-    width : opts.width || 500,
-    height: opts.height || 500,
-    antialias : opts.antialias || true,
+    width : (opts.width || 500),
+    height: (opts.height || 500),
+    antialias : opts.antialias,
     quality : opts.quality || 'low',
   }
+  this._dom_element = dom_element
+  this._canvas = document.createElement('canvas');
   if ('outline' in opts) {
     this._options.outline = opts.outline;
   } else {
@@ -1017,10 +1019,8 @@ function PV(dom_element, opts) {
   }
   this._ok = false;
   this.quality(this._options.quality);
-  this._canvas = document.createElement('canvas');
   this._canvas.width = this._options.width;
   this._canvas.height = this._options.height;
-  this._dom_element = dom_element
   this._dom_element.appendChild(this._canvas);
 
   document.addEventListener('DOMContentLoaded', 
@@ -1060,28 +1060,55 @@ PV.prototype.quality = function(qual) {
   console.error('invalid quality argument', qual);
 }
 
-PV.prototype._initGL = function () {
-    // todo wrap in try-catch for browser which don't support WebGL
-    try {
-      this._gl = this._canvas.getContext('experimental-webgl', 
-                                        { antialias: this._options.antialias });
-    } catch (err) {
-      console.error('WebGL not supported', err);
-      return false;
-    }
-    if (!this._gl) {
-      console.error('WebGL not supported');
-      return false;
-    }
-    this._gl.viewportWidth = this._options.width;
-    this._gl.viewportHeight = this._options.height;
+PV.prototype._init_gl = function () {
+  var samples = 1;
+  try {
+    var context_opts = { antialias : this._options.antialias };
+    this._gl = this._canvas.getContext('experimental-webgl', 
+                                       context_opts);
 
-    this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
-    this._gl.lineWidth(2.0);
-    this._gl.cullFace(this._gl.FRONT);
-    this._gl.enable(this._gl.CULL_FACE);
-    this._gl.enable(this._gl.DEPTH_TEST);
-    return true;
+    if (!this._gl.getContextAttributes().antialias &&
+        this._options.antialias) {
+      console.info('hardware antialising not supported.',
+                   'will use manual antialiasing instead.');
+      samples = 2;
+    }
+  } catch (err) {
+    console.error('WebGL not supported', err);
+    return false;
+  }
+  if (!this._gl) {
+    console.error('WebGL not supported');
+    return false;
+  }
+  this._options.real_width = this._options.width * samples;
+  this._options.real_height = this._options.height * samples;
+  if (samples > 1) {
+    var scale_factor = 1.0/samples;
+    var trans_x = -(1-scale_factor)*0.5*this._options.real_width;
+    var trans_y = -(1-scale_factor)*0.5*this._options.real_height;
+    var translate = 'translate('+trans_x+'px, '+trans_y+'px)';
+    var scale = 'scale('+scale_factor+', '+scale_factor+')';
+    var transform = translate+' '+scale;
+
+    this._dom_element.style.width = this._options.width+'px';
+    this._dom_element.style.height = this._options.height+'px';
+    this._dom_element.style.overflow = 'hidden';
+    this._canvas.style.webkitTransform = transform;
+    this._canvas.style.transform = transform;
+    this._canvas.style.ieTransform = transform;
+    this._canvas.width = this._options.real_width;
+    this._canvas.height = this._options.real_height;
+  }
+  this._gl.viewportWidth = this._options.real_width;
+  this._gl.viewportHeight = this._options.real_height;
+
+  this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
+  this._gl.lineWidth(2.0);
+  this._gl.cullFace(this._gl.FRONT);
+  this._gl.enable(this._gl.CULL_FACE);
+  this._gl.enable(this._gl.DEPTH_TEST);
+  return true;
 }
 
 PV.prototype._shader_from_string = function(shader_code, type) {
@@ -1125,7 +1152,7 @@ PV.prototype._mouse_up = function(event) {
 
 
 PV.prototype._init_pv = function() {
-  if (!this._initGL()) {
+  if (!this._init_gl()) {
     this._dom_element.removeChild(this._canvas);
     this._dom_element.innerHTML = WEBGL_NOT_SUPPORTED;
     this._dom_element.style.width = this._options.width+'px';
