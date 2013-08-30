@@ -37,8 +37,7 @@ void main(void) {\n\
   float fog_factor = smoothstep(fog_near, fog_far, depth);\n\
   gl_FragColor = mix(gl_FragColor, vec4(fog_color, gl_FragColor.w),\n\
                       fog_factor);\n\
-}\n\
-'
+}';
 
 // hemilight vertex shader
 var HEMILIGHT_VS = '\n\
@@ -55,8 +54,7 @@ void main(void) {\n\
   vec4 n = (modelview_mat * vec4(attr_normal, 0.0));\n\
   vert_normal = n.xyz;\n\
   vert_color = attr_color;\n\
-}\n\
-'
+}';
 // outline shader. mixes outline_color with fog_color
 var OUTLINE_FS = '\n\
 precision mediump float;\n\
@@ -72,8 +70,7 @@ void main() {\n\
   float fog_factor = smoothstep(fog_near, fog_far, depth);\n\
   gl_FragColor = mix(gl_FragColor, vec4(fog_color, gl_FragColor.w),\n\
                       fog_factor);\n\
-}\n\
-'
+}';
 // outline vertex shader. expands vertices along the (in-screen) xy
 // components of the normals.
 var OUTLINE_VS = '\n\
@@ -89,8 +86,7 @@ void main(void) {\n\
   gl_Position = projection_mat * modelview_mat * vec4(attr_pos, 1.0);\n\
   vec4 normal = modelview_mat * vec4(attr_normal, 0.0);\n\
   gl_Position.xy += normal.xy*0.200;\n\
-}\n\
-'
+}';
 
 function bind(obj, fn) { 
   return function() { return fn.apply(obj, arguments); };
@@ -113,7 +109,7 @@ vec3.signedAngle = (function() {
   return function (a, b, c) {
     vec3.cross(tmp, a, b);
     return Math.atan2(vec3.dot(tmp, c), vec3.dot(a, b));
-  }
+  };
 })();
 
 vec3.ortho = (function() {
@@ -122,7 +118,7 @@ vec3.ortho = (function() {
     vec3.copy(tmp, vec);
     if (Math.abs(vec[0]) < Math.abs(vec[1])) {
       if (Math.abs(vec[0]) < Math.abs(vec[2])) {
-        tmp[0] += 1
+        tmp[0] += 1;
       } else {
         tmp[2] += 1;
       }
@@ -151,7 +147,7 @@ mat3.axisRotation = function(out, axis, angle) {
   out[3] = xy-ca*xy+sa*z; out[4] = yy+ca-ca*yy;   out[5] = yz-ca*yz-sa*x;
   out[6] = xz-ca*xz-sa*y; out[7] = yz-ca*yz+sa*x; out[8] = zz+ca-ca*zz;
   return out;
-}
+};
 
 
 // performs an in-place smoothing over 3 consecutive positions.
@@ -169,7 +165,7 @@ var inplace_smooth = (function() {
       vec3.copy(bf, cf);
       vec3.copy(cf, af);
     }
-  }
+  };
 })();
 
 // linearly interpolates the array of colors and returns it as a Float32Array
@@ -207,7 +203,7 @@ function even_odd(even, odd) {
       out[index+1] = odd[1];
       out[index+2] = odd[2];
     }
-  }
+  };
 }
 
 
@@ -230,7 +226,7 @@ function ss() {
         out[index+2] = 0.2;
         return;
     }
-  }
+  };
 }
 
 
@@ -239,15 +235,12 @@ function uniform_color(color) {
     out[index] = color[0];
     out[index+1] = color[1];
     out[index+2] = color[2];
-  }
+  };
 }
 
 
 function MolBase() {
 
-};
-
-function Mol() {
 }
 
 function MolView(mol) {
@@ -267,15 +260,15 @@ ChainBase.prototype.each_atom = function(callback) {
   for (var i = 0; i< this._residues.length; i+=1) {
     this._residues[i].each_atom(callback);
   }
-}
+};
 ChainBase.prototype.each_residue = function(callback) {
   for (var i = 0; i < this._residues.length; i+=1) {
     callback(this._residues[i]);
   }
-}
+};
 
-ChainBase.prototype.residues = function() { return this._residues; }
-ChainBase.prototype.structure = function() { return this._structure; }
+ChainBase.prototype.residues = function() { return this._residues; };
+ChainBase.prototype.structure = function() { return this._structure; };
 
 // invokes a callback for each connected stretch of amino acids. these 
 // stretches are used for all trace-based rendering styles, e.g. sline, 
@@ -291,7 +284,7 @@ ChainBase.prototype.each_backbone_trace = function(callback) {
       }
       continue;
     }
-    if (stretch.length == 0) {
+    if (stretch.length === 0) {
       stretch.push(residue);
       continue;
     }
@@ -309,7 +302,7 @@ ChainBase.prototype.each_backbone_trace = function(callback) {
   if (stretch.length > 1) {
     callback(stretch);
   }
-}
+};
 
 
 // returns all connected stretches of amino acids found in this chain as 
@@ -319,7 +312,7 @@ ChainBase.prototype.backbone_traces = function() {
   this.each_backbone_trace(function(trace) { traces.push(trace); });
   return traces;
 
-}
+};
 
 function ChainView(mol_view, chain) {
   this._chain = chain;
@@ -341,7 +334,7 @@ ChainView.prototype.add_residue = function(residue, recurse) {
     }
   }
   return res_view;
-}
+};
 
 
 function ResidueBase() {
@@ -350,13 +343,13 @@ function ResidueBase() {
 
 ResidueBase.prototype.is_water = function() {
   return this.name() == 'HOH' || this.name() == 'DOD';
-}
+};
 
 ResidueBase.prototype.each_atom = function(callback) {
   for (var i =0; i< this._atoms.length; i+=1) {
     callback(this._atoms[i]);
   }
-}
+};
 ResidueBase.prototype.atom = function(index_or_name) { 
   if (typeof index_or_name == 'string') {
     for (var i =0; i < this._atoms.length; ++i) {
@@ -366,12 +359,12 @@ ResidueBase.prototype.atom = function(index_or_name) {
     }
   }
   return this._atoms[index_or_name]; 
-}
+};
 
 
 ResidueBase.prototype.is_aminoacid = function() { 
   return this.atom('N') && this.atom('CA') && this.atom('C') && this.atom('O');
-}
+};
 
 
 
@@ -386,7 +379,8 @@ ResidueView.prototype = new ResidueBase();
 ResidueView.prototype.add_atom = function(atom) {
   var atom_view = new AtomView(this, atom);
   this._atoms.push(atom_view);
-}
+};
+
 function AtomView(res_view, atom) {
   this._res_view = res_view;
   this._atom = atom;
@@ -395,10 +389,10 @@ function AtomView(res_view, atom) {
 
 
 AtomView.prototype = new AtomBase();
-AtomView.prototype.name = function() { return this._atom.name(); }
-AtomView.prototype.pos = function() { return this._atom.pos(); }
-AtomView.prototype.element = function() { return this._atom.element(); }
-AtomView.prototype.bonds = function() { return this._bonds; }
+AtomView.prototype.name = function() { return this._atom.name(); };
+AtomView.prototype.pos = function() { return this._atom.pos(); };
+AtomView.prototype.element = function() { return this._atom.element(); };
+AtomView.prototype.bonds = function() { return this._bonds; };
 
 
 function Chain(structure, name) {
@@ -411,13 +405,13 @@ function Chain(structure, name) {
 
 Chain.prototype = new ChainBase();
 
-Chain.prototype.name = function() { return this._name; }
+Chain.prototype.name = function() { return this._name; };
 
 Chain.prototype.add_residue = function(name, num) {
   var residue = new Residue(this, name, num);
   this._residues.push(residue);
   return residue;
-}
+};
 
 // assigns secondary structure to residues in range from_num to to_num.
 Chain.prototype.assign_ss = function(from_num, to_num, ss) {
@@ -434,10 +428,10 @@ Chain.prototype.assign_ss = function(from_num, to_num, ss) {
     }
     res.set_ss(ss);
   }
-},
+};
 
 
-ChainView.prototype.name = function () { return this._chain.name(); }
+ChainView.prototype.name = function () { return this._chain.name(); };
 
 function color_for_element(ele, out) {
   if (!out) {
@@ -470,7 +464,7 @@ function color_for_element(ele, out) {
 function cpk_color() {
   return function(atom, out, index) {
     color_for_element(atom.element(), out);
-  }
+  };
 }
 
 
@@ -491,7 +485,7 @@ var cubic_hermite_interpolate = (function() {
     out[index] = p[0];
     out[index+1] = p[1];
     out[index+2] = p[2];
-}
+};
 })();
 
 
@@ -501,16 +495,18 @@ var cubic_hermite_interpolate = (function() {
 function catmull_rom_spline(points, num, strength, circular) {
   circular = circular || false;
   strength = strength || 0.5;
+  var out = null;
   if (circular) {
-    var out = new Float32Array(points.length*num);
+    out = new Float32Array(points.length*num);
   } else {
-    var out = new Float32Array((points.length-3)*num);
+    out = new Float32Array((points.length-3)*num);
   }
   var index = 0;
   var delta_t = 1.0/num;
   var m_k = vec3.create(), m_kp1 = vec3.create(); // tangents at k-1 and k+1
   var p_k = vec3.create(), p_kp1 = vec3.create(), 
       p_kp2 = vec3.create(), p_kp3 = vec3.create(); 
+  var i, j, e;
 
   vec3.set(p_kp1, points[0], points[1], points[2]);
   vec3.set(p_kp2, points[3], points[4], points[5]);
@@ -523,13 +519,13 @@ function catmull_rom_spline(points, num, strength, circular) {
     vec3.set(p_k,   points[0], points[1], points[2]);
     vec3.set(m_k, 0, 0, 0);
   }
-  for (var i = 1, e = points.length/3-1; i < e; ++i) {
+  for (i = 1, e = points.length/3-1; i < e; ++i) {
     vec3.set(p_kp3, points[3*(i+1)], points[3*(i+1)+1], points[3*(i+1)+2]);
     vec3.sub(m_kp1, p_kp3, p_kp1);
     vec3.scale(m_kp1, m_kp1, strength);
-    for (var j = 0; j < num; ++j) {
-      var t = delta_t*j;
-      cubic_hermite_interpolate(out, p_kp1, m_k, p_kp2, m_kp1, t, index);
+    for (j = 0; j < num; ++j) {
+      cubic_hermite_interpolate(out, p_kp1, m_k, p_kp2, m_kp1, 
+                                delta_t*j, index);
       index+=3;
     }
     vec3.copy(p_k, p_kp1);
@@ -544,9 +540,9 @@ function catmull_rom_spline(points, num, strength, circular) {
   } else {
     vec3.set(m_kp1, 0, 0, 0);
   }
-  for (var j = 0; j < num; ++j) {
-    var t = delta_t*j;
-    cubic_hermite_interpolate(out, p_kp1, m_k, p_kp2, m_kp1, t, index);
+  for (j = 0; j < num; ++j) {
+    cubic_hermite_interpolate(out, p_kp1, m_k, p_kp2, m_kp1, 
+                              delta_t*j, index);
     index+=3;
   }
   if (!circular) {
@@ -562,9 +558,9 @@ function catmull_rom_spline(points, num, strength, circular) {
   vec3.set(p_kp3, points[3], points[4], points[5]);
   vec3.sub(m_kp1, p_kp3, p_kp1);
   vec3.scale(m_kp1, m_kp1, strength);
-  for (var j = 0; j < num; ++j) {
-    var t = delta_t*j;
-    cubic_hermite_interpolate(out, p_kp1, m_k, p_kp2, m_kp1, t, index);
+  for (j = 0; j < num; ++j) {
+    cubic_hermite_interpolate(out, p_kp1, m_k, p_kp2, m_kp1, 
+                              delta_t*j, index);
     index+=3;
   }
   return out;
@@ -603,7 +599,7 @@ var LineGeom = function(gl) {
         gl.bufferData(gl.ARRAY_BUFFER, float_array, gl.STATIC_DRAW);
         self.ready = true;
         // clear original data. it's not used anymore
-        self.data = []
+        self.data = [];
       }
     },
     add_line : function(start_pos, start_color, end_pos, end_color) {
@@ -635,10 +631,11 @@ var ProtoSphere  = function(stacks, arcs) {
   };
   var vert_angle = Math.PI/(stacks-1);
   var horz_angle = Math.PI*2.0/arcs;
-  for (var i = 0; i < self.stacks; ++i) {
+  var i, j;
+  for (i = 0; i < self.stacks; ++i) {
     var radius = Math.sin(i*vert_angle);
     var z = Math.cos(i*vert_angle);
-    for (var j = 0; j < self.arcs; ++j) {
+    for (j = 0; j < self.arcs; ++j) {
       var nx = radius*Math.cos(j*horz_angle);
       var ny = radius*Math.sin(j*horz_angle);
       self.verts[3*(j+i*self.arcs)] = nx;
@@ -647,8 +644,8 @@ var ProtoSphere  = function(stacks, arcs) {
     }
   }
   var index = 0;
-  for (var i = 0; i < self.stacks-1; ++i) {
-    for (var j = 0; j < self.arcs; ++j) {
+  for (i = 0; i < self.stacks-1; ++i) {
+    for (j = 0; j < self.arcs; ++j) {
       self.indices[index] = (i)*self.arcs+j;
       self.indices[index+1] = (i)*self.arcs+((j+1) % self.arcs);
       self.indices[index+2] = (i+1)*self.arcs+j;
@@ -673,7 +670,7 @@ var ProtoSphere  = function(stacks, arcs) {
         vec3.add(pos, pos, center);
         geom.add_vertex(pos, normal, color);
       }
-      for (var i = 0; i < self.indices.length/3; ++i) {
+      for (i = 0; i < self.indices.length/3; ++i) {
         geom.add_triangle(base_index+self.indices[i*3], 
                           base_index+self.indices[i*3+1], 
                           base_index+self.indices[i*3+2]);
@@ -682,7 +679,7 @@ var ProtoSphere  = function(stacks, arcs) {
     num_indices : function() { return self.indices.length; },
     num_vertices : function() { return self.verts.length; }
   };
-}
+};
 
 // A tube profile is a cross-section of a tube, e.g. a circle or a 'flat' square.
 // They are used to control the style of helices, strands and coils for the 
@@ -700,8 +697,8 @@ var TubeProfile = function(points, num, strength) {
 
   var normal = vec3.create();
   for (var i = 0; i < self.arcs; ++i) {
-    var i_prev = i == 0 ? self.arcs-1 : i-1;
-    var i_next = i == self.arcs-1 ? 0 : i+1;
+    var i_prev = i === 0 ? self.arcs-1 : i-1;
+    var i_next = i === self.arcs-1 ? 0 : i+1;
     normal[0] = self.verts[3*i_next+1] - self.verts[3*i_prev+1];
     normal[1] = self.verts[3*i_prev] - self.verts[3*i_next];
     vec3.normalize(normal, normal);
@@ -710,7 +707,7 @@ var TubeProfile = function(points, num, strength) {
     self.normals[3*i+2] = normal[2];
   }
 
-  for (var i = 0; i < self.arcs; ++i) {
+  for (i = 0; i < self.arcs; ++i) {
     self.indices[6*i] = i;
     self.indices[6*i+1] = i+self.arcs;
     self.indices[6*i+2] = ((i+1) % self.arcs) + self.arcs;
@@ -719,7 +716,7 @@ var TubeProfile = function(points, num, strength) {
     self.indices[6*i+5] = (i+1) % self.arcs;
   }
 
-  var pos = vec3.create(), normal = vec3.create();
+  var pos = vec3.create();
   return {
     add_transformed : function(geom, center, radius, rotation, color, first,
                                offset) {
@@ -738,14 +735,14 @@ var TubeProfile = function(points, num, strength) {
       }
       if (offset === 0) {
         // that's what happens most of the time, thus is has been optimized.
-        for (var i = 0; i < self.indices.length/3; ++i) {
+        for (i = 0; i < self.indices.length/3; ++i) {
           geom.add_triangle(base_index+self.indices[i*3], 
                             base_index+self.indices[i*3+1], 
                             base_index+self.indices[i*3+2]);
         }
         return;
       }
-      for (var i = 0; i < self.arcs; ++i) {
+      for (i = 0; i < self.arcs; ++i) {
         geom.add_triangle(base_index+((i+offset) % self.arcs),
                           base_index+i+self.arcs,
                           base_index+((i+1) % self.arcs) + self.arcs);
@@ -756,7 +753,7 @@ var TubeProfile = function(points, num, strength) {
 
     }
   };
-}
+};
 
 var R = 0.7071;
 var COIL_POINTS = [
@@ -781,7 +778,7 @@ var ProtoCylinder = function(arcs) {
     verts : new Float32Array(3*arcs*2),
     normals : new Float32Array(3*arcs*2)
   };
-  var angle = Math.PI*2/self.arcs
+  var angle = Math.PI*2/self.arcs;
   for (var i = 0; i < self.arcs; ++i) {
     var cos_angle = Math.cos(angle*i);
     var sin_angle = Math.sin(angle*i);
@@ -796,7 +793,7 @@ var ProtoCylinder = function(arcs) {
     self.normals[3*arcs+3*i] = cos_angle;
     self.normals[3*arcs+3*i+1] = sin_angle;
   }
-  for (var i = 0; i < self.arcs; ++i) {
+  for (i = 0; i < self.arcs; ++i) {
     self.indices[6*i] = (i) % self.arcs;
     self.indices[6*i+1] = arcs+((i+1) % self.arcs);
     self.indices[6*i+2] = (i+1) % self.arcs;
@@ -820,7 +817,7 @@ var ProtoCylinder = function(arcs) {
         vec3.transformMat3(normal, normal, rotation);
         geom.add_vertex(pos, normal, i < self.arcs ? clr_one : clr_two);
       }
-      for (var i = 0; i < self.indices.length/3; ++i) {
+      for (i = 0; i < self.indices.length/3; ++i) {
         geom.add_triangle(base_index+self.indices[i*3], 
                           base_index+self.indices[i*3+1], 
                           base_index+self.indices[i*3+2]);
@@ -839,14 +836,14 @@ function SceneNode() {
 
 SceneNode.prototype.add = function(node) {
   this._children.push(node);
-}
+};
 
 SceneNode.prototype.draw = function(shader_program, outline_pass) {
   for (var i = 0; i < this._children.length; ++i) {
     if (!outline_pass || this._children[i].requires_outline_pass())
       this._children[i].draw(shader_program, outline_pass);
   }
-}
+};
 
 // an (indexed) mesh geometry container.
 //
@@ -901,7 +898,7 @@ var MeshGeom = function(gl) {
       self.num_verts += 1;
     },
     add_triangle : function(idx1, idx2, idx3) {
-      self.index_data.push(idx1, idx2, idx3)
+      self.index_data.push(idx1, idx2, idx3);
       self.num_triangles +=1;
     },
     bind : function() {
@@ -1003,14 +1000,14 @@ var Cam = function(gl) {
 
 
 function PV(dom_element, opts) {
-  opts = opts || {}
+  opts = opts || {};
   this._options = {
     width : (opts.width || 500),
     height: (opts.height || 500),
     antialias : opts.antialias,
     quality : opts.quality || 'low',
-  }
-  this._dom_element = dom_element
+  };
+  this._dom_element = dom_element;
   this._canvas = document.createElement('canvas');
   if ('outline' in opts) {
     this._options.outline = opts.outline;
@@ -1027,14 +1024,14 @@ function PV(dom_element, opts) {
                             bind(this, this._init_pv));
 }
 
-PV.prototype.gl = function() { return this._gl; }
+PV.prototype.gl = function() { return this._gl; };
 
-PV.prototype.ok = function() { return this._ok; }
+PV.prototype.ok = function() { return this._ok; };
 
 
 PV.prototype.options = function(opt_name) {
   return this._options[opt_name];
-}
+};
 
 PV.prototype.quality = function(qual) {
   this._options.quality = qual;
@@ -1058,7 +1055,7 @@ PV.prototype.quality = function(qual) {
     return;
   }
   console.error('invalid quality argument', qual);
-}
+};
 
 PV.prototype._init_gl = function () {
   var samples = 1;
@@ -1109,7 +1106,7 @@ PV.prototype._init_gl = function () {
   this._gl.enable(this._gl.CULL_FACE);
   this._gl.enable(this._gl.DEPTH_TEST);
   return true;
-}
+};
 
 PV.prototype._shader_from_string = function(shader_code, type) {
   var shader;
@@ -1128,17 +1125,17 @@ PV.prototype._shader_from_string = function(shader_code, type) {
     return null;
   }
   return shader;
-}
+};
 
 PV.prototype._init_shader = function(vert_shader, frag_shader) {
-  var frag_shader = this._shader_from_string(frag_shader, 'fragment');
-  var vert_shader = this._shader_from_string(vert_shader, 'vertex');
+  var fs = this._shader_from_string(frag_shader, 'fragment');
+  var vs = this._shader_from_string(vert_shader, 'vertex');
   var shader_program = this._gl.createProgram();
-  this._gl.attachShader(shader_program, vert_shader);
-  this._gl.attachShader(shader_program, frag_shader);
+  this._gl.attachShader(shader_program, vs);
+  this._gl.attachShader(shader_program, fs);
   this._gl.linkProgram(shader_program);
   if (!this._gl.getProgramParameter(shader_program, this._gl.LINK_STATUS)) {
-    console.error('could not initialise shaders')
+    console.error('could not initialise shaders');
   }
   return shader_program;
 };
@@ -1148,7 +1145,7 @@ PV.prototype._mouse_up = function(event) {
                                    false);
   this._canvas.removeEventListener('mouseup', this._mouse_up_listener, false);
   document.removeEventListener('mousemove', this._mouse_move_listener);
-}
+};
 
 
 PV.prototype._init_pv = function() {
@@ -1178,16 +1175,16 @@ PV.prototype._init_pv = function() {
   this._canvas.addEventListener('mousedown', bind(this, this._mouse_down), 
                                 false);
   return true;
-}
+};
 
 PV.prototype._add = function(what) {
   this._objects.push(what);
   this.requestRedraw();
-}
+};
 
 PV.prototype.requestRedraw = function() {
   requestAnimFrame(bind(this, this._draw));
-}
+};
 
 PV.prototype._draw = function() {
 
@@ -1205,36 +1202,36 @@ PV.prototype._draw = function() {
   this._cam.bind(this._outline_shader);
   this._gl.cullFace(this._gl.BACK);
   this._gl.enable(this._gl.CULL_FACE);
-  for (var i=0; i<this._objects.length; i+=1) {
+  for (i = 0; i < this._objects.length; i+=1) {
     this._objects[i].draw(this._outline_shader, true);
   }
-}
+};
 
 
 
 PV.prototype.center_on = function(what) {
   this._cam.set_center(what.center());
-}
+};
 
 PV.prototype.clear = function() {
   this._objects = [];
-}
+};
 
 PV.prototype._parse_helix_record = function(line) {
   // FIXME: handle insertion codes
-  var frst_num = parseInt(line.substr(21, 4));
-  var last_num = parseInt(line.substr(33, 4));
+  var frst_num = parseInt(line.substr(21, 4), 10);
+  var last_num = parseInt(line.substr(33, 4), 10);
   var chain_name = line[19];
   return { first : frst_num, last : last_num, chain_name : chain_name };
-}
+};
 
 PV.prototype._parse_sheet_record = function(line) {
   // FIXME: handle insertion codes
-  var frst_num = parseInt(line.substr(22, 4));
-  var last_num = parseInt(line.substr(33, 4));
+  var frst_num = parseInt(line.substr(22, 4), 10);
+  var last_num = parseInt(line.substr(33, 4), 10);
   var chain_name = line[21];
   return { first : frst_num, last : last_num, chain_name : chain_name };
-}
+};
 
 // a truly minimalistic PDB parser. It will die as soon as the input is 
 // not well-formed. it only reads ATOM, HETATM, HELIX and SHEET records, 
@@ -1269,7 +1266,7 @@ PV.prototype.pdb = function(text) {
     var chain_name = line[21];
     var res_name = line.substr(17, 3);
     var atom_name = line.substr(12, 4).trim();
-    var rnum_num = parseInt(line.substr(22, 4));
+    var rnum_num = parseInt(line.substr(22, 4), 10);
     var ins_code = line[26];
     var update_residue = false;
     var update_chain = false;
@@ -1293,7 +1290,8 @@ PV.prototype.pdb = function(text) {
     curr_res.add_atom(atom_name, pos, line.substr(76, 2).trim());
   }
   var lines = text.split(/\r\n|\r|\n/g);
-  for (var i = 0; i < lines.length; i++) {
+  var i = 0;
+  for (i = 0; i < lines.length; i++) {
     var line = lines[i];
     var record_name = line.substr(0, 6);
 
@@ -1317,16 +1315,17 @@ PV.prototype.pdb = function(text) {
       break;
     }
   }
-  for (var i = 0; i < sheets.length; ++i) {
+  var chain = null;
+  for (i = 0; i < sheets.length; ++i) {
     var sheet = sheets[i];
-    var chain = structure.chain(sheet.chain_name);
+    chain = structure.chain(sheet.chain_name);
     if (chain) {
       chain.assign_ss(sheet.first, sheet.last, 'E');
     }
   }
-  for (var i = 0; i < helices.length; ++i) {
+  for (i = 0; i < helices.length; ++i) {
     var helix = helices[i];
-    var chain = structure.chain(helix.chain_name);
+    chain = structure.chain(helix.chain_name);
     if (chain) {
       chain.assign_ss(helix.first, helix.last, 'H');
     }
@@ -1341,12 +1340,12 @@ PV.prototype.pdb = function(text) {
 PV.prototype._mouse_wheel = function(event) {
   this._cam.zoom(event.wheelDelta*0.05);
   this.requestRedraw();
-}
+};
 
 PV.prototype._mouse_wheel_ff = function(event) {
   this._cam.zoom(-event.deltaY*0.60);
   this.requestRedraw();
-}
+};
 
 PV.prototype._mouse_down = function(event) {
   event.preventDefault();
@@ -1355,7 +1354,7 @@ PV.prototype._mouse_down = function(event) {
   this._canvas.addEventListener('mouseup', this._mouse_up_listener, false);
   document.addEventListener('mouseup', this._mouse_up_listener, false);
   this._last_mouse_pos = { x: event.pageX, y: event.pageY };
-}
+};
 
 PV.prototype._mouse_move = function(event) {
   var new_mouse_pos = { x : event.pageX, y : event.pageY };
@@ -1367,7 +1366,7 @@ PV.prototype._mouse_move = function(event) {
   this._cam.rotate_y(speed*delta.x);
   this._last_mouse_pos = new_mouse_pos;
   this.requestRedraw();
-}
+};
 
 // derive a rotation matrix which rotates the z-axis onto tangent. when
 // left is given and use_hint is true, x-axis is chosen to be as close
@@ -1399,7 +1398,7 @@ var build_rotation = (function() {
     rotation[6] = tangent[0];
     rotation[7] = tangent[1];
     rotation[8] = tangent[2];
-  }
+  };
 })();
 
 function Mol(pv) {
@@ -1408,27 +1407,25 @@ function Mol(pv) {
   this._next_atom_index = 0;
 }
 
-function MolBase() {
-}
 
 MolBase.prototype.each_residue = function(callback) {
   for (var i = 0; i < this._chains.length; i+=1) {
     this._chains[i].each_residue(callback);
   }
-}
+};
 
 MolBase.prototype.each_atom = function(callback) {
   for (var i = 0; i < this._chains.length; i+=1) {
     this._chains[i].each_atom(callback);
   }
-}
+};
 
 MolBase.prototype.line_trace = function(opts) {
   console.time('MolBase.line_trace');
   opts = opts || {};
   var options = {
     color : opts.color || uniform_color([1, 0, 1])
-  }
+  };
   var clr_one = vec3.create(), clr_two = vec3.create();
   var line_geom = LineGeom(this._pv.gl());
   for (var ci  in this._chains) {
@@ -1445,7 +1442,7 @@ MolBase.prototype.line_trace = function(opts) {
   this._pv._add(line_geom);
   console.time('MolBase.line_trace');
   return line_geom;
-}
+};
 
 
 MolBase.prototype.spheres = function(opts) {
@@ -1453,7 +1450,7 @@ MolBase.prototype.spheres = function(opts) {
   opts = opts || {};
   var options = {
     color : opts.color || cpk_color()
-  }
+  };
   var clr = vec3.create();
   var geom = MeshGeom(this._pv.gl());
   var sphere_detail = this._pv.options('sphere_detail');
@@ -1465,12 +1462,12 @@ MolBase.prototype.spheres = function(opts) {
   console.timeEnd('MolBase.spheres');
   this._pv._add(geom);
   return geom;
-}
+};
 
 MolBase.prototype.RENDER_MODES = [
   'sline', 'line', 'trace', 'line_trace', 'cartoon', 'tube',
   'spheres'
-]
+];
 
 
 /// simple dispatcher which allows to render using a certain style.
@@ -1489,7 +1486,7 @@ MolBase.prototype.render_as = function(mode, opts) {
   }
   return this[mode](opts);
 
-}
+};
 
 MolBase.prototype.sline = function(opts) {
   console.time('MolBase.sline');
@@ -1518,7 +1515,7 @@ MolBase.prototype.sline = function(opts) {
       var sdiv = catmull_rom_spline(positions, options.spline_detail, 
                                     options.strength, false);
       var interp_colors = interpolate_color(colors, options.spline_detail);
-      for (var i = 1, e = sdiv.length/3; i < e; ++i) {
+      for (i = 1, e = sdiv.length/3; i < e; ++i) {
         pos_one[0] = sdiv[3*(i-1)];
         pos_one[1] = sdiv[3*(i-1)+1];
         pos_one[2] = sdiv[3*(i-1)+2];
@@ -1539,7 +1536,7 @@ MolBase.prototype.sline = function(opts) {
   console.timeEnd('MolBase.sline');
   this._pv._add(line_geom);
   return line_geom;
-}
+};
 
 
 MolBase.prototype._cartoon_add_tube = (function() {
@@ -1549,7 +1546,7 @@ MolBase.prototype._cartoon_add_tube = (function() {
   return function(geom, pos, left, res, tangent, color, first, options, 
                   offset) {
     var ss = res.ss();
-    var prof = options.coil_profile
+    var prof = options.coil_profile;
     if (ss == 'H' && !options.force_tube) {
       prof = options.helix_profile;
     } else if (ss == 'E' && !options.force_tube) {
@@ -1565,7 +1562,7 @@ MolBase.prototype._cartoon_add_tube = (function() {
     build_rotation(rotation, tangent, left, up, true);
     prof.add_transformed(geom, pos, options.radius, rotation, color, first, 
                          offset);
-  }
+  };
 })();
 
 
@@ -1606,7 +1603,7 @@ MolBase.prototype._color_pos_normals_from_trace = function(trace, colors,
     normals[i*3+2] = positions[3*i+2]+dz;
     options.color(trace[i].atom('CA'), colors, i*3);
   }
-}
+};
 
 // constructs a cartoon representation for all consecutive backbone traces found
 // in the given chain. 
@@ -1715,7 +1712,7 @@ MolBase.prototype._cartoon_for_chain = (function() {
         this._cartoon_add_tube(geom, pos, normal, trace[trace_index], 
                               tangent, color, false, options, offset);
       }
-      var i = sdiv.length;
+      i = sdiv.length;
       // finish trace off, again unrolled for efficiency.
       vec3.set(tangent, sdiv[3*i-3]-sdiv[3*i-6], 
                 sdiv[3*i-2]-sdiv[3*i-5],
@@ -1736,7 +1733,7 @@ MolBase.prototype._cartoon_for_chain = (function() {
                              tangent, color, false, options, 0);
     }
     return geom;
-  }
+  };
 })();
 
 MolBase.prototype.cartoon = function(opts) {
@@ -1768,7 +1765,7 @@ MolBase.prototype.cartoon = function(opts) {
   console.timeEnd('Mol.cartoon');
   this._pv._add(node);
   return node;
-}
+};
 
 // renders the protein using a smoothly interpolated tube, essentially 
 // identical to the cartoon render mode, but without special treatment for 
@@ -1777,7 +1774,7 @@ MolBase.prototype.tube = function(opts) {
   opts = opts || {};
   opts.force_tube = true;
   return this.cartoon(opts);
-}
+};
 
 MolBase.prototype.lines = function(opts) {
   console.time('MolBase.lines');
@@ -1815,7 +1812,7 @@ MolBase.prototype.lines = function(opts) {
   console.timeEnd('MolBase.lines');
   this._pv._add(line_geom);
   return line_geom;
-}
+};
 
 ChainBase.prototype._trace_for_chain = (function() {
 
@@ -1859,17 +1856,17 @@ ChainBase.prototype._trace_for_chain = (function() {
       }
     }
     return geom;
-  }
+  };
 })();
 
 MolBase.prototype.trace = function(opts) {
-  opts = opts || {}
+  opts = opts || {};
   var options = {
     color : opts.color || uniform_color([1, 0, 0]),
     radius: opts.radius || 0.3,
     arc_detail : (opts.arc_detail || this._pv.options('arc_detail'))*4,
     sphere_detail : opts.sphere_detail || this._pv.options('sphere_detail')
-  }
+  };
   var node = new SceneNode();
   options.proto_cyl = ProtoCylinder(options.arc_detail);
   options.proto_sphere = ProtoSphere(options.sphere_detail, 
@@ -1883,7 +1880,7 @@ MolBase.prototype.trace = function(opts) {
   }
   this._pv._add(node);
   return node;
-}
+};
 
 MolBase.prototype.center = function() {
   var sum = vec3.create();
@@ -1896,11 +1893,11 @@ MolBase.prototype.center = function() {
     vec3.scale(sum, sum, 1/count);
   }
   return sum;
-}
+};
 
-Mol.prototype = new MolBase()
+Mol.prototype = new MolBase();
 
-Mol.prototype.chains = function() { return this._chains; }
+Mol.prototype.chains = function() { return this._chains; };
 
 Mol.prototype.residue_select = function(predicate) {
   console.time('Mol.residue_select');
@@ -1918,9 +1915,9 @@ Mol.prototype.residue_select = function(predicate) {
       }
     }
   }
-  console.timeEnd('Mol.residue_select')
+  console.timeEnd('Mol.residue_select');
   return view;
-}
+};
 
 Mol.prototype.select = function(what) {
 
@@ -1936,7 +1933,7 @@ Mol.prototype.select = function(what) {
     });
   }
   return view;
-}
+};
 
 Mol.prototype.chain = function(name) { 
   for (var i = 0; i < this._chains.length; ++i) {
@@ -1945,19 +1942,19 @@ Mol.prototype.chain = function(name) {
     }
   }
   return null;
-}
+};
 
 Mol.prototype.next_atom_index = function() {
   var next_index = this._next_atom_index; 
   this._next_atom_index+=1; 
   return next_index; 
-}
+};
 
 Mol.prototype.add_chain = function(name) {
   var chain = new Chain(this, name);
   this._chains.push(chain);
   return chain;
-}
+};
 
 
 Mol.prototype.connect = function(atom_a, atom_b) {
@@ -1965,7 +1962,7 @@ Mol.prototype.connect = function(atom_a, atom_b) {
   atom_a.add_bond(bond);
   atom_b.add_bond(bond);
   return bond;
-}
+};
 
 // determine connectivity structure. for simplicity only connects atoms of the 
 // same residue and peptide bonds
@@ -1974,20 +1971,21 @@ Mol.prototype.derive_connectivity = function() {
   var this_structure = this;
   var prev_residue;
   this.each_residue(function(res) {
+    var sqr_dist;
     var d = vec3.create();
     for (var i = 0; i < res.atoms().length; i+=1) {
-    for (var j = 0; j < i; j+=1) {
-      var sqr_dist = vec3.sqrDist(res.atom(i).pos(), res.atom(j).pos());
-      if (sqr_dist < 1.6*1.6) {
+      for (var j = 0; j < i; j+=1) {
+        sqr_dist = vec3.sqrDist(res.atom(i).pos(), res.atom(j).pos());
+        if (sqr_dist < 1.6*1.6) {
           this_structure.connect(res.atom(i), res.atom(j));
+        }
       }
-    }
     }
     if (prev_residue) {
     var c_atom = prev_residue.atom('C');
     var n_atom = res.atom('N');
     if (c_atom && n_atom) {
-      var sqr_dist = vec3.sqrDist(c_atom.pos(), n_atom.pos());
+      sqr_dist = vec3.sqrDist(c_atom.pos(), n_atom.pos());
       if (sqr_dist < 1.6*1.6) {
         this_structure.connect(n_atom, c_atom);
       }
@@ -1996,7 +1994,7 @@ Mol.prototype.derive_connectivity = function() {
     prev_residue = res;
   });
   console.timeEnd('Mol.derive_connectivity');
-}
+};
 
 // add chain to view
 MolView.prototype.add_chain = function(chain, recurse) {
@@ -2009,11 +2007,11 @@ MolView.prototype.add_chain = function(chain, recurse) {
     }
   }
   return chain_view;
-}
+};
 
 
 function Residue(chain, name, num) {
-  this._name = name
+  this._name = name;
   this._num = num;
   this._atoms = [];
   this._ss = 'C';
@@ -2022,39 +2020,39 @@ function Residue(chain, name, num) {
 
 Residue.prototype = new ResidueBase();
 
-Residue.prototype.name = function() { return this._name; }
+Residue.prototype.name = function() { return this._name; };
 
-Residue.prototype.num = function() { return this._num; }
+Residue.prototype.num = function() { return this._num; };
 
 Residue.prototype.add_atom = function(name, pos, element) {
   var atom = new Atom(this, name, pos, element);
   this._atoms.push(atom);
   return atom;
-}
+};
 
-Residue.prototype.ss = function() { return this._ss; }
-Residue.prototype.set_ss = function(ss) { this._ss = ss; }
+Residue.prototype.ss = function() { return this._ss; };
+Residue.prototype.set_ss = function(ss) { this._ss = ss; };
 
-Residue.prototype.atoms = function() { return this._atoms; }
-Residue.prototype.chain = function() { return this._chain; }
+Residue.prototype.atoms = function() { return this._atoms; };
+Residue.prototype.chain = function() { return this._chain; };
 
 
 Residue.prototype.structure = function() { 
   return this._chain.structure(); 
-}
+};
 
 function AtomBase() {
 }
 
-AtomBase.prototype.name = function() { return this._name; },
-AtomBase.prototype.pos = function() { return this._pos; },
-AtomBase.prototype.element = function() { return this._element; },
-AtomBase.prototype.index = function() { return this._index; },
+AtomBase.prototype.name = function() { return this._name; };
+AtomBase.prototype.pos = function() { return this._pos; };
+AtomBase.prototype.element = function() { return this._element; };
+AtomBase.prototype.index = function() { return this._index; };
 AtomBase.prototype.each_bond = function(callback) {
   for (var i = 0; i < this._bonds.length; ++i) {
     callback(this._bonds[i]);
   }
-}
+};
 
 function Atom(residue, name, pos, element) {
   this._residue = residue;
@@ -2066,11 +2064,11 @@ function Atom(residue, name, pos, element) {
 
 Atom.prototype = new AtomBase();
 
-Atom.prototype.add_bond = function(bond) { this._bonds.push(bond); },
-Atom.prototype.name = function() { return this._name; },
-Atom.prototype.bonds = function() { return this._bonds; }
-Atom.prototype.residue = function() { return this._residue; }
-Atom.prototype.structure = function() { return this._residue.structure(); }
+Atom.prototype.add_bond = function(bond) { this._bonds.push(bond); };
+Atom.prototype.name = function() { return this._name; };
+Atom.prototype.bonds = function() { return this._bonds; };
+Atom.prototype.residue = function() { return this._residue; };
+Atom.prototype.structure = function() { return this._residue.structure(); };
 
 var Bond = function(atom_a, atom_b) {
   var self = {
@@ -2091,7 +2089,7 @@ var Bond = function(atom_a, atom_b) {
       return out;
     }
   };
-}
+};
 
 return { Viewer: function(elem, options) { return new PV(elem, options); }};
 })();
