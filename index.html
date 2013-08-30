@@ -6,7 +6,13 @@
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <script src='js/jquery-2.0.2.min.js'></script>
     <script src='js/gl-matrix.js'></script>
+    <!--
     <script src='js/pv.js'></script>
+    -->
+    <script src='src/geom.js'></script>
+    <script src='src/mol.js'></script>
+    <script src='src/render.js'></script>
+    <script src='src/viewer.js'></script>
     <style>
     body {
       font-family: Helvetica;
@@ -19,7 +25,7 @@
       float: left;
     }
     #inspector {
-      float : right;
+      float : left;
       background-color:#fafafa;
       padding:15px;
     }
@@ -73,44 +79,44 @@
     var pv = pv.Viewer(document.getElementById('gl'), 
                        { quality : 'medium', width: 400, height : 400,
                          antialias : true, outline : true});
-    var mol;
+    var structure;
     function lines() {
       pv.clear();
-      mol.lines();
+      pv.add('structure', pv.lines(structure));
     }
     function cartoon() {
       pv.clear();
-      mol.cartoon();
+      pv.add('structure', pv.cartoon(structure));
     }
     function line_trace() {
       pv.clear();
-      mol.line_trace();
+      pv.add('structure', pv.lineTrace(structure));
     }
     function sline() {
       pv.clear();
-      mol.sline();
+      pv.add('structure', pv.sline(structure));
     }
 
     function tube() {
       pv.clear();
-      mol.tube();
+      pv.add('structure', pv.tube(structure));
     }
 
     function trace() {
       pv.clear();
-      mol.trace();
+      pv.add('structure', pv.trace(structure));
     }
     function preset() {
       pv.clear();
-      var ligand = mol.select('ligand');
-      mol.cartoon();
-      ligand.spheres();
+      var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
+      pv.add('ligand', pv.spheres(ligand));
+      pv.add('protein', pv.cartoon(structure));
     }
     function load(pdb_id) {
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
-        mol = pv.pdb(data);
+        structure = mol.pdb(data);
         cartoon();
-        pv.center_on(mol);
+        pv.centerOn(structure);
       }});
     }
     function kinase() {
