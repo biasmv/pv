@@ -1508,12 +1508,13 @@ MolBase.prototype.sline = function(opts) {
   var line_geom = LineGeom(this._pv.gl());
   var pos_one = vec3.create(), pos_two = vec3.create();
   var clr_one = vec3.create(), clr_two = vec3.create();
+  var i, e;
   for (var ci  in this._chains) {
     var chain = this._chains[ci];
     chain.each_backbone_trace(function(trace) {
       var positions = new Float32Array(trace.length*3);
       var colors = new Float32Array(trace.length*3);
-      for (var i = 0; i < trace.length; ++i) {
+      for (i = 0; i < trace.length; ++i) {
         var atom = trace[i].atom('CA');
         options.color(atom, colors, 3*i);
         var p = atom.pos();

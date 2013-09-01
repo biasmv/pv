@@ -65,6 +65,7 @@
        <li id=1ake>Adenylate kinase</li>
        <li id=1crn>Crambin</li>
        <li id=2por>Porin</li>
+       <li id=2f8v>Telethonin</li>
     </ul>
   </div>
   </script>
@@ -121,6 +122,9 @@
     function transferase() {
       load('1r6a');
     }
+
+    function telethonin() { load('2f8v'); }
+
     function porin() { load('2por'); }
 
     $('#cartoon').click(cartoon);
@@ -134,6 +138,7 @@
     $('#1r6a').click(transferase);
     $('#1crn').click(crambin);
     $('#2por').click(porin);
+    $('#2f8v').click(telethonin);
 
     document.addEventListener('DOMContentLoaded', transferase);
   </script>
