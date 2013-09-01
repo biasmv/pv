@@ -86,18 +86,18 @@ var LineGeom = function(gl) {
   return {
     draw : function(shaderProgram) {
       this.bind();
-      var vert_attrib = gl.getAttribLocation(shaderProgram, 'attrPos');
-      gl.enableVertexAttribArray(vert_attrib);
-      gl.vertexAttribPointer(vert_attrib, 3, gl.FLOAT, false, 6*4, 0*4);
+      var vertAttrib = gl.getAttribLocation(shaderProgram, 'attrPos');
+      gl.enableVertexAttribArray(vertAttrib);
+      gl.vertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 6*4, 0*4);
       var clrAttrib = gl.getAttribLocation(shaderProgram, 'attrColor');
       gl.vertexAttribPointer(clrAttrib, 3, gl.FLOAT, false, 6*4, 3*4);
       gl.enableVertexAttribArray(clrAttrib);
       gl.drawArrays(gl.LINES, 0, self.num_lines*2);
-      gl.disableVertexAttribArray(vert_attrib);
+      gl.disableVertexAttribArray(vertAttrib);
       gl.disableVertexAttribArray(clrAttrib);
     },
 
-    requires_outline_pass : function() { return false; },
+    requiresOutlinePass : function() { return false; },
     // prepare data for rendering. if the buffer data was modified, this 
     // synchronizes the corresponding GL array buffers.
     bind : function() {
@@ -110,20 +110,20 @@ var LineGeom = function(gl) {
         self.data = [];
       }
     },
-    addLine : function(start_pos, start_color, end_pos, end_color) {
-     self.data.push(start_pos[0]); 
-     self.data.push(start_pos[1]); 
-     self.data.push(start_pos[2]); 
-     self.data.push(start_color[0]);
-     self.data.push(start_color[1]);
-     self.data.push(start_color[2]);
+    addLine : function(startPos, startColor, endPos, endColor) {
+     self.data.push(startPos[0]); 
+     self.data.push(startPos[1]); 
+     self.data.push(startPos[2]); 
+     self.data.push(startColor[0]);
+     self.data.push(startColor[1]);
+     self.data.push(startColor[2]);
 
-     self.data.push(end_pos[0]); 
-     self.data.push(end_pos[1]); 
-     self.data.push(end_pos[2]); 
-     self.data.push(end_color[0]);
-     self.data.push(end_color[1]);
-     self.data.push(end_color[2]);
+     self.data.push(endPos[0]); 
+     self.data.push(endPos[1]); 
+     self.data.push(endPos[2]); 
+     self.data.push(endColor[0]);
+     self.data.push(endColor[1]);
+     self.data.push(endColor[2]);
      self.num_lines += 1;
      self.ready = false;
     }
@@ -169,7 +169,7 @@ var ProtoSphere  = function(stacks, arcs) {
   var pos = vec3.create(), normal = vec3.create();
   return {
     addTransformed : function(geom, center, radius, color) {
-      var base_index = geom.numVerts();
+      var baseIndex = geom.numVerts();
       for (var i = 0; i < self.stacks*self.arcs; ++i) {
         vec3.set(normal, self.verts[3*i], self.verts[3*i+1], 
                  self.verts[3*i+2]);
@@ -179,9 +179,9 @@ var ProtoSphere  = function(stacks, arcs) {
         geom.addVertex(pos, normal, color);
       }
       for (i = 0; i < self.indices.length/3; ++i) {
-        geom.addTriangle(base_index+self.indices[i*3], 
-                          base_index+self.indices[i*3+1], 
-                          base_index+self.indices[i*3+2]);
+        geom.addTriangle(baseIndex+self.indices[i*3], 
+                          baseIndex+self.indices[i*3+1], 
+                          baseIndex+self.indices[i*3+2]);
       }
     },
     num_indices : function() { return self.indices.length; },
@@ -228,10 +228,9 @@ var TubeProfile = function(points, num, strength) {
   return {
     addTransformed : function(geom, center, radius, rotation, color, first,
                                offset) {
-      var base_index = geom.numVerts() - self.arcs;
+      var baseIndex = geom.numVerts() - self.arcs;
       for (var i = 0; i < self.arcs; ++i) {
-        vec3.set(pos, radius*self.verts[3*i], radius*self.verts[3*i+1], 
-                 0.0);
+        vec3.set(pos, radius*self.verts[3*i], radius*self.verts[3*i+1], 0.0);
         vec3.transformMat3(pos, pos, rotation);
         vec3.add(pos, pos, center);
         vec3.set(normal, self.normals[3*i], self.normals[3*i+1], 0.0);
@@ -244,19 +243,19 @@ var TubeProfile = function(points, num, strength) {
       if (offset === 0) {
         // that's what happens most of the time, thus is has been optimized.
         for (i = 0; i < self.indices.length/3; ++i) {
-          geom.addTriangle(base_index+self.indices[i*3], 
-                            base_index+self.indices[i*3+1], 
-                            base_index+self.indices[i*3+2]);
+          geom.addTriangle(baseIndex+self.indices[i*3], 
+                            baseIndex+self.indices[i*3+1], 
+                            baseIndex+self.indices[i*3+2]);
         }
         return;
       }
       for (i = 0; i < self.arcs; ++i) {
-        geom.addTriangle(base_index+((i+offset) % self.arcs),
-                          base_index+i+self.arcs,
-                          base_index+((i+1) % self.arcs) + self.arcs);
-        geom.addTriangle(base_index+(i+offset) % self.arcs,
-                          base_index+((i+1) % self.arcs) + self.arcs,
-                          base_index+((i+1+offset) % self.arcs));
+        geom.addTriangle(baseIndex+((i+offset) % self.arcs),
+                          baseIndex+i+self.arcs,
+                          baseIndex+((i+1) % self.arcs) + self.arcs);
+        geom.addTriangle(baseIndex+(i+offset) % self.arcs,
+                          baseIndex+((i+1) % self.arcs) + self.arcs,
+                          baseIndex+((i+1+offset) % self.arcs));
       }
 
     }
@@ -313,22 +312,21 @@ var ProtoCylinder = function(arcs) {
   return {
     addTransformed : function(geom, center, length, radius, rotation, colorOne, 
                                colorTwo) {
-      var base_index = geom.numVerts();
+      var baseIndex = geom.numVerts();
       var pos = vec3.create(), normal = vec3.create(), color;
       for (var i = 0; i < 2*self.arcs; ++i) {
         vec3.set(pos, radius*self.verts[3*i], radius*self.verts[3*i+1], 
                  length*self.verts[3*i+2]);
         vec3.transformMat3(pos, pos, rotation);
         vec3.add(pos, pos, center);
-        vec3.set(normal, self.normals[3*i], self.normals[3*i+1], 
-                 self.normals[3*i+2]);
+        vec3.set(normal, self.normals[3*i], self.normals[3*i+1], self.normals[3*i+2]);
         vec3.transformMat3(normal, normal, rotation);
         geom.addVertex(pos, normal, i < self.arcs ? colorOne : colorTwo);
       }
       for (i = 0; i < self.indices.length/3; ++i) {
-        geom.addTriangle(base_index+self.indices[i*3], 
-                          base_index+self.indices[i*3+1], 
-                          base_index+self.indices[i*3+2]);
+        geom.addTriangle(baseIndex+self.indices[i*3], 
+                         baseIndex+self.indices[i*3+1], 
+                         baseIndex+self.indices[i*3+2]);
       }
     }
   };
@@ -342,9 +340,9 @@ var ProtoCylinder = function(arcs) {
 var MeshGeom = function(gl) {
   var self = {
     interleavedBuffer : gl.createBuffer(),
-    index_buffer : gl.createBuffer(),
+    indexBuffer : gl.createBuffer(),
     vertData : [],
-    index_data : [],
+    indexData : [],
     num_triangles : 0,
     numVerts : 0,
     ready : false
@@ -352,7 +350,7 @@ var MeshGeom = function(gl) {
 
   return {
     numVerts : function() { return self.numVerts; },
-    requires_outline_pass : function() { return true; },
+    requiresOutlinePass : function() { return true; },
     draw: function(shaderProgram) {
       this.bind();
       var posAttrib = gl.getAttribLocation(shaderProgram, 'attrPos');
@@ -387,19 +385,19 @@ var MeshGeom = function(gl) {
       self.numVerts += 1;
     },
     addTriangle : function(idx1, idx2, idx3) {
-      self.index_data.push(idx1, idx2, idx3);
+      self.indexData.push(idx1, idx2, idx3);
       self.num_triangles +=1;
     },
     bind : function() {
       gl.bindBuffer(gl.ARRAY_BUFFER, self.interleavedBuffer);
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.index_buffer);
+      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.indexBuffer);
       if (!self.ready) {
         var floatArray = new Float32Array(self.vertData);
         gl.bufferData(gl.ARRAY_BUFFER, floatArray, gl.STATIC_DRAW);
-        var indexArray = new Uint16Array(self.index_data);
+        var indexArray = new Uint16Array(self.indexData);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexArray, gl.STATIC_DRAW);
         self.ready = true;
-        self.index_data = [];
+        self.indexData = [];
         self.vertData = [];
       }
     }
@@ -419,7 +417,7 @@ SceneNode.prototype.add = function(node) {
 
 SceneNode.prototype.draw = function(shaderProgram, outline_pass) {
   for (var i = 0; i < this._children.length; ++i) {
-    if (!outline_pass || this._children[i].requires_outline_pass())
+    if (!outline_pass || this._children[i].requiresOutlinePass())
       this._children[i].draw(shaderProgram, outline_pass);
   }
 };
@@ -631,8 +629,8 @@ var _cartoonForChain = (function() {
         vec3.set(pos, sdiv[ix3], sdiv[ix3+1], sdiv[ix3+2]);
 
         vec3.set(tangent, sdiv[ipox3]-sdiv[imox3],
-                  sdiv[ipox3+1]-sdiv[imox3+1],
-                  sdiv[ipox3+2]-sdiv[imox3+2]);
+                 sdiv[ipox3+1]-sdiv[imox3+1],
+                 sdiv[ipox3+2]-sdiv[imox3+2]);
         vec3.normalize(tangent, tangent);
         vec3.set(color, interpColors[ix3], interpColors[ix3+1],
                 interpColors[ix3+2]);
@@ -652,9 +650,8 @@ var _cartoonForChain = (function() {
           // to coil or inside a helix or strand.
           //
           // to avoid these visual artifacts, we calculate the best fit between
-          // the normal "after" which gives us an offset for stitching the two
-          // parts together. we try to avoid this kind of stitching in general
-          // since we no longer can precalculate the triangle indices.
+          // the current normal and the normal "after" which gives us an offset 
+          // for stitching the two parts together. 
           if (trace[prevTraceIndex].ss() === 'C' &&
               (trace[traceIndex].ss() === 'H' ||
                trace[traceIndex].ss() === 'E')) {
@@ -662,8 +659,8 @@ var _cartoonForChain = (function() {
             // the vertices of the rotated profile align with the previous
             // profile.
             vec3.set(normal2, normalSdiv[imox3]-sdiv[imox3], 
-                    normalSdiv[imox3+1]-sdiv[imox3+1],
-                    normalSdiv[imox3+2]-sdiv[imox3+2]);
+                     normalSdiv[imox3+1]-sdiv[imox3+1],
+                     normalSdiv[imox3+2]-sdiv[imox3+2]);
             vec3.normalize(normal2, normal2);
             var  argAngle = 2*Math.PI/(options.arcDetail*4);
             var signedAngle = geom.signedAngle(normal, normal2, tangent);
