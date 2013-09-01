@@ -1,17 +1,17 @@
-
 <!DOCTYPE html>
 <html>
   <head>
-    <title>pv - JavaScript protein viewer</title>
+    <title>Dengue virus methyl transferase</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-    <script src='https://rawgithub.com/biasmv/pv/master/js/jquery-2.0.2.min.js'></script>
-    <script src='https://rawgithub.com/biasmv/pv/master/js/gl-matrix.js'></script>
-    <script src='https://rawgithub.com/biasmv/pv/master/js/pv.js'></script>
+    <script src='js/jquery.min.js'></script>
+    <script src='js/gl-matrix.min.js'></script>
+    <script src='js/pv.min.js'></script>
     <style>
     body {
-      font-family: Monospace;
+      font-family: Helvetica;
       background-color: #fff;/*#f0f0f0;*/
+      font-weight: lighter;
       margin: 0px;
       overflow: hidden;
     }
@@ -19,9 +19,13 @@
       float: left;
     }
     #inspector {
-      float : right;
-      background-color:#eee;
+      margin-top:10px;
+      float : left;
+      background-color:#fafafa;
       padding:10px;
+      border-style:solid;
+      border-width:1px;
+      border-color:#ccc;
     }
 
     #inspector ul {
@@ -29,12 +33,20 @@
     }
 
     #inspector ul li {
+      margin-left:5px;
+      margin-right:5px;
+      margin-bottom:5px;
       list-style:none;
       cursor: pointer;
       color:#660000
     }
+
     #inspector ul li:hover {
       color:#994444;
+    }
+    #inspector h1 {
+      font-weight:normal;
+      font-size:12pt;
     }
     </style>
     </head>
@@ -42,6 +54,7 @@
   <div id=gl>
   </div>
   <div id=inspector>
+    <h1>Choose Style</h1>
     <ul>
       <li id=preset>Preset</li>
       <li id=cartoon>Cartoon</li>
@@ -55,40 +68,50 @@
   </script>
   <script>
     var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'medium', width: 800, height : 800,
+                       { quality : 'medium', width: 600, height : 600,
                          antialias : true, outline : true});
-    var mol;
+    var structure;
     function lines() {
       pv.clear();
-      mol.lines();
+      pv.add('structure', pv.lines(structure));
     }
     function cartoon() {
       pv.clear();
-      mol.cartoon();
+      pv.add('structure', pv.cartoon(structure));
     }
     function line_trace() {
       pv.clear();
-      mol.line_trace();
+      pv.add('structure', pv.lineTrace(structure));
     }
     function sline() {
       pv.clear();
-      mol.sline();
+      pv.add('structure', pv.sline(structure));
     }
 
     function tube() {
       pv.clear();
-      mol.tube();
+      pv.add('structure', pv.tube(structure));
     }
 
     function trace() {
       pv.clear();
-      mol.trace();
+      pv.add('structure', pv.trace(structure));
     }
     function preset() {
       pv.clear();
-      var ligand = mol.select('ligand');
-      mol.cartoon();
-      ligand.spheres();
+      var ligand = structure.select({rnames : ['RVP', 'SAH']});
+      pv.add('ligand', pv.spheres(ligand));
+      pv.add('protein', pv.cartoon(structure));
+    }
+    function load(pdb_id) {
+      $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
+        structure = mol.pdb(data);
+        preset();
+        pv.centerOn(structure);
+      }});
+    }
+    function transferase() {
+      load('1r6a');
     }
 
     $('#cartoon').click(cartoon);
@@ -99,16 +122,7 @@
     $('#sline').click(sline);
     $('#tube').click(tube);
 
-    function on_ready() {
-      $.ajax({ url : 'http://biasmv.github.io/pv/pdbs/1r6a.pdb', 
-               success : function(data) {
-        console.log('loading');
-        mol = pv.pdb(data);
-        cartoon();
-        pv.center_on(mol);
-    }, error : function(a, b, c) { console.error(a, b, c);}});
-    }
-    document.addEventListener('DOMContentLoaded', on_ready);
+    document.addEventListener('DOMContentLoaded', transferase);
   </script>
 </body>
 </html>
