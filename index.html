@@ -13,7 +13,11 @@
       overflow: hidden;
     }
     #gl {
+      margin-left:50px;
+      margin-top:50px;
       float: left;
+      width:600px;
+      height:600px;
     }
     #inspector {
       margin-top:10px;
@@ -62,6 +66,7 @@
       <li id=trace>Trace</li>
     </ul>
   </div>
+  <div id=status>initialising...</div>
 </body>
   <script src='js/gl-matrix.min.js'></script>
   <script src='js/pv.min.js'></script>
@@ -103,6 +108,7 @@
       pv.add('protein', pv.cartoon(structure));
     }
     function load(pdb_id) {
+      document.getElementById('status').innerHTML ='loading '+pdb_id;
       var xhr = new XMLHttpRequest();
       xhr.open('GET', 'pdbs/'+pdb_id+'.pdb');
       xhr.setRequestHeader('Content-type', 'application/x-pdb');
@@ -112,6 +118,7 @@
           preset();
           pv.centerOn(structure);
         }
+        document.getElementById('status').innerHTML = '';
       }
       xhr.send();
     }
