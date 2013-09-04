@@ -4,9 +4,6 @@
     <title>Dengue virus methyl transferase</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
-    <script src='js/jquery.min.js'></script>
-    <script src='js/gl-matrix.min.js'></script>
-    <script src='js/pv.min.js'></script>
     <style>
     body {
       font-family: Helvetica;
@@ -65,7 +62,9 @@
       <li id=trace>Trace</li>
     </ul>
   </div>
-  </script>
+</body>
+  <script src='js/gl-matrix.min.js'></script>
+  <script src='js/pv.min.js'></script>
   <script>
     var pv = pv.Viewer(document.getElementById('gl'), 
                        { quality : 'medium', width: 600, height : 600,
@@ -104,25 +103,28 @@
       pv.add('protein', pv.cartoon(structure));
     }
     function load(pdb_id) {
-      $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
-        structure = mol.pdb(data);
-        preset();
-        pv.centerOn(structure);
-      }});
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', 'pdbs/'+pdb_id+'.pdb');
+      xhr.setRequestHeader('Content-type', 'application/x-pdb');
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4) {
+          structure = mol.pdb(xhr.responseText);
+          preset();
+          pv.centerOn(structure);
+        }
+      }
+      xhr.send();
     }
     function transferase() {
       load('1r6a');
     }
-
-    $('#cartoon').click(cartoon);
-    $('#line-trace').click(line_trace);
-    $('#preset').click(preset);
-    $('#lines').click(lines);
-    $('#trace').click(trace);
-    $('#sline').click(sline);
-    $('#tube').click(tube);
-
+    document.getElementById('cartoon').onclick = cartoon;
+    document.getElementById('line-trace').onclick = cartoon;
+    document.getElementById('preset').onclick = preset;
+    document.getElementById('lines').onclick = lines;
+    document.getElementById('trace').onclick = trace;
+    document.getElementById('sline').onclick = sline;
+    document.getElementById('tube').onclick = tube;
     document.addEventListener('DOMContentLoaded', transferase);
   </script>
-</body>
 </html>
