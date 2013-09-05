@@ -538,6 +538,7 @@ var _cartoonAddTube = (function() {
 var _colorPosNormalsFromTrace = function(trace, colors, positions, normals, 
                                          strengths, options) {
   var last_x = 0, last_y = 0, last_z = 0;
+  var strand_start = null, strand_end = null;
   for (var i = 0; i < trace.length; ++i) {
     var p = trace[i].atom('CA').pos();
     var c = trace[i].atom('C').pos();
@@ -560,6 +561,18 @@ var _colorPosNormalsFromTrace = function(trace, colors, positions, normals,
         dy *= -1;
         dz *= -1;
       }
+    }
+    if (trace[i].ss() === 'E' && !options.force_tube) {
+      if (strand_start === null) {
+        strand_start = i;
+      }
+      strand_end = i;
+    }
+    if (trace[i].ss() =='C' && strand_start !== null) {
+      //inplaceSmooth(positions, strand_start, strand_end+1);
+      //inplaceSmooth(normals, strand_start-1, strand_end+1);
+      strand_start = null;
+      strand_start = null;
     }
     last_x = dx;
     last_y = dy;

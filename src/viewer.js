@@ -128,9 +128,9 @@ function ss() {
         out[index+2] = 0.8;
         return;
       case 'H':
-        out[index] = 0.3;
-        out[index+1] = 0.3;
-        out[index+2] = 0.8;
+        out[index] = 0.6;
+        out[index+1] = 0.6;
+        out[index+2] = 0.9;
         return;
       case 'E':
         out[index] = 0.2;
