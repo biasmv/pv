@@ -454,6 +454,36 @@ function Atom(residue, name, pos, element) {
   this._pos = pos;
   this._element = element;
 }
+
+Atom.prototype = new AtomBase();
+
+Atom.prototype.addBond = function(bond) { this._bonds.push(bond); };
+Atom.prototype.name = function() { return this._name; };
+Atom.prototype.bonds = function() { return this._bonds; };
+Atom.prototype.residue = function() { return this._residue; };
+Atom.prototype.structure = function() { return this._residue.structure(); };
+
+var Bond = function(atom_a, atom_b) {
+  var self = {
+    atom_one : atom_a,
+    atom_two : atom_b
+  };
+  return {
+    atom_one : function() { return self.atom_one; },
+    atom_two : function() { return self.atom_two; },
+
+    // calculates the mid-point between the two atom positions
+    mid_point : function(out) { 
+      if (!out) {
+        out = vec3.create();
+      }
+      vec3.add(out, self.atom_one.pos(), self.atom_two.pos());
+      vec3.scale(out, out, 0.5);
+      return out;
+    }
+  };
+};
+
 //-----------------------------------------------------------------------------
 // MolView, ChainView, ResidueView, AtomView
 //-----------------------------------------------------------------------------
@@ -478,6 +508,9 @@ MolView.prototype.addChain = function(chain, recurse) {
   }
   return chain_view;
 };
+
+
+MolView.prototype.chains = function() { return this._chains; };
 
 function ChainView(mol_view, chain) {
   this._chain = chain;
@@ -515,34 +548,9 @@ ResidueView.prototype.addAtom = function(atom) {
   this._atoms.push(atom_view);
 };
 
-Atom.prototype = new AtomBase();
+ResidueView.prototype.num = function() { return this._residue.num(); };
+ResidueView.prototype.ss = function() { return this._residue.ss(); };
 
-Atom.prototype.addBond = function(bond) { this._bonds.push(bond); };
-Atom.prototype.name = function() { return this._name; };
-Atom.prototype.bonds = function() { return this._bonds; };
-Atom.prototype.residue = function() { return this._residue; };
-Atom.prototype.structure = function() { return this._residue.structure(); };
-
-var Bond = function(atom_a, atom_b) {
-  var self = {
-    atom_one : atom_a,
-    atom_two : atom_b
-  };
-  return {
-    atom_one : function() { return self.atom_one; },
-    atom_two : function() { return self.atom_two; },
-
-    // calculates the mid-point between the two atom positions
-    mid_point : function(out) { 
-      if (!out) {
-        out = vec3.create();
-      }
-      vec3.add(out, self.atom_one.pos(), self.atom_two.pos());
-      vec3.scale(out, out, 0.5);
-      return out;
-    }
-  };
-};
 
 ChainView.prototype.name = function () { return this._chain.name(); };
 
@@ -557,6 +565,7 @@ AtomView.prototype = new AtomBase();
 AtomView.prototype.name = function() { return this._atom.name(); };
 AtomView.prototype.pos = function() { return this._atom.pos(); };
 AtomView.prototype.element = function() { return this._atom.element(); };
+AtomView.prototype.residue = function() { return this._res_view; };
 AtomView.prototype.bonds = function() { return this._bonds; };
 
 

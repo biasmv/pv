@@ -198,6 +198,7 @@ var Cam = function(gl) {
     fogNear : -5,
     fogFar : 10,
     fogColor : vec3.fromValues(1, 1, 1),
+    outlineColor : vec3.fromValues(0.1, 0.1, 0.1),
     center : vec3.create(),
     zoom : 50,
     rotation : mat4.create(),
@@ -264,6 +265,10 @@ var Cam = function(gl) {
                     self.fogFar+self.zoom);
       gl.uniform1f(gl.getUniformLocation(shader, 'fogNear'),
                     self.fogNear+self.zoom);
+      if (gl.getUniformLocation(shader, 'outlineColor')) {
+        gl.uniform3fv(gl.getUniformLocation(shader, 'outlineColor'),
+                      self.outlineColor);
+      }
       gl.uniform3fv(gl.getUniformLocation(shader, 'fogColor'),
                     self.fogColor);
     }
@@ -301,7 +306,11 @@ PV.prototype.gl = function() { return this._gl; };
 PV.prototype.ok = function() { return this._ok; };
 
 
-PV.prototype.options = function(opt_name) {
+PV.prototype.options = function(opt_name, value) {
+  if (value !== undefined) {
+    this._options[opt_name] = value;
+    return value;
+  }
   return this._options[opt_name];
 };
 

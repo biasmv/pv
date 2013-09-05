@@ -272,10 +272,10 @@ var COIL_POINTS = [
 
 
 var HELIX_POINTS = [
-  -6*R, -1.2*R, 0,
-   6*R, -1.2*R, 0,
-   6*R, 1.2*R, 0,
-  -6*R,  1.2*R, 0
+  -6*R, -1.0*R, 0,
+   6*R, -1.0*R, 0,
+   6*R, 1.0*R, 0,
+  -6*R,  1.0*R, 0
 ];
 
 var ProtoCylinder = function(arcs) {
@@ -536,14 +536,13 @@ var _cartoonAddTube = (function() {
 // INTERNAL: fills positions, normals and colors from the information found in 
 // trace. The 3 arrays must already have the correct size (3*trace.length).
 var _colorPosNormalsFromTrace = function(trace, colors, positions, normals, 
-                                         strengths, options) {
+                                         options) {
   var last_x = 0, last_y = 0, last_z = 0;
   var strand_start = null, strand_end = null;
   for (var i = 0; i < trace.length; ++i) {
     var p = trace[i].atom('CA').pos();
     var c = trace[i].atom('C').pos();
     var o = trace[i].atom('O').pos();
-    strengths[i] = trace[i].ss() === 'E' ? 0.5 : 1.0;
     positions[i*3] = p[0]; positions[i*3+1] = p[1]; positions[i*3+2] = p[2];
 
     var dx = o[0] - c[0], dy = o[1] - c[1], dz = o[2] - c[2];
@@ -574,12 +573,12 @@ var _colorPosNormalsFromTrace = function(trace, colors, positions, normals,
       strand_start = null;
       strand_start = null;
     }
+    normals[i*3]   = positions[3*i]+dx+last_x; 
+    normals[i*3+1] = positions[3*i+1]+dy+last_y; 
+    normals[i*3+2] = positions[3*i+2]+dz+last_z;
     last_x = dx;
     last_y = dy;
     last_z = dz;
-    normals[i*3]   = positions[3*i]+dx; 
-    normals[i*3+1] = positions[3*i+1]+dy; 
-    normals[i*3+2] = positions[3*i+2]+dz;
     options.color(trace[i].atom('CA'), colors, i*3);
   }
 };
@@ -606,10 +605,8 @@ var _cartoonForChain = (function() {
       var positions = new Float32Array(trace.length*3);
       var colors = new Float32Array(trace.length*3);
       var normals = new Float32Array(trace.length*3);
-      var strenghts = new Float32Array(trace.length);
 
-      _colorPosNormalsFromTrace(trace, colors, positions, normals, 
-                                strenghts, options);
+      _colorPosNormalsFromTrace(trace, colors, positions, normals, options);
       var sdiv = geom.catmullRomSpline(positions, options.splineDetail, 
                                        options.strength, false);
       var normalSdiv = geom.catmullRomSpline(normals, options.splineDetail,
