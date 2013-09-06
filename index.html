@@ -25,12 +25,23 @@
       overflow: hidden;
     }
     #gl {
-      float: left;
+      position:fixed;
+      left:232px;
+      top:36px;
     }
     #inspector {
-      float : left;
-      background-color:#fafafa;
+      position:fixed;
+      width:200px;
+      top:36px;
+      bottom:0px;
+      
+      background-color:white;
+      /*border-right-style:solid;
+      border-right-width:1px;
+      border-right-color:#ccc;
+      */
       padding:15px;
+      box-shadow: 2px 0px 2px #ddd;
     }
 
     #inspector ul {
@@ -49,17 +60,62 @@
     #inspector ul li:hover {
       color:#994444;
     }
-    #inspector span {
-      font-weight:normal;
+    #toolbar {
+      position:fixed;
+      background-color:#fafafa;
+      top:0px;
+      left:0px;
+      padding-top:8px;
+      padding-left:5px;
+      border-bottom-style:solid;
+      border-bottom-color:#ccc;
+      border-bottom-width:1px;
+      right:0px;
+      height:27px;
+    }
+    #copyright {
+      bottom:0px;
+      position: fixed;
+      left:20px;
+      color:#888;
+      border-top-style:solid;
+      border-top-color:#ccc;
+      border-top-width:1px;
+      font-size:10pt;
+      padding-bottom:20px;
+      padding-left:5px;
+      padding-top:20px;
+    }
+    #toolbar a {
+      float:right;
+      padding-right:10px;
+      color:#660000;
+      text-decoration:none;
+    }
+    #toolbar a:hover {
+      color:#994444;
+    }
+    #inspector h1 {
+      margin-top:20px;
+      border-top-style:solid;
+      border-top-color:#ccc;
+      border-top-width:1px;
+      padding-bottom:10px;
+      padding-top:10px;
+      font-size:12pt;
+      font-weight:lighter;
+      color:#888;
+      text-align:center;
     }
     </style>
     </head>
 <body>
-  <div id=gl>
+  <div id=toolbar>pv - JavaScript protein viewer
+    <a href="http://github.com/biasmv/pv">code on github</a>
   </div>
   <div id=inspector>
     <ul>
-      <span>Render Style</span>
+      <h1></h1>
       <li id=preset>Preset</li>
       <li id=cartoon>Cartoon</li>
       <li id=tube>Tube</li>
@@ -69,12 +125,12 @@
       <li id=trace>Trace</li>
     </ul>
      <ul>
-      <span>Render Options</span>
+      <h1></h1>
       <li><input type="checkbox" name="outline" 
                  value="yes" checked=true id=showOutline>Show Outline</li>
     </ul>
      <ul>
-      <span>Molecule</span>
+      <h1></h1>
        <li id=1r6a>Methyl transferase</li>
        <li id=1ake>Adenylate kinase</li>
        <li id=1crn>Crambin</li>
@@ -82,7 +138,10 @@
        <li id=2f8v>Telethonin</li>
     </ul>
   </div>
-  </script>
+  <div id=gl>
+  </div>
+  <div id=copyright>Copyright (2013) Marco Biasini</div>
+ </body>
   <script>
     var pv = pv.Viewer(document.getElementById('gl'), 
                        { quality : 'medium', width: 800, height : 800,
@@ -161,5 +220,4 @@
 
     document.addEventListener('DOMContentLoaded', transferase);
   </script>
-</body>
 </html>
