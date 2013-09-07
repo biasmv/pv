@@ -422,6 +422,7 @@ function Residue(chain, name, num) {
   this._atoms = [];
   this._ss = 'C';
   this._chain = chain;
+  this._index = chain.residues().length;
 }
 
 Residue.prototype = new ResidueBase();
@@ -438,6 +439,7 @@ Residue.prototype.addAtom = function(name, pos, element) {
 
 Residue.prototype.ss = function() { return this._ss; };
 Residue.prototype.set_ss = function(ss) { this._ss = ss; };
+Residue.prototype.index = function() { return this._index; };
 
 Residue.prototype.atoms = function() { return this._atoms; };
 Residue.prototype.chain = function() { return this._chain; };
@@ -550,6 +552,8 @@ ResidueView.prototype.addAtom = function(atom) {
 
 ResidueView.prototype.num = function() { return this._residue.num(); };
 ResidueView.prototype.ss = function() { return this._residue.ss(); };
+ResidueView.prototype.index = function() { return this._residue.index(); };
+ResidueView.prototype.chain = function() { return this._chain_view; };
 
 
 ChainView.prototype.name = function () { return this._chain.name(); };
@@ -629,7 +633,8 @@ function pdb(text) {
       curr_chain = structure.addChain(chain_name);
     }
     if (update_residue) {
-      curr_res = curr_chain.addResidue(res_name, rnum_num);
+      curr_res = curr_chain.addResidue(res_name, rnum_num,
+                                       curr_chain.residues().length);
     }
     var pos = vec3.create();
     for (var i=0;i<3;++i) {
