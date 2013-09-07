@@ -16,12 +16,14 @@ module.exports = function(grunt) {
     },
     jshint : {
       options: { multistr :true },
-      all : ['src/geom.js', 'src/viewer.js', 'src/color.js', 'src/mol.js'],
+      all : ['src/geom.js', 'src/shade.js', 'src/viewer.js', 
+             'src/color.js', 'src/mol.js'],
     },
 
     concat: {
       dist: {
-        src: ['src/geom.js', 'src/color.js', 'src/mol.js', 'src/render.js', 'src/viewer.js'],
+        src: ['src/gl-matrix.js', 'src/geom.js', 'src/shade.js', 
+              'src/color.js', 'src/mol.js', 'src/render.js', 'src/viewer.js'],
         dest: 'js/pv.js'
       }
     }
