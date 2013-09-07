@@ -25,6 +25,27 @@ MolBase.prototype.eachAtom = function(callback) {
   }
 };
 
+MolBase.prototype.residueCount = function () {
+  var chains = this.chains();
+  var count = 0;
+  for (var ci = 0; ci < chains.length; ++ci) {
+    count += chains[ci].residues().length;
+  }
+  return count;
+};
+
+MolBase.prototype.atomCount = function() {
+  var chains = this.chains();
+  var count = 0;
+  for (var ci = 0; ci < chains.length; ++ci) {
+    var residues = chains[ci].residues();
+    for (var ri = 0; ri < residues.length; ++ri) {
+      count+= residues[ri].atoms().length;
+    }
+  }
+  return count;
+};
+
 MolBase.prototype.center = function() {
   var sum = vec3.create();
   var count = 1;
@@ -57,6 +78,14 @@ ChainBase.prototype.eachResidue = function(callback) {
 ChainBase.prototype.residues = function() { return this._residues; };
 
 ChainBase.prototype.structure = function() { return this._structure; };
+
+
+ChainBase.prototype.asView = function() {
+  var view = new MolView(this.structure());
+  view.addChain(this, true);
+  return view;
+
+};
 
 // invokes a callback for each connected stretch of amino acids. these 
 // stretches are used for all trace-based rendering styles, e.g. sline, 
@@ -156,12 +185,15 @@ AtomBase.prototype.eachBond = function(callback) {
 function Mol(pv) {
   this._chains = [];
   this._pv = pv;
-  this._next_atom_index = 0;
+  this._nextAtomIndex = 0;
 }
 
 Mol.prototype = new MolBase();
 
+
 Mol.prototype.chains = function() { return this._chains; };
+
+
 
 Mol.prototype.residueSelect = function(predicate) {
   console.time('Mol.residueSelect');
@@ -331,10 +363,10 @@ Mol.prototype.chain = function(name) {
   return null;
 };
 
-Mol.prototype.next_atom_index = function() {
-  var next_index = this._next_atom_index; 
-  this._next_atom_index+=1; 
-  return next_index; 
+Mol.prototype.nextAtomIndex = function() {
+  var nextIndex = this._nextAtomIndex; 
+  this._nextAtomIndex+=1; 
+  return nextIndex; 
 };
 
 Mol.prototype.addChain = function(name) {
@@ -432,7 +464,7 @@ Residue.prototype.name = function() { return this._name; };
 Residue.prototype.num = function() { return this._num; };
 
 Residue.prototype.addAtom = function(name, pos, element) {
-  var atom = new Atom(this, name, pos, element);
+  var atom = new Atom(this, name, pos, element, this.structure().nextAtomIndex());
   this._atoms.push(atom);
   return atom;
 };
@@ -449,11 +481,12 @@ Residue.prototype.structure = function() {
   return this._chain.structure(); 
 };
 
-function Atom(residue, name, pos, element) {
+function Atom(residue, name, pos, element, index) {
   this._residue = residue;
   this._bonds = [];
   this._name = name;
   this._pos = pos;
+  this._index = index;
   this._element = element;
 }
 
@@ -571,6 +604,7 @@ AtomView.prototype.pos = function() { return this._atom.pos(); };
 AtomView.prototype.element = function() { return this._atom.element(); };
 AtomView.prototype.residue = function() { return this._res_view; };
 AtomView.prototype.bonds = function() { return this._bonds; };
+AtomView.prototype.index = function() { return this._atom.index(); };
 
 
 function parse_helix_record(line) {

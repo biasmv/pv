@@ -75,60 +75,193 @@ function interpolateColor(colors, num) {
   return out;
 }
 
-var LineGeom = function(gl) {
-  var self = {
-    data : [],
-    ready : false,
-    interleavedBuffer : gl.createBuffer(),
-    num_lines : 0
-  };
+// During recoloring of a render style, most of the vertex attributes, e.g.
+// normals and positions do not change. Only the color information for each
+// vertex needs to be adjusted. 
+//
+// To do that efficiently, we need store an association between ranges of
+// vertices and atoms in the original structure. Worse, we also need to 
+// support render styles for which colors need to be interpolated, e.g.
+// the smooth line trace, tube and cartoon render modes. 
+//
+// The vertex association data for the atom-based render styles is managed
+// by AtomVertexAssoc, whereas the trace-based render styles are managed 
+// by the TraceVertexAssoc class. 
+function AtomVertexAssoc(structure) {
+  this._structure = structure;
+  this._assocs = [];
+}
 
-  return {
-    draw : function(shaderProgram) {
-      this.bind();
-      var vertAttrib = gl.getAttribLocation(shaderProgram, 'attrPos');
-      gl.enableVertexAttribArray(vertAttrib);
-      gl.vertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 6*4, 0*4);
-      var clrAttrib = gl.getAttribLocation(shaderProgram, 'attrColor');
-      gl.vertexAttribPointer(clrAttrib, 3, gl.FLOAT, false, 6*4, 3*4);
-      gl.enableVertexAttribArray(clrAttrib);
-      gl.drawArrays(gl.LINES, 0, self.num_lines*2);
-      gl.disableVertexAttribArray(vertAttrib);
-      gl.disableVertexAttribArray(clrAttrib);
-    },
+AtomVertexAssoc.prototype.addAssoc = function(atom, vertStart, vertEnd)  {
+  this._assocs.push({ atom: atom, vertStart : vertStart, vertEnd : vertEnd });
+}
 
-    requiresOutlinePass : function() { return false; },
-    // prepare data for rendering. if the buffer data was modified, this 
-    // synchronizes the corresponding GL array buffers.
-    bind : function() {
-      gl.bindBuffer(gl.ARRAY_BUFFER, self.interleavedBuffer);
-      if (!self.ready) {
-        var floatArray = new Float32Array(self.data);
-        gl.bufferData(gl.ARRAY_BUFFER, floatArray, gl.STATIC_DRAW);
-        self.ready = true;
-        // clear original data. it's not used anymore
-        self.data = [];
-      }
-    },
-    addLine : function(startPos, startColor, endPos, endColor) {
-     self.data.push(startPos[0]); 
-     self.data.push(startPos[1]); 
-     self.data.push(startPos[2]); 
-     self.data.push(startColor[0]);
-     self.data.push(startColor[1]);
-     self.data.push(startColor[2]);
-
-     self.data.push(endPos[0]); 
-     self.data.push(endPos[1]); 
-     self.data.push(endPos[2]); 
-     self.data.push(endColor[0]);
-     self.data.push(endColor[1]);
-     self.data.push(endColor[2]);
-     self.num_lines += 1;
-     self.ready = false;
+AtomVertexAssoc.prototype.recolor = function(colorFunc, buffer, offset, stride) {
+  var colorData = new Float32Array(this._structure.atomCount()*3); 
+  this._structure.eachAtom(function(atom) {
+    colorFunc(atom, colorData, atom.index()*3);
+  });
+  for (var i = 0; i < this._assocs.length; ++i) {
+    var assoc = this._assocs[i];
+    var ai = assoc.atom.index();
+    var r = colorData[ai*3], g = colorData[ai*3+1], b = colorData[ai*3+2];
+    for (var j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
+       buffer[offset+j*stride+0] = r;  
+       buffer[offset+j*stride+1] = g;  
+       buffer[offset+j*stride+2] = b;  
     }
-  };
+  }
 };
+
+function TraceVertexAssoc(structure) {
+  this._structure = structure;
+  this._assocs = [];
+}
+
+TraceVertexAssoc.prototype.addAssoc = function(slice, vertStart, vertEnd) {
+  this._assocs.push({ slice : slice, vertStart : vertStart, 
+                      vertEnd : vertEnd});
+};
+
+
+TraceVertexAssoc.prototype.recolor = function(colorFunc, buffer, offset, 
+                                              stride) {
+  for (var ci = 0; ci < this._structure.chains().length; ++ci) {
+    var chain = this._structure.chains()[ci];
+    var traces = chain.backboneTraces();
+    var numTraceResidues = 0;
+    var i;
+    for (i = 0; i < traces.length; ++i) {
+      numTraceResidues += traces[i].length;
+    }
+    var colorData = new Float32Array(numTraceResidues*3); 
+    var index = 0;
+    for (i = 0; i < traces.length; ++i) {
+      for (var j = 0; j < traces[i].length; ++j) {
+        colorFunc(traces[i][j].atom('CA'), colorData, index);
+        index+=3;
+      }
+    }
+    for (var i = 0; i < this._assocs.length; ++i) {
+      var assoc = this._assocs[i];
+      var ai = assoc.slice;
+      var r = colorData[ai*3], g = colorData[ai*3+1], b = colorData[ai*3+2];
+      for (var j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
+        buffer[offset+j*stride+0] = r;  
+        buffer[offset+j*stride+1] = g;  
+        buffer[offset+j*stride+2] = b;  
+      }
+    }
+  }
+};
+
+// Holds geometrical data for objects rendered as lines. For each vertex,
+// the color and position is stored in an interleaved format.
+function LineGeom(gl) {
+  this._data = [];
+  this._ready = false;
+  this._interleavedBuffer = gl.createBuffer();
+  this._gl = gl;
+  this._numLines = 0;
+  this._vertAssoc = null;
+  this._lineWidth = 1.0;
+  SceneNode.prototype.constructor(this);
+}
+
+LineGeom.prototype = new SceneNode();
+
+LineGeom.prototype.setLineWidth = function(width) {
+  this._lineWidth = width;
+}
+
+LineGeom.prototype.setVertAssoc = function(assoc) {
+  this._vertAssoc = assoc;
+}
+
+LineGeom.prototype.numVerts = function() { return this._numLines*2; };
+
+LineGeom.prototype.draw = function(shaderProgram) {
+  this.bind();
+  this._gl.lineWidth(this._lineWidth);
+  var vertAttrib = this._gl.getAttribLocation(shaderProgram, 'attrPos');
+  this._gl.enableVertexAttribArray(vertAttrib);
+  this._gl.vertexAttribPointer(vertAttrib, 3, this._gl.FLOAT, false, 6*4, 0*4);
+  var clrAttrib = this._gl.getAttribLocation(shaderProgram, 'attrColor');
+  this._gl.vertexAttribPointer(clrAttrib, 3, this._gl.FLOAT, false, 6*4, 3*4);
+  this._gl.enableVertexAttribArray(clrAttrib);
+  this._gl.drawArrays(this._gl.LINES, 0, this._numLines*2);
+  this._gl.disableVertexAttribArray(vertAttrib);
+  this._gl.disableVertexAttribArray(clrAttrib);
+};
+
+LineGeom.prototype.requiresOutlinePass = function() {
+  return false;
+}
+
+LineGeom.prototype.colorBy = function(colorFunc) {
+  console.time('LineGeom.colorBy');
+  this._ready = false;
+  this._vertAssoc.recolor(colorFunc, this._data, 3, 6);
+  console.timeEnd('LineGeom.colorBy');
+}
+
+LineGeom.prototype.bind = function() {
+  this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._interleavedBuffer);
+  if (this._ready) {
+    return;
+  }
+  var floatArray = new Float32Array(this._data);
+  this._gl.bufferData(this._gl.ARRAY_BUFFER, floatArray, this._gl.STATIC_DRAW);
+  this._ready = true;
+};
+
+LineGeom.prototype.addLine = function(startPos, startColor, endPos, endColor) {
+  this._data.push(startPos[0], startPos[1], startPos[2],
+                  startColor[0], startColor[1], startColor[2],
+                  endPos[0], endPos[1], endPos[2],
+                  endColor[0], endColor[1], endColor[2]);
+  this._numLines += 1;
+  this._ready = false;
+}
+
+// a SceneNode which aggregates one or more (unnamed) geometries into one
+// named object. It forwards coloring and configuration calls to all
+// geometries it contains. 
+//
+// FIXME: CompositeGeom could possibly be merged directly into the 
+// SceneNode by introducing named and unnamed child nodes at the SceneNode
+// level. It only exists to support unnamed child nodes and hide the fact
+// that some render styles require multiple MeshGeoms to be constructed.
+function CompositeGeom() {
+  this._geoms = [];
+  SceneNode.prototype.constructor(this);
+}
+
+CompositeGeom.prototype = new SceneNode();
+
+
+CompositeGeom.prototype.addGeom = function(geom) {
+  this._geoms.push(geom);
+};
+
+CompositeGeom.prototype.forwardMethod = function(method, args) {
+  for (var i = 0; i < this._geoms.length; ++i) {
+    this._geoms[i][method].apply(this._geoms[i], args);
+  }
+};
+
+CompositeGeom.prototype.colorBy = function() {
+  this.forwardMethod('colorBy', arguments);
+};
+
+CompositeGeom.prototype.draw = function(shaderProgram, outlinePass) {
+  for (var i = 0; i < this._geoms.length; ++i) {
+    this._geoms[i].draw(shaderProgram, outlinePass);
+  }
+  SceneNode.prototype.draw(this, shaderProgram, outlinePass);
+}
+
+
 
 var ProtoSphere  = function(stacks, arcs) {
   var self = {
@@ -335,80 +468,107 @@ var ProtoCylinder = function(arcs) {
 // an (indexed) mesh geometry container.
 //
 // stores the vertex data in interleaved format. not doing so has severe 
-// performance penalties in WebGL, and by severe I mean orders of magnitude 
+// performance penalties in WebGL, and severe means orders of magnitude 
 // slower than using an interleaved array.
-var MeshGeom = function(gl) {
-  var self = {
-    interleavedBuffer : gl.createBuffer(),
-    indexBuffer : gl.createBuffer(),
-    vertData : [],
-    indexData : [],
-    num_triangles : 0,
-    numVerts : 0,
-    ready : false
-  };
+//
+// the vertex data is stored in the following format;
+//
+// Px Py Pz Nx Ny Nz Cr Cg Cb
+//
+// , where P is the position, N the normal and C the color information
+// of the vertex.
+function MeshGeom(gl) {
+  this._interleavedBuffer = gl.createBuffer();
+  this._indexBuffer = gl.createBuffer();
+  this._vertData = [];
+  this._indexData = [];
+  this._numVerts = 0;
+  this._numTriangles = 0;
+  this._ready = false;
+  this._gl = gl;
+  this._vertAssoc = null;
+}
 
-  return {
-    numVerts : function() { return self.numVerts; },
-    requiresOutlinePass : function() { return true; },
-    draw: function(shaderProgram) {
-      this.bind();
-      var posAttrib = gl.getAttribLocation(shaderProgram, 'attrPos');
-      gl.enableVertexAttribArray(posAttrib);
-      gl.vertexAttribPointer(posAttrib, 3, gl.FLOAT, false, 9*4, 0*4);
+MeshGeom.prototype = new SceneNode();
 
-      var normalAttrib = gl.getAttribLocation(shaderProgram, 'attrNormal');
-      if (normalAttrib !== -1) {
-        gl.enableVertexAttribArray(normalAttrib);
-        gl.vertexAttribPointer(normalAttrib, 3, gl.FLOAT, false, 9*4, 3*4);
-      }
+MeshGeom.prototype.setVertAssoc = function(assoc) {
+  this._vertAssoc = assoc;
+}
 
-      var clrAttrib = gl.getAttribLocation(shaderProgram, 'attrColor');
-      if (clrAttrib !== -1) {
-        gl.vertexAttribPointer(clrAttrib, 3, gl.FLOAT, false, 9*4, 6*4);
-        gl.enableVertexAttribArray(clrAttrib);
-      }
-      gl.drawElements(gl.TRIANGLES, self.num_triangles*3, gl.UNSIGNED_SHORT, 0);
-      gl.disableVertexAttribArray(posAttrib);
-      if (clrAttrib !==-1)
-        gl.disableVertexAttribArray(clrAttrib);
-      if (normalAttrib !== -1)
-        gl.disableVertexAttribArray(normalAttrib);
-    },
-    addVertex : function(pos, normal, color) {
-      // pushing all values at once seems to be more efficient than pushing
-      // separately. resizing the vertData prior and setting the elements
-      // is substantially slower.
-      self.vertData.push(pos[0], pos[1], pos[2], 
-                         normal[0], normal[1], normal[2],
-                         color[0], color[1], color[2]);
-      self.numVerts += 1;
-    },
-    addTriangle : function(idx1, idx2, idx3) {
-      self.indexData.push(idx1, idx2, idx3);
-      self.num_triangles +=1;
-    },
-    bind : function() {
-      gl.bindBuffer(gl.ARRAY_BUFFER, self.interleavedBuffer);
-      gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, self.indexBuffer);
-      if (!self.ready) {
-        var floatArray = new Float32Array(self.vertData);
-        gl.bufferData(gl.ARRAY_BUFFER, floatArray, gl.STATIC_DRAW);
-        var indexArray = new Uint16Array(self.indexData);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indexArray, gl.STATIC_DRAW);
-        self.ready = true;
-        self.indexData = [];
-        self.vertData = [];
-      }
-    }
-  };
+MeshGeom.prototype.numVerts = function() { return this._numVerts; };
+
+MeshGeom.prototype.requiresOutlinePass = function() { return true; };
+
+MeshGeom.prototype.colorBy = function(colorFunc) {
+  console.time('MeshGeom.colorBy');
+  this._ready = false;
+  this._vertAssoc.recolor(colorFunc, this._vertData, 6, 9);
+  console.timeEnd('MeshGeom.colorBy');
+}
+
+MeshGeom.prototype.draw = function(shaderProgram) {
+  this.bind();
+  var posAttrib = this._gl.getAttribLocation(shaderProgram, 'attrPos');
+  this._gl.enableVertexAttribArray(posAttrib);
+  this._gl.vertexAttribPointer(posAttrib, 3, this._gl.FLOAT, false, 9*4, 0*4);
+
+  var normalAttrib = this._gl.getAttribLocation(shaderProgram, 'attrNormal');
+  if (normalAttrib !== -1) {
+    this._gl.enableVertexAttribArray(normalAttrib);
+    this._gl.vertexAttribPointer(normalAttrib, 3, this._gl.FLOAT, false, 
+                                 9*4, 3*4);
+  }
+
+  var clrAttrib = this._gl.getAttribLocation(shaderProgram, 'attrColor');
+  if (clrAttrib !== -1) {
+    this._gl.vertexAttribPointer(clrAttrib, 3, this._gl.FLOAT, false, 9*4, 6*4);
+    this._gl.enableVertexAttribArray(clrAttrib);
+  }
+  this._gl.drawElements(this._gl.TRIANGLES, this._numTriangles*3, 
+                        this._gl.UNSIGNED_SHORT, 0);
+  this._gl.disableVertexAttribArray(posAttrib);
+  if (clrAttrib !==-1)
+    this._gl.disableVertexAttribArray(clrAttrib);
+  if (normalAttrib !== -1)
+    this._gl.disableVertexAttribArray(normalAttrib);
+};
+
+MeshGeom.prototype.addVertex = function(pos, normal, color) {
+  // pushing all values at once seems to be more efficient than pushing
+  // separately. resizing the vertData prior and setting the elements
+  // is substantially slower.
+  this._vertData.push(pos[0], pos[1], pos[2], normal[0], normal[1], normal[2],
+                      color[0], color[1], color[2]);
+  this._numVerts += 1;
+};
+
+MeshGeom.prototype.addTriangle = function(idx1, idx2, idx3) {
+  this._indexData.push(idx1, idx2, idx3);
+  this._numTriangles += 1;
+};
+
+MeshGeom.prototype.bind = function() {
+  this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._interleavedBuffer);
+  this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
+  if (this._ready) {
+    return;
+  }
+  var floatArray = new Float32Array(this._vertData);
+  this._gl.bufferData(this._gl.ARRAY_BUFFER, floatArray, 
+                      this._gl.STATIC_DRAW);
+  var indexArray = new Uint16Array(this._indexData);
+  this._gl.bufferData(this._gl.ELEMENT_ARRAY_BUFFER, indexArray, 
+                      this._gl.STATIC_DRAW);
+  this._ready = true;
 };
 
 // A scene node holds a set of child nodes to be rendered on screen. Later on, 
 // the SceneNode might grow additional functionality commonly found in a scene 
 // graph, e.g. coordinate transformations.
-function SceneNode() {
+function SceneNode(name) {
   this._children = [];
+  this._visible = false;
+  this._name = name || '';
 }
 
 SceneNode.prototype.add = function(node) {
@@ -422,6 +582,21 @@ SceneNode.prototype.draw = function(shaderProgram, outline_pass) {
   }
 };
 
+SceneNode.prototype.show = function() {
+  this._visible = true;
+};
+
+SceneNode.prototype.hide = function() {
+  this._visible = false;
+};
+
+SceneNode.prototype.name = function(name) { 
+  if (name !== undefined) {
+    this._name = name;
+  }
+  return this._name; 
+};
+
 var exports = {};
 
 exports.SceneNode = SceneNode;
@@ -429,32 +604,45 @@ exports.SceneNode = SceneNode;
 exports.lineTrace = function(structure, gl, options) {
   console.time('lineTrace');
   var colorOne = vec3.create(), colorTwo = vec3.create();
-  var lineGeom = LineGeom(gl);
+  var lineGeom = new LineGeom(gl);
+  var vertAssoc = new TraceVertexAssoc(structure);
+  lineGeom.setLineWidth(options.lineWidth);
   var chains = structure.chains();
   for (var ci = 0; ci < chains.length; ++ci) {
     var chain = chains[ci];
     chain.eachBackboneTrace(function(trace) {
+      vertAssoc.addAssoc(0, lineGeom.numVerts(), lineGeom.numVerts()+1);
       for (var i = 1; i < trace.length; ++i) {
         options.color(trace[i-1].atom('CA'), colorOne, 0);
         options.color(trace[i].atom('CA'), colorTwo, 0);
         lineGeom.addLine(trace[i-1].atom('CA').pos(), colorOne, 
                          trace[i-0].atom('CA').pos(), colorTwo);
+
+        var vertEnd = lineGeom.numVerts();
+        vertAssoc.addAssoc(i, vertEnd-1, 
+                           vertEnd+((i === trace.length-1) ? 0 : 1));
       }
     });
   }
-  console.time('lineTrace');
+  lineGeom.setVertAssoc(vertAssoc);
+  console.timeEnd('lineTrace');
   return lineGeom;
 };
 
 exports.spheres = function(structure, gl, options) {
   console.time('spheres');
   var clr = vec3.create();
-  var geom = MeshGeom(gl);
+  var geom = new MeshGeom(gl);
   var protoSphere = ProtoSphere(options.sphereDetail, options.sphereDetail);
+  var vertAssoc = new AtomVertexAssoc(structure);
   structure.eachAtom(function(atom) {
     options.color(atom, clr, 0);
+    var vertStart = geom.numVerts();
     protoSphere.addTransformed(geom, atom.pos(), 1.5, clr);
+    var vertEnd = geom.numVerts();
+    vertAssoc.addAssoc(atom, vertStart, vertEnd);
   });
+  geom.setVertAssoc(vertAssoc);
   console.timeEnd('spheres');
   return geom;
 };
@@ -462,7 +650,8 @@ exports.spheres = function(structure, gl, options) {
 
 exports.sline = function(structure, gl, options) {
   console.time('sline');
-  var lineGeom = LineGeom(gl);
+  var lineGeom =new  LineGeom(gl);
+  lineGeom.setLineWidth(options.lineWidth);
   var posOne = vec3.create(), posTwo = vec3.create();
   var colorOne = vec3.create(), colorTwo = vec3.create();
   var chains = structure.chains();
@@ -597,7 +786,7 @@ var _cartoonForChain = (function() {
     if (traces.length === 0) {
       return null;
     }
-    var mgeom = MeshGeom(gl);
+    var mgeom = new MeshGeom(gl);
 
     for (var ti = 0; ti < traces.length; ++ti) {
       var trace = traces[ti];
@@ -717,36 +906,35 @@ exports.cartoon = function(structure, gl, options) {
   options.helixProfile = TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
   options.strandProfile = TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
 
-  var node = new SceneNode();
+  var compositeGeom = new CompositeGeom();
   var chains = structure.chains();
   for (var i = 0, e = chains.length;  i < e; ++i) {
-    var mgeom = _cartoonForChain(chains[i], gl, options);
-    // check that there is anything to be added...
-    if (mgeom) {
-      node.add(mgeom);
+    var meshGeom = _cartoonForChain(chains[i], gl, options);
+    if (meshGeom) {
+      compositeGeom.addGeom(meshGeom);
     }
   }
   console.timeEnd('cartoon');
-  return node;
+  return compositeGeom;
 };
 
 
 exports.lines = function(structure, gl, options) {
   console.time('lines');
   var mp = vec3.create();
-  var lineGeom = LineGeom(gl);
+  var lineGeom = new LineGeom(gl);
+  lineGeom.setLineWidth(options.lineWidth);
   var clr = vec3.create();
+  var vertAssoc = new AtomVertexAssoc(structure);
   structure.eachAtom(function(atom) {
     // for atoms without bonds, we draw a small cross, otherwise these atoms 
     // would be invisible on the screen.
+    var vertStart = lineGeom.numVerts();
     if (atom.bonds().length) {
       atom.eachBond(function(bond) {
         bond.mid_point(mp); 
-        options.color(bond.atom_one(), clr, 0);
-        lineGeom.addLine(bond.atom_one().pos(), clr, mp, clr);
-        options.color(bond.atom_two(), clr, 0);
-        lineGeom.addLine(mp, clr, bond.atom_two().pos(), clr);
-
+        options.color(atom, clr, 0);
+        lineGeom.addLine(atom.pos(), clr, mp, clr);
       });
     } else {
       var cs = 0.2;
@@ -759,7 +947,10 @@ exports.lines = function(structure, gl, options) {
       lineGeom.addLine([pos[0], pos[1], pos[2]-cs], clr, 
                         [pos[0], pos[1], pos[2]+cs], clr);
     }
+    var vertEnd = lineGeom.numVerts();
+    vertAssoc.addAssoc(atom, vertStart, vertEnd);
   });
+  lineGeom.setVertAssoc(vertAssoc);
   console.timeEnd('lines');
   return lineGeom;
 };
@@ -768,7 +959,8 @@ var _traceForChain = (function() {
 
   var rotation = mat3.create();
 
-  var dir = vec3.create(), left = vec3.create(), up = vec3.create();
+  var dir = vec3.create(), left = vec3.create(), up = vec3.create(),
+      midPoint = vec3.create();
   var colorOne = vec3.create(), colorTwo = vec3.create();
 
   return function(chain, gl, options) {
@@ -776,19 +968,22 @@ var _traceForChain = (function() {
     if (traces.length === 0) {
       return null;
     }
-    var mgeom = MeshGeom(gl);
+    var meshGeom = new MeshGeom(gl);
+    var vertAssoc = new TraceVertexAssoc(chain.asView());
     for (var ti = 0; ti < traces.length; ++ti) {
       var trace = traces[ti];
 
       options.color(trace[0].atom('CA'), colorOne, 0);
-      options.protoSphere.addTransformed(mgeom, trace[0].atom('CA').pos(), 
+      var vertStart = meshGeom.numVerts();
+      options.protoSphere.addTransformed(meshGeom, trace[0].atom('CA').pos(), 
                                          options.radius, colorOne);
+      var vertEnd = null;
+      vertAssoc.addAssoc(0, vertStart, vertEnd);
       for (var i = 1; i < trace.length; ++i) {
         var caPrevPos = trace[i-1].atom('CA').pos();
         var caThisPos = trace[i].atom('CA').pos();
         options.color(trace[i].atom('CA'), colorTwo, 0);
-        options.protoSphere.addTransformed(mgeom, caThisPos, options.radius, 
-                                           colorTwo);
+
         vec3.sub(dir, caThisPos, caPrevPos);
         var length = vec3.length(dir);
 
@@ -796,32 +991,44 @@ var _traceForChain = (function() {
 
         buildRotation(rotation, dir, left, up, false);
 
-        var mid_point = vec3.clone(caPrevPos);
-        vec3.add(mid_point, mid_point, caThisPos);
-        vec3.scale(mid_point, mid_point, 0.5);
-        options.protoCyl.addTransformed(mgeom, mid_point, length, 
+        vec3.copy(midPoint, caPrevPos);
+        vec3.add(midPoint, midPoint, caThisPos);
+        vec3.scale(midPoint, midPoint, 0.5);
+        var endSphere = meshGeom.numVerts();
+        options.protoCyl.addTransformed(meshGeom, midPoint, length, 
                                         options.radius, rotation, 
                                         colorOne, colorTwo);
+        vertEnd = meshGeom.numVerts();
+        vertEnd = vertEnd - (vertEnd-endSphere)/2;
+
+        options.protoSphere.addTransformed(meshGeom, caThisPos, options.radius, 
+                                           colorTwo);
+        vertAssoc.addAssoc(i, vertStart, vertEnd);
+        vertStart = vertEnd;
         vec3.copy(colorOne, colorTwo);
       }
+      vertAssoc.addAssoc(trace.length-1, vertStart, meshGeom.numVerts());
     }
-    return mgeom;
+    meshGeom.setVertAssoc(vertAssoc);
+    return meshGeom;
   };
 })();
 
 exports.trace = function(structure, gl, options) {
-  var node = new SceneNode();
+  console.time('trace');
+  var compositeGeom = new CompositeGeom();
   options.protoCyl = ProtoCylinder(options.arcDetail);
   options.protoSphere = ProtoSphere(options.sphereDetail, options.sphereDetail);
   var chains = structure.chains();
   for (var ci = 0; ci < chains.length; ++ci) {
     var chain = chains[ci];
-    var mgeom = _traceForChain(chain, gl, options);
-    if (mgeom) {
-      node.add(mgeom);
+    var meshGeom = _traceForChain(chain, gl, options);
+    if (meshGeom) {
+      compositeGeom.addGeom(meshGeom);
     }
   }
-  return node;
+  console.timeEnd('trace');
+  return compositeGeom;
 };
 
 return exports;

@@ -24,7 +24,7 @@
     }
     #gl {
       position:fixed;
-      left:232px;
+      left:233px;
       top:36px;
     }
     #inspector {
@@ -130,8 +130,9 @@
     <a href="http://github.com/biasmv/pv">code on github</a>
   </div>
   <div id=inspector>
-    <span class=btn onclick='showTab("style")'>Style</span><span class=btn onclick='showTab("color")'>Color</span>
-    <ul id=style>
+    <span class=btn onclick='showTab("styleTab")'>Style</span>
+    <span class=btn onclick='showTab("colorTab")'>Color</span>
+    <ul id=styleTab>
       <h1></h1>
       <li id=preset>Preset</li>
       <li id=cartoon>Cartoon</li>
@@ -140,10 +141,12 @@
       <li id=line-trace>Line Trace</li>
       <li id=sline>Smooth Line Trace</li>
       <li id=trace>Trace</li>
+      <li id=spheres>Spheres</li>
     </ul>
-    <ul id=color>
+    <ul id=colorTab>
       <h1></h1>
        <li id=uniform>Uniform</li>
+       <li id=by-ele>By Element (CPK)</li>
        <li id=rainbow>Rainbow</li>
        <li id=ss>Secondary Structure</li>
        <li id=ss-suc>Secondary Structure Succession</li>
@@ -169,8 +172,8 @@
   <div id=copyright>Copyright (2013) Marco Biasini</div>
  </body>
   <script>
-    var activeTab = 'style';
-    $('#color').hide();
+    var activeTab = 'styleTab';
+    $('#colorTab').hide();
     var pv = pv.Viewer(document.getElementById('gl'), 
                        { quality : 'medium', width: 800, height : 800,
                          antialias : true, outline : true});
@@ -215,6 +218,10 @@
     function line_trace() {
       pv.clear();
       pv.add('structure', pv.lineTrace(structure));
+    }
+    function spheres() {
+      pv.clear();
+      pv.add('structure', pv.spheres(structure));
     }
     function sline() {
       pv.clear();
@@ -262,9 +269,26 @@
     function telethonin() { load('2f8v'); }
 
     function porin() { load('2por'); }
+
     function ssSuccession() {}
-    function uniform() {}
-    function ss() {}
+
+    function uniform() {
+      var go = pv.get('structure');
+      go.colorBy(color.uniform([0,1,0]));
+      pv.requestRedraw();
+    }
+    function byElement() {
+      var go = pv.get('structure');
+      go.colorBy(color.byElement());
+      pv.requestRedraw();
+    }
+
+    function ss() {
+      var go = pv.get('structure');
+      go.colorBy(color.bySS());
+      pv.requestRedraw();
+    }
+
     function rainbow() {}
 
     $('#cartoon').click(cartoon);
@@ -273,6 +297,7 @@
     $('#lines').click(lines);
     $('#trace').click(trace);
     $('#sline').click(sline);
+    $('#spheres').click(spheres);
     $('#tube').click(tube);
     $('#1ake').click(kinase);
     $('#1r6a').click(transferase);
@@ -281,7 +306,8 @@
     $('#2f8v').click(telethonin);
     $('#rainbow').click(rainbow);
     $('#ss').click(ss);
-    $('#uniform').click(rainbow);
+    $('#uniform').click(uniform);
+    $('#by-ele').click(byElement);
     $('#ss-sub').click(ssSuccession);
     $('#showOutline').change(function() {
       pv.options('outline', this.checked);

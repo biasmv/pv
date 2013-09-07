@@ -125,72 +125,7 @@ function evenOdd(even, odd) {
 }
 
 
-function ss() {
-  return function(atom, out, index) {
-    switch (atom.residue().ss()) {
-      case 'C':
-        out[index] = 0.8;
-        out[index+1] = 0.8;
-        out[index+2] = 0.8;
-        return;
-      case 'H':
-        out[index] = 0.6;
-        out[index+1] = 0.6;
-        out[index+2] = 0.9;
-        return;
-      case 'E':
-        out[index] = 0.2;
-        out[index+1] = 0.8;
-        out[index+2] = 0.2;
-        return;
-    }
-  };
-}
 
-
-function uniformColor(color) {
-  return function(atom, out, index) {
-    out[index] = color[0];
-    out[index+1] = color[1];
-    out[index+2] = color[2];
-  };
-}
-
-
-
-function colorForElement(ele, out) {
-  if (!out) {
-    out = vec3.create();
-  }
-  if (ele == 'C') {
-    vec3.set(out, 0.8,0.8, 0.8);
-    return out;
-  }
-  if (ele == 'N') {
-    vec3.set(out, 0, 0, 1);
-    return out;
-  }
-  if (ele == 'O') {
-    vec3.set(out, 1, 0, 0);
-    return out;
-  }
-  if (ele == 'S') {
-    vec3.set(out, 0.8, 0.8, 0);
-    return out;
-  }
-  if (ele == 'CA') {
-    vec3.set(out, 0.533, 0.533, 0.666);
-    return out;
-  }
-  vec3.set(out, 1, 0, 1);
-  return out;
-}
-
-function cpk_color() {
-  return function(atom, out, index) {
-    colorForElement(atom.element(), out);
-  };
-}
 
 
 
@@ -477,10 +412,6 @@ PV.prototype._initPV = function() {
   return true;
 };
 
-PV.prototype._add = function(what) {
-  this._objects.push(what);
-  this.requestRedraw();
-};
 
 PV.prototype.requestRedraw = function() {
   requestAnimFrame(bind(this, this._draw));
@@ -578,7 +509,8 @@ PV.prototype.renderAs = function(structure, mode, opts) {
 PV.prototype.lineTrace = function(structure, opts) {
   opts = opts || {};
   var options = {
-    color : opts.color || uniformColor([1, 0, 1])
+    color : opts.color || color.uniform([1, 0, 1]),
+    lineWidth : opts.lineWidth || 4.0
   };
   return render.lineTrace(structure, this._gl, options);
 };
@@ -586,7 +518,7 @@ PV.prototype.lineTrace = function(structure, opts) {
 PV.prototype.spheres = function(structure, opts) {
   opts = opts || {};
   var options = {
-    color : opts.color || cpk_color(),
+    color : opts.color || color.byElement(),
     sphereDetail : this.options('sphereDetail')
   };
   return render.spheres(structure, this._gl, options);
@@ -595,9 +527,10 @@ PV.prototype.spheres = function(structure, opts) {
 PV.prototype.sline = function(structure, opts) {
   opts = opts || {};
   var options = {
-    color : opts.color || uniformColor([1, 0, 1]),
+    color : opts.color || color.uniform([1, 0, 1]),
     splineDetail : opts.splineDetail || this.options('splineDetail'),
-    strength: opts.strength || 0.5
+    strength: opts.strength || 0.5,
+    lineWidth : opts.lineWidth || 4.0
   };
   return render.sline(structure, this._gl, options);
 }
@@ -605,7 +538,7 @@ PV.prototype.sline = function(structure, opts) {
 PV.prototype.cartoon = function(structure, opts) {
   opts = opts || {};
   var options = {
-    color : opts.color || ss(),
+    color : opts.color || color.bySS(),
     strength: opts.strength || 1.0,
     splineDetail : opts.splineDetail || this.options('splineDetail'),
     arcDetail : opts.arcDetail || this.options('arcDetail'),
@@ -627,7 +560,8 @@ PV.prototype.tube = function(structure, opts) {
 PV.prototype.lines = function(structure, opts) {
   opts = opts || {};
   var options = {
-    color : opts.color || cpk_color()
+    color : opts.color || color.byElement(),
+    lineWidth : opts.lineWidth || 4.0
   };
   return render.lines(structure, this._gl, options);
 }
@@ -635,7 +569,7 @@ PV.prototype.lines = function(structure, opts) {
 PV.prototype.trace = function(structure, opts) {
   opts = opts || {};
   var options = {
-    color : opts.color || uniformColor([1, 0, 0]),
+    color : opts.color || color.uniform([1, 0, 0]),
     radius: opts.radius || 0.3,
     arcDetail : (opts.arcDetail || this.options('arcDetail'))*2,
     sphereDetail : opts.sphereDetail || this.options('sphereDetail')
@@ -645,10 +579,20 @@ PV.prototype.trace = function(structure, opts) {
 
 
 PV.prototype.add = function(name, obj) {
+  obj.name(name);
   this._objects.push(obj);
   this.requestRedraw();
-
 };
+
+PV.prototype.get = function(name) {
+  for (var i = 0; i < this._objects.length; ++i) {
+    if (this._objects[i].name() === name) {
+      return this._objects[i];
+    }
+  }
+  console.error('could not find object with name', name);
+  return null;
+}
 
 return { Viewer: function(elem, options) { return new PV(elem, options); }};
 })();

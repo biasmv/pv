@@ -68,6 +68,76 @@ exports.gradient = function(colors, stops) {
 exports.rgbFromName = function(colorName) {
 };
 
+exports.color = {};
 
+exports.color.uniform = function(color) {
+  return function(atom, out, index) {
+    out[index] = color[0];
+    out[index+1] = color[1];
+    out[index+2] = color[2];
+  };
+}
+
+exports.color.byElement = function() {
+  return function(atom, out, index) {
+    var ele = atom.element();
+    if (ele == 'C') {
+      out[index] = 0.8;
+      out[index+1] = 0.8;
+      out[index+2] = 0.8;
+      return out;
+    }
+    if (ele == 'N') {
+      out[index] = 0;
+      out[index+1] = 0;
+      out[index+2] = 1;
+      return out;
+    }
+    if (ele == 'O') {
+      out[index] = 1;
+      out[index+1] = 0;
+      out[index+2] = 0;
+      return out;
+    }
+    if (ele == 'S') {
+      out[index] = 0.8;
+      out[index+1] = 0.8;
+      out[index+2] = 0;
+      return out;
+    }
+    if (ele == 'CA') {
+      out[index] = 0.533;
+      out[index+1] = 0.533;
+      out[index+2] = 0.666;
+      return out;
+    }
+    out[index] = 1;
+    out[index+1] = 0;
+    out[index+2] = 1;
+    return out;
+  };
+};
+
+exports.color.bySS = function() {
+  return function(atom, out, index) {
+    switch (atom.residue().ss()) {
+      case 'C':
+        out[index] = 0.8;
+        out[index+1] = 0.8;
+        out[index+2] = 0.8;
+        return;
+      case 'H':
+        out[index] = 0.6;
+        out[index+1] = 0.6;
+        out[index+2] = 0.9;
+        return;
+      case 'E':
+        out[index] = 0.2;
+        out[index+1] = 0.8;
+        out[index+2] = 0.2;
+        return;
+    }
+  };
+};
 
 })(this);
