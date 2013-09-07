@@ -105,6 +105,24 @@
       color:#888;
       text-align:center;
     }
+
+    span.btn:hover {
+      border-color:#dcc;
+    }
+    span.btn {
+      background-color:#fdd;
+      margin-left:5px;
+      margin-right:5px;
+      border-color:#edd;
+      padding:5px;
+      padding-left:8px;
+      padding-right:8px;
+      color:#977;
+      cursor:pointer;
+      border-radius:3px;
+      border-style:solid;
+      border-width:1px;
+    }
     </style>
     </head>
 <body>
@@ -112,7 +130,8 @@
     <a href="http://github.com/biasmv/pv">code on github</a>
   </div>
   <div id=inspector>
-    <ul>
+    <span class=btn onclick='showTab("style")'>Style</span><span class=btn onclick='showTab("color")'>Color</span>
+    <ul id=style>
       <h1></h1>
       <li id=preset>Preset</li>
       <li id=cartoon>Cartoon</li>
@@ -122,10 +141,19 @@
       <li id=sline>Smooth Line Trace</li>
       <li id=trace>Trace</li>
     </ul>
+    <ul id=color>
+      <h1></h1>
+       <li id=uniform>Uniform</li>
+       <li id=rainbow>Rainbow</li>
+       <li id=ss>Secondary Structure</li>
+       <li id=ss-suc>Secondary Structure Succession</li>
+    </ul>
      <ul>
       <h1></h1>
       <li><input type="checkbox" name="outline" 
                  value="yes" checked=true id=showOutline>Show Outline</li>
+      <li><input type="checkbox" name="fog" 
+                 value="yes" checked=true id=fog>Fog</li>
     </ul>
      <ul>
       <h1></h1>
@@ -141,6 +169,8 @@
   <div id=copyright>Copyright (2013) Marco Biasini</div>
  </body>
   <script>
+    var activeTab = 'style';
+    $('#color').hide();
     var pv = pv.Viewer(document.getElementById('gl'), 
                        { quality : 'medium', width: 800, height : 800,
                          antialias : true, outline : true});
@@ -216,9 +246,15 @@
     function kinase() {
       load('1ake');
     }
+    function showTab(tabName) {
+      $('#'+activeTab).hide();
+      $('#'+tabName).show();
+      activeTab = tabName;
+    }
     function crambin() {
       load('1crn');
     }
+
     function transferase() {
       load('1r6a');
     }
@@ -226,6 +262,10 @@
     function telethonin() { load('2f8v'); }
 
     function porin() { load('2por'); }
+    function ssSuccession() {}
+    function uniform() {}
+    function ss() {}
+    function rainbow() {}
 
     $('#cartoon').click(cartoon);
     $('#line-trace').click(line_trace);
@@ -239,8 +279,16 @@
     $('#1crn').click(crambin);
     $('#2por').click(porin);
     $('#2f8v').click(telethonin);
+    $('#rainbow').click(rainbow);
+    $('#ss').click(ss);
+    $('#uniform').click(rainbow);
+    $('#ss-sub').click(ssSuccession);
     $('#showOutline').change(function() {
       pv.options('outline', this.checked);
+      pv.requestRedraw();
+    });
+    $('#fog').change(function() {
+      pv.options('fog', this.checked);
       pv.requestRedraw();
     });
 

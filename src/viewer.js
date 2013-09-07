@@ -28,15 +28,18 @@ varying vec3 vertNormal;\n\
 uniform float fogNear;\n\
 uniform float fogFar;\n\
 uniform vec3 fogColor;\n\
+uniform bool fog;\n\
 \n\
 void main(void) {\n\
   float dp = dot(vertNormal, vec3(0.0, 0.0, 1.0));\n\
   float hemi = max(0.0, dp)*0.5+0.5;\n\
   gl_FragColor = vec4(vertColor*hemi, 1.0);\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
-  float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
-  gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
-                      fog_factor);\n\
+  if (fog) {\n\
+    float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
+    gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
+                        fog_factor);\n\
+  }\n\
 }';
 
 // hemilight vertex shader
@@ -63,13 +66,16 @@ uniform vec3 outlineColor;\n\
 uniform float fogNear;\n\
 uniform float fogFar;\n\
 uniform vec3 fogColor;\n\
+uniform bool fog;\n\
 \n\
 void main() {\n\
   gl_FragColor = vec4(outlineColor, 1.0);\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
-  float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
-  gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
-                      fog_factor);\n\
+  if (fog) { \n\
+    float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
+    gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
+                        fog_factor);\n\
+  }\n\
 }';
 // outline vertex shader. expands vertices along the (in-screen) xy
 // components of the normals.
@@ -197,6 +203,7 @@ var Cam = function(gl) {
     far : 400.0,
     fogNear : -5,
     fogFar : 10,
+    fog : true,
     fogColor : vec3.fromValues(1, 1, 1),
     outlineColor : vec3.fromValues(0.1, 0.1, 0.1),
     center : vec3.create(),
@@ -230,6 +237,12 @@ var Cam = function(gl) {
       self.updateMat = true;
       vec3.copy(self.center, point);
     },
+    fog :function(value) {
+      if (value !== undefined) {
+        self.fog = value;
+      }
+      return self.fog;
+    },
     rotate_z : function(delta) {
       self.updateMat = true;
       var tm = mat4.create();
@@ -261,6 +274,8 @@ var Cam = function(gl) {
       shader.modelview = gl.getUniformLocation(shader, 'modelviewMat');
       gl.uniformMatrix4fv(shader.projection, false, self.projection);
       gl.uniformMatrix4fv(shader.modelview, false, self.modelview);
+      gl.uniformMatrix4fv(shader.modelview, false, self.modelview);
+      gl.uniform1i(gl.getUniformLocation(shader, 'fog'), self.fog);
       gl.uniform1f(gl.getUniformLocation(shader, 'fogFar'),
                     self.fogFar+self.zoom);
       gl.uniform1f(gl.getUniformLocation(shader, 'fogNear'),
@@ -306,12 +321,16 @@ PV.prototype.gl = function() { return this._gl; };
 PV.prototype.ok = function() { return this._ok; };
 
 
-PV.prototype.options = function(opt_name, value) {
+PV.prototype.options = function(optName, value) {
   if (value !== undefined) {
-    this._options[opt_name] = value;
+    if (optName == 'fog') {
+      this._cam.fog(value);
+    } else {
+      this._options[optName] = value;
+    }
     return value;
   }
-  return this._options[opt_name];
+  return this._options[optName];
 };
 
 PV.prototype.quality = function(qual) {
