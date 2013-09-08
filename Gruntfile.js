@@ -17,7 +17,7 @@ module.exports = function(grunt) {
     jshint : {
       options: { multistr :true },
       all : ['src/geom.js', 'src/shade.js', 'src/viewer.js', 
-             'src/color.js', 'src/mol.js'],
+             'src/color.js', 'src/mol.js', 'src/render.js'],
     },
 
     concat: {

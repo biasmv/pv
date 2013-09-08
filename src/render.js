@@ -94,7 +94,7 @@ function AtomVertexAssoc(structure) {
 
 AtomVertexAssoc.prototype.addAssoc = function(atom, vertStart, vertEnd)  {
   this._assocs.push({ atom: atom, vertStart : vertStart, vertEnd : vertEnd });
-}
+};
 
 AtomVertexAssoc.prototype.recolor = function(colorFunc, buffer, offset, stride) {
   var colorData = new Float32Array(this._structure.atomCount()*3); 
@@ -130,23 +130,23 @@ TraceVertexAssoc.prototype.recolor = function(colorFunc, buffer, offset,
     var chain = this._structure.chains()[ci];
     var traces = chain.backboneTraces();
     var numTraceResidues = 0;
-    var i;
+    var i, j;
     for (i = 0; i < traces.length; ++i) {
       numTraceResidues += traces[i].length;
     }
     var colorData = new Float32Array(numTraceResidues*3); 
     var index = 0;
     for (i = 0; i < traces.length; ++i) {
-      for (var j = 0; j < traces[i].length; ++j) {
+      for (j = 0; j < traces[i].length; ++j) {
         colorFunc(traces[i][j].atom('CA'), colorData, index);
         index+=3;
       }
     }
-    for (var i = 0; i < this._assocs.length; ++i) {
+    for (i = 0; i < this._assocs.length; ++i) {
       var assoc = this._assocs[i];
       var ai = assoc.slice;
       var r = colorData[ai*3], g = colorData[ai*3+1], b = colorData[ai*3+2];
-      for (var j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
+      for (j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
         buffer[offset+j*stride+0] = r;  
         buffer[offset+j*stride+1] = g;  
         buffer[offset+j*stride+2] = b;  
@@ -172,11 +172,11 @@ LineGeom.prototype = new SceneNode();
 
 LineGeom.prototype.setLineWidth = function(width) {
   this._lineWidth = width;
-}
+};
 
 LineGeom.prototype.setVertAssoc = function(assoc) {
   this._vertAssoc = assoc;
-}
+};
 
 LineGeom.prototype.numVerts = function() { return this._numLines*2; };
 
@@ -196,14 +196,14 @@ LineGeom.prototype.draw = function(shaderProgram) {
 
 LineGeom.prototype.requiresOutlinePass = function() {
   return false;
-}
+};
 
 LineGeom.prototype.colorBy = function(colorFunc) {
   console.time('LineGeom.colorBy');
   this._ready = false;
   this._vertAssoc.recolor(colorFunc, this._data, 3, 6);
   console.timeEnd('LineGeom.colorBy');
-}
+};
 
 LineGeom.prototype.bind = function() {
   this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._interleavedBuffer);
@@ -222,7 +222,7 @@ LineGeom.prototype.addLine = function(startPos, startColor, endPos, endColor) {
                   endColor[0], endColor[1], endColor[2]);
   this._numLines += 1;
   this._ready = false;
-}
+};
 
 // a SceneNode which aggregates one or more (unnamed) geometries into one
 // named object. It forwards coloring and configuration calls to all
@@ -259,7 +259,7 @@ CompositeGeom.prototype.draw = function(shaderProgram, outlinePass) {
     this._geoms[i].draw(shaderProgram, outlinePass);
   }
   SceneNode.prototype.draw(this, shaderProgram, outlinePass);
-}
+};
 
 
 
@@ -493,7 +493,7 @@ MeshGeom.prototype = new SceneNode();
 
 MeshGeom.prototype.setVertAssoc = function(assoc) {
   this._vertAssoc = assoc;
-}
+};
 
 MeshGeom.prototype.numVerts = function() { return this._numVerts; };
 
@@ -504,7 +504,7 @@ MeshGeom.prototype.colorBy = function(colorFunc) {
   this._ready = false;
   this._vertAssoc.recolor(colorFunc, this._vertData, 6, 9);
   console.timeEnd('MeshGeom.colorBy');
-}
+};
 
 MeshGeom.prototype.draw = function(shaderProgram) {
   this.bind();

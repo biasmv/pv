@@ -522,7 +522,7 @@ PV.prototype.spheres = function(structure, opts) {
     sphereDetail : this.options('sphereDetail')
   };
   return render.spheres(structure, this._gl, options);
-}
+};
 
 PV.prototype.sline = function(structure, opts) {
   opts = opts || {};
@@ -533,7 +533,7 @@ PV.prototype.sline = function(structure, opts) {
     lineWidth : opts.lineWidth || 4.0
   };
   return render.sline(structure, this._gl, options);
-}
+};
 
 PV.prototype.cartoon = function(structure, opts) {
   opts = opts || {};
@@ -564,7 +564,7 @@ PV.prototype.lines = function(structure, opts) {
     lineWidth : opts.lineWidth || 4.0
   };
   return render.lines(structure, this._gl, options);
-}
+};
 
 PV.prototype.trace = function(structure, opts) {
   opts = opts || {};
@@ -575,7 +575,7 @@ PV.prototype.trace = function(structure, opts) {
     sphereDetail : opts.sphereDetail || this.options('sphereDetail')
   };
   return render.trace(structure, this._gl, options);
-}
+};
 
 
 PV.prototype.add = function(name, obj) {
@@ -592,7 +592,7 @@ PV.prototype.get = function(name) {
   }
   console.error('could not find object with name', name);
   return null;
-}
+};
 
 return { Viewer: function(elem, options) { return new PV(elem, options); }};
 })();

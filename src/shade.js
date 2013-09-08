@@ -76,7 +76,7 @@ exports.color.uniform = function(color) {
     out[index+1] = color[1];
     out[index+2] = color[2];
   };
-}
+};
 
 exports.color.byElement = function() {
   return function(atom, out, index) {
@@ -139,5 +139,4 @@ exports.color.bySS = function() {
     }
   };
 };
-
 })(this);

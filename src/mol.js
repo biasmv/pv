@@ -279,11 +279,12 @@ Mol.prototype._chainPredicates = function(dict) {
 function fulfillsPredicates(obj, predicates) {
   for (var i = 0; i < predicates.length; ++i) {
     if (!predicates[i](obj)) {
-      return false
+      return false;
     }
   }
   return true;
 }
+
 Mol.prototype._dictSelect = function(dict) {
   var view = new MolView(this);
   var residuePredicates = this._residuePredicates(dict);
