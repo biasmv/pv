@@ -113,9 +113,10 @@ AtomVertexAssoc.prototype.recolor = function(colorFunc, buffer, offset, stride) 
   }
 };
 
-function TraceVertexAssoc(structure) {
+function TraceVertexAssoc(structure, interpolation) {
   this._structure = structure;
   this._assocs = [];
+  this._interpolation = interpolation || 1;
 }
 
 TraceVertexAssoc.prototype.addAssoc = function(slice, vertStart, vertEnd) {
@@ -141,6 +142,9 @@ TraceVertexAssoc.prototype.recolor = function(colorFunc, buffer, offset,
         colorFunc(traces[i][j].atom('CA'), colorData, index);
         index+=3;
       }
+    }
+    if (this._interpolation>1) {
+      colorData = interpolateColor(colorData, this._interpolation);
     }
     for (i = 0; i < this._assocs.length; ++i) {
       var assoc = this._assocs[i];
@@ -651,6 +655,7 @@ exports.spheres = function(structure, gl, options) {
 exports.sline = function(structure, gl, options) {
   console.time('sline');
   var lineGeom =new  LineGeom(gl);
+  var vertAssoc = new TraceVertexAssoc(structure, options.splineDetail);
   lineGeom.setLineWidth(options.lineWidth);
   var posOne = vec3.create(), posTwo = vec3.create();
   var colorOne = vec3.create(), colorTwo = vec3.create();
@@ -672,6 +677,8 @@ exports.sline = function(structure, gl, options) {
       var sdiv = geom.catmullRomSpline(positions, options.splineDetail, 
                                        options.strength, false);
       var interpColors = interpolateColor(colors, options.splineDetail);
+      var vertStart = lineGeom.numVerts();
+      vertAssoc.addAssoc(i, vertStart, vertStart+1);
       for (i = 1, e = sdiv.length/3; i < e; ++i) {
         posOne[0] = sdiv[3*(i-1)];
         posOne[1] = sdiv[3*(i-1)+1];
@@ -687,9 +694,13 @@ exports.sline = function(structure, gl, options) {
         colorTwo[1] = interpColors[3*(i-0)+1];
         colorTwo[2] = interpColors[3*(i-0)+2];
         lineGeom.addLine(posOne, colorOne, posTwo, colorTwo);
+        var vertEnd = lineGeom.numVerts();
+        vertAssoc.addAssoc(i, vertEnd-1, 
+                           vertEnd+((i === trace.length-1) ? 0 : 1));
       }
     });
   }
+  lineGeom.setVertAssoc(vertAssoc);
   console.timeEnd('sline');
   return lineGeom;
 };
@@ -787,6 +798,8 @@ var _cartoonForChain = (function() {
       return null;
     }
     var mgeom = new MeshGeom(gl);
+    var vertAssoc = new TraceVertexAssoc(chain.asView(), 
+                                         options.splineDetail);
 
     for (var ti = 0; ti < traces.length; ++ti) {
       var trace = traces[ti];
@@ -817,8 +830,13 @@ var _cartoonForChain = (function() {
       vec3.normalize(normal, normal);
       vec3.set(color, interpColors[0], interpColors[1], interpColors[2]);
 
+      var vertStart = mgeom.numVerts();
       _cartoonAddTube(mgeom, pos, normal, trace[0], tangent, color, true, 
                       options, 0);
+      var vertEnd = mgeom.numVerts();
+      var slice = 0;
+      vertAssoc.addAssoc(slice, vertStart, vertEnd);
+      slice +=1;
 
       // handle the bulk of the trace
       for (var i = 1, e = sdiv.length/3 - 1; i < e; ++i) {
@@ -873,8 +891,12 @@ var _cartoonForChain = (function() {
                  normalSdiv[ix3+1]-sdiv[ix3+1],
                  normalSdiv[ix3+2]-sdiv[ix3+2]);
         vec3.normalize(normal, normal);
+        vertStart = mgeom.numVerts();
         _cartoonAddTube(mgeom, pos, normal, trace[traceIndex], tangent, color, 
                         false, options, offset);
+        vertEnd = mgeom.numVerts();
+        vertAssoc.addAssoc(slice, vertStart, vertEnd);
+        slice += 1;
       }
       i = sdiv.length;
       // finish trace off, again unrolled for efficiency.
@@ -893,9 +915,13 @@ var _cartoonForChain = (function() {
                 interpColors[interpColors.length-2],
                 interpColors[interpColors.length-1]);
                 
+      vertStart = mgeom.numVerts();
       _cartoonAddTube(mgeom, pos, normal, trace[trace.length-1], tangent, color, 
                       false, options, 0);
+      vertEnd = mgeom.numVerts();
+      vertAssoc.addAssoc(slice, vertStart, vertEnd);
     }
+    mgeom.setVertAssoc(vertAssoc);
     return mgeom;
   };
 })();

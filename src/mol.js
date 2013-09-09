@@ -81,7 +81,7 @@ ChainBase.prototype.structure = function() { return this._structure; };
 
 
 ChainBase.prototype.asView = function() {
-  var view = new MolView(this.structure());
+  var view = new MolView(this.structure().full());
   view.addChain(this, true);
   return view;
 
@@ -192,6 +192,7 @@ Mol.prototype = new MolBase();
 
 
 Mol.prototype.chains = function() { return this._chains; };
+Mol.prototype.full = function() { return this; };
 
 
 
@@ -426,6 +427,8 @@ Chain.prototype = new ChainBase();
 
 Chain.prototype.name = function() { return this._name; };
 
+Chain.prototype.full = function() { return this; };
+
 Chain.prototype.addResidue = function(name, num) {
   var residue = new Residue(this, name, num);
   this._residues.push(residue);
@@ -464,6 +467,8 @@ Residue.prototype.name = function() { return this._name; };
 
 Residue.prototype.num = function() { return this._num; };
 
+Residue.prototype.full = function() { return this; };
+
 Residue.prototype.addAtom = function(name, pos, element) {
   var atom = new Atom(this, name, pos, element, this.structure().nextAtomIndex());
   this._atoms.push(atom);
@@ -498,6 +503,7 @@ Atom.prototype.name = function() { return this._name; };
 Atom.prototype.bonds = function() { return this._bonds; };
 Atom.prototype.residue = function() { return this._residue; };
 Atom.prototype.structure = function() { return this._residue.structure(); };
+Atom.prototype.full = function() { return this; };
 
 var Bond = function(atom_a, atom_b) {
   var self = {
@@ -526,15 +532,16 @@ var Bond = function(atom_a, atom_b) {
 
 function MolView(mol) {
  this._mol = mol; 
- this._pv = mol._pv;
  this._chains = [];
 }
 
 MolView.prototype = new MolBase();
 
+MolView.prototype.full = function() { return this._mol; };
+
 // add chain to view
 MolView.prototype.addChain = function(chain, recurse) {
-  var chain_view = new ChainView(this, chain);
+  var chain_view = new ChainView(this, chain.full());
   this._chains.push(chain_view);
   if (recurse) {
     var residues = chain.residues();
@@ -559,17 +566,20 @@ function ChainView(mol_view, chain) {
 ChainView.prototype = new ChainBase();
 
 ChainView.prototype.addResidue = function(residue, recurse) {
-  var res_view = new ResidueView(this, residue);
+  var res_view = new ResidueView(this, residue.full());
   this._residues.push(res_view);
   if (recurse) {
     var atoms = residue.atoms();
     for (var i = 0; i < atoms.length; ++i) {
-      res_view.addAtom(atoms[i]);
+      res_view.addAtom(atoms[i].full());
     }
   }
   return res_view;
 };
 
+ChainView.prototype.full = function() { return this._chain; };
+
+ChainView.prototype.structure = function() { return this._mol_view; };
 
 function ResidueView(chain_view, residue) {
   this._chain_view = chain_view;
@@ -580,14 +590,17 @@ function ResidueView(chain_view, residue) {
 ResidueView.prototype = new ResidueBase();
 
 ResidueView.prototype.addAtom = function(atom) {
-  var atom_view = new AtomView(this, atom);
+  var atom_view = new AtomView(this, atom.full());
   this._atoms.push(atom_view);
 };
 
+ResidueView.prototype.full = function() { return this._residue; };
 ResidueView.prototype.num = function() { return this._residue.num(); };
 ResidueView.prototype.ss = function() { return this._residue.ss(); };
 ResidueView.prototype.index = function() { return this._residue.index(); };
 ResidueView.prototype.chain = function() { return this._chain_view; };
+
+ResidueView.prototype.atoms = function() { return this._atoms; };
 
 
 ChainView.prototype.name = function () { return this._chain.name(); };
@@ -600,6 +613,7 @@ function AtomView(res_view, atom) {
 
 
 AtomView.prototype = new AtomBase();
+AtomView.prototype.full = function() { return this._atom; };
 AtomView.prototype.name = function() { return this._atom.name(); };
 AtomView.prototype.pos = function() { return this._atom.pos(); };
 AtomView.prototype.element = function() { return this._atom.element(); };
