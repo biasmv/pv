@@ -96,11 +96,13 @@ AtomVertexAssoc.prototype.addAssoc = function(atom, vertStart, vertEnd)  {
   this._assocs.push({ atom: atom, vertStart : vertStart, vertEnd : vertEnd });
 };
 
-AtomVertexAssoc.prototype.recolor = function(colorFunc, buffer, offset, stride) {
+AtomVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, stride) {
   var colorData = new Float32Array(this._structure.atomCount()*3); 
+  colorOp.begin(this._structure);
   this._structure.eachAtom(function(atom) {
-    colorFunc(atom, colorData, atom.index()*3);
+    colorOp.colorFor(atom, colorData, atom.index()*3);
   });
+  colorOp.end(this._structure);
   for (var i = 0; i < this._assocs.length; ++i) {
     var assoc = this._assocs[i];
     var ai = assoc.atom.index();
@@ -125,7 +127,7 @@ TraceVertexAssoc.prototype.addAssoc = function(slice, vertStart, vertEnd) {
 };
 
 
-TraceVertexAssoc.prototype.recolor = function(colorFunc, buffer, offset, 
+TraceVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, 
                                               stride) {
   for (var ci = 0; ci < this._structure.chains().length; ++ci) {
     var chain = this._structure.chains()[ci];
@@ -137,12 +139,14 @@ TraceVertexAssoc.prototype.recolor = function(colorFunc, buffer, offset,
     }
     var colorData = new Float32Array(numTraceResidues*3); 
     var index = 0;
+    colorOp.begin(this._structure);
     for (i = 0; i < traces.length; ++i) {
       for (j = 0; j < traces[i].length; ++j) {
-        colorFunc(traces[i][j].atom('CA'), colorData, index);
+        colorOp.colorFor(traces[i][j].atom('CA'), colorData, index);
         index+=3;
       }
     }
+    colorOp.end(this._structure);
     if (this._interpolation>1) {
       colorData = interpolateColor(colorData, this._interpolation);
     }
@@ -611,14 +615,15 @@ exports.lineTrace = function(structure, gl, options) {
   var lineGeom = new LineGeom(gl);
   var vertAssoc = new TraceVertexAssoc(structure);
   lineGeom.setLineWidth(options.lineWidth);
+  options.color.begin(structure);
   var chains = structure.chains();
   for (var ci = 0; ci < chains.length; ++ci) {
     var chain = chains[ci];
     chain.eachBackboneTrace(function(trace) {
       vertAssoc.addAssoc(0, lineGeom.numVerts(), lineGeom.numVerts()+1);
       for (var i = 1; i < trace.length; ++i) {
-        options.color(trace[i-1].atom('CA'), colorOne, 0);
-        options.color(trace[i].atom('CA'), colorTwo, 0);
+        options.color.colorFor(trace[i-1].atom('CA'), colorOne, 0);
+        options.color.colorFor(trace[i].atom('CA'), colorTwo, 0);
         lineGeom.addLine(trace[i-1].atom('CA').pos(), colorOne, 
                          trace[i-0].atom('CA').pos(), colorTwo);
 
@@ -629,6 +634,7 @@ exports.lineTrace = function(structure, gl, options) {
     });
   }
   lineGeom.setVertAssoc(vertAssoc);
+  options.color.end(structure);
   console.timeEnd('lineTrace');
   return lineGeom;
 };
@@ -639,8 +645,9 @@ exports.spheres = function(structure, gl, options) {
   var geom = new MeshGeom(gl);
   var protoSphere = ProtoSphere(options.sphereDetail, options.sphereDetail);
   var vertAssoc = new AtomVertexAssoc(structure);
+  options.color.begin(structure);
   structure.eachAtom(function(atom) {
-    options.color(atom, clr, 0);
+    options.color.colorFor(atom, clr, 0);
     var vertStart = geom.numVerts();
     protoSphere.addTransformed(geom, atom.pos(), 1.5, clr);
     var vertEnd = geom.numVerts();
@@ -648,6 +655,7 @@ exports.spheres = function(structure, gl, options) {
   });
   geom.setVertAssoc(vertAssoc);
   console.timeEnd('spheres');
+  options.color.end(structure);
   return geom;
 };
 
@@ -655,6 +663,7 @@ exports.spheres = function(structure, gl, options) {
 exports.sline = function(structure, gl, options) {
   console.time('sline');
   var lineGeom =new  LineGeom(gl);
+  options.color.begin(structure);
   var vertAssoc = new TraceVertexAssoc(structure, options.splineDetail);
   lineGeom.setLineWidth(options.lineWidth);
   var posOne = vec3.create(), posTwo = vec3.create();
@@ -668,7 +677,7 @@ exports.sline = function(structure, gl, options) {
       var colors = new Float32Array(trace.length*3);
       for (i = 0; i < trace.length; ++i) {
         var atom = trace[i].atom('CA');
-        options.color(atom, colors, 3*i);
+        options.color.colorFor(atom, colors, 3*i);
         var p = atom.pos();
         positions[i*3] = p[0];
         positions[i*3+1] = p[1];
@@ -701,6 +710,7 @@ exports.sline = function(structure, gl, options) {
     });
   }
   lineGeom.setVertAssoc(vertAssoc);
+  options.color.end(structure);
   console.timeEnd('sline');
   return lineGeom;
 };
@@ -779,7 +789,7 @@ var _colorPosNormalsFromTrace = function(trace, colors, positions, normals,
     last_x = dx;
     last_y = dy;
     last_z = dz;
-    options.color(trace[i].atom('CA'), colors, i*3);
+    options.color.colorFor(trace[i].atom('CA'), colors, i*3);
   }
 };
 
@@ -797,6 +807,7 @@ var _cartoonForChain = (function() {
     if (traces.length === 0) {
       return null;
     }
+    var chainView = chain.asView();
     var mgeom = new MeshGeom(gl);
     var vertAssoc = new TraceVertexAssoc(chain.asView(), 
                                          options.splineDetail);
@@ -934,6 +945,7 @@ exports.cartoon = function(structure, gl, options) {
 
   var compositeGeom = new CompositeGeom();
   var chains = structure.chains();
+  options.color.begin(structure);
   for (var i = 0, e = chains.length;  i < e; ++i) {
     var meshGeom = _cartoonForChain(chains[i], gl, options);
     if (meshGeom) {
@@ -941,6 +953,7 @@ exports.cartoon = function(structure, gl, options) {
     }
   }
   console.timeEnd('cartoon');
+  options.color.end(structure);
   return compositeGeom;
 };
 
@@ -952,6 +965,7 @@ exports.lines = function(structure, gl, options) {
   lineGeom.setLineWidth(options.lineWidth);
   var clr = vec3.create();
   var vertAssoc = new AtomVertexAssoc(structure);
+  options.color.begin(structure);
   structure.eachAtom(function(atom) {
     // for atoms without bonds, we draw a small cross, otherwise these atoms 
     // would be invisible on the screen.
@@ -959,13 +973,13 @@ exports.lines = function(structure, gl, options) {
     if (atom.bonds().length) {
       atom.eachBond(function(bond) {
         bond.mid_point(mp); 
-        options.color(atom, clr, 0);
+        options.color.colorFor(atom, clr, 0);
         lineGeom.addLine(atom.pos(), clr, mp, clr);
       });
     } else {
       var cs = 0.2;
       var pos = atom.pos();
-      options.color(atom, clr, 0);
+      options.color.colorFor(atom, clr, 0);
       lineGeom.addLine([pos[0]-cs, pos[1], pos[2]], clr, 
                         [pos[0]+cs, pos[1], pos[2]], clr);
       lineGeom.addLine([pos[0], pos[1]-cs, pos[2]], clr, 
@@ -977,6 +991,7 @@ exports.lines = function(structure, gl, options) {
     vertAssoc.addAssoc(atom, vertStart, vertEnd);
   });
   lineGeom.setVertAssoc(vertAssoc);
+  options.color.end(structure);
   console.timeEnd('lines');
   return lineGeom;
 };
@@ -999,7 +1014,7 @@ var _traceForChain = (function() {
     for (var ti = 0; ti < traces.length; ++ti) {
       var trace = traces[ti];
 
-      options.color(trace[0].atom('CA'), colorOne, 0);
+      options.color.colorFor(trace[0].atom('CA'), colorOne, 0);
       var vertStart = meshGeom.numVerts();
       options.protoSphere.addTransformed(meshGeom, trace[0].atom('CA').pos(), 
                                          options.radius, colorOne);
@@ -1008,7 +1023,7 @@ var _traceForChain = (function() {
       for (var i = 1; i < trace.length; ++i) {
         var caPrevPos = trace[i-1].atom('CA').pos();
         var caThisPos = trace[i].atom('CA').pos();
-        options.color(trace[i].atom('CA'), colorTwo, 0);
+        options.color.colorFor(trace[i].atom('CA'), colorTwo, 0);
 
         vec3.sub(dir, caThisPos, caPrevPos);
         var length = vec3.length(dir);
@@ -1045,6 +1060,7 @@ exports.trace = function(structure, gl, options) {
   var compositeGeom = new CompositeGeom();
   options.protoCyl = ProtoCylinder(options.arcDetail);
   options.protoSphere = ProtoSphere(options.sphereDetail, options.sphereDetail);
+  options.color.begin(structure);
   var chains = structure.chains();
   for (var ci = 0; ci < chains.length; ++ci) {
     var chain = chains[ci];
@@ -1053,6 +1069,7 @@ exports.trace = function(structure, gl, options) {
       compositeGeom.addGeom(meshGeom);
     }
   }
+  options.color.end(structure);
   console.timeEnd('trace');
   return compositeGeom;
 };

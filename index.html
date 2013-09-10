@@ -184,36 +184,8 @@
     }
     function cartoon() {
       pv.clear();
-      var sel = structure.select({chain:'A'});
-      var chains = sel.chains();
-      var chainLimits = {}
-      var grad = gradient([rgb.fromValues(1,0,0), 
-                           rgb.fromValues(1,1,0), 
-                           rgb.fromValues(0,1,0),
-                           rgb.fromValues(0,0,1)]);
-      for (var i = 0; i < chains.length; ++i) {
-        var bb = chains[i].backboneTraces();
-        if (bb.length == 0) {
-          continue;
-        }
-        var minIndex = bb[0][0].index(), maxIndex = bb[0][bb[0].length-1].index();
-        for (var j = 1; j < bb.length; ++j) {
-          minIndex = Math.min(minIndex, bb[i][0].index());
-          maxIndex = Math.max(maxIndex, bb[i][bb[i].length-1].index());
-        }
-        chainLimits[chains[i].name()] = [minIndex, maxIndex];
-      }
-      var x = [0,0,0];
-      var colorFunc = function(a, out, index) {
-        var idx = a.residue().index();
-        var limits = chainLimits[a.residue().chain().name()];
-        var t =  (idx - limits[0])/(limits[1]-limits[0]);
-        grad.colorAt(x, t);
-        out[index] = x[0];
-        out[index+1] = x[1];
-        out[index+2] = x[2];
-      }
-      pv.add('structure', pv.cartoon(sel, { color : colorFunc }));
+      pv.add('structure', pv.cartoon(structure, 
+             { color : color.rainbow() }));
     }
     function line_trace() {
       pv.clear();
@@ -289,7 +261,11 @@
       pv.requestRedraw();
     }
 
-    function rainbow() {}
+    function rainbow() {
+      var go = pv.get('structure');
+      go.colorBy(color.rainbow());
+      pv.requestRedraw();
+    }
 
     $('#cartoon').click(cartoon);
     $('#line-trace').click(line_trace);
