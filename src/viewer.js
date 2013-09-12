@@ -109,120 +109,104 @@ var requestAnimFrame = (function(){
 })();
 
 
-
-function evenOdd(even, odd) {
-  return function(atom, out, index) {
-    if (atom.residue().num() % 2) {
-      out[index] = even[0];
-      out[index+1] = even[1];
-      out[index+2] = even[2];
-    } else {
-      out[index] = odd[0];
-      out[index+1] = odd[1];
-      out[index+2] = odd[2];
-    }
-  };
+// A camera, providing us with a view into the 3D worlds. Handles projection,
+// and modelview matrices and controls the global render parameters such as
+// shader and fog.
+function Cam(gl) {
+  this._projection = mat4.create();
+  this._modelview = mat4.create();
+  this._near = 0.1;
+  this._far = 400.0;
+  this._fogNear = -5;
+  this._fogFar = 10;
+  this._fog = true;
+  this._fogColor = vec3.fromValues(1, 1, 1);
+  this._outlineColor = vec3.fromValues(0.1, 0.1, 0.1);
+  this._center = vec3.create();
+  this._zoom = 50;
+  this._rotation = mat4.create();
+  this._translation = mat4.create();
+  this._updateMat = true;
+  this._gl = gl;
+  mat4.perspective(this._projection, 45.0, gl.viewportWidth / gl.viewportHeight, 
+                   this._near, this._far);
+  mat4.translate(this._modelview, this._modelview, [0, 0, -20]);
 }
 
-
-
-
-
-
-
-var Cam = function(gl) {
-  var self = {
-    projection : mat4.create(),
-    modelview : mat4.create(),
-    near : 0.1,
-    far : 400.0,
-    fogNear : -5,
-    fogFar : 10,
-    fog : true,
-    fogColor : vec3.fromValues(1, 1, 1),
-    outlineColor : vec3.fromValues(0.1, 0.1, 0.1),
-    center : vec3.create(),
-    zoom : 50,
-    rotation : mat4.create(),
-    translation : mat4.create(),
-    updateMat : true
-  }; 
-
-
-  function updateIfRequired() {
-    if (!self.updateMat) {
-      return;
-    }
-    mat4.identity(self.modelview);
-    mat4.translate(self.modelview, self.modelview, 
-                   [-self.center[0], -self.center[1], -self.center[2]]);
-    mat4.mul(self.modelview, self.rotation, self.modelview);
-    mat4.identity(self.translation);
-    mat4.translate(self.translation, self.translation, [0,0, -self.zoom]);
-    mat4.mul(self.modelview, self.translation, self.modelview);
-    self.updateMat = false;
+Cam.prototype._updateIfRequired = function() {
+  if (!this._updateMat) {
+    return;
   }
+  mat4.identity(this._modelview);
+  mat4.translate(this._modelview, this._modelview, 
+                  [-this._center[0], -this._center[1], -this._center[2]]);
+  mat4.mul(this._modelview, this._rotation, this._modelview);
+  mat4.identity(this._translation);
+  mat4.translate(this._translation, this._translation, [0,0, -this._zoom]);
+  mat4.mul(this._modelview, this._translation, this._modelview);
+  this._updateMat = false;
+};
 
-  mat4.perspective(self.projection, 45.0, gl.viewportWidth / gl.viewportHeight, 
-                   self.near, self.far);
-  mat4.translate(self.modelview, self.modelview, [0, 0, -20]);
-  return {
 
-    set_center : function(point) {
-      self.updateMat = true;
-      vec3.copy(self.center, point);
-    },
-    fog :function(value) {
-      if (value !== undefined) {
-        self.fog = value;
-      }
-      return self.fog;
-    },
-    rotate_z : function(delta) {
-      self.updateMat = true;
-      var tm = mat4.create();
-      mat4.rotate(tm, tm, delta, [0,0,1]);
-      mat4.mul(self.rotation, tm, self.rotation);
-    },
-    rotate_x: function(delta) {
-      self.updateMat = true;
-      var tm = mat4.create();
-      mat4.rotate(tm, tm, delta, [1,0,0]);
-      mat4.mul(self.rotation, tm, self.rotation);
-    },
-    rotate_y : function(delta) {
-      self.updateMat = true;
-      var tm = mat4.create();
-      mat4.rotate(tm, tm, delta, [0,1,0]);
-      mat4.mul(self.rotation, tm, self.rotation);
-    },
-    zoom : function(delta) {
-      self.updateMat = true;
-      self.zoom += delta;
-    },
+Cam.prototype.setCenter = function(point) {
+  this._updateMat = true;
+  vec3.copy(this._center, point);
+};
 
-    bind : function(shader) {
-      updateIfRequired();
-      gl.useProgram(shader);
-      gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
-      shader.projection = gl.getUniformLocation(shader, 'projectionMat');
-      shader.modelview = gl.getUniformLocation(shader, 'modelviewMat');
-      gl.uniformMatrix4fv(shader.projection, false, self.projection);
-      gl.uniformMatrix4fv(shader.modelview, false, self.modelview);
-      gl.uniformMatrix4fv(shader.modelview, false, self.modelview);
-      gl.uniform1i(gl.getUniformLocation(shader, 'fog'), self.fog);
-      gl.uniform1f(gl.getUniformLocation(shader, 'fogFar'),
-                    self.fogFar+self.zoom);
-      gl.uniform1f(gl.getUniformLocation(shader, 'fogNear'),
-                    self.fogNear+self.zoom);
-      if (gl.getUniformLocation(shader, 'outlineColor')) {
-        gl.uniform3fv(gl.getUniformLocation(shader, 'outlineColor'),
-                      self.outlineColor);
-      }
-      gl.uniform3fv(gl.getUniformLocation(shader, 'fogColor'),
-                    self.fogColor);
-    }
-  };
+Cam.prototype.fog =function(value) {
+  if (value !== undefined) {
+    this._fog = value;
+  }
+  return this._fog;
+};
+
+Cam.prototype.rotateZ = function(delta) {
+  this._updateMat = true;
+  var tm = mat4.create();
+  mat4.rotate(tm, tm, delta, [0,0,1]);
+  mat4.mul(this._rotation, tm, this._rotation);
+};
+
+Cam.prototype.rotateX= function(delta) {
+  this._updateMat = true;
+  var tm = mat4.create();
+  mat4.rotate(tm, tm, delta, [1,0,0]);
+  mat4.mul(this._rotation, tm, this._rotation);
+};
+
+Cam.prototype.rotateY = function(delta) {
+  this._updateMat = true;
+  var tm = mat4.create();
+  mat4.rotate(tm, tm, delta, [0,1,0]);
+  mat4.mul(this._rotation, tm, this._rotation);
+};
+
+Cam.prototype.zoom = function(delta) {
+  this._updateMat = true;
+  this._zoom += delta;
+};
+
+// sets all OpenGL parameters to make this camera active.
+Cam.prototype.bind = function(shader) {
+  this._updateIfRequired();
+  this._gl.useProgram(shader);
+  this._gl.viewport(0, 0, this._gl.viewportWidth, this._gl.viewportHeight);
+  shader.projection = this._gl.getUniformLocation(shader, 'projectionMat');
+  shader.modelview = this._gl.getUniformLocation(shader, 'modelviewMat');
+  this._gl.uniformMatrix4fv(shader.projection, false, this._projection);
+  this._gl.uniformMatrix4fv(shader.modelview, false, this._modelview);
+  this._gl.uniformMatrix4fv(shader.modelview, false, this._modelview);
+  this._gl.uniform1i(this._gl.getUniformLocation(shader, 'fog'), this._fog);
+  this._gl.uniform1f(this._gl.getUniformLocation(shader, 'fogFar'),
+                this._fogFar+this._zoom);
+  this._gl.uniform1f(this._gl.getUniformLocation(shader, 'fogNear'),
+                this._fogNear+this._zoom);
+  if (this._gl.getUniformLocation(shader, 'outlineColor')) {
+    this._gl.uniform3fv(this._gl.getUniformLocation(shader, 'outlineColor'),
+                  this._outlineColor);
+  }
+  this._gl.uniform3fv(this._gl.getUniformLocation(shader, 'fogColor'),
+                this._fogColor);
 };
 
 
@@ -392,7 +376,7 @@ PV.prototype._initPV = function() {
     return false; 
   }
   this._ok = true;
-  this._cam = Cam(this._gl);
+  this._cam = new Cam(this._gl);
   this._hemilightShader = this._initShader(HEMILIGHT_VS, HEMILIGHT_FS);
   this._outlineShader = this._initShader(OUTLINE_VS, OUTLINE_FS);
   this._mouseMoveListener = bind(this, this._mouseMove);
@@ -441,7 +425,7 @@ PV.prototype._draw = function() {
 
 
 PV.prototype.centerOn = function(what) {
-  this._cam.set_center(what.center());
+  this._cam.setCenter(what.center());
 };
 
 PV.prototype.clear = function() {
@@ -475,8 +459,8 @@ PV.prototype._mouseMove = function(event) {
                 y : newMousePos.y - this._lastMousePos.y};
                 
   var speed = 0.005;
-  this._cam.rotate_x(speed*delta.y);
-  this._cam.rotate_y(speed*delta.x);
+  this._cam.rotateX(speed*delta.y);
+  this._cam.rotateY(speed*delta.x);
   this._lastMousePos = newMousePos;
   this.requestRedraw();
 };

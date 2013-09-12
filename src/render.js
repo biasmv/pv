@@ -270,138 +270,142 @@ CompositeGeom.prototype.draw = function(shaderProgram, outlinePass) {
 };
 
 
-
-var ProtoSphere  = function(stacks, arcs) {
-  var self = {
-    arcs : arcs,
-    stacks : stacks,
-    indices : new Uint16Array(3*arcs*stacks*2),
-    verts : new Float32Array(3*arcs*stacks)
-  };
+function ProtoSphere(stacks, arcs) {
+  this._arcs = arcs;
+  this._stacks = stacks;
+  this._indices = new Uint16Array(3*arcs*stacks*2);
+  this._verts = new Float32Array(3*arcs*stacks);
   var vert_angle = Math.PI/(stacks-1);
   var horz_angle = Math.PI*2.0/arcs;
   var i, j;
-  for (i = 0; i < self.stacks; ++i) {
+  for (i = 0; i < this._stacks; ++i) {
     var radius = Math.sin(i*vert_angle);
     var z = Math.cos(i*vert_angle);
-    for (j = 0; j < self.arcs; ++j) {
+    for (j = 0; j < this._arcs; ++j) {
       var nx = radius*Math.cos(j*horz_angle);
       var ny = radius*Math.sin(j*horz_angle);
-      self.verts[3*(j+i*self.arcs)] = nx;
-      self.verts[3*(j+i*self.arcs)+1] = ny;
-      self.verts[3*(j+i*self.arcs)+2] = z;
+      this._verts[3*(j+i*this._arcs)] = nx;
+      this._verts[3*(j+i*this._arcs)+1] = ny;
+      this._verts[3*(j+i*this._arcs)+2] = z;
     }
   }
   var index = 0;
-  for (i = 0; i < self.stacks-1; ++i) {
-    for (j = 0; j < self.arcs; ++j) {
-      self.indices[index] = (i)*self.arcs+j;
-      self.indices[index+1] = (i)*self.arcs+((j+1) % self.arcs);
-      self.indices[index+2] = (i+1)*self.arcs+j;
+  for (i = 0; i < this._stacks-1; ++i) {
+    for (j = 0; j < this._arcs; ++j) {
+      this._indices[index] = (i)*this._arcs+j;
+      this._indices[index+1] = (i)*this._arcs+((j+1) % this._arcs);
+      this._indices[index+2] = (i+1)*this._arcs+j;
 
       index += 3;
       
-      self.indices[index] = (i)*self.arcs+((j+1) % self.arcs);
-      self.indices[index+1] = (i+1)*self.arcs+((j+1) % self.arcs);
-      self.indices[index+2] = (i+1)*self.arcs+j;
+      this._indices[index] = (i)*this._arcs+((j+1) % this._arcs);
+      this._indices[index+1] = (i+1)*this._arcs+((j+1) % this._arcs);
+      this._indices[index+2] = (i+1)*this._arcs+j;
       index += 3;
     }
   }
+}
+
+ProtoSphere.prototype.addTransformed = (function() {
+  
   var pos = vec3.create(), normal = vec3.create();
-  return {
-    addTransformed : function(geom, center, radius, color) {
-      var baseIndex = geom.numVerts();
-      for (var i = 0; i < self.stacks*self.arcs; ++i) {
-        vec3.set(normal, self.verts[3*i], self.verts[3*i+1], 
-                 self.verts[3*i+2]);
-        vec3.copy(pos, normal);
-        vec3.scale(pos, pos, radius);
-        vec3.add(pos, pos, center);
-        geom.addVertex(pos, normal, color);
-      }
-      for (i = 0; i < self.indices.length/3; ++i) {
-        geom.addTriangle(baseIndex+self.indices[i*3], 
-                          baseIndex+self.indices[i*3+1], 
-                          baseIndex+self.indices[i*3+2]);
-      }
-    },
-    num_indices : function() { return self.indices.length; },
-    num_vertices : function() { return self.verts.length; }
+
+  return function(geom, center, radius, color) {
+    var baseIndex = geom.numVerts();
+    for (var i = 0; i < this._stacks*this._arcs; ++i) {
+      vec3.set(normal, this._verts[3*i], this._verts[3*i+1], 
+                this._verts[3*i+2]);
+      vec3.copy(pos, normal);
+      vec3.scale(pos, pos, radius);
+      vec3.add(pos, pos, center);
+      geom.addVertex(pos, normal, color);
+    }
+    for (i = 0; i < this._indices.length/3; ++i) {
+      geom.addTriangle(baseIndex+this._indices[i*3], 
+                      baseIndex+this._indices[i*3+1], 
+                      baseIndex+this._indices[i*3+2]);
+    }
   };
+})();
+
+ProtoSphere.prototype.num_indices = function() { 
+  return this._indices.length; 
+};
+
+ProtoSphere.prototype.num_vertices = function() { 
+  return this._verts.length; 
 };
 
 // A tube profile is a cross-section of a tube, e.g. a circle or a 'flat' square.
 // They are used to control the style of helices, strands and coils for the 
 // cartoon render mode. 
-var TubeProfile = function(points, num, strength) {
-
+function TubeProfile(points, num, strength) {
   var interpolated = geom.catmullRomSpline(points, num, strength, true);
 
-  var self = {
-    indices : new Uint16Array(interpolated.length*2),
-    verts : interpolated,
-    normals : new Float32Array(interpolated.length),
-    arcs : interpolated.length/3
-  };
+  this._indices = new Uint16Array(interpolated.length*2);
+  this._verts = interpolated;
+  this._normals = new Float32Array(interpolated.length);
+  this._arcs = interpolated.length/3;
 
-  var normal = vec3.create();
-  for (var i = 0; i < self.arcs; ++i) {
-    var i_prev = i === 0 ? self.arcs-1 : i-1;
-    var i_next = i === self.arcs-1 ? 0 : i+1;
-    normal[0] = self.verts[3*i_next+1] - self.verts[3*i_prev+1];
-    normal[1] = self.verts[3*i_prev] - self.verts[3*i_next];
+  var normal = vec3.create(), pos = vec3.create();
+
+  for (var i = 0; i < this._arcs; ++i) {
+    var i_prev = i === 0 ? this._arcs-1 : i-1;
+    var i_next = i === this._arcs-1 ? 0 : i+1;
+    normal[0] = this._verts[3*i_next+1] - this._verts[3*i_prev+1];
+    normal[1] = this._verts[3*i_prev] - this._verts[3*i_next];
     vec3.normalize(normal, normal);
-    self.normals[3*i] = normal[0];
-    self.normals[3*i+1] = normal[1];
-    self.normals[3*i+2] = normal[2];
+    this._normals[3*i] = normal[0];
+    this._normals[3*i+1] = normal[1];
+    this._normals[3*i+2] = normal[2];
   }
 
-  for (i = 0; i < self.arcs; ++i) {
-    self.indices[6*i] = i;
-    self.indices[6*i+1] = i+self.arcs;
-    self.indices[6*i+2] = ((i+1) % self.arcs) + self.arcs;
-    self.indices[6*i+3] = i;
-    self.indices[6*i+4] = ((i+1) % self.arcs) + self.arcs;
-    self.indices[6*i+5] = (i+1) % self.arcs;
+  for (i = 0; i < this._arcs; ++i) {
+    this._indices[6*i] = i;
+    this._indices[6*i+1] = i+this._arcs;
+    this._indices[6*i+2] = ((i+1) % this._arcs) + this._arcs;
+    this._indices[6*i+3] = i;
+    this._indices[6*i+4] = ((i+1) % this._arcs) + this._arcs;
+    this._indices[6*i+5] = (i+1) % this._arcs;
   }
+}
 
-  var pos = vec3.create();
-  return {
-    addTransformed : function(geom, center, radius, rotation, color, first,
-                               offset) {
-      var baseIndex = geom.numVerts() - self.arcs;
-      for (var i = 0; i < self.arcs; ++i) {
-        vec3.set(pos, radius*self.verts[3*i], radius*self.verts[3*i+1], 0.0);
-        vec3.transformMat3(pos, pos, rotation);
-        vec3.add(pos, pos, center);
-        vec3.set(normal, self.normals[3*i], self.normals[3*i+1], 0.0);
-        vec3.transformMat3(normal, normal, rotation);
-        geom.addVertex(pos, normal, color);
-      }
-      if (first) {
-        return;
-      }
-      if (offset === 0) {
-        // that's what happens most of the time, thus is has been optimized.
-        for (i = 0; i < self.indices.length/3; ++i) {
-          geom.addTriangle(baseIndex+self.indices[i*3], 
-                            baseIndex+self.indices[i*3+1], 
-                            baseIndex+self.indices[i*3+2]);
-        }
-        return;
-      }
-      for (i = 0; i < self.arcs; ++i) {
-        geom.addTriangle(baseIndex+((i+offset) % self.arcs),
-                          baseIndex+i+self.arcs,
-                          baseIndex+((i+1) % self.arcs) + self.arcs);
-        geom.addTriangle(baseIndex+(i+offset) % self.arcs,
-                          baseIndex+((i+1) % self.arcs) + self.arcs,
-                          baseIndex+((i+1+offset) % self.arcs));
-      }
-
+TubeProfile.prototype.addTransformed = (function() {
+  var pos = vec3.create(), normal = vec3.create();
+  return function(geom, center, radius, rotation, color, first,
+                              offset) {
+    var baseIndex = geom.numVerts() - this._arcs;
+    for (var i = 0; i < this._arcs; ++i) {
+      vec3.set(pos, radius*this._verts[3*i], radius*this._verts[3*i+1], 0.0);
+      vec3.transformMat3(pos, pos, rotation);
+      vec3.add(pos, pos, center);
+      vec3.set(normal, this._normals[3*i], this._normals[3*i+1], 0.0);
+      vec3.transformMat3(normal, normal, rotation);
+      geom.addVertex(pos, normal, color);
     }
+    if (first) {
+      return;
+    }
+    if (offset === 0) {
+      // that's what happens most of the time, thus is has been optimized.
+      for (i = 0; i < this._indices.length/3; ++i) {
+        geom.addTriangle(baseIndex+this._indices[i*3], 
+                          baseIndex+this._indices[i*3+1], 
+                          baseIndex+this._indices[i*3+2]);
+      }
+      return;
+    }
+    for (i = 0; i < this._arcs; ++i) {
+      geom.addTriangle(baseIndex+((i+offset) % this._arcs),
+                        baseIndex+i+this._arcs,
+                        baseIndex+((i+1) % this._arcs) + this._arcs);
+      geom.addTriangle(baseIndex+(i+offset) % this._arcs,
+                        baseIndex+((i+1) % this._arcs) + this._arcs,
+                        baseIndex+((i+1+offset) % this._arcs));
+    }
+
   };
-};
+})();
 
 var R = 0.7071;
 var COIL_POINTS = [
@@ -419,59 +423,58 @@ var HELIX_POINTS = [
   -6*R,  1.0*R, 0
 ];
 
-var ProtoCylinder = function(arcs) {
-  var self = {
-    arcs : arcs,
-    indices : new Uint16Array(arcs*3*2),
-    verts : new Float32Array(3*arcs*2),
-    normals : new Float32Array(3*arcs*2)
-  };
-  var angle = Math.PI*2/self.arcs;
-  for (var i = 0; i < self.arcs; ++i) {
+function ProtoCylinder(arcs) {
+  this._arcs = arcs;
+  this._indices = new Uint16Array(arcs*3*2);
+  this._verts = new Float32Array(3*arcs*2);
+  this._normals = new Float32Array(3*arcs*2);
+  var angle = Math.PI*2/this._arcs;
+  for (var i = 0; i < this._arcs; ++i) {
     var cos_angle = Math.cos(angle*i);
     var sin_angle = Math.sin(angle*i);
-    self.verts[3*i] = cos_angle;
-    self.verts[3*i+1] = sin_angle;
-    self.verts[3*i+2] = -0.5;
-    self.verts[3*arcs+3*i] = cos_angle;
-    self.verts[3*arcs+3*i+1] = sin_angle;
-    self.verts[3*arcs+3*i+2] = 0.5;
-    self.normals[3*i] = cos_angle;
-    self.normals[3*i+1] = sin_angle;
-    self.normals[3*arcs+3*i] = cos_angle;
-    self.normals[3*arcs+3*i+1] = sin_angle;
+    this._verts[3*i] = cos_angle;
+    this._verts[3*i+1] = sin_angle;
+    this._verts[3*i+2] = -0.5;
+    this._verts[3*arcs+3*i] = cos_angle;
+    this._verts[3*arcs+3*i+1] = sin_angle;
+    this._verts[3*arcs+3*i+2] = 0.5;
+    this._normals[3*i] = cos_angle;
+    this._normals[3*i+1] = sin_angle;
+    this._normals[3*arcs+3*i] = cos_angle;
+    this._normals[3*arcs+3*i+1] = sin_angle;
   }
-  for (i = 0; i < self.arcs; ++i) {
-    self.indices[6*i] = (i) % self.arcs;
-    self.indices[6*i+1] = arcs+((i+1) % self.arcs);
-    self.indices[6*i+2] = (i+1) % self.arcs;
+  for (i = 0; i < this._arcs; ++i) {
+    this._indices[6*i] = (i) % this._arcs;
+    this._indices[6*i+1] = arcs+((i+1) % this._arcs);
+    this._indices[6*i+2] = (i+1) % this._arcs;
 
-    self.indices[6*i+3] = (i) % self.arcs;
-    self.indices[6*i+4] = arcs+((i) % self.arcs);
-    self.indices[6*i+5] = arcs+((i+1) % self.arcs);
+    this._indices[6*i+3] = (i) % this._arcs;
+    this._indices[6*i+4] = arcs+((i) % this._arcs);
+    this._indices[6*i+5] = arcs+((i+1) % this._arcs);
   }
-  return {
-    addTransformed : function(geom, center, length, radius, rotation, colorOne, 
-                               colorTwo) {
-      var baseIndex = geom.numVerts();
-      var pos = vec3.create(), normal = vec3.create(), color;
-      for (var i = 0; i < 2*self.arcs; ++i) {
-        vec3.set(pos, radius*self.verts[3*i], radius*self.verts[3*i+1], 
-                 length*self.verts[3*i+2]);
-        vec3.transformMat3(pos, pos, rotation);
-        vec3.add(pos, pos, center);
-        vec3.set(normal, self.normals[3*i], self.normals[3*i+1], self.normals[3*i+2]);
-        vec3.transformMat3(normal, normal, rotation);
-        geom.addVertex(pos, normal, i < self.arcs ? colorOne : colorTwo);
-      }
-      for (i = 0; i < self.indices.length/3; ++i) {
-        geom.addTriangle(baseIndex+self.indices[i*3], 
-                         baseIndex+self.indices[i*3+1], 
-                         baseIndex+self.indices[i*3+2]);
-      }
+}
+
+ProtoCylinder.prototype.addTransformed = (function() {
+  var pos = vec3.create(), normal = vec3.create();
+  return function(geom, center, length, radius, rotation, colorOne, 
+                              colorTwo) {
+    var baseIndex = geom.numVerts();
+    for (var i = 0; i < 2*this._arcs; ++i) {
+      vec3.set(pos, radius*this._verts[3*i], radius*this._verts[3*i+1], 
+                length*this._verts[3*i+2]);
+      vec3.transformMat3(pos, pos, rotation);
+      vec3.add(pos, pos, center);
+      vec3.set(normal, this._normals[3*i], this._normals[3*i+1], this._normals[3*i+2]);
+      vec3.transformMat3(normal, normal, rotation);
+      geom.addVertex(pos, normal, i < this._arcs ? colorOne : colorTwo);
+    }
+    for (i = 0; i < this._indices.length/3; ++i) {
+      geom.addTriangle(baseIndex+this._indices[i*3], 
+                        baseIndex+this._indices[i*3+1], 
+                        baseIndex+this._indices[i*3+2]);
     }
   };
-};
+})();
 
 // an (indexed) mesh geometry container.
 //
@@ -617,21 +620,22 @@ exports.lineTrace = function(structure, gl, options) {
   lineGeom.setLineWidth(options.lineWidth);
   options.color.begin(structure);
   var chains = structure.chains();
+  function makeLineTrace(trace) {
+    vertAssoc.addAssoc(0, lineGeom.numVerts(), lineGeom.numVerts()+1);
+    for (var i = 1; i < trace.length; ++i) {
+      options.color.colorFor(trace[i-1].atom('CA'), colorOne, 0);
+      options.color.colorFor(trace[i].atom('CA'), colorTwo, 0);
+      lineGeom.addLine(trace[i-1].atom('CA').pos(), colorOne, 
+                        trace[i-0].atom('CA').pos(), colorTwo);
+
+      var vertEnd = lineGeom.numVerts();
+      vertAssoc.addAssoc(i, vertEnd-1, 
+                          vertEnd+((i === trace.length-1) ? 0 : 1));
+    }
+  }
   for (var ci = 0; ci < chains.length; ++ci) {
     var chain = chains[ci];
-    chain.eachBackboneTrace(function(trace) {
-      vertAssoc.addAssoc(0, lineGeom.numVerts(), lineGeom.numVerts()+1);
-      for (var i = 1; i < trace.length; ++i) {
-        options.color.colorFor(trace[i-1].atom('CA'), colorOne, 0);
-        options.color.colorFor(trace[i].atom('CA'), colorTwo, 0);
-        lineGeom.addLine(trace[i-1].atom('CA').pos(), colorOne, 
-                         trace[i-0].atom('CA').pos(), colorTwo);
-
-        var vertEnd = lineGeom.numVerts();
-        vertAssoc.addAssoc(i, vertEnd-1, 
-                           vertEnd+((i === trace.length-1) ? 0 : 1));
-      }
-    });
+    chain.eachBackboneTrace(makeLineTrace);
   }
   lineGeom.setVertAssoc(vertAssoc);
   options.color.end(structure);
@@ -643,7 +647,7 @@ exports.spheres = function(structure, gl, options) {
   console.time('spheres');
   var clr = vec3.create();
   var geom = new MeshGeom(gl);
-  var protoSphere = ProtoSphere(options.sphereDetail, options.sphereDetail);
+  var protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
   var vertAssoc = new AtomVertexAssoc(structure);
   options.color.begin(structure);
   structure.eachAtom(function(atom) {
@@ -670,44 +674,45 @@ exports.sline = function(structure, gl, options) {
   var colorOne = vec3.create(), colorTwo = vec3.create();
   var chains = structure.chains();
   var i, e;
+  function makeTrace(trace) {
+    var positions = new Float32Array(trace.length*3);
+    var colors = new Float32Array(trace.length*3);
+    for (i = 0; i < trace.length; ++i) {
+      var atom = trace[i].atom('CA');
+      options.color.colorFor(atom, colors, 3*i);
+      var p = atom.pos();
+      positions[i*3] = p[0];
+      positions[i*3+1] = p[1];
+      positions[i*3+2] = p[2];
+    }
+    var sdiv = geom.catmullRomSpline(positions, options.splineDetail, 
+                                      options.strength, false);
+    var interpColors = interpolateColor(colors, options.splineDetail);
+    var vertStart = lineGeom.numVerts();
+    vertAssoc.addAssoc(i, vertStart, vertStart+1);
+    for (i = 1, e = sdiv.length/3; i < e; ++i) {
+      posOne[0] = sdiv[3*(i-1)];
+      posOne[1] = sdiv[3*(i-1)+1];
+      posOne[2] = sdiv[3*(i-1)+2];
+      posTwo[0] = sdiv[3*(i-0)];
+      posTwo[1] = sdiv[3*(i-0)+1];
+      posTwo[2] = sdiv[3*(i-0)+2];
+
+      colorOne[0] = interpColors[3*(i-1)];
+      colorOne[1] = interpColors[3*(i-1)+1];
+      colorOne[2] = interpColors[3*(i-1)+2];
+      colorTwo[0] = interpColors[3*(i-0)];
+      colorTwo[1] = interpColors[3*(i-0)+1];
+      colorTwo[2] = interpColors[3*(i-0)+2];
+      lineGeom.addLine(posOne, colorOne, posTwo, colorTwo);
+      var vertEnd = lineGeom.numVerts();
+      vertAssoc.addAssoc(i, vertEnd-1, 
+                          vertEnd+((i === trace.length-1) ? 0 : 1));
+    }
+  }
   for (var ci = 0; ci < chains.length; ++ci) {
     var chain = chains[ci];
-    chain.eachBackboneTrace(function(trace) {
-      var positions = new Float32Array(trace.length*3);
-      var colors = new Float32Array(trace.length*3);
-      for (i = 0; i < trace.length; ++i) {
-        var atom = trace[i].atom('CA');
-        options.color.colorFor(atom, colors, 3*i);
-        var p = atom.pos();
-        positions[i*3] = p[0];
-        positions[i*3+1] = p[1];
-        positions[i*3+2] = p[2];
-      }
-      var sdiv = geom.catmullRomSpline(positions, options.splineDetail, 
-                                       options.strength, false);
-      var interpColors = interpolateColor(colors, options.splineDetail);
-      var vertStart = lineGeom.numVerts();
-      vertAssoc.addAssoc(i, vertStart, vertStart+1);
-      for (i = 1, e = sdiv.length/3; i < e; ++i) {
-        posOne[0] = sdiv[3*(i-1)];
-        posOne[1] = sdiv[3*(i-1)+1];
-        posOne[2] = sdiv[3*(i-1)+2];
-        posTwo[0] = sdiv[3*(i-0)];
-        posTwo[1] = sdiv[3*(i-0)+1];
-        posTwo[2] = sdiv[3*(i-0)+2];
-
-        colorOne[0] = interpColors[3*(i-1)];
-        colorOne[1] = interpColors[3*(i-1)+1];
-        colorOne[2] = interpColors[3*(i-1)+2];
-        colorTwo[0] = interpColors[3*(i-0)];
-        colorTwo[1] = interpColors[3*(i-0)+1];
-        colorTwo[2] = interpColors[3*(i-0)+2];
-        lineGeom.addLine(posOne, colorOne, posTwo, colorTwo);
-        var vertEnd = lineGeom.numVerts();
-        vertAssoc.addAssoc(i, vertEnd-1, 
-                           vertEnd+((i === trace.length-1) ? 0 : 1));
-      }
-    });
+    chain.eachBackboneTrace(makeTrace);
   }
   lineGeom.setVertAssoc(vertAssoc);
   options.color.end(structure);
@@ -939,9 +944,9 @@ var _cartoonForChain = (function() {
 
 exports.cartoon = function(structure, gl, options) {
   console.time('cartoon');
-  options.coilProfile = TubeProfile(COIL_POINTS, options.arcDetail, 1.0);
-  options.helixProfile = TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
-  options.strandProfile = TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
+  options.coilProfile = new TubeProfile(COIL_POINTS, options.arcDetail, 1.0);
+  options.helixProfile = new TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
+  options.strandProfile = new TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
 
   var compositeGeom = new CompositeGeom();
   var chains = structure.chains();
@@ -1058,8 +1063,8 @@ var _traceForChain = (function() {
 exports.trace = function(structure, gl, options) {
   console.time('trace');
   var compositeGeom = new CompositeGeom();
-  options.protoCyl = ProtoCylinder(options.arcDetail);
-  options.protoSphere = ProtoSphere(options.sphereDetail, options.sphereDetail);
+  options.protoCyl = new ProtoCylinder(options.arcDetail);
+  options.protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
   options.color.begin(structure);
   var chains = structure.chains();
   for (var ci = 0; ci < chains.length; ++ci) {

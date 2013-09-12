@@ -154,7 +154,7 @@
      <ul>
       <h1></h1>
       <li><input type="checkbox" name="outline" 
-                 value="yes" checked=true id=showOutline>Show Outline</li>
+                 value="yes" id=showOutline>Show Outline</li>
       <li><input type="checkbox" name="fog" 
                  value="yes" checked=true id=fog>Fog</li>
     </ul>
@@ -175,8 +175,8 @@
     var activeTab = 'styleTab';
     $('#colorTab').hide();
     var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'medium', width: 800, height : 800,
-                         antialias : true, outline : true});
+                       { quality : 'medium', width: 400, height : 400,
+                         antialias : true, outline : false});
     var structure;
     function lines() {
       pv.clear();

@@ -1,4 +1,4 @@
-!(function(exports) {
+(function(exports) {
 "use strict";
 
 
@@ -78,14 +78,14 @@ ColorOp.prototype.begin = function(obj) {
   if (this._beginFunc) {
     this._beginFunc(obj);
   }
-}
+};
 
 
 ColorOp.prototype.end = function(obj) {
   if (this._endFunc) {
     this._endFunc(obj);
   }
-}
+};
 
 exports.color = {};
 
@@ -162,10 +162,10 @@ exports.color.rainbow = function(grad) {
     out[index+2] = x[2];
   }, function(obj) {
     var chains = obj.chains();
-    this.chainLimits = {}
+    this.chainLimits = {};
     for (var i = 0; i < chains.length; ++i) {
       var bb = chains[i].backboneTraces();
-      if (bb.length == 0) {
+      if (bb.length === 0) {
         continue;
       }
       var minIndex = bb[0][0].index(), maxIndex = bb[0][bb[0].length-1].index();
@@ -181,4 +181,5 @@ exports.color.rainbow = function(grad) {
   return colorFunc;
 };
 
+return true;
 })(this);
