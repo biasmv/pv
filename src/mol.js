@@ -387,8 +387,8 @@ Mol.prototype.connect = function(atom_a, atom_b) {
 
 // determine connectivity structure. for simplicity only connects atoms of the 
 // same residue and peptide bonds
-Mol.prototype.derive_connectivity = function() {
-  console.time('Mol.derive_connectivity');
+Mol.prototype.deriveConnectivity = function() {
+  console.time('Mol.deriveConnectivity');
   var this_structure = this;
   var prev_residue;
   this.eachResidue(function(res) {
@@ -414,7 +414,7 @@ Mol.prototype.derive_connectivity = function() {
     }
     prev_residue = res;
   });
-  console.timeEnd('Mol.derive_connectivity');
+  console.timeEnd('Mol.deriveConnectivity');
 };
 
 function Chain(structure, name) {
@@ -622,20 +622,20 @@ AtomView.prototype.bonds = function() { return this._bonds; };
 AtomView.prototype.index = function() { return this._atom.index(); };
 
 
-function parse_helix_record(line) {
+function parseHelixRecord(line) {
   // FIXME: handle insertion codes
   var frst_num = parseInt(line.substr(21, 4), 10);
   var last_num = parseInt(line.substr(33, 4), 10);
-  var chain_name = line[19];
-  return { first : frst_num, last : last_num, chain_name : chain_name };
+  var chainName = line[19];
+  return { first : frst_num, last : last_num, chainName : chainName };
 }
 
-function parse_sheet_record(line) {
+function parseSheetRecord(line) {
   // FIXME: handle insertion codes
   var frst_num = parseInt(line.substr(22, 4), 10);
   var last_num = parseInt(line.substr(33, 4), 10);
-  var chain_name = line[21];
-  return { first : frst_num, last : last_num, chain_name : chain_name };
+  var chainName = line[21];
+  return { first : frst_num, last : last_num, chainName : chainName };
 }
 
 // a truly minimalistic PDB parser. It will die as soon as the input is 
@@ -652,87 +652,89 @@ function parse_sheet_record(line) {
 function pdb(text) {
   console.time('pdb'); 
   var structure = new Mol();
-  var curr_chain = null;
-  var curr_res = null;
-  var curr_atom = null;
+  var currChain = null;
+  var currRes = null;
+  var currAtom = null;
   
   var helices = [];
   var sheets = [];
   
-  function parse_and_addAtom(line, hetatm) {
+  function parseAndAddAtom(line, hetatm) {
     var alt_loc = line[16];
     if (alt_loc!=' ' && alt_loc!='A') {
       return;
     }
-    var chain_name = line[21];
+    var chainName = line[21];
     var res_name = line.substr(17, 3);
-    var atom_name = line.substr(12, 4).trim();
-    var rnum_num = parseInt(line.substr(22, 4), 10);
+    var atomName = line.substr(12, 4).trim();
+    var rnumNum = parseInt(line.substr(22, 4), 10);
     var ins_code = line[26];
-    var update_residue = false;
-    var update_chain = false;
-    if (!curr_chain || curr_chain.name() != chain_name) {
-      update_chain = true;
-      update_residue = true;
+    var updateResidue = false;
+    var updateChain = false;
+    if (!currChain || currChain.name() != chainName) {
+      updateChain = true;
+      updateResidue = true;
     }
-    if (!curr_res || curr_res.num() != rnum_num) {
-      update_residue = true;
+    if (!currRes || currRes.num() != rnumNum) {
+      updateResidue = true;
     }
-    if (update_chain) {
-      curr_chain = structure.addChain(chain_name);
+    if (updateChain) {
+      // residues of one chain might appear interspersed with residues from
+      // other chains.
+      currChain = structure.chain(chainName) || structure.addChain(chainName);
     }
-    if (update_residue) {
-      curr_res = curr_chain.addResidue(res_name, rnum_num,
-                                       curr_chain.residues().length);
+    if (updateResidue) {
+      currRes = currChain.addResidue(res_name, rnumNum,
+                                       currChain.residues().length);
     }
     var pos = vec3.create();
     for (var i=0;i<3;++i) {
       pos[i] = (parseFloat(line.substr(30+i*8, 8)));
     }
-    curr_res.addAtom(atom_name, pos, line.substr(76, 2).trim());
+    currRes.addAtom(atomName, pos, line.substr(76, 2).trim());
   }
   var lines = text.split(/\r\n|\r|\n/g);
   var i = 0;
   for (i = 0; i < lines.length; i++) {
     var line = lines[i];
-    var record_name = line.substr(0, 6);
+    var recordName = line.substr(0, 6);
 
-    if (record_name == 'ATOM  ') {
-      parse_and_addAtom(line, false);
+    if (recordName == 'ATOM  ') {
+      parseAndAddAtom(line, false);
       continue;
     }
-    if (record_name == 'HETATM') {
-      parse_and_addAtom(line, true);
+    if (recordName == 'HETATM') {
+      parseAndAddAtom(line, true);
       continue;
     }
-    if (record_name == 'HELIX ') {
-      helices.push(parse_helix_record(line));
+    if (recordName == 'HELIX ') {
+      helices.push(parseHelixRecord(line));
       continue;
     }
-    if (record_name == 'SHEET ') {
-      sheets.push(parse_sheet_record(line));
+    if (recordName == 'SHEET ') {
+      sheets.push(parseSheetRecord(line));
       continue;
     }
-    if (record_name == 'END') {
+    if (recordName == 'END') {
       break;
     }
   }
   var chain = null;
   for (i = 0; i < sheets.length; ++i) {
     var sheet = sheets[i];
-    chain = structure.chain(sheet.chain_name);
+    chain = structure.chain(sheet.chainName);
     if (chain) {
       chain.assign_ss(sheet.first, sheet.last, 'E');
     }
   }
   for (i = 0; i < helices.length; ++i) {
     var helix = helices[i];
-    chain = structure.chain(helix.chain_name);
+    chain = structure.chain(helix.chainName);
     if (chain) {
       chain.assign_ss(helix.first, helix.last, 'H');
     }
   }
-  structure.derive_connectivity();
+  structure.deriveConnectivity();
   console.timeEnd('PV.pdb');
 
   return structure;
