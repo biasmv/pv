@@ -181,5 +181,36 @@ exports.color.rainbow = function(grad) {
   return colorFunc;
 };
 
+exports.color.byChain = function(grad) {
+  if (!grad) {
+    grad = gradient([rgb.fromValues(1,0,0), 
+                     rgb.fromValues(1,1,0), 
+                     rgb.fromValues(0,1,0),
+                     rgb.fromValues(0,0,1)]);
+  }
+  var colorFunc = new ColorOp(function(a, out, index) {
+    var idx = a.residue().index();
+    var chainIndex = this.chainIndices[a.residue().chain().name()];
+    var t =  chainIndex*this.scale;
+    var x = [0,0,0];
+    grad.colorAt(x, t);
+    out[index] = x[0];
+    out[index+1] = x[1];
+    out[index+2] = x[2];
+  }, function(obj) {
+    var chains = obj.chains();
+    this.chainIndices = {};
+    for (var i = 0; i < chains.length; ++i) {
+      this.chainIndices[chains[i].name()] = i;
+    }
+    this.scale = chains.length > 1 ? 1.0/(chains.length-1) : 1.0;
+  },function(obj) {
+    this.chainIndices = null;
+  });
+  return colorFunc;
+};
+
+
+
 return true;
 })(this);

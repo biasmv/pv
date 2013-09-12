@@ -87,9 +87,11 @@ function interpolateColor(colors, num) {
 // The vertex association data for the atom-based render styles is managed
 // by AtomVertexAssoc, whereas the trace-based render styles are managed 
 // by the TraceVertexAssoc class. 
-function AtomVertexAssoc(structure) {
+function AtomVertexAssoc(structure, callColoringBeginEnd) {
   this._structure = structure;
   this._assocs = [];
+  this._callBeginEnd = callColoringBeginEnd;
+
 }
 
 AtomVertexAssoc.prototype.addAssoc = function(atom, vertStart, vertEnd)  {
@@ -98,10 +100,15 @@ AtomVertexAssoc.prototype.addAssoc = function(atom, vertStart, vertEnd)  {
 
 AtomVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, stride) {
   var colorData = new Float32Array(this._structure.atomCount()*3); 
-  colorOp.begin(this._structure);
+  if (this._callBeginEnd) {
+    colorOp.begin(this._structure);
+  }
   this._structure.eachAtom(function(atom) {
     colorOp.colorFor(atom, colorData, atom.index()*3);
   });
+  if (this._callBeginEnd) {
+    colorOp.begin(this._structure);
+  }
   colorOp.end(this._structure);
   for (var i = 0; i < this._assocs.length; ++i) {
     var assoc = this._assocs[i];
@@ -115,9 +122,10 @@ AtomVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, stride) {
   }
 };
 
-function TraceVertexAssoc(structure, interpolation) {
+function TraceVertexAssoc(structure, interpolation, callColoringBeginEnd) {
   this._structure = structure;
   this._assocs = [];
+  this._callBeginEnd = callColoringBeginEnd;
   this._interpolation = interpolation || 1;
 }
 
@@ -129,6 +137,10 @@ TraceVertexAssoc.prototype.addAssoc = function(slice, vertStart, vertEnd) {
 
 TraceVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, 
                                               stride) {
+
+  if (this._callBeginEnd) {
+    colorOp.begin(this._structure);
+  }
   for (var ci = 0; ci < this._structure.chains().length; ++ci) {
     var chain = this._structure.chains()[ci];
     var traces = chain.backboneTraces();
@@ -139,14 +151,12 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, buffer, offset,
     }
     var colorData = new Float32Array(numTraceResidues*3); 
     var index = 0;
-    colorOp.begin(this._structure);
     for (i = 0; i < traces.length; ++i) {
       for (j = 0; j < traces[i].length; ++j) {
         colorOp.colorFor(traces[i][j].atom('CA'), colorData, index);
         index+=3;
       }
     }
-    colorOp.end(this._structure);
     if (this._interpolation>1) {
       colorData = interpolateColor(colorData, this._interpolation);
     }
@@ -160,6 +170,9 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, buffer, offset,
         buffer[offset+j*stride+2] = b;  
       }
     }
+  }
+  if (this._callBeginEnd) {
+    colorOp.end(this._structure);
   }
 };
 
@@ -240,8 +253,9 @@ LineGeom.prototype.addLine = function(startPos, startColor, endPos, endColor) {
 // SceneNode by introducing named and unnamed child nodes at the SceneNode
 // level. It only exists to support unnamed child nodes and hide the fact
 // that some render styles require multiple MeshGeoms to be constructed.
-function CompositeGeom() {
+function CompositeGeom(structure) {
   this._geoms = [];
+  this._structure = structure;
   SceneNode.prototype.constructor(this);
 }
 
@@ -259,7 +273,10 @@ CompositeGeom.prototype.forwardMethod = function(method, args) {
 };
 
 CompositeGeom.prototype.colorBy = function() {
+  var colorFunc = arguments[0];
+  colorFunc.begin(this._structure);
   this.forwardMethod('colorBy', arguments);
+  colorFunc.end(this._structure);
 };
 
 CompositeGeom.prototype.draw = function(shaderProgram, outlinePass) {
@@ -616,7 +633,7 @@ exports.lineTrace = function(structure, gl, options) {
   console.time('lineTrace');
   var colorOne = vec3.create(), colorTwo = vec3.create();
   var lineGeom = new LineGeom(gl);
-  var vertAssoc = new TraceVertexAssoc(structure);
+  var vertAssoc = new TraceVertexAssoc(structure, 1, true);
   lineGeom.setLineWidth(options.lineWidth);
   options.color.begin(structure);
   var chains = structure.chains();
@@ -648,7 +665,7 @@ exports.spheres = function(structure, gl, options) {
   var clr = vec3.create();
   var geom = new MeshGeom(gl);
   var protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
-  var vertAssoc = new AtomVertexAssoc(structure);
+  var vertAssoc = new AtomVertexAssoc(structure, true);
   options.color.begin(structure);
   structure.eachAtom(function(atom) {
     options.color.colorFor(atom, clr, 0);
@@ -668,7 +685,7 @@ exports.sline = function(structure, gl, options) {
   console.time('sline');
   var lineGeom =new  LineGeom(gl);
   options.color.begin(structure);
-  var vertAssoc = new TraceVertexAssoc(structure, options.splineDetail);
+  var vertAssoc = new TraceVertexAssoc(structure, options.splineDetail, 1, true);
   lineGeom.setLineWidth(options.lineWidth);
   var posOne = vec3.create(), posTwo = vec3.create();
   var colorOne = vec3.create(), colorTwo = vec3.create();
@@ -814,8 +831,8 @@ var _cartoonForChain = (function() {
     }
     var chainView = chain.asView();
     var mgeom = new MeshGeom(gl);
-    var vertAssoc = new TraceVertexAssoc(chain.asView(), 
-                                         options.splineDetail);
+    var vertAssoc = new TraceVertexAssoc(chain.asView(), options.splineDetail,
+                                         false);
 
     for (var ti = 0; ti < traces.length; ++ti) {
       var trace = traces[ti];
@@ -948,7 +965,7 @@ exports.cartoon = function(structure, gl, options) {
   options.helixProfile = new TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
   options.strandProfile = new TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
 
-  var compositeGeom = new CompositeGeom();
+  var compositeGeom = new CompositeGeom(structure);
   var chains = structure.chains();
   options.color.begin(structure);
   for (var i = 0, e = chains.length;  i < e; ++i) {
@@ -969,7 +986,7 @@ exports.lines = function(structure, gl, options) {
   var lineGeom = new LineGeom(gl);
   lineGeom.setLineWidth(options.lineWidth);
   var clr = vec3.create();
-  var vertAssoc = new AtomVertexAssoc(structure);
+  var vertAssoc = new AtomVertexAssoc(structure, true);
   options.color.begin(structure);
   structure.eachAtom(function(atom) {
     // for atoms without bonds, we draw a small cross, otherwise these atoms 
@@ -1015,7 +1032,7 @@ var _traceForChain = (function() {
       return null;
     }
     var meshGeom = new MeshGeom(gl);
-    var vertAssoc = new TraceVertexAssoc(chain.asView());
+    var vertAssoc = new TraceVertexAssoc(chain.asView(), 1, false);
     for (var ti = 0; ti < traces.length; ++ti) {
       var trace = traces[ti];
 
@@ -1062,7 +1079,7 @@ var _traceForChain = (function() {
 
 exports.trace = function(structure, gl, options) {
   console.time('trace');
-  var compositeGeom = new CompositeGeom();
+  var compositeGeom = new CompositeGeom(structure);
   options.protoCyl = new ProtoCylinder(options.arcDetail);
   options.protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
   options.color.begin(structure);
