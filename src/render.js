@@ -103,8 +103,10 @@ AtomVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, stride) {
   if (this._callBeginEnd) {
     colorOp.begin(this._structure);
   }
-  this._structure.eachAtom(function(atom) {
-    colorOp.colorFor(atom, colorData, atom.index()*3);
+  var atomMap = {};
+  this._structure.eachAtom(function(atom, index) {
+    atomMap[atom.index()] = index;
+    colorOp.colorFor(atom, colorData, index*3);
   });
   if (this._callBeginEnd) {
     colorOp.begin(this._structure);
@@ -112,7 +114,7 @@ AtomVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, stride) {
   colorOp.end(this._structure);
   for (var i = 0; i < this._assocs.length; ++i) {
     var assoc = this._assocs[i];
-    var ai = assoc.atom.index();
+    var ai = atomMap[assoc.atom.index()];
     var r = colorData[ai*3], g = colorData[ai*3+1], b = colorData[ai*3+2];
     for (var j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
        buffer[offset+j*stride+0] = r;  

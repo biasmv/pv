@@ -154,7 +154,10 @@ exports.color.rainbow = function(grad) {
   var colorFunc = new ColorOp(function(a, out, index) {
     var idx = a.residue().index();
     var limits = this.chainLimits[a.residue().chain().name()];
-    var t =  (idx - limits[0])/(limits[1]-limits[0]);
+    var t = 0.0;
+    if (limits !== undefined) {
+      t =  (idx - limits[0])/(limits[1]-limits[0]);
+    } 
     var x = [0,0,0];
     grad.colorAt(x, t);
     out[index] = x[0];

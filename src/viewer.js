@@ -578,6 +578,10 @@ PV.prototype.get = function(name) {
   return null;
 };
 
+PV.prototype.all = function() {
+  return this._objects;
+};
+
 return { Viewer: function(elem, options) { return new PV(elem, options); }};
 })();
 

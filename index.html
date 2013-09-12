@@ -264,31 +264,47 @@
     function ssSuccession() {}
 
     function uniform() {
-      var go = pv.get('structure');
-      go.colorBy(color.uniform([0,1,0]));
+      var all = pv.all();
+      for (var i = 0; i < all.length; ++i) {
+        var go = all[i];
+        go.colorBy(color.uniform([0,1,0]));
+      }
       pv.requestRedraw();
     }
     function byElement() {
-      var go = pv.get('structure');
-      go.colorBy(color.byElement());
+      var all = pv.all();
+      for (var i = 0; i < all.length; ++i) {
+        var go = all[i];
+        go.colorBy(color.byChain());
+        go.colorBy(color.byElement());
+      }
       pv.requestRedraw();
     }
 
     function ss() {
-      var go = pv.get('structure');
-      go.colorBy(color.bySS());
+      var all = pv.all();
+      for (var i = 0; i < all.length; ++i) {
+        var go = all[i];
+        go.colorBy(color.bySS());
+      }
       pv.requestRedraw();
     }
 
     function rainbow() {
-      var go = pv.get('structure');
-      go.colorBy(color.rainbow());
+      var all = pv.all();
+      for (var i = 0; i < all.length; ++i) {
+        var go = all[i];
+        go.colorBy(color.rainbow());
+      }
       pv.requestRedraw();
     }
 
     function byChain() {
-      var go = pv.get('structure');
-      go.colorBy(color.byChain());
+      var all = pv.all();
+      for (var i = 0; i < all.length; ++i) {
+        var go = all[i];
+        go.colorBy(color.byChain());
+      }
       pv.requestRedraw();
     }
 

@@ -1,4 +1,4 @@
-var mol = (function() {
+(function(exports) {
 "use strict";
 
 
@@ -19,9 +19,10 @@ MolBase.prototype.eachResidue = function(callback) {
   }
 };
 
-MolBase.prototype.eachAtom = function(callback) {
+MolBase.prototype.eachAtom = function(callback, index) {
+  index |= 0;
   for (var i = 0; i < this._chains.length; i+=1) {
-    this._chains[i].eachAtom(callback);
+    index = this._chains[i].eachAtom(callback, index);
   }
 };
 
@@ -63,10 +64,12 @@ function ChainBase() {
 
 }
 
-ChainBase.prototype.eachAtom = function(callback) {
+ChainBase.prototype.eachAtom = function(callback, index) {
+  index |= 0;
   for (var i = 0; i< this._residues.length; i+=1) {
-    this._residues[i].eachAtom(callback);
+    index = this._residues[i].eachAtom(callback, index);
   }
+  return index;
 };
 
 ChainBase.prototype.eachResidue = function(callback) {
@@ -139,10 +142,13 @@ ResidueBase.prototype.isWater = function() {
   return this.name() == 'HOH' || this.name() == 'DOD';
 };
 
-ResidueBase.prototype.eachAtom = function(callback) {
+ResidueBase.prototype.eachAtom = function(callback, index) {
+  index |= 0;
   for (var i =0; i< this._atoms.length; i+=1) {
-    callback(this._atoms[i]);
+    callback(this._atoms[i], index);
+    index +=1;
   }
+  return index;
 };
 
 ResidueBase.prototype.qualifiedName = function() {
@@ -739,19 +745,19 @@ function pdb(text) {
 
   return structure;
 }
+exports.mol = {};
 
-var exports = {};
+exports.mol.Mol = Mol;
+exports.mol.Chain = Chain;
+exports.mol.Residue = Residue;
+exports.mol.Atom = Atom;
 
-exports.Mol = Mol;
-exports.Chain = Chain;
-exports.Residue = Residue;
-exports.Atom = Atom;
+exports.mol.MolView = MolView;
+exports.mol.ChainView = ChainView;
+exports.mol.ResidueView = ResidueView;
+exports.mol.AtomView = AtomView;
+exports.mol.pdb = pdb;
 
-exports.MolView = MolView;
-exports.ChainView = ChainView;
-exports.ResidueView = ResidueView;
-exports.AtomView = AtomView;
-exports.pdb = pdb;
+return true;
 
-return exports;
-})();
+})(this);
