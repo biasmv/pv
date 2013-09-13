@@ -131,46 +131,49 @@ function TraceVertexAssoc(structure, interpolation, callColoringBeginEnd) {
   this._interpolation = interpolation || 1;
 }
 
-TraceVertexAssoc.prototype.addAssoc = function(slice, vertStart, vertEnd) {
-  this._assocs.push({ slice : slice, vertStart : vertStart, 
+TraceVertexAssoc.prototype.addAssoc = function(traceIndex, slice, vertStart, vertEnd) {
+  this._assocs.push({ traceIndex: traceIndex, slice : slice, vertStart : vertStart, 
                       vertEnd : vertEnd});
 };
 
 
 TraceVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, 
                                               stride) {
-
+  // FIXME: this function might create quite a few temporary buffers. Implement
+  // a buffer pool to avoid hitting the GC and having to go through the slow
+  // creation of typed arrays.
   if (this._callBeginEnd) {
     colorOp.begin(this._structure);
   }
+  var colorData = [];
   for (var ci = 0; ci < this._structure.chains().length; ++ci) {
     var chain = this._structure.chains()[ci];
     var traces = chain.backboneTraces();
-    var numTraceResidues = 0;
     var i, j;
     for (i = 0; i < traces.length; ++i) {
-      numTraceResidues += traces[i].length;
-    }
-    var colorData = new Float32Array(numTraceResidues*3); 
-    var index = 0;
-    for (i = 0; i < traces.length; ++i) {
+      var data = new Float32Array(traces[i].length*3); 
+      var index = 0;
       for (j = 0; j < traces[i].length; ++j) {
-        colorOp.colorFor(traces[i][j].atom('CA'), colorData, index);
+        colorOp.colorFor(traces[i][j].atom('CA'), data, index);
         index+=3;
       }
-    }
-    if (this._interpolation>1) {
-      colorData = interpolateColor(colorData, this._interpolation);
-    }
-    for (i = 0; i < this._assocs.length; ++i) {
-      var assoc = this._assocs[i];
-      var ai = assoc.slice;
-      var r = colorData[ai*3], g = colorData[ai*3+1], b = colorData[ai*3+2];
-      for (j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
-        buffer[offset+j*stride+0] = r;  
-        buffer[offset+j*stride+1] = g;  
-        buffer[offset+j*stride+2] = b;  
+      if (this._interpolation>1) {
+        colorData.push(interpolateColor(data, this._interpolation));
+      } else {
+        colorData.push(data);
       }
+    }
+  }
+  for (i = 0; i < this._assocs.length; ++i) {
+    var assoc = this._assocs[i];
+    var ai = assoc.slice;
+    var d = colorData[assoc.traceIndex];
+    console.log(assoc.traceIndex, colorData.length);
+    var r = d[ai*3], g = d[ai*3+1], b = d[ai*3+2];
+    for (j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
+      buffer[offset+j*stride+0] = r;  
+      buffer[offset+j*stride+1] = g;  
+      buffer[offset+j*stride+2] = b;  
     }
   }
   if (this._callBeginEnd) {
@@ -639,8 +642,10 @@ exports.lineTrace = function(structure, gl, options) {
   lineGeom.setLineWidth(options.lineWidth);
   options.color.begin(structure);
   var chains = structure.chains();
+  var traceIndex = 0;
   function makeLineTrace(trace) {
-    vertAssoc.addAssoc(0, lineGeom.numVerts(), lineGeom.numVerts()+1);
+    vertAssoc.addAssoc(traceIndex, 0, lineGeom.numVerts(), 
+                       lineGeom.numVerts()+1);
     for (var i = 1; i < trace.length; ++i) {
       options.color.colorFor(trace[i-1].atom('CA'), colorOne, 0);
       options.color.colorFor(trace[i].atom('CA'), colorTwo, 0);
@@ -648,9 +653,10 @@ exports.lineTrace = function(structure, gl, options) {
                         trace[i-0].atom('CA').pos(), colorTwo);
 
       var vertEnd = lineGeom.numVerts();
-      vertAssoc.addAssoc(i, vertEnd-1, 
-                          vertEnd+((i === trace.length-1) ? 0 : 1));
+      vertAssoc.addAssoc(traceIndex, i, vertEnd-1, 
+                         vertEnd+((i === trace.length-1) ? 0 : 1));
     }
+    traceIndex += 1;
   }
   for (var ci = 0; ci < chains.length; ++ci) {
     var chain = chains[ci];
@@ -692,7 +698,7 @@ exports.sline = function(structure, gl, options) {
   var posOne = vec3.create(), posTwo = vec3.create();
   var colorOne = vec3.create(), colorTwo = vec3.create();
   var chains = structure.chains();
-  var i, e;
+  var i, e, traceIndex = 0;
   function makeTrace(trace) {
     var positions = new Float32Array(trace.length*3);
     var colors = new Float32Array(trace.length*3);
@@ -708,7 +714,7 @@ exports.sline = function(structure, gl, options) {
                                       options.strength, false);
     var interpColors = interpolateColor(colors, options.splineDetail);
     var vertStart = lineGeom.numVerts();
-    vertAssoc.addAssoc(i, vertStart, vertStart+1);
+    vertAssoc.addAssoc(traceIndex, i, vertStart, vertStart+1);
     for (i = 1, e = sdiv.length/3; i < e; ++i) {
       posOne[0] = sdiv[3*(i-1)];
       posOne[1] = sdiv[3*(i-1)+1];
@@ -725,8 +731,9 @@ exports.sline = function(structure, gl, options) {
       colorTwo[2] = interpColors[3*(i-0)+2];
       lineGeom.addLine(posOne, colorOne, posTwo, colorTwo);
       var vertEnd = lineGeom.numVerts();
-      vertAssoc.addAssoc(i, vertEnd-1, 
-                          vertEnd+((i === trace.length-1) ? 0 : 1));
+      vertAssoc.addAssoc(traceIndex, i, vertEnd-1, 
+                         vertEnd+((i === trace.length-1) ? 0 : 1));
+      traceIndex += 1;
     }
   }
   for (var ci = 0; ci < chains.length; ++ci) {
@@ -870,7 +877,7 @@ var _cartoonForChain = (function() {
                       options, 0);
       var vertEnd = mgeom.numVerts();
       var slice = 0;
-      vertAssoc.addAssoc(slice, vertStart, vertEnd);
+      vertAssoc.addAssoc(ti, slice, vertStart, vertEnd);
       slice +=1;
 
       // handle the bulk of the trace
@@ -930,7 +937,7 @@ var _cartoonForChain = (function() {
         _cartoonAddTube(mgeom, pos, normal, trace[traceIndex], tangent, color, 
                         false, options, offset);
         vertEnd = mgeom.numVerts();
-        vertAssoc.addAssoc(slice, vertStart, vertEnd);
+        vertAssoc.addAssoc(ti, slice, vertStart, vertEnd);
         slice += 1;
       }
       i = sdiv.length;
@@ -954,7 +961,8 @@ var _cartoonForChain = (function() {
       _cartoonAddTube(mgeom, pos, normal, trace[trace.length-1], tangent, color, 
                       false, options, 0);
       vertEnd = mgeom.numVerts();
-      vertAssoc.addAssoc(slice, vertStart, vertEnd);
+      vertAssoc.addAssoc(ti, slice, vertStart, vertEnd);
+      traceIndex+=1;
     }
     mgeom.setVertAssoc(vertAssoc);
     return mgeom;
@@ -1035,6 +1043,7 @@ var _traceForChain = (function() {
     }
     var meshGeom = new MeshGeom(gl);
     var vertAssoc = new TraceVertexAssoc(chain.asView(), 1, false);
+    var traceIndex = 0;
     for (var ti = 0; ti < traces.length; ++ti) {
       var trace = traces[ti];
 
@@ -1043,7 +1052,7 @@ var _traceForChain = (function() {
       options.protoSphere.addTransformed(meshGeom, trace[0].atom('CA').pos(), 
                                          options.radius, colorOne);
       var vertEnd = null;
-      vertAssoc.addAssoc(0, vertStart, vertEnd);
+      vertAssoc.addAssoc(traceIndex, 0, vertStart, vertEnd);
       for (var i = 1; i < trace.length; ++i) {
         var caPrevPos = trace[i-1].atom('CA').pos();
         var caThisPos = trace[i].atom('CA').pos();
@@ -1068,11 +1077,13 @@ var _traceForChain = (function() {
 
         options.protoSphere.addTransformed(meshGeom, caThisPos, options.radius, 
                                            colorTwo);
-        vertAssoc.addAssoc(i, vertStart, vertEnd);
+        vertAssoc.addAssoc(traceIndex, i, vertStart, vertEnd);
         vertStart = vertEnd;
         vec3.copy(colorOne, colorTwo);
       }
-      vertAssoc.addAssoc(trace.length-1, vertStart, meshGeom.numVerts());
+      vertAssoc.addAssoc(traceIndex, trace.length-1, vertStart, 
+                         meshGeom.numVerts());
+      traceIndex += 1;
     }
     meshGeom.setVertAssoc(vertAssoc);
     return meshGeom;

@@ -184,6 +184,7 @@
        <li id=1crn>Crambin</li>
        <li id=2por>Porin</li>
        <li id=2f8v>Telethonin</li>
+       <li id=4c46>Long Helices</li>
     </ul>
   </div>
   <div id=gl>
@@ -259,7 +260,12 @@
 
     function telethonin() { load('2f8v'); }
 
-    function porin() { load('4c46'); }
+    function porin() { 
+      load('2por'); 
+    }
+    function longHelices() {
+      load('4c46');
+    }
 
     function ssSuccession() {}
 
@@ -321,6 +327,7 @@
     $('#1crn').click(crambin);
     $('#2por').click(porin);
     $('#2f8v').click(telethonin);
+    $('#4c46').click(longHelices);
     $('#rainbow').click(rainbow);
     $('#ss').click(ss);
     $('#uniform').click(uniform);
