@@ -741,7 +741,9 @@ function pdb(text) {
     }
   }
   structure.deriveConnectivity();
-  console.timeEnd('PV.pdb');
+  console.log('imported', structure.chains().length, 'chain(s),',
+              structure.residueCount(), 'residue(s)');
+  console.timeEnd('pdb');
 
   return structure;
 }

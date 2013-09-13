@@ -173,8 +173,9 @@ exports.color.rainbow = function(grad) {
       }
       var minIndex = bb[0][0].index(), maxIndex = bb[0][bb[0].length-1].index();
       for (var j = 1; j < bb.length; ++j) {
-        minIndex = Math.min(minIndex, bb[i][0].index());
-        maxIndex = Math.max(maxIndex, bb[i][bb[i].length-1].index());
+        var bbj = bb[j];
+        minIndex = Math.min(minIndex, bbj[0].index());
+        maxIndex = Math.max(maxIndex, bbj[bb[j].length-1].index());
       }
       this.chainLimits[chains[i].name()] = [minIndex, maxIndex];
     }
