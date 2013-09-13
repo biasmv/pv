@@ -270,6 +270,8 @@ CompositeGeom.prototype.addGeom = function(geom) {
   this._geoms.push(geom);
 };
 
+SceneNode.prototype.requiresOutlinePass = function() { return true; };
+
 CompositeGeom.prototype.forwardMethod = function(method, args) {
   for (var i = 0; i < this._geoms.length; ++i) {
     this._geoms[i][method].apply(this._geoms[i], args);
@@ -285,7 +287,9 @@ CompositeGeom.prototype.colorBy = function() {
 
 CompositeGeom.prototype.draw = function(shaderProgram, outlinePass) {
   for (var i = 0; i < this._geoms.length; ++i) {
-    this._geoms[i].draw(shaderProgram, outlinePass);
+    if (!outlinePass || this._geoms[i].requiresOutlinePass()) {
+      this._geoms[i].draw(shaderProgram, outlinePass);
+    }
   }
   SceneNode.prototype.draw(this, shaderProgram, outlinePass);
 };
@@ -614,6 +618,7 @@ SceneNode.prototype.draw = function(shaderProgram, outline_pass) {
   }
 };
 
+SceneNode.prototype.requiresOutlinePass = function() { return true; };
 SceneNode.prototype.show = function() {
   this._visible = true;
 };

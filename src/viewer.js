@@ -427,7 +427,9 @@ PV.prototype._draw = function() {
   this._gl.cullFace(this._gl.BACK);
   this._gl.enable(this._gl.CULL_FACE);
   for (i = 0; i < this._objects.length; i+=1) {
-    this._objects[i].draw(this._outlineShader, true);
+    if (this._objects[i].requiresOutlinePass()) {
+      this._objects[i].draw(this._outlineShader, true);
+    }
   }
 };
 
