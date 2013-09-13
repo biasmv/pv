@@ -27,6 +27,11 @@
       left:233px;
       top:49px;
     }
+    .screenshot {
+      position:fixed;
+      top:49px;
+      left:233px;
+    }
     #inspector {
       position:fixed;
       width:200px;
@@ -176,6 +181,7 @@
                  value="yes" id=showOutline>Show Outline</li>
       <li><input type="checkbox" name="fog" 
                  value="yes" checked=true id=fog>Fog</li>
+      <li id=save>Save Image</li>
     </ul>
      <ul>
       <h1></h1>
@@ -334,6 +340,17 @@
     $('#by-ele').click(byElement);
     $('#ss-sub').click(ssSuccession);
     $('#by-chain').click(byChain);
+    $('#save').click(function() {
+      var img = document.createElement('img');
+      img.src = pv.imageData();
+      $(img).addClass('screenshot');
+      $(img).click(function() {
+        $(img).hide();
+        $('#gl').show();
+      });
+      document.body.appendChild(img);
+      $('#gl').hide();
+    });
     $('#showOutline').change(function() {
       pv.options('outline', this.checked);
       pv.requestRedraw();

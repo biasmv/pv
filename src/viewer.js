@@ -276,12 +276,21 @@ PV.prototype.quality = function(qual) {
   console.error('invalid quality argument', qual);
 };
 
+// returns the content of the WebGL context as a data URL element which can be 
+// inserted into an img element. This allows users to save a picture to disk
+PV.prototype.imageData = function() {
+  return this._canvas.toDataURL();
+}
+
 PV.prototype._initGL = function () {
   var samples = 1;
   try {
-    var context_opts = { antialias : this._options.antialias };
+    var contextOpts = { 
+      antialias : this._options.antialias,
+      preserveDrawingBuffer : true // for image export
+    };
     this._gl = this._canvas.getContext('experimental-webgl', 
-                                       context_opts);
+                                       contextOpts);
 
     if (!this._gl.getContextAttributes().antialias &&
         this._options.antialias) {
