@@ -168,7 +168,6 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, buffer, offset,
     var assoc = this._assocs[i];
     var ai = assoc.slice;
     var d = colorData[assoc.traceIndex];
-    console.log(assoc.traceIndex, colorData.length);
     var r = d[ai*3], g = d[ai*3+1], b = d[ai*3+2];
     for (j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
       buffer[offset+j*stride+0] = r;  
