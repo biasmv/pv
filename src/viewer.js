@@ -280,7 +280,7 @@ PV.prototype.quality = function(qual) {
 // inserted into an img element. This allows users to save a picture to disk
 PV.prototype.imageData = function() {
   return this._canvas.toDataURL();
-}
+};
 
 PV.prototype._initGL = function () {
   var samples = 1;

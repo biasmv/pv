@@ -146,10 +146,10 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, buffer, offset,
     colorOp.begin(this._structure);
   }
   var colorData = [];
+  var i, j;
   for (var ci = 0; ci < this._structure.chains().length; ++ci) {
     var chain = this._structure.chains()[ci];
     var traces = chain.backboneTraces();
-    var i, j;
     for (i = 0; i < traces.length; ++i) {
       var data = new Float32Array(traces[i].length*3); 
       var index = 0;
@@ -962,7 +962,6 @@ var _cartoonForChain = (function() {
                       false, options, 0);
       vertEnd = mgeom.numVerts();
       vertAssoc.addAssoc(ti, slice, vertStart, vertEnd);
-      traceIndex+=1;
     }
     mgeom.setVertAssoc(vertAssoc);
     return mgeom;
