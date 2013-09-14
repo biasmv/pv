@@ -17,11 +17,11 @@ Clone this repository
 git clone https://github.com/biasmv/pv.git
 ```
 
-Change to the pv directory and serve the files. This is required for the demo to work properly.
+Change to the pv directory and serve the files using the serve command. It's a small wrapper around the SimpleHTTPServer module which also sets the Access-Control-Allow-Origin header to allow requests to pdb.org. This is required for the demo to work properly.
 
 ```bash
 cd pv
-python -m SimpleHTTPServer
+./serve 
 ```
 
 Open a WebGL-enabled web browser and visit http://localhost:8000

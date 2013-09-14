@@ -149,7 +149,8 @@
     </head>
 <body>
   <div id=toolbar>
-    <input type=text name=a placeholder='Enter PDB identifier to load' />
+    <input type=text name=pdbid id=pdbid 
+     placeholder='Enter PDB identifier to load' />
     <a href="https://github.com/biasmv/pv"><img style="position: absolute; top: 0; right: 0; border: 0; width: 149px; height: 149px;" src="http://aral.github.com/fork-me-on-github-retina-ribbons/right-cerulean@2x.png" alt="Fork me on GitHub"></a>
   </div>
   <div id=inspector>
@@ -329,6 +330,16 @@
     $('#by-ele').click(byElement);
     $('#ss-sub').click(ssSuccession);
     $('#by-chain').click(byChain);
+    $('#pdbid').change(function() {
+      $.ajax({ url : 'http://pdb.org/pdb/files/'+this.value+'.pdb', 
+               success : function(data) {
+        structure = mol.pdb(data);
+        cartoon();
+        pv.centerOn(structure);
+      }});
+      this.value = '';
+      this.blur();
+    });
     $('#save').click(function() {
       var imgDataURL = pv.imageData();
       window.open(imgDataURL);
