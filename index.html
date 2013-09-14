@@ -150,7 +150,7 @@
 <body>
   <div id=toolbar>
     <input type=text name=pdbid id=pdbid 
-     placeholder='Enter PDB identifier to load' />
+    placeholder='Enter PDB identifier to load' />&nbsp;&nbsp;<span id=status></span>
     <a href="https://github.com/biasmv/pv"><img style="position: absolute; top: 0; right: 0; border: 0; width: 149px; height: 149px;" src="http://aral.github.com/fork-me-on-github-retina-ribbons/right-cerulean@2x.png" alt="Fork me on GitHub"></a>
   </div>
   <div id=inspector>
@@ -331,14 +331,24 @@
     $('#ss-sub').click(ssSuccession);
     $('#by-chain').click(byChain);
     $('#pdbid').change(function() {
-      $.ajax({ url : 'http://pdb.org/pdb/files/'+this.value+'.pdb', 
-               success : function(data) {
-        structure = mol.pdb(data);
-        cartoon();
-        pv.centerOn(structure);
-      }});
+      var st = $('#status')
+      st.show();
+      var pdbId = this.value;
       this.value = '';
       this.blur();
+      st.text('retrieving file from pdb.org. This may take a while');
+      $.ajax('http://pdb.org/pdb/files/'+pdbId+'.pdb')
+        .done(function(data) {
+          st.text('loaded');
+          structure = mol.pdb(data);
+          cartoon();
+          pv.centerOn(structure);
+          st.fadeOut(2000);
+        })
+        .fail(function() {
+          st.text('could not load '+pdbId+' from PDB.org');
+          st.fadeOut(2000);
+        });
     });
     $('#save').click(function() {
       var imgDataURL = pv.imageData();
