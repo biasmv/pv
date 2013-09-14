@@ -572,11 +572,33 @@ PV.prototype.trace = function(structure, opts) {
   return render.trace(structure, this._gl, options);
 };
 
-
 PV.prototype.add = function(name, obj) {
   obj.name(name);
   this._objects.push(obj);
   this.requestRedraw();
+  return obj;
+};
+
+PV.prototype._globToRegex = function(glob) {
+  var r = glob.replace('.', '\\.').replace('*', '.*');
+  return new RegExp('^'+r+'$');
+};
+
+PV.prototype.forEach = function() {
+  var callback, pattern = '*';
+  if (arguments.length === 2) {
+    callback = arguments[1];
+    pattern = arguments[0];
+  } else {
+    callback = arguments[0];
+  }
+  var regex = this._globToRegex(pattern);
+  for (var i = 0; i < this._objects.length; ++i) {
+    var obj = this._objects[i];
+    if (regex.test(obj.name())) {
+      callback(obj, i);
+    }
+  }
 };
 
 PV.prototype.get = function(name) {
@@ -588,6 +610,33 @@ PV.prototype.get = function(name) {
   console.error('could not find object with name', name);
   return null;
 };
+
+PV.prototype.hide = function(glob) {
+  this.forEach(glob, function(obj) {
+    obj.hide();
+  });
+};
+
+PV.prototype.show = function(glob) {
+  this.forEach(glob, function(obj) {
+    obj.show();
+  });
+};
+
+// remove all objects whose names match the provided glob pattern from 
+// the viewer. 
+PV.prototype.rm = function(glob) {
+  var newObjects = [];
+  var regex = this._globToRegex(pattern);
+  for (var i = 0; i < this._objects.length; ++i) {
+    var obj = this._objects[i];
+    if (!regex.test(obj.name())) {
+      newObjects.push(obj);
+    }
+  }
+  this._objects = newObjects;
+};
+
 
 PV.prototype.all = function() {
   return this._objects;

@@ -238,8 +238,8 @@
     function preset() {
       pv.clear();
       var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
-      pv.add('ligand', pv.spheres(ligand));
-      pv.add('protein', pv.cartoon(structure));
+      pv.add('structure.ligand', pv.spheres(ligand));
+      pv.add('structure.protein', pv.cartoon(structure));
     }
     function load(pdb_id) {
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
@@ -276,47 +276,36 @@
     function ssSuccession() {}
 
     function uniform() {
-      var all = pv.all();
-      for (var i = 0; i < all.length; ++i) {
-        var go = all[i];
+      pv.forEach(function(go) {
         go.colorBy(color.uniform([0,1,0]));
-      }
+      });
       pv.requestRedraw();
     }
     function byElement() {
-      var all = pv.all();
-      for (var i = 0; i < all.length; ++i) {
-        var go = all[i];
-        go.colorBy(color.byChain());
+      pv.forEach(function(go) {
         go.colorBy(color.byElement());
-      }
+      });
       pv.requestRedraw();
     }
 
     function ss() {
-      var all = pv.all();
-      for (var i = 0; i < all.length; ++i) {
-        var go = all[i];
+      pv.forEach(function(go) {
         go.colorBy(color.bySS());
-      }
+      });
       pv.requestRedraw();
     }
 
     function rainbow() {
-      var all = pv.all();
-      for (var i = 0; i < all.length; ++i) {
-        var go = all[i];
+      pv.forEach(function(go) {
         go.colorBy(color.rainbow());
-      }
+      });
       pv.requestRedraw();
     }
 
     function byChain() {
-      var all = pv.all();
-      for (var i = 0; i < all.length; ++i) {
-        var go = all[i];
+      pv.forEach(function(go) {
         go.colorBy(color.byChain());
-      }
+      });
       pv.requestRedraw();
     }
 

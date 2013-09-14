@@ -206,6 +206,8 @@ LineGeom.prototype.setVertAssoc = function(assoc) {
 LineGeom.prototype.numVerts = function() { return this._numLines*2; };
 
 LineGeom.prototype.draw = function(shaderProgram) {
+  if (!this._visible)
+    return;
   this.bind();
   this._gl.lineWidth(this._lineWidth);
   var vertAttrib = this._gl.getAttribLocation(shaderProgram, 'attrPos');
@@ -286,6 +288,8 @@ CompositeGeom.prototype.colorBy = function() {
 };
 
 CompositeGeom.prototype.draw = function(shaderProgram, outlinePass) {
+  if (!this._visible)
+    return;
   for (var i = 0; i < this._geoms.length; ++i) {
     if (!outlinePass || this._geoms[i].requiresOutlinePass()) {
       this._geoms[i].draw(shaderProgram, outlinePass);
@@ -543,6 +547,8 @@ MeshGeom.prototype.colorBy = function(colorFunc) {
 };
 
 MeshGeom.prototype.draw = function(shaderProgram) {
+  if (!this._visible)
+    return;
   this.bind();
   var posAttrib = this._gl.getAttribLocation(shaderProgram, 'attrPos');
   this._gl.enableVertexAttribArray(posAttrib);
@@ -603,7 +609,7 @@ MeshGeom.prototype.bind = function() {
 // graph, e.g. coordinate transformations.
 function SceneNode(name) {
   this._children = [];
-  this._visible = false;
+  this._visible = true;
   this._name = name || '';
 }
 
