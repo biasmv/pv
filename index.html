@@ -245,7 +245,7 @@
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = mol.pdb(data);
         cartoon();
-        pv.centerOn(structure.select({chain: 'A'}));
+        pv.centerOn(structure);
       }});
     }
     function kinase() {
