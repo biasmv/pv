@@ -1,25 +1,18 @@
-`pv.Viewer` - the viewer widget
-===============================================================
+The Viewer
+================================================================================
 
 
-The 3D molecules are managed and rendered by an instance of the viewer class. It serves as the main entry point for the protein viewer and is where most of the action happens. Before being able to use any of the render-related functions, a viewer must be constructed first. 
-
-
-`pv.Viewer` API
---------------------------------------------------------------------------------
-
-In the following, the full API of :class:`~pv.Viewer` is described. The methods are roughly categorized into the following sections:
+The 3D molecules are managed and rendered by an instance of the viewer class. It serves as the main entry point for the protein viewer and is where most of the action happens. Before being able to use any of the render-related functions, a viewer must be constructed first. In the following, the full API of :class:`~pv.Viewer` is described. The methods are roughly categorized into the following sections:
 
  * :ref:`pv.viewer.init`
  * :ref:`pv.viewer.rendering`
  * :ref:`pv.viewer.management`
 
 
-
 .. _pv.viewer.init:
 
 Initialization and Configuration
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------------------------------------------------
 
 .. class:: pv.Viewer(parentElement[,options])
 
@@ -59,7 +52,7 @@ The following code defines a new viewer. This can be done during page load time,
 .. _pv.viewer.rendering:
 
 Rendering
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------------------------------------------------
 
 This section describes the high-level API for displaying molecular structures on screen. The interface consists of render methods part of :class:`~pv.Viewer` which accept a structure and create a graphical representation out of it. For example, to create a cartoon representation, the following code will do:
 
@@ -146,7 +139,7 @@ While these methods create the graphical representation, they do not directly ad
 .. _pv.viewer.management:
 
 Object Management
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------------------------------------------------------------
 
 Multiple render objects can be displayed at once. To be able to refer to these objects, all objects need to be assigned a name that uniquely identifies them. :class:`~pv.Viewer` offers methods to conveniently add, retrieve objects, or remove them from the viewer. 
 
