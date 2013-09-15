@@ -2,10 +2,6 @@
 "use strict";
 
 
-function Gradient(colors, stops) {
-  this._colors = colors;
-  this._stops = stops;
-}
 
 exports.rgb = {};
 
@@ -21,6 +17,50 @@ exports.rgb.mix = function(out, colorOne, colorTwo, t) {
   out[2] = colorOne[2]*t+colorTwo[2]*oneMinusT;
   return out;
 };
+
+var COLORS = {
+  white : rgb.fromValues(1.0,1.0,1.0),
+  black : rgb.fromValues(0.0,0.0,0.0),
+  grey : rgb.fromValues(0.5,0.5,0.5),
+  red : rgb.fromValues(1.0,0.0,0.0),
+  darkred : rgb.fromValues(0.5,0.0,0.0),
+  lightred : rgb.fromValues(1.0,0.5,0.5),
+  green : rgb.fromValues(0.0,1.0,0.0),
+  darkgreen : rgb.fromValues(0.0,0.5,0.0),
+  lightgreen : rgb.fromValues(0.5,1.0,0.5),
+  blue : rgb.fromValues(0.0,0.0,1.0),
+  darkblue : rgb.fromValues(0.0,0.0,0.5),
+  lightblue : rgb.fromValues(0.5,0.5,1.0),
+  yellow : rgb.fromValues(1.0,1.0,0.0),
+  darkyellow : rgb.fromValues(0.5,0.5,0.0),
+  lightyellow : rgb.fromValues(1.0,1.0,0.5),
+  cyan : rgb.fromValues(0.0,1.0,1.0),
+  darkcyan : rgb.fromValues(0.0,0.5,0.5),
+  lightcyan : rgb.fromValues(0.5,1.0,1.0),
+  magenta : rgb.fromValues(1.0,0.0,1.0),
+  darkmagenta : rgb.fromValues(0.5,0.0,0.5),
+  lightmagenta : rgb.fromValues(1.0,0.5,1.0),
+  orange : rgb.fromValues(1.0,0.5,0.0),
+  darkorange : rgb.fromValues(0.5,0.25,0.0),
+  lightorange : rgb.fromValues(1.0,0.75,0.5)
+};
+
+// converts color strings to RGB. for now only supports color names. 
+// hex triples will need to be added.
+exports.forceRGB = function(color) {
+  if (COLORS[color] !== undefined) {
+    return COLORS[color];
+  }
+  return color;
+};
+
+function Gradient(colors, stops) {
+  this._colors = colors;
+  for (var i = 0; i < this._colors.length; ++i) {
+    this._colors[i] = exports.forceRGB(this._colors[i]);
+  }
+  this._stops = stops;
+}
 
 Gradient.prototype.colorAt = function(out, value) {
   if (value <= this._stops[0]) {
@@ -45,6 +85,7 @@ Gradient.prototype.colorAt = function(out, value) {
   var t = (value - lowerStop)/ (upperStop - lowerStop);
   return rgb.mix(out, this._colors[upperIndex], this._colors[lowerIndex], t);
 };
+var GRADIENTS = { };
 // creates a new gradient from the given set of colors. 
 // 
 // colors must be a valid list of colors.
@@ -54,6 +95,9 @@ Gradient.prototype.colorAt = function(out, value) {
 // stops must be  a list of floating point numbers with the 
 // same length than colors.
 exports.gradient = function(colors, stops) {
+  if (typeof colors === 'string') {
+    return GRADIENTS[colors];
+  }
   stops = stops || 'equal';
   if (stops === 'equal') {
     stops = [];
@@ -64,9 +108,12 @@ exports.gradient = function(colors, stops) {
   return new Gradient(colors, stops);
 };
 
-// returns the color for the given name.
-exports.rgbFromName = function(colorName) {
-};
+GRADIENTS.rainbow =gradient(['red', 'yellow', 'green', 'blue']);
+GRADIENTS.reds = gradient(['lightred', 'darkred']);
+GRADIENTS.greens = gradient(['lightgreen', 'darkgreen']);
+GRADIENTS.blues = gradient(['lightblue', 'darkblue']);
+GRADIENTS.trafficlight = gradient(['green', 'yellow', 'red']);
+GRADIENTS.heatmap = gradient(['red', 'white', 'blue'])
 
 function ColorOp(colorFunc, beginFunc, endFunc) {
   this.colorFor = colorFunc;
@@ -92,6 +139,7 @@ exports.color = {};
 exports.ColorOp = ColorOp;
 
 exports.color.uniform = function(color) {
+  color = exports.forceRGB(color);
   return new ColorOp(function(atom, out, index) {
     out[index] = color[0];
     out[index+1] = color[1];
@@ -146,10 +194,7 @@ exports.color.bySS = function() {
 
 exports.color.rainbow = function(grad) {
   if (!grad) {
-    grad = gradient([rgb.fromValues(1,0,0), 
-                     rgb.fromValues(1,1,0), 
-                     rgb.fromValues(0,1,0),
-                     rgb.fromValues(0,0,1)]);
+    grad = gradient('rainbow');
   }
   var colorFunc = new ColorOp(function(a, out, index) {
     var idx = a.residue().index();
@@ -187,10 +232,7 @@ exports.color.rainbow = function(grad) {
 
 exports.color.byChain = function(grad) {
   if (!grad) {
-    grad = gradient([rgb.fromValues(1,0,0), 
-                     rgb.fromValues(1,1,0), 
-                     rgb.fromValues(0,1,0),
-                     rgb.fromValues(0,0,1)]);
+    grad = gradient('rainbow');
   }
   var colorFunc = new ColorOp(function(a, out, index) {
     var idx = a.residue().index();
