@@ -110,16 +110,37 @@ While these methods create the graphical representation, they do not directly ad
 
 .. function:: pv.Viewer.trace(structure[, options])
 
-  Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a carbon-alpha trace.
+  Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a carbon-alpha trace. Consecutive Carbon alpha atoms (CA) are connected by a cylinder. For a line-based version of the trace render style, see :func:`pv.viewer.lineTrace`. Accepted *options* are:
+
+  * *color*: the color operation to be used. Defaults to :func:`color.uniform`.
+  * *radius*: Radius of the tube. Defaults to 0.3.
+  * *arcDetail*: number of vertices on the tube. The default is determined by :func:`pv.Viewer.quality`.
+  * *sphereDetail* number of vertical and horizontal arcs for the spheres.
+
+
+
 
 .. function:: pv.Viewer.tube(structure[, options])
 
   Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a smoothly interpolated tube. 
 
+  * *color*: the color operation to be used. Defaults to :func:`color.bySS`.
+  * *radius*: Radius of the tube. Defaults to 0.3.
+  * *arcDetail*: number of vertices on the tube. The default is determined by :func:`pv.Viewer.quality`.
+  * *strength*: influences the magnitude of the tangents for the Catmull-Rom spline. Defaults to 1.0. Meaningful values are between 0 and 1.
+  * *splineDetail* number of subdivisions per Carbon-alpha atom. The default is termined by :func:`pv.Viewer.quality`.
+
 .. function:: pv.Viewer.cartoon(structure[, options])
 
   Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a 
   helix, strand coil cartoon. Accepted *options* are:
+
+  * *color*: the color operation to be used. Defaults to :func:`color.bySS`.
+  * *radius*: Radius of the tube profile. Also influences the profile thickness for helix and strand profiles. Defaults to 0.3.
+  * *arcDetail*: number of vertices on the tube. The default is determined by :func:`pv.Viewer.quality`.
+  * *strength*: influences the magnitude of the tangents for the Catmull-Rom spline. Defaults to 1.0. Meaningful values are between 0 and 1.
+  * *splineDetail* number of subdivisions per Carbon-alpha atom. The default is termined by :func:`pv.Viewer.quality`.
+
 
 
 .. _pv.viewer.management:
@@ -148,7 +169,7 @@ Multiple render objects can be displayed at once. To be able to refer to these o
 .. function:: pv.Viewer.hide(globPattern)
               pv.Viewer.show(globPattern)
 
-  Hide/show objects matching glob pattern. The render geometry of hidden objects is retrained, but is not longer visisble on the screen, nor are they available for object picking.
+  Hide/show objects matching glob pattern. The render geometry of hidden objects is retrained, but is not longer visible on the screen, nor are they available for object picking.
 
 .. function:: pv.Viewer.rm(globPattern)
 
