@@ -39,6 +39,15 @@ The Mol (and MolView) API
 
   Invoke callback for each residue in the structure or view.
 
+.. function:: mol.Mol.full()
+              mol.MolView.full()
+
+  Convenience function that always links back to :class:`mol.Mol`. For instances of :class:`mol.Mol`, returns this directly, for instances of :class:`mol.MolView` returns a reference to the :class:`mol.Mol` the subset was derived from. 
+
+.. function:: mol.Mol.atomCount()
+              mol.MolView.atomCount()
+
+  Returns the number of atoms in the structure, subset of structure.
 
 .. function:: mol.Mol.center()
               mol.MolView.center()
@@ -64,7 +73,7 @@ The Mol (and MolView) API
   **Available Predicates:**
 
   * *cname*/*chain*: A chain is included iff the chain name it is equal to the *cname*/*chain*. To match against multiple chain names, use the plural forms cnames/chains.
-  * *cnames*/*chains*: A chain is included iff its name is identical of one of the names in the *cnames*/*chains* array. To match against a single chain name, use the singular forms *cname*/*chain*.
+  * *cnames*/*chains*: A chain is included iff its name is identical to one of the names in the *cnames*/*chains* array. To match against a single chain name, use the singular forms *cname*/*chain*.
 
   * to be continued...
 
@@ -77,7 +86,7 @@ The Mol (and MolView) API
 
     // select carbon alpha  of chain 'A'. Residues with no carbon alpha will not be
     // included in the result.
-    var chainACarbonAlpha = myStructure.select({cname : 'A', aname='CA'});
+    var chainACarbonAlpha = myStructure.select({cname : 'A', aname : 'CA'});
 
   When none of the above selection mechanisms is flexible enough, consider using :func:`mol.Mol.residueSelect`, or :func:`mol.Mol.atomSelect`.
 
@@ -100,6 +109,29 @@ The Chain (and ChainView) API
 
 .. class:: mol.ChainView
 
+.. function:: mol.Chain.name()
+              mol.ChainView.name()
+
+  The name of the chain. For chains loaded from PDB, the chain names are alpha-numeric and no longer than one character.
+
+.. function:: mol.Chain.residues()
+              mol.ChainView.residues()
+
+  Returns the list of residues contained in this chain. For :class:`mol.Chain` instances, returns an array of :class:`mol.Residue`, for :class:`mol.ChainView` instances returns an array of :class:`mol.ResidueView` instances.
+
+.. function:: mol.Chain.eachBackboneTrace(callback)
+              mol.ChainView.eachBackboneTrace(callback)
+
+  Invokes *callback* for each stretch of consecutive amino acids found in the chain. Each trace contains at least two amino acids. Two amino acids are consecutive when their backbone is complete and the carboxy C-atom and the nitrogen N could potentially form a peptide bond.
+
+  :param callback: a function which accepts the array of trace residues as an argument
+
+.. function:: mol.Chain.backboneTraces()
+              mol.ChainView.backboneTraces()
+
+  Convenience function which returns all backbone traces of the chain as a list. See :func:`mol.Chain.eachBackboneTrace`.
+
+
 
 The Residue (and ResidueView) API
 -----------------------------------------------------------------------------------------
@@ -110,6 +142,32 @@ The Residue (and ResidueView) API
 
 .. class:: mol.ResidueView
 
+
+.. function:: mol.Residue.name()
+              mol.ResidueView.name()
+
+  Returns the three-letter-code of the residue, e.g. GLY for glycine. 
+
+
+.. function:: mol.Residue.isAminoAcid()
+              mol.ResidueView.isAminoAcid()
+
+  Returns true when the residue is an amino acid. Residues which have the four backbone atoms N, CA, C, and O are considered as amino acids, all others not. 
+
+.. function:: mol.Residue.num()
+              mol.ResidueView.num()
+
+  Returns the numeric part of the residue number, ignoring insertion code.
+
+.. function:: mol.Residue.index()
+              mol.ResidueView.index()
+
+  Returns the index of the residue in the chain.
+
+.. function:: mol.Residue.atoms()
+              mol.ResidueView.atoms()
+
+  Returns the list of atoms of this residue. For :class:`mol.Residue`, returns an array of :class:`mol.Atom` instances, for :class:`mol.ResidueView`, resturns an array of :class:`mol.AtomView` instances.
 
 
 The Atom (and AtomView) API
