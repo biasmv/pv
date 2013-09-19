@@ -15,7 +15,11 @@ module.exports = function(grunt) {
       }
     },
     jshint : {
-      options: { multistr :true },
+      options: { 
+        multistr :true, 
+        curly : true, 
+        eqeqeq : true
+      },
       all : ['src/core.js', 'src/geom.js', 'src/shade.js', 'src/viewer.js', 
              'src/color.js', 'src/mol.js', 'src/render.js'],
     },

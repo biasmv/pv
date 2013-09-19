@@ -150,23 +150,23 @@ exports.color.uniform = function(color) {
 exports.color.byElement = function() {
   return new ColorOp(function(atom, out, index) {
     var ele = atom.element();
-    if (ele == 'C') {
+    if (ele === 'C') {
       out[index] = 0.8; out[index+1] = 0.8; out[index+2] = 0.8;
       return out;
     }
-    if (ele == 'N') {
+    if (ele === 'N') {
       out[index] = 0; out[index+1] = 0; out[index+2] = 1;
       return out;
     }
-    if (ele == 'O') {
+    if (ele === 'O') {
       out[index] = 1; out[index+1] = 0; out[index+2] = 0;
       return out;
     }
-    if (ele == 'S') {
+    if (ele === 'S') {
       out[index] = 0.8; out[index+1] = 0.8; out[index+2] = 0;
       return out;
     }
-    if (ele == 'CA') {
+    if (ele === 'CA') {
       out[index] = 0.533; out[index+1] = 0.533; out[index+2] = 0.666;
       return out;
     }

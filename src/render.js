@@ -206,8 +206,9 @@ LineGeom.prototype.setVertAssoc = function(assoc) {
 LineGeom.prototype.numVerts = function() { return this._numLines*2; };
 
 LineGeom.prototype.draw = function(shaderProgram) {
-  if (!this._visible)
+  if (!this._visible) {
     return;
+  }
   this.bind();
   this._gl.lineWidth(this._lineWidth);
   var vertAttrib = this._gl.getAttribLocation(shaderProgram, 'attrPos');
@@ -288,8 +289,9 @@ CompositeGeom.prototype.colorBy = function() {
 };
 
 CompositeGeom.prototype.draw = function(shaderProgram, outlinePass) {
-  if (!this._visible)
+  if (!this._visible) {
     return;
+  }
   for (var i = 0; i < this._geoms.length; ++i) {
     if (!outlinePass || this._geoms[i].requiresOutlinePass()) {
       this._geoms[i].draw(shaderProgram, outlinePass);
@@ -547,8 +549,9 @@ MeshGeom.prototype.colorBy = function(colorFunc) {
 };
 
 MeshGeom.prototype.draw = function(shaderProgram) {
-  if (!this._visible)
+  if (!this._visible) {
     return;
+  }
   this.bind();
   var posAttrib = this._gl.getAttribLocation(shaderProgram, 'attrPos');
   this._gl.enableVertexAttribArray(posAttrib);
@@ -569,10 +572,12 @@ MeshGeom.prototype.draw = function(shaderProgram) {
   this._gl.drawElements(this._gl.TRIANGLES, this._numTriangles*3, 
                         this._gl.UNSIGNED_SHORT, 0);
   this._gl.disableVertexAttribArray(posAttrib);
-  if (clrAttrib !==-1)
+  if (clrAttrib !==-1) {
     this._gl.disableVertexAttribArray(clrAttrib);
-  if (normalAttrib !== -1)
+  }
+  if (normalAttrib !== -1) {
     this._gl.disableVertexAttribArray(normalAttrib);
+  }
 };
 
 MeshGeom.prototype.addVertex = function(pos, normal, color) {
@@ -619,8 +624,9 @@ SceneNode.prototype.add = function(node) {
 
 SceneNode.prototype.draw = function(shaderProgram, outline_pass) {
   for (var i = 0; i < this._children.length; ++i) {
-    if (!outline_pass || this._children[i].requiresOutlinePass())
+    if (!outline_pass || this._children[i].requiresOutlinePass()) {
       this._children[i].draw(shaderProgram, outline_pass);
+    }
   }
 };
 
@@ -765,9 +771,9 @@ var _cartoonAddTube = (function() {
                   offset) {
     var ss = res.ss();
     var prof = options.coilProfile;
-    if (ss == 'H' && !options.forceTube) {
+    if (ss === 'H' && !options.forceTube) {
       prof = options.helixProfile;
-    } else if (ss == 'E' && !options.forceTube) {
+    } else if (ss === 'E' && !options.forceTube) {
       prof = options.strandProfile;
     } else {
       if (first) {
@@ -818,7 +824,7 @@ var _colorPosNormalsFromTrace = function(trace, colors, positions, normals,
       }
       strand_end = i;
     }
-    if (trace[i].ss() =='C' && strand_start !== null) {
+    if (trace[i].ss() === 'C' && strand_start !== null) {
       //inplaceSmooth(positions, strand_start, strand_end+1);
       //inplaceSmooth(normals, strand_start-1, strand_end+1);
       strand_start = null;
@@ -908,7 +914,7 @@ var _cartoonForChain = (function() {
                         //    transitions.
         var traceIndex = Math.floor(i/options.splineDetail);
         var prevTraceIndex = Math.floor((i-1)/options.splineDetail);
-        if (traceIndex != prevTraceIndex) {
+        if (traceIndex !== prevTraceIndex) {
           // for helix and strand regions, we can't base the left vector
           // of the current residue on the previous one, since it determines
           // the orientation of the strand and helix profiles.

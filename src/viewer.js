@@ -242,7 +242,7 @@ PV.prototype.ok = function() { return this._ok; };
 
 PV.prototype.options = function(optName, value) {
   if (value !== undefined) {
-    if (optName == 'fog') {
+    if (optName === 'fog') {
       this._cam.fog(value);
     } else {
       this._options[optName] = value;
@@ -255,19 +255,19 @@ PV.prototype.options = function(optName, value) {
 PV.prototype.quality = function(qual) {
   this._options.quality = qual;
   console.info('setting quality to', qual);
-  if (qual == 'high') {
+  if (qual === 'high') {
     this._options.arcDetail = 4;
     this._options.sphereDetail = 16;
     this._options.splineDetail = 8;
     return;
   } 
-  if (qual == 'medium') {
+  if (qual === 'medium') {
     this._options.arcDetail = 3;
     this._options.sphereDetail = 10;
     this._options.splineDetail = 4;
     return;
   }
-  if (qual == 'low') {
+  if (qual === 'low') {
     this._options.arcDetail = 2;
     this._options.sphereDetail = 8;
     this._options.splineDetail = 2;

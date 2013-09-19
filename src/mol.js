@@ -139,7 +139,7 @@ function ResidueBase() {
 }
 
 ResidueBase.prototype.isWater = function() {
-  return this.name() == 'HOH' || this.name() == 'DOD';
+  return this.name() === 'HOH' || this.name() === 'DOD';
 };
 
 ResidueBase.prototype.eachAtom = function(callback, index) {
@@ -156,9 +156,9 @@ ResidueBase.prototype.qualifiedName = function() {
 };
 
 ResidueBase.prototype.atom = function(index_or_name) { 
-  if (typeof index_or_name == 'string') {
+  if (typeof index_or_name === 'string') {
     for (var i =0; i < this._atoms.length; ++i) {
-     if (this._atoms[i].name() == index_or_name) {
+     if (this._atoms[i].name() === index_or_name) {
        return this._atoms[i];
      }
     }
@@ -346,13 +346,13 @@ Mol.prototype._dictSelect = function(dict) {
 
 Mol.prototype.select = function(what) {
 
-  if (what == 'protein') {
+  if (what === 'protein') {
     return this.residueSelect(function(r) { return r.isAminoacid(); });
   }
-  if (what == 'water') {
+  if (what === 'water') {
     return this.residueSelect(function(r) { return r.isWater(); });
   }
-  if (what == 'ligand') {
+  if (what === 'ligand') {
     return this.residueSelect(function(r) { 
       return !r.isAminoacid() && !r.isWater();
     });
@@ -364,7 +364,7 @@ Mol.prototype.select = function(what) {
 
 Mol.prototype.chain = function(name) { 
   for (var i = 0; i < this._chains.length; ++i) {
-    if (this._chains[i].name() == name) {
+    if (this._chains[i].name() === name) {
       return this._chains[i];
     }
   }
@@ -667,7 +667,7 @@ function pdb(text) {
   
   function parseAndAddAtom(line, hetatm) {
     var alt_loc = line[16];
-    if (alt_loc!=' ' && alt_loc!='A') {
+    if (alt_loc !== ' ' && alt_loc !== 'A') {
       return;
     }
     var chainName = line[21];
@@ -677,11 +677,11 @@ function pdb(text) {
     var ins_code = line[26];
     var updateResidue = false;
     var updateChain = false;
-    if (!currChain || currChain.name() != chainName) {
+    if (!currChain || currChain.name() !== chainName) {
       updateChain = true;
       updateResidue = true;
     }
-    if (!currRes || currRes.num() != rnumNum) {
+    if (!currRes || currRes.num() !== rnumNum) {
       updateResidue = true;
     }
     if (updateChain) {
@@ -705,23 +705,23 @@ function pdb(text) {
     var line = lines[i];
     var recordName = line.substr(0, 6);
 
-    if (recordName == 'ATOM  ') {
+    if (recordName === 'ATOM  ') {
       parseAndAddAtom(line, false);
       continue;
     }
-    if (recordName == 'HETATM') {
+    if (recordName === 'HETATM') {
       parseAndAddAtom(line, true);
       continue;
     }
-    if (recordName == 'HELIX ') {
+    if (recordName === 'HELIX ') {
       helices.push(parseHelixRecord(line));
       continue;
     }
-    if (recordName == 'SHEET ') {
+    if (recordName === 'SHEET ') {
       sheets.push(parseSheetRecord(line));
       continue;
     }
-    if (recordName == 'END') {
+    if (recordName === 'END') {
       break;
     }
   }
