@@ -113,7 +113,7 @@ GRADIENTS.reds = gradient(['lightred', 'darkred']);
 GRADIENTS.greens = gradient(['lightgreen', 'darkgreen']);
 GRADIENTS.blues = gradient(['lightblue', 'darkblue']);
 GRADIENTS.trafficlight = gradient(['green', 'yellow', 'red']);
-GRADIENTS.heatmap = gradient(['red', 'white', 'blue'])
+GRADIENTS.heatmap = gradient(['red', 'white', 'blue']);
 
 function ColorOp(colorFunc, beginFunc, endFunc) {
   this.colorFor = colorFunc;

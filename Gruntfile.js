@@ -7,7 +7,7 @@ module.exports = function(grunt) {
       options: {
         banner: '',
         preserveComments : false,
-        report : 'gzip'
+        report : 'min'
       },
       build: {
         src: 'js/<%= pkg.name %>.js',
@@ -16,13 +16,13 @@ module.exports = function(grunt) {
     },
     jshint : {
       options: { multistr :true },
-      all : ['src/geom.js', 'src/shade.js', 'src/viewer.js', 
+      all : ['src/core.js', 'src/geom.js', 'src/shade.js', 'src/viewer.js', 
              'src/color.js', 'src/mol.js', 'src/render.js'],
     },
 
     concat: {
       dist: {
-        src: ['src/gl-matrix.js', 'src/geom.js', 'src/shade.js', 
+        src: ['src/gl-matrix.js', 'src/core.js', 'src/geom.js', 'src/shade.js', 
               'src/color.js', 'src/mol.js', 'src/render.js', 'src/viewer.js'],
         dest: 'js/pv.js'
       }
