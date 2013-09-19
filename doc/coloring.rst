@@ -5,7 +5,7 @@ Coloring Molecular Structures
 This document describes how structures can be colored.
 
 
-Coloring is achieved by coloring operations, which can be understood as small objects that are applied to a structure. Coloring operations can be as simple as "assign a uniform color" to the complete structure, or as complex as mapping a custom float property to a color gradient.
+Coloring is achieved by coloring operations, which can be understood as actions that are applied to a structure. Coloring operations can be as simple as "assign a uniform color" to the complete structure, or as complex as mapping a custom float property to a color gradient.
 
 Coloring operations are either supplied directly when generating the geometry of an object, or passed at a later point through :func:`RenderGeom.colorBy`. Internally these two scenarios are handled differently, but from the point of the user, they work exactly the same. These two different ways of coloring are illustrated in the following code example:
 
