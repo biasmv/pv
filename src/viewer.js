@@ -456,6 +456,9 @@ PV.prototype._mouseWheelFF = function(event) {
 };
 
 PV.prototype._mouseDown = function(event) {
+  if (event.button !== 0) {
+    return;
+  }
   event.preventDefault();
   this._canvas.addEventListener('mousemove', this._mouseMoveListener, false);
   document.addEventListener('mousemove', this._mouseMoveListener, false);
