@@ -170,9 +170,11 @@ The Residue (and ResidueView) API
   Returns the list of atoms of this residue. For :class:`mol.Residue`, returns an array of :class:`mol.Atom` instances, for :class:`mol.ResidueView`, resturns an array of :class:`mol.AtomView` instances.
 
 .. function:: mol.Residue.atom(nameOrIndex])
-              mol.ResidueView.atom([nameOrIndex])
+              mol.ResidueView.atom(nameOrIndex)
 
-  Get a particular atom from this residue. *nameOrResidue* can either be an integer, in which case the atom at that index is returned, or a string, in which case an atom with that name is searched and returned. If no atom is matching, null is returned.
+  Get a particular atom from this residue. *nameOrResidue* can either be an integer, in which case the atom at that index is returned, or a string, in which case an atom with that name is searched and returned. 
+
+  :returns: For :class:`mol.Residue`, a :class:`mol.Atom` instance, for :class:`mol.ResidueView`, a :class:`mol.AtomView` instance. If no matching atom coul be found, null is returned. 
 
 
 
