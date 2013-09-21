@@ -93,6 +93,13 @@ The Mol (and MolView) API
 
   :returns: :class:`mol.MolView` containing the subset of chains, residues and atoms.
 
+.. function:: mol.Mol.selectWithin(structure[, options])
+              mol.MolView.selectWithin(structure[, options])
+
+  Returns an instance of :class:`mol.MolView` containing chains, residues and atoms which are in spatial proximity to *structure*. 
+
+  :param structure: :class:`mol.Mol` or :class:`mol.MolView` to which proximity is required.
+  :param options: An optional dictionary of options to control the behavior of selectWithin.  **radius** sets the distance cutoff in Angstrom. The default radius is 4.   **matchResidues** whether to use residue matching mode. When set to true, all atom of a residue are included in result as soon as one atom is in proximity.
 
 .. function:: mol.pdb(pdbData)
 

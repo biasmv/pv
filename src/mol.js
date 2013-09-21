@@ -60,6 +60,58 @@ MolBase.prototype.center = function() {
   return sum;
 };
 
+MolBase.prototype.selectWithin = (function() {
+  var dist = vec3.create();
+  return function(mol, options) {
+    console.time('Mol.selectWithin');
+    options = options || {};
+    var radius = options.radius || 4.0
+    var radiusSqr = radius*radius;
+    var matchResidues = !!options.matchResidues;
+    var targetAtoms = [];
+    mol.eachAtom(function(a) { targetAtoms.push(a); });
+
+    var view = new MolView(this.full());
+    var addedRes = null, addedChain = null;
+    var chains = this.chains();
+    var skipResidue = false;
+    for (var ci = 0; ci < chains.length; ++ci) {
+      var residues = chains[ci].residues();
+      addedChain = null;
+      for (var ri = 0; ri < residues.length; ++ri) {
+        addedRes = null;
+        skipResidue = false;
+        var atoms = residues[ri].atoms();
+        for (var ai = 0; ai < atoms.length; ++ai) {
+          if (skipResidue) {
+            break;
+          }
+          for (var wi = 0; wi < targetAtoms.length; ++wi) {
+            vec3.sub(dist, atoms[ai].pos(), targetAtoms[wi].pos());
+            if (vec3.sqrLen(dist) > radiusSqr) {
+              continue;
+            }
+            if (!addedChain) {
+              addedChain = view.addChain(chains[ci].full(), false);
+            }
+            if (!addedRes) {
+              addedRes = addedChain.addResidue(residues[ri].full(), 
+                                               matchResidues);
+            }
+            if (matchResidues) {
+              skipResidue = true;
+              break;
+            } 
+            addedRes.addAtom(atoms[ai].full());
+          }
+        }
+      }
+    }
+    console.timeEnd('Mol.selectWithin');
+    return view;
+  }
+})();
+
 function ChainBase() {
 
 }
@@ -77,6 +129,8 @@ ChainBase.prototype.eachResidue = function(callback) {
     callback(this._residues[i]);
   }
 };
+
+
 
 ChainBase.prototype.residues = function() { return this._residues; };
 
@@ -179,8 +233,9 @@ AtomBase.prototype.element = function() { return this._element; };
 AtomBase.prototype.index = function() { return this._index; };
 
 AtomBase.prototype.eachBond = function(callback) {
-  for (var i = 0; i < this._bonds.length; ++i) {
-    callback(this._bonds[i]);
+  var bonds = this.bonds();
+  for (var i = 0, e = bonds.length; i < e; ++i) {
+    callback(bonds[i]);
   }
 };
 
@@ -624,7 +679,7 @@ AtomView.prototype.name = function() { return this._atom.name(); };
 AtomView.prototype.pos = function() { return this._atom.pos(); };
 AtomView.prototype.element = function() { return this._atom.element(); };
 AtomView.prototype.residue = function() { return this._res_view; };
-AtomView.prototype.bonds = function() { return this._bonds; };
+AtomView.prototype.bonds = function() { return this._atom.bonds(); };
 AtomView.prototype.index = function() { return this._atom.index(); };
 
 
