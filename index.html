@@ -167,6 +167,7 @@
       <li id=sline>Smooth Line Trace</li>
       <li id=trace>Trace</li>
       <li id=spheres>Spheres</li>
+      <li id=test>Test</li>
     </ul>
     <ul id=colorTab>
       <h1></h1>
@@ -193,7 +194,6 @@
        <li id=2por>Porin</li>
        <li id=2f8v>Telethonin</li>
        <li id=4c46>Long Helices</li>
-       <li id=2c6s>Large</li>
     </ul>
   </div>
   <div id=gl>
@@ -238,6 +238,12 @@
       pv.clear();
       pv.add('structure', pv.trace(structure));
     }
+    function test() {
+      pv.clear();
+      var ligand = structure.select('ligand');
+      pv.add('structure.ligand', pv.lines(ligand));
+    }
+
     function preset() {
       pv.clear();
       var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
@@ -271,9 +277,6 @@
 
     function porin() { 
       load('2por'); 
-    }
-    function large() {
-      load('2c6s');
     }
     function longHelices() {
       load('4c46');
@@ -322,6 +325,7 @@
     $('#trace').click(trace);
     $('#sline').click(sline);
     $('#spheres').click(spheres);
+    $('#test').click(test);
     $('#tube').click(tube);
     $('#1ake').click(kinase);
     $('#1r6a').click(transferase);
@@ -329,7 +333,6 @@
     $('#2por').click(porin);
     $('#2f8v').click(telethonin);
     $('#4c46').click(longHelices);
-    $('#2c6s').click(large);
     $('#rainbow').click(rainbow);
     $('#ss').click(ss);
     $('#uniform').click(uniform);
