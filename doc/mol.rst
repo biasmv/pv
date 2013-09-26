@@ -3,7 +3,7 @@ Molecular Structures
 
 Molecular structures are represented by the :class:`mol.Mol` class. While nothing restricts the type of molecules stored in an instance of :class:`mol.Mol`, the data structure is optimized for biological macromolecules and follows the same hierarchical organizing principle. The lowest level of the hierarchy is formed by chains. The chains consist of one or more residues. Depending on the type of residues the chain holds, the chain is interpreted as a linear chain of residues, e.g. a polyeptide, or polynucleotide, or a collection of an unordered group of molecules such as water. In the former case, residues are ordered from N to C terminus, whereas in the latter the ordering of the molecules does not carry any meaning. Each residue consists of a one or more atoms.
 
-Tightly coupled to :class:`mol.Mol` is the concept of structural subset, a :class:`mol.MolView`. MolViews have the exact same interface than :class:`mol.Mol` and in most cases behave exactly the same. Thus, from a user perspective it mostly does not matter whether one is working with a complete structure or a subset thereof. In the following, the API described for :class:`mol.Mol` only, but almost all methods are valid for :class:`mol.MolView` as well. Where differences exists, they are documented.
+Tightly coupled to :class:`mol.Mol` is the concept of structural subset, a :class:`mol.MolView`. MolViews have the exact same interface than :class:`mol.Mol` and in most cases behave exactly the same. Thus, from a user perspective it mostly does not matter whether one is working with a complete structure or a subset thereof. In the following, the APIs for the :class:`mol.Mol` and :class:`mol.MolView` classes are described together. Where differences exist, they are documented.
 
 
 The Mol (and MolView) API
@@ -156,6 +156,12 @@ The Residue (and ResidueView) API
   Returns the three-letter-code of the residue, e.g. GLY for glycine. 
 
 
+.. function:: mol.Residue.isWater()
+              mol.ResidueView.isWater()
+
+  Returns true when the residue is a water molecule. Water molecules are recognized by having a one-letter-code of HOH or DOD (deuteriated water).
+
+
 .. function:: mol.Residue.isAminoAcid()
               mol.ResidueView.isAminoAcid()
 
@@ -176,24 +182,44 @@ The Residue (and ResidueView) API
 
   Returns the list of atoms of this residue. For :class:`mol.Residue`, returns an array of :class:`mol.Atom` instances, for :class:`mol.ResidueView`, resturns an array of :class:`mol.AtomView` instances.
 
-.. function:: mol.Residue.atom(nameOrIndex])
+.. function:: mol.Residue.atom(nameOrIndex)
               mol.ResidueView.atom(nameOrIndex)
 
   Get a particular atom from this residue. *nameOrResidue* can either be an integer, in which case the atom at that index is returned, or a string, in which case an atom with that name is searched and returned. 
 
-  :returns: For :class:`mol.Residue`, a :class:`mol.Atom` instance, for :class:`mol.ResidueView`, a :class:`mol.AtomView` instance. If no matching atom coul be found, null is returned. 
+  :returns: For :class:`mol.Residue`, a :class:`mol.Atom` instance, for :class:`mol.ResidueView`, a :class:`mol.AtomView` instance. If no matching atom could be found, null is returned. 
 
 
 
 The Atom (and AtomView) API
 -----------------------------------------------------------------------------------------
 
-
 .. class:: mol.Atom
 
 
 .. class:: mol.AtomView
 
+
+.. function:: mol.Atom.name()
+              mol.AtomView.name()
+
+  The name of the atom, e.g. CA for carbon alpha.
+
+.. function:: mol.Atom.element()
+              mol.AtomView.element()
+
+  The element of the atom. When loading structures from PDB, the element column must be present for the element to be set properly. When the element column is not present, the element is set to an empty string, or to whatever characters are present in the element column.
+  
+
+.. function:: mol.Atom.bonds()
+              mol.AtomView.bonds()
+
+  Returns a list of all bonds this atom is involved in. 
+
+.. function:: mol.Atom.pos()
+              mol.AtomView.pos()
+
+  The actual coordinates of the atom.
 
 
 The Bond API
