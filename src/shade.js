@@ -250,7 +250,10 @@ exports.color.ssSuccession = function(grad, coilColor) {
       return;
     }
     var t = 0.0;
-    if (limits !== undefined) {
+    if (limits.max === null) {
+      console.log(a.residue().ss(), a.residue().chain().name(),ssIndex, idx);
+    }
+    if (limits.max !== null) {
       t =  ssIndex/(limits.max > 0 ? limits.max : 1);
     } 
     var x = [0,0,0];
@@ -264,7 +267,7 @@ exports.color.ssSuccession = function(grad, coilColor) {
     for (var i = 0; i < chains.length; ++i) {
       var residues = chains[i].residues();
       var maxIndex = null;
-      var indices = [];
+      var indices = {};
       var ssIndex = 0;
       var lastSS = 'C';
       for (var j = 0; j < residues.length; ++j) {
@@ -273,10 +276,10 @@ exports.color.ssSuccession = function(grad, coilColor) {
           if (lastSS !== 'C') {
             ssIndex++;
           }
-          indices.push(-1);
+          indices[residues[j].index()] = -1;
         } else {
           maxIndex = ssIndex;
-          indices.push(ssIndex);
+          indices[residues[j].index()] = ssIndex;
         }
         lastSS = ss;
       }
