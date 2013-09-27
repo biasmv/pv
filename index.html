@@ -282,7 +282,12 @@
       load('4c46');
     }
 
-    function ssSuccession() {}
+    function ssSuccession() {
+      pv.forEach(function(go) {
+        go.colorBy(color.ssSuccession());
+      });
+      pv.requestRedraw();
+    }
 
     function uniform() {
       pv.forEach(function(go) {
@@ -337,7 +342,7 @@
     $('#ss').click(ss);
     $('#uniform').click(uniform);
     $('#by-ele').click(byElement);
-    $('#ss-sub').click(ssSuccession);
+    $('#ss-suc').click(ssSuccession);
     $('#by-chain').click(byChain);
     $('#pdbid').change(function() {
       var st = $('#status')

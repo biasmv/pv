@@ -40,6 +40,13 @@ The following color operations are available:
   :param gradient: An optional gradient to draw colors from. Defaults to a rainbow gradient.
 
 
+.. function:: color.ssSuccession([gradient[,coilColor]])
+
+  Colors the structure's secondary structure elements with a gradient, keeping the color constant for each secondary structure element. Coil residues, and residue without secondary structure (e.g. ligands) are a colored with *coilColor*.
+
+  :param gradient: The graident to draw colors from. Defaults to rainbow.
+  :param coilColor: The color for residues without regular secondary structure. Defaults to lightgrey.
+
 .. function:: color.bySS()
 
   Colors the structure based on secondary structure type of the residue. Distinct colors are used for helices, strands and coil residues.

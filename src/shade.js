@@ -22,6 +22,8 @@ var COLORS = {
   white : rgb.fromValues(1.0,1.0,1.0),
   black : rgb.fromValues(0.0,0.0,0.0),
   grey : rgb.fromValues(0.5,0.5,0.5),
+  lightgrey : rgb.fromValues(0.8,0.8,0.8),
+  darkgrey : rgb.fromValues(0.3,0.3,0.3),
   red : rgb.fromValues(1.0,0.0,0.0),
   darkred : rgb.fromValues(0.5,0.0,0.0),
   lightred : rgb.fromValues(1.0,0.5,0.5),
@@ -223,6 +225,65 @@ exports.color.rainbow = function(grad) {
         maxIndex = Math.max(maxIndex, bbj[bb[j].length-1].index());
       }
       this.chainLimits[chains[i].name()] = [minIndex, maxIndex];
+    }
+  },function(obj) {
+    this.chainLimits = null;
+  });
+  return colorFunc;
+};
+
+exports.color.ssSuccession = function(grad, coilColor) {
+  if (!grad) {
+    grad = gradient('rainbow');
+  }
+  if (!coilColor) {
+    coilColor = forceRGB('lightgrey');
+  }
+  var colorFunc = new ColorOp(function(a, out, index) {
+    var idx = a.residue().index();
+    var limits = this.chainLimits[a.residue().chain().name()];
+    var ssIndex = limits.indices[idx];
+    if (ssIndex === -1) {
+      out[index] = coilColor[0];
+      out[index+1] = coilColor[1];
+      out[index+2] = coilColor[2];
+      return;
+    }
+    var t = 0.0;
+    if (limits !== undefined) {
+      t =  ssIndex/(limits.max > 0 ? limits.max : 1);
+    } 
+    var x = [0,0,0];
+    grad.colorAt(x, t);
+    out[index] = x[0];
+    out[index+1] = x[1];
+    out[index+2] = x[2];
+  }, function(obj) {
+    var chains = obj.chains();
+    this.chainLimits = {};
+    for (var i = 0; i < chains.length; ++i) {
+      var residues = chains[i].residues();
+      var maxIndex = null;
+      var indices = [];
+      var ssIndex = 0;
+      var lastSS = 'C';
+      for (var j = 0; j < residues.length; ++j) {
+        var ss =  residues[j].ss();
+        if (ss === 'C') {
+          if (lastSS !== 'C') {
+            ssIndex++;
+          }
+          indices.push(-1);
+        } else {
+          maxIndex = ssIndex;
+          indices.push(ssIndex);
+        }
+        lastSS = ss;
+      }
+      this.chainLimits[chains[i].name()] = {
+        indices : indices,
+        max: maxIndex,
+      };
     }
   },function(obj) {
     this.chainLimits = null;
