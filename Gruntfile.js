@@ -21,13 +21,13 @@ module.exports = function(grunt) {
         eqeqeq : true
       },
       all : ['src/core.js', 'src/geom.js', 'src/shade.js', 'src/viewer.js', 
-             'src/color.js', 'src/mol.js', 'src/render.js'],
+             'src/mol.js', 'src/render.js'],
     },
 
     concat: {
       dist: {
         src: ['src/gl-matrix.js', 'src/core.js', 'src/geom.js', 'src/shade.js', 
-              'src/color.js', 'src/mol.js', 'src/render.js', 'src/viewer.js'],
+              'src/mol.js', 'src/render.js', 'src/viewer.js'],
         dest: 'js/pv.js'
       }
     }
