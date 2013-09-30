@@ -24,7 +24,7 @@ AT : 1.50, RN : 1.50, FR : 2.60, RA : 2.21, AC : 2.15, TH : 2.06, PA : 2.00,
 };
 
 function covalentRadius(ele) {
-  var r = ELEMENT_COVALENT_RADII[ele];
+  var r = ELEMENT_COVALENT_RADII[ele.toUpperCase()];
   if (r !== undefined) {
     return r;
   }
