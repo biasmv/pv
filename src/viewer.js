@@ -204,6 +204,27 @@ Cam.prototype.rotateY = function(delta) {
   mat4.mul(this._rotation, tm, this._rotation);
 };
 
+Cam.prototype.panX = function(delta) {
+  return this.panXY(delta, 0);
+};
+
+Cam.prototype.panY = function(delta) {
+  return this.panXY(0, delta);
+};
+
+Cam.prototype.panXY = (function () {
+  var invertRotation = mat4.create();
+  var newCenter = vec3.create();
+  return function(deltaX, deltaY) {
+    mat4.transpose(invertRotation, this._rotation);
+    this._updateMat = true;
+    vec3.set(newCenter, -deltaX, deltaY ,0);
+    vec3.transformMat4(newCenter, newCenter, invertRotation);
+    vec3.add(newCenter, newCenter, this._center);
+    this.setCenter(newCenter);
+  };
+})();
+
 Cam.prototype.zoom = function(delta) {
   this._updateMat = true;
   this._zoom += delta;
@@ -403,10 +424,14 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
 };
 
 PV.prototype._mouseUp = function(event) {
-  this._canvas.removeEventListener('mousemove', this._mouseMoveListener, 
+  this._canvas.removeEventListener('mousemove', this._mouseRotateListener, 
+                                   false);
+  this._canvas.removeEventListener('mousemove', this._mousePanListener, 
                                    false);
   this._canvas.removeEventListener('mouseup', this._mouseUpListener, false);
-  document.removeEventListener('mousemove', this._mouseMoveListener);
+  document.removeEventListener('mouseup', this._mouseUpListener, false);
+  document.removeEventListener('mousemove', this._mouseRotateListener);
+  document.removeEventListener('mousemove', this._mousePanListener);
 };
 
 
@@ -425,7 +450,8 @@ PV.prototype._initPV = function() {
     outline : this._initShader(OUTLINE_VS, OUTLINE_FS),
     lines : this._initShader(HEMILIGHT_VS, LINES_FS)
   };
-  this._mouseMoveListener = bind(this, this._mouseMove);
+  this._mousePanListener = bind(this, this._mousePan);
+  this._mouseRotateListener = bind(this, this._mouseRotate);
   this._mouseUpListener = bind(this, this._mouseUp);
   // Firefox responds to the wheel event, whereas other browsers listen to
   // the mousewheel event. Register different event handlers, depending on
@@ -495,14 +521,19 @@ PV.prototype._mouseDown = function(event) {
     return;
   }
   event.preventDefault();
-  this._canvas.addEventListener('mousemove', this._mouseMoveListener, false);
-  document.addEventListener('mousemove', this._mouseMoveListener, false);
+  if (event.shiftKey === true){
+    this._canvas.addEventListener('mousemove', this._mousePanListener, false);
+    document.addEventListener('mousemove', this._mousePanListener, false);
+  } else {
+    this._canvas.addEventListener('mousemove', this._mouseRotateListener, false);
+    document.addEventListener('mousemove', this._mouseRotateListener, false);
+  }
   this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
   document.addEventListener('mouseup', this._mouseUpListener, false);
   this._lastMousePos = { x: event.pageX, y: event.pageY };
 };
 
-PV.prototype._mouseMove = function(event) {
+PV.prototype._mouseRotate = function(event) {
   var newMousePos = { x : event.pageX, y : event.pageY };
   var delta = { x : newMousePos.x - this._lastMousePos.x,
                 y : newMousePos.y - this._lastMousePos.y};
@@ -510,6 +541,18 @@ PV.prototype._mouseMove = function(event) {
   var speed = 0.005;
   this._cam.rotateX(speed*delta.y);
   this._cam.rotateY(speed*delta.x);
+  this._lastMousePos = newMousePos;
+  this.requestRedraw();
+};
+
+PV.prototype._mousePan = function(event){
+  console.log(event);
+  var newMousePos = { x : event.pageX, y : event.pageY };
+  var delta = { x : newMousePos.x - this._lastMousePos.x,
+                y : newMousePos.y - this._lastMousePos.y};
+                
+  var speed = 0.05;
+  this._cam.panXY(speed*delta.x, speed*delta.y);
   this._lastMousePos = newMousePos;
   this.requestRedraw();
 };
