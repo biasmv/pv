@@ -19,6 +19,27 @@ graphic card might be blocked. Check the browser documentation for details\
 </p>\
 </div>';
 
+// line fragment shader, essentially uses the vertColor and adds some fog.
+var LINES_FS = '\n\
+precision mediump float;\n\
+\n\
+varying vec3 vertColor;\n\
+varying vec3 vertNormal;\n\
+uniform float fogNear;\n\
+uniform float fogFar;\n\
+uniform vec3 fogColor;\n\
+uniform bool fog;\n\
+\n\
+void main(void) {\n\
+  gl_FragColor = vec4(vertColor, 1.0);\n\
+  float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
+  if (fog) {\n\
+    float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
+    gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
+                        fog_factor);\n\
+  }\n\
+}';
+
 // hemilight fragment shader
 var HEMILIGHT_FS = '\n\
 precision mediump float;\n\
@@ -128,6 +149,7 @@ function Cam(gl) {
   this._translation = mat4.create();
   this._updateMat = true;
   this._gl = gl;
+  this._currentShader = null;
   mat4.perspective(this._projection, 45.0, gl.viewportWidth / gl.viewportHeight, 
                    this._near, this._far);
   mat4.translate(this._modelview, this._modelview, [0, 0, -20]);
@@ -135,7 +157,7 @@ function Cam(gl) {
 
 Cam.prototype._updateIfRequired = function() {
   if (!this._updateMat) {
-    return;
+    return false;
   }
   mat4.identity(this._modelview);
   mat4.translate(this._modelview, this._modelview, 
@@ -145,6 +167,7 @@ Cam.prototype._updateIfRequired = function() {
   mat4.translate(this._translation, this._translation, [0,0, -this._zoom]);
   mat4.mul(this._modelview, this._translation, this._modelview);
   this._updateMat = false;
+  return true;
 };
 
 
@@ -186,10 +209,20 @@ Cam.prototype.zoom = function(delta) {
   this._zoom += delta;
 };
 
+Cam.prototype.currentShader = function() { return this._currentShader; };
+
 // sets all OpenGL parameters to make this camera active.
 Cam.prototype.bind = function(shader) {
-  this._updateIfRequired();
-  this._gl.useProgram(shader);
+  var shaderChanged = false;
+  if (this._currentShader !== shader)
+  {
+    this._currentShader = shader;
+    this._gl.useProgram(shader);
+    shaderChanged = true;
+  }
+  if (!this._updateIfRequired() && !shaderChanged) {
+    return;
+  }
   this._gl.viewport(0, 0, this._gl.viewportWidth, this._gl.viewportHeight);
   shader.projection = this._gl.getUniformLocation(shader, 'projectionMat');
   shader.modelview = this._gl.getUniformLocation(shader, 'modelviewMat');
@@ -217,6 +250,7 @@ function PV(domElement, opts) {
     height: (opts.height || 500),
     antialias : opts.antialias,
     quality : opts.quality || 'low',
+    style : opts.style || 'hemilight'
   };
   this._domElement = domElement;
   this._canvas = document.createElement('canvas');
@@ -386,8 +420,11 @@ PV.prototype._initPV = function() {
   }
   this._ok = true;
   this._cam = new Cam(this._gl);
-  this._hemilightShader = this._initShader(HEMILIGHT_VS, HEMILIGHT_FS);
-  this._outlineShader = this._initShader(OUTLINE_VS, OUTLINE_FS);
+  this._shaderCatalog = {
+    hemilight : this._initShader(HEMILIGHT_VS, HEMILIGHT_FS),
+    outline : this._initShader(OUTLINE_VS, OUTLINE_FS),
+    lines : this._initShader(HEMILIGHT_VS, LINES_FS)
+  };
   this._mouseMoveListener = bind(this, this._mouseMove);
   this._mouseUpListener = bind(this, this._mouseUp);
   // Firefox responds to the wheel event, whereas other browsers listen to
@@ -414,22 +451,20 @@ PV.prototype._draw = function() {
 
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
 
-  this._cam.bind(this._hemilightShader);
   this._gl.cullFace(this._gl.FRONT);
   this._gl.enable(this._gl.CULL_FACE);
   for (var i=0; i<this._objects.length; i+=1) {
-    this._objects[i].draw(this._hemilightShader, false);
+    this._objects[i].draw(this._cam, this._shaderCatalog, this._options.style, 
+                          'normal');
   }
   if (!this._options.outline) {
     return;
   }
-  this._cam.bind(this._outlineShader);
   this._gl.cullFace(this._gl.BACK);
   this._gl.enable(this._gl.CULL_FACE);
   for (i = 0; i < this._objects.length; i+=1) {
-    if (this._objects[i].requiresOutlinePass()) {
-      this._objects[i].draw(this._outlineShader, true);
-    }
+    this._objects[i].draw(this._cam, this._shaderCatalog, this._options.style, 
+                          'outline');
   }
 };
 

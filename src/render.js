@@ -199,22 +199,35 @@ LineGeom.prototype.setLineWidth = function(width) {
   this._lineWidth = width;
 };
 
+
+LineGeom.prototype.shaderForStyleAndPass = function(shaderCatalog, style, pass) {
+  if (pass === 'outline') {
+    return null;
+  }
+  return shaderCatalog.lines;
+};
+
+
+
 LineGeom.prototype.setVertAssoc = function(assoc) {
   this._vertAssoc = assoc;
 };
 
 LineGeom.prototype.numVerts = function() { return this._numLines*2; };
 
-LineGeom.prototype.draw = function(shaderProgram) {
-  if (!this._visible) {
-    return;
-  }
+LineGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
+
+  if (!this._visible) { return; }
+
+  var shader = this.shaderForStyleAndPass(shaderCatalog, style, pass);
+  if (!shader) { return; }
+  cam.bind(shader);
   this.bind();
   this._gl.lineWidth(this._lineWidth);
-  var vertAttrib = this._gl.getAttribLocation(shaderProgram, 'attrPos');
+  var vertAttrib = this._gl.getAttribLocation(shader, 'attrPos');
   this._gl.enableVertexAttribArray(vertAttrib);
   this._gl.vertexAttribPointer(vertAttrib, 3, this._gl.FLOAT, false, 6*4, 0*4);
-  var clrAttrib = this._gl.getAttribLocation(shaderProgram, 'attrColor');
+  var clrAttrib = this._gl.getAttribLocation(shader, 'attrColor');
   this._gl.vertexAttribPointer(clrAttrib, 3, this._gl.FLOAT, false, 6*4, 3*4);
   this._gl.enableVertexAttribArray(clrAttrib);
   this._gl.drawArrays(this._gl.LINES, 0, this._numLines*2);
@@ -222,9 +235,6 @@ LineGeom.prototype.draw = function(shaderProgram) {
   this._gl.disableVertexAttribArray(clrAttrib);
 };
 
-LineGeom.prototype.requiresOutlinePass = function() {
-  return false;
-};
 
 LineGeom.prototype.colorBy = function(colorFunc) {
   console.time('LineGeom.colorBy');
@@ -273,8 +283,6 @@ CompositeGeom.prototype.addGeom = function(geom) {
   this._geoms.push(geom);
 };
 
-SceneNode.prototype.requiresOutlinePass = function() { return true; };
-
 CompositeGeom.prototype.forwardMethod = function(method, args) {
   for (var i = 0; i < this._geoms.length; ++i) {
     this._geoms[i][method].apply(this._geoms[i], args);
@@ -288,16 +296,14 @@ CompositeGeom.prototype.colorBy = function() {
   colorFunc.end(this._structure);
 };
 
-CompositeGeom.prototype.draw = function(shaderProgram, outlinePass) {
+CompositeGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   if (!this._visible) {
     return;
   }
   for (var i = 0; i < this._geoms.length; ++i) {
-    if (!outlinePass || this._geoms[i].requiresOutlinePass()) {
-      this._geoms[i].draw(shaderProgram, outlinePass);
-    }
+    this._geoms[i].draw(cam, shaderCatalog, style, pass);
   }
-  SceneNode.prototype.draw(this, shaderProgram, outlinePass);
+  SceneNode.prototype.draw(this, cam, shaderCatalog, style, pass);
 };
 
 
@@ -539,7 +545,14 @@ MeshGeom.prototype.setVertAssoc = function(assoc) {
 
 MeshGeom.prototype.numVerts = function() { return this._numVerts; };
 
-MeshGeom.prototype.requiresOutlinePass = function() { return true; };
+MeshGeom.prototype.shaderForStyleAndPass = function(shaderCatalog, style, pass) {
+  if (pass === 'outline') {
+    return shaderCatalog.outline;
+  }
+  var shader = shaderCatalog[style];
+  return shader !== undefined ? shader : null;
+};
+
 
 MeshGeom.prototype.colorBy = function(colorFunc) {
   console.time('MeshGeom.colorBy');
@@ -548,23 +561,26 @@ MeshGeom.prototype.colorBy = function(colorFunc) {
   console.timeEnd('MeshGeom.colorBy');
 };
 
-MeshGeom.prototype.draw = function(shaderProgram) {
-  if (!this._visible) {
-    return;
-  }
+MeshGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
+
+  if (!this._visible) { return; }
+  
+  var shader = this.shaderForStyleAndPass(shaderCatalog, style, pass);
+  if (!shader) { return; }
+  cam.bind(shader);
   this.bind();
-  var posAttrib = this._gl.getAttribLocation(shaderProgram, 'attrPos');
+  var posAttrib = this._gl.getAttribLocation(shader, 'attrPos');
   this._gl.enableVertexAttribArray(posAttrib);
   this._gl.vertexAttribPointer(posAttrib, 3, this._gl.FLOAT, false, 9*4, 0*4);
 
-  var normalAttrib = this._gl.getAttribLocation(shaderProgram, 'attrNormal');
+  var normalAttrib = this._gl.getAttribLocation(shader, 'attrNormal');
   if (normalAttrib !== -1) {
     this._gl.enableVertexAttribArray(normalAttrib);
     this._gl.vertexAttribPointer(normalAttrib, 3, this._gl.FLOAT, false, 
                                  9*4, 3*4);
   }
 
-  var clrAttrib = this._gl.getAttribLocation(shaderProgram, 'attrColor');
+  var clrAttrib = this._gl.getAttribLocation(shader, 'attrColor');
   if (clrAttrib !== -1) {
     this._gl.vertexAttribPointer(clrAttrib, 3, this._gl.FLOAT, false, 9*4, 6*4);
     this._gl.enableVertexAttribArray(clrAttrib);
@@ -622,15 +638,12 @@ SceneNode.prototype.add = function(node) {
   this._children.push(node);
 };
 
-SceneNode.prototype.draw = function(shaderProgram, outline_pass) {
+SceneNode.prototype.draw = function(cam, shaderCatalog, style, pass) {
   for (var i = 0; i < this._children.length; ++i) {
-    if (!outline_pass || this._children[i].requiresOutlinePass()) {
-      this._children[i].draw(shaderProgram, outline_pass);
-    }
+    this._children[i].draw(cam, shaderCatalog, style, pass);
   }
 };
 
-SceneNode.prototype.requiresOutlinePass = function() { return true; };
 SceneNode.prototype.show = function() {
   this._visible = true;
 };
