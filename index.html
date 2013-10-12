@@ -56,7 +56,7 @@
     #inspector ul li {
       margin-left:5px;
       margin-right:5px;
-      margin-bottom:5px;
+      margin-bottom:0px;
       list-style:none;
       cursor: pointer;
       color:#660000
@@ -254,7 +254,7 @@
     function load(pdb_id) {
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = mol.pdb(data);
-        cartoon();
+        spheres();
         pv.centerOn(structure);
       }});
     }
@@ -378,6 +378,6 @@
       pv.requestRedraw();
     });
 
-    document.addEventListener('DOMContentLoaded', transferase);
+    document.addEventListener('DOMContentLoaded', crambin);
   </script>
 </html>

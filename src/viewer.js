@@ -40,6 +40,60 @@ void main(void) {\n\
   }\n\
 }';
 
+// spherical billboard fragment shader
+var SPHERICAL_BB_FS = '\n\
+//#extension GL_EXT_frag_depth : enable\n\
+precision mediump float;\n\
+\n\
+varying vec2 vertTex;\n\
+varying vec4 vertCenter;\n\
+varying vec3 vertColor;\n\
+uniform float fogNear;\n\
+uniform float fogFar;\n\
+uniform vec3 fogColor;\n\
+uniform mat4 projectionMat;\n\
+uniform bool fog;\n\
+\n\
+void main(void) {\n\
+  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 0.5)\n\
+    discard;\n\
+  vec3 pos = vec3(vertTex.x, vertTex.y, \n\
+                  1.0*1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y);\n\
+  vec3 normal = normalize(pos);\n\
+  float dp = dot(normal, vec3(0.0, 0.0, 1.0))*0.5+0.5;\n\
+  float hemi = max(0.0, dp);\n\
+  vec4 p = vertCenter + vec4(pos, 0.0);\n\
+  p = projectionMat * p;\n\
+  //gl_FragDepthEXT = (pos.z/pos.w+1.0)/2.0;\n\
+  gl_FragColor = vec4(vertColor*hemi, 1.0);\n\
+  float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
+  if (fog) {\n\
+    float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
+    gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
+                        fog_factor);\n\
+  }\n\
+}';
+
+
+var SPHERICAL_BB_VS = '\n\
+attribute vec3 attrPos;\n\
+attribute vec3 attrColor;\n\
+attribute vec3 attrCenter;\n\
+\n\
+uniform mat4 projectionMat;\n\
+uniform mat4 modelviewMat;\n\
+uniform mat4 rotationMat;\n\
+varying vec3 vertColor;\n\
+varying vec2 vertTex;\n\
+varying vec4 vertCenter;\n\
+void main() {\n\
+  vec4 rotated = vec4(attrPos - attrCenter, 0.0)*rotationMat;\n\
+  //vec4 rotated = vec4(attrPos - attrCenter, 0.0);\n\
+  gl_Position = projectionMat * modelviewMat * (vec4(attrCenter, 1.0)+rotated);\n\
+  vertTex = normalize(attrPos-attrCenter).xy;\n\
+  vertColor = attrColor;\n\
+  vertCenter = modelviewMat* vec4(attrCenter, 1.0);\n\
+}';
 // hemilight fragment shader
 var HEMILIGHT_FS = '\n\
 precision mediump float;\n\
@@ -229,6 +283,11 @@ Cam.prototype.bind = function(shader) {
   this._gl.uniformMatrix4fv(shader.projection, false, this._projection);
   this._gl.uniformMatrix4fv(shader.modelview, false, this._modelview);
   this._gl.uniformMatrix4fv(shader.modelview, false, this._modelview);
+  var rotation = this._gl.getUniformLocation(shader, 'rotationMat');
+  if (rotation !== -1) {
+    
+    this._gl.uniformMatrix4fv(rotation, false, this._rotation);
+  }
   this._gl.uniform1i(this._gl.getUniformLocation(shader, 'fog'), this._fog);
   this._gl.uniform1f(this._gl.getUniformLocation(shader, 'fogFar'),
                 this._fogFar+this._zoom);
@@ -423,7 +482,8 @@ PV.prototype._initPV = function() {
   this._shaderCatalog = {
     hemilight : this._initShader(HEMILIGHT_VS, HEMILIGHT_FS),
     outline : this._initShader(OUTLINE_VS, OUTLINE_FS),
-    lines : this._initShader(HEMILIGHT_VS, LINES_FS)
+    lines : this._initShader(HEMILIGHT_VS, LINES_FS),
+    sphericalBillboard: this._initShader(SPHERICAL_BB_VS, SPHERICAL_BB_FS)
   };
   this._mouseMoveListener = bind(this, this._mouseMove);
   this._mouseUpListener = bind(this, this._mouseUp);

@@ -131,14 +131,14 @@ function TraceVertexAssoc(structure, interpolation, callColoringBeginEnd) {
   this._interpolation = interpolation || 1;
 }
 
-TraceVertexAssoc.prototype.addAssoc = function(traceIndex, slice, vertStart, vertEnd) {
-  this._assocs.push({ traceIndex: traceIndex, slice : slice, vertStart : vertStart, 
-                      vertEnd : vertEnd});
+TraceVertexAssoc.prototype.addAssoc = function(traceIndex, slice, vertStart, 
+                                               vertEnd) {
+  this._assocs.push({ traceIndex: traceIndex, slice : slice, 
+                      vertStart : vertStart, vertEnd : vertEnd});
 };
 
 
-TraceVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, 
-                                              stride) {
+TraceVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, stride) {
   // FIXME: this function might create quite a few temporary buffers. Implement
   // a buffer pool to avoid hitting the GC and having to go through the slow
   // creation of typed arrays.
@@ -626,6 +626,100 @@ MeshGeom.prototype.bind = function() {
   this._ready = true;
 };
 
+
+function BillboardGeom(gl) {
+  this._sphericalBillboards = gl.createBuffer();
+  this._vertData = [];
+  this._visible = true;
+  this._numTriangles = 0;
+  this._ready = false;
+  this._gl = gl;
+  this._vertAssoc = null;
+}
+
+BillboardGeom.prototype.bind = function() {
+  this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._sphericalBillboards);
+  if (this._ready) {
+    return;
+  }
+  var floatArray = new Float32Array(this._vertData);
+  this._gl.bufferData(this._gl.ARRAY_BUFFER, floatArray, 
+                      this._gl.STATIC_DRAW);
+  this._ready = true;
+};
+
+BillboardGeom.prototype.shaderForStyleAndPass = function(shaderCatalog, style, pass) {
+  if (pass === 'outline') {
+    return null;
+  }
+  return shaderCatalog.sphericalBillboard;
+};
+BillboardGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
+
+  if (!this._visible) { return; }
+  
+  var shader = this.shaderForStyleAndPass(shaderCatalog, style, pass);
+  if (!shader) { return; }
+  cam.bind(shader);
+  this.bind();
+
+  var posAttrib = this._gl.getAttribLocation(shader, 'attrPos');
+  this._gl.enableVertexAttribArray(posAttrib);
+  this._gl.vertexAttribPointer(posAttrib, 3, this._gl.FLOAT, false, 9*4, 0*4);
+
+  var clrAttrib = this._gl.getAttribLocation(shader, 'attrColor');
+  if (clrAttrib !== -1) {
+    this._gl.vertexAttribPointer(clrAttrib, 3, this._gl.FLOAT, false, 9*4, 3*4);
+    this._gl.enableVertexAttribArray(clrAttrib);
+  }
+  var centerAttrib = this._gl.getAttribLocation(shader, 'attrCenter');
+  if (centerAttrib !== -1) {
+    this._gl.vertexAttribPointer(centerAttrib, 3, this._gl.FLOAT, false, 9*4, 6*4);
+    this._gl.enableVertexAttribArray(centerAttrib);
+  }
+  this._gl.drawArrays(this._gl.TRIANGLES, 0, this.numVerts());
+  this._gl.disableVertexAttribArray(posAttrib);
+  if (centerAttrib !==-1) {
+    this._gl.disableVertexAttribArray(centerAttrib);
+  }
+  if (clrAttrib !==-1) {
+    this._gl.disableVertexAttribArray(clrAttrib);
+  }
+};
+
+BillboardGeom.prototype.addSphericalBillboard = function(pos, radius, color) {
+  this.addXYQuad(pos, radius, radius, color);
+};
+
+
+BillboardGeom.prototype.name = function(name) { 
+  if (name !== undefined) {
+    this._name = name;
+  }
+  return this._name; 
+};
+
+BillboardGeom.prototype.setVertAssoc = function(assoc) {
+  this._vertAssoc = assoc;
+}
+
+BillboardGeom.prototype.addXYQuad = function(pos, xLength, yLength, color) {
+  this._vertData.push(pos[0]-xLength, pos[1]-yLength, pos[2],
+                      color[0], color[1], color[2], pos[0], pos[1], pos[2],
+                      pos[0]+xLength, pos[1]+yLength, pos[2],
+                      color[0], color[1], color[2], pos[0], pos[1], pos[2],
+                      pos[0]+xLength, pos[1]-yLength, pos[2],
+                      color[0], color[1], color[2], pos[0], pos[1], pos[2],
+                      pos[0]-xLength, pos[1]-yLength, pos[2],
+                      color[0], color[1], color[2], pos[0], pos[1], pos[2],
+                      pos[0]-xLength, pos[1]+yLength, pos[2],
+                      color[0], color[1], color[2], pos[0], pos[1], pos[2],
+                      pos[0]+xLength, pos[1]+yLength, pos[2],
+                      color[0], color[1], color[2], pos[0], pos[1], pos[2]);
+};
+
+BillboardGeom.prototype.numVerts = function() { return this._vertData.length/9; }
+
 // A scene node holds a set of child nodes to be rendered on screen. Later on, 
 // the SceneNode might grow additional functionality commonly found in a scene 
 // graph, e.g. coordinate transformations.
@@ -698,17 +792,18 @@ exports.lineTrace = function(structure, gl, options) {
   return lineGeom;
 };
 
+// all-atom sphere model of the molecule using spherical billboards.
 exports.spheres = function(structure, gl, options) {
   console.time('spheres');
   var clr = vec3.create();
-  var geom = new MeshGeom(gl);
+  var geom = new BillboardGeom(gl);
   var protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
   var vertAssoc = new AtomVertexAssoc(structure, true);
   options.color.begin(structure);
   structure.eachAtom(function(atom) {
     options.color.colorFor(atom, clr, 0);
     var vertStart = geom.numVerts();
-    protoSphere.addTransformed(geom, atom.pos(), 1.5, clr);
+    geom.addSphericalBillboard(atom.pos(), 1.5, clr);
     var vertEnd = geom.numVerts();
     vertAssoc.addAssoc(atom, vertStart, vertEnd);
   });
@@ -1164,7 +1259,8 @@ exports.trace = function(structure, gl, options) {
   console.time('trace');
   var compositeGeom = new CompositeGeom(structure);
   options.protoCyl = new ProtoCylinder(options.arcDetail);
-  options.protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
+  options.protoSphere = new ProtoSphere(options.sphereDetail, 
+                                        options.sphereDetail);
   options.color.begin(structure);
   var chains = structure.chains();
   for (var ci = 0; ci < chains.length; ++ci) {
