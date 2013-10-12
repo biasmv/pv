@@ -38,6 +38,7 @@ SceneNode.prototype.draw = function(cam, shaderCatalog, style, pass) {
   }
 };
 
+
 SceneNode.prototype.show = function() {
   this._visible = true;
 };
@@ -76,13 +77,15 @@ AtomVertexAssoc.prototype.addAssoc = function(atom, vertStart, vertEnd)  {
   this._assocs.push({ atom: atom, vertStart : vertStart, vertEnd : vertEnd });
 };
 
-AtomVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, stride) {
+AtomVertexAssoc.prototype.recolor = function(colorOp, view, buffer, offset, stride) {
   var colorData = new Float32Array(this._structure.atomCount()*3); 
   if (this._callBeginEnd) {
+    // FIXME: does this need to be called on the complete structure or the 
+    // view?
     colorOp.begin(this._structure);
   }
   var atomMap = {};
-  this._structure.eachAtom(function(atom, index) {
+  view.eachAtom(function(atom, index) {
     atomMap[atom.index()] = index;
     colorOp.colorFor(atom, colorData, index*3);
   });
@@ -92,6 +95,9 @@ AtomVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, stride) {
   for (var i = 0; i < this._assocs.length; ++i) {
     var assoc = this._assocs[i];
     var ai = atomMap[assoc.atom.index()];
+    if (ai === undefined) {
+      continue;
+    }
     var r = colorData[ai*3], g = colorData[ai*3+1], b = colorData[ai*3+2];
     for (var j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
        buffer[offset+j*stride+0] = r;  
@@ -114,18 +120,20 @@ TraceVertexAssoc.prototype.addAssoc = function(traceIndex, slice, vertStart, ver
 };
 
 
-TraceVertexAssoc.prototype.recolor = function(colorOp, buffer, offset, 
+TraceVertexAssoc.prototype.recolor = function(colorOp, view, buffer, offset, 
                                               stride) {
   // FIXME: this function might create quite a few temporary buffers. Implement
   // a buffer pool to avoid hitting the GC and having to go through the slow
   // creation of typed arrays.
   if (this._callBeginEnd) {
+    // FIXME: does this need to be called on the complete structure?
     colorOp.begin(this._structure);
   }
   var colorData = [];
   var i, j;
-  for (var ci = 0; ci < this._structure.chains().length; ++ci) {
-    var chain = this._structure.chains()[ci];
+  var chains = view.chains();
+  for (var ci = 0; ci < chains.length; ++ci) {
+    var chain = chains[ci];
     var traces = chain.backboneTraces();
     for (i = 0; i < traces.length; ++i) {
       var data = new Float32Array(traces[i].length*3); 
@@ -227,7 +235,8 @@ LineGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
 LineGeom.prototype.colorBy = function(colorFunc, view) {
   console.time('LineGeom.colorBy');
   this._ready = false;
-  this._vertAssoc.recolor(colorFunc, this._data, 3, 6);
+  view = view || this.structure();
+  this._vertAssoc.recolor(colorFunc, view, this._data, 3, 6);
   console.timeEnd('LineGeom.colorBy');
 };
 
@@ -271,7 +280,10 @@ CompositeGeom.prototype.addGeom = function(geom) {
   this._geoms.push(geom);
 };
 
-CompositeGeom.prototype.structure = function() { return this._structure; };
+
+CompositeGeom.prototype.structure = function() { 
+  return this._structure;
+};
 
 CompositeGeom.prototype.forwardMethod = function(method, args) {
   for (var i = 0; i < this._geoms.length; ++i) {
@@ -531,7 +543,8 @@ MeshGeom.prototype.shaderForStyleAndPass = function(shaderCatalog, style, pass) 
 MeshGeom.prototype.colorBy = function(colorFunc, view) {
   console.time('MeshGeom.colorBy');
   this._ready = false;
-  this._vertAssoc.recolor(colorFunc, this._vertData, 6, 9);
+  view = view || this.structure();
+  this._vertAssoc.recolor(colorFunc, view, this._vertData, 6, 9);
   console.timeEnd('MeshGeom.colorBy');
 };
 
