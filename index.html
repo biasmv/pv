@@ -9,6 +9,7 @@
     <script src='src/core.js'></script>
     <script src='src/geom.js'></script>
     <script src='src/mol.js'></script>
+    <script src='src/scene.js'></script>
     <script src='src/render.js'></script>
     <script src='src/shade.js'></script>
     <script src='src/viewer.js'></script>
@@ -178,6 +179,7 @@
        <li id=rainbow>Rainbow</li>
        <li id=ss>Secondary Structure</li>
        <li id=ss-suc>Secondary Structure Succession</li>
+       <li id=pro-in-red>Prolines in Red</li>
     </ul>
      <ul>
       <h1></h1>
@@ -310,6 +312,12 @@
       pv.requestRedraw();
     }
 
+    function proInRed() {
+      pv.forEach(function(go) {
+        go.colorBy(color.uniform('red'), go.select({rname : 'PRO'}));
+      });
+      pv.requestRedraw();
+    }
     function rainbow() {
       pv.forEach(function(go) {
         go.colorBy(color.rainbow());
@@ -345,6 +353,7 @@
     $('#by-ele').click(byElement);
     $('#ss-suc').click(ssSuccession);
     $('#by-chain').click(byChain);
+    $('#pro-in-red').click(proInRed);
     $('#pdbid').change(function() {
       var st = $('#status')
       st.show();

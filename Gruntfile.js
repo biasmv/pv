@@ -1,3 +1,15 @@
+SOURCE_FILES = [
+  'src/core.js', 
+  'src/geom.js', 
+  'src/shade.js', 
+  'src/scene.js',
+  'src/mol.js', 
+  'src/render.js', 
+  'src/viewer.js'
+];
+
+ALL_FILES = new Array(SOURCE_FILES);
+ALL_FILES.push('src/gl-matrix.js');
 module.exports = function(grunt) {
 
   // Project configuration.
@@ -20,14 +32,12 @@ module.exports = function(grunt) {
         curly : true, 
         eqeqeq : true
       },
-      all : ['src/core.js', 'src/geom.js', 'src/shade.js', 'src/viewer.js', 
-             'src/mol.js', 'src/render.js'],
+      all : SOURCE_FILES
     },
 
     concat: {
       dist: {
-        src: ['src/gl-matrix.js', 'src/core.js', 'src/geom.js', 'src/shade.js', 
-              'src/mol.js', 'src/render.js', 'src/viewer.js'],
+        src: ALL_FILES,
         dest: 'js/pv.js'
       }
     }

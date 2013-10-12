@@ -17,6 +17,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
 // SOFTWARE.
+
 (function(exports) {
   if (window.console === 'undefined') {
     window.console = {};
@@ -26,6 +27,12 @@
     window.console.timeEnd = function() {};
     window.console.info = function() {};
   }
+
+  exports.derive = function(subclass, baseclass) {
+    for (var prop in baseclass.prototype) {
+      subclass.prototype[prop] = baseclass.prototype[prop];
+    }
+  };
 
   return true;
 

@@ -338,6 +338,30 @@ exports.color.byChain = function(grad) {
   return colorFunc;
 };
 
+// linearly interpolates the array of colors and returns it as a Float32Array
+// color must be an array containing a sequence of R,G,B triples.
+exports.interpolateColor = function(colors, num) {
+  var out = new Float32Array((colors.length-3)*num);
+  var index = 0;
+  var bf = vec3.create(), af = vec3.create();
+  var delta = 1/num;
+  for (var i = 0; i < colors.length/3-1; ++i) {
+    vec3.set(bf, colors[3*i], colors[3*i+1], colors[3*i+2]);
+    vec3.set(af, colors[3*i+3], colors[3*i+4], colors[3*i+5]);
+    for (var j = 0; j < num; ++j) {
+      var t = delta * j;
+      out[index] = bf[0]*(1-t)+af[0]*t;
+      out[index+1] = bf[1]*(1-t)+af[1]*t;
+      out[index+2] = bf[2]*(1-t)+af[2]*t;
+      index+=3;
+    }
+  }
+  out[index] = af[0];
+  out[index+1] = af[1];
+  out[index+2] = af[2];
+  return out;
+};
+
 
 
 return true;
