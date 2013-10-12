@@ -569,6 +569,7 @@ MeshGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   if (!shader) { return; }
   cam.bind(shader);
   this.bind();
+
   var posAttrib = this._gl.getAttribLocation(shader, 'attrPos');
   this._gl.enableVertexAttribArray(posAttrib);
   this._gl.vertexAttribPointer(posAttrib, 3, this._gl.FLOAT, false, 9*4, 0*4);
@@ -1017,6 +1018,47 @@ exports.cartoon = function(structure, gl, options) {
   return compositeGeom;
 };
 
+
+exports.ballsAndSticks = (function() {
+  var mp = vec3.create(), dir = vec3.create();
+  var clr = vec3.create();
+  var left = vec3.create(), up = vec3.create();
+  var rotation = mat3.create();
+
+  return function(structure, gl, options) {
+    console.time('ballsAndSticks');
+    var meshGeom = new MeshGeom(gl);
+    var vertAssoc = new AtomVertexAssoc(structure, true);
+    var protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
+    var protoCyl = new ProtoCylinder(options.arcDetail);
+    options.color.begin(structure);
+    structure.eachAtom(function(atom) {
+      var vertStart = meshGeom.numVerts();
+      options.color.colorFor(atom, clr, 0);
+      protoSphere.addTransformed(meshGeom, atom.pos(), options.radius, clr);
+      atom.eachBond(function(bond) {
+        bond.mid_point(mp); 
+        vec3.sub(dir, atom.pos(), mp);
+        var length = vec3.length(dir);
+
+        vec3.scale(dir, dir, 1.0/length);
+
+        buildRotation(rotation, dir, left, up, false);
+
+        vec3.add(mp, mp, atom.pos());
+        vec3.scale(mp, mp, 0.5);
+        protoCyl.addTransformed(meshGeom, mp, length, options.radius, rotation, 
+                                clr, clr);
+      });
+      var vertEnd = meshGeom.numVerts();
+      vertAssoc.addAssoc(atom, vertStart, vertEnd);
+    });
+    meshGeom.setVertAssoc(vertAssoc);
+    options.color.end(structure);
+    console.timeEnd('ballsAndSticks');
+    return meshGeom;
+  };
+})();
 
 exports.lines = function(structure, gl, options) {
   console.time('lines');

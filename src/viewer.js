@@ -590,6 +590,17 @@ PV.prototype.tube = function(structure, opts) {
   return this.cartoon(structure, opts);
 };
 
+PV.prototype.ballsAndSticks = function(structure, opts) {
+  opts = opts || {};
+  var options = {
+    color : opts.color || color.byElement(),
+    radius: opts.radius || 0.3,
+    arcDetail : (opts.arcDetail || this.options('arcDetail'))*2,
+    sphereDetail : opts.sphereDetail || this.options('sphereDetail')
+  };
+  return render.ballsAndSticks(structure, this._gl, options);
+};
+
 PV.prototype.lines = function(structure, opts) {
   opts = opts || {};
   var options = {
