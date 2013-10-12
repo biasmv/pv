@@ -214,14 +214,14 @@ Cam.prototype.panY = function(delta) {
 
 Cam.prototype.panXY = (function () {
   var invertRotation = mat4.create();
-  var newCentre = vec3.create();
+  var newCenter = vec3.create();
   return function(deltaX, deltaY) {
     mat4.transpose(invertRotation, this._rotation);
     this._updateMat = true;
-    vec3.set(newCentre, -deltaX, deltaY ,0);
-    vec3.transformMat4(newCentre, newCentre, invertRotation);
-    vec3.add(newCentre, newCentre, this._center);
-    this.setCenter(newCentre);
+    vec3.set(newCenter, -deltaX, deltaY ,0);
+    vec3.transformMat4(newCenter, newCenter, invertRotation);
+    vec3.add(newCenter, newCenter, this._center);
+    this.setCenter(newCenter);
   };
 })();
 
