@@ -8,6 +8,7 @@
     <script src='src/gl-matrix.js'></script>
     <script src='src/core.js'></script>
     <script src='src/geom.js'></script>
+    <script src='src/trace.js'></script>
     <script src='src/mol.js'></script>
     <script src='src/vert_assoc.js'></script>
     <script src='src/scene.js'></script>
@@ -169,7 +170,6 @@
       <li id=trace>Trace</li>
       <li id=spheres>Spheres</li>
       <li id=balls-and-sticks>Balls and Sticks</li>
-      <li id=test>Test</li>
     </ul>
     <ul id=colorTab>
       <h1></h1>
@@ -223,18 +223,21 @@
       pv.clear();
       pv.add('structure', pv.lineTrace(structure));
     }
+
     function spheres() {
       pv.clear();
       pv.add('structure', pv.spheres(structure));
     }
+
     function sline() {
       pv.clear();
-      pv.add('structure', pv.sline(structure));
+      pv.add('structure', pv.sline(structure, { color : color.uniform('black')}));
     }
 
     function tube() {
       pv.clear();
       pv.add('structure', pv.tube(structure));
+      pv.add('structure.ca', pv.lines(structure.select({aname :'CA'}), { color: color.uniform('blue'), lineWidth : 1}));
     }
 
     function trace() {
@@ -254,17 +257,10 @@
       pv.add('structure.protein', pv.cartoon(structure));
     }
 
-    function test() {
-      pv.clear();
-      var subset = structure.select({rindexRange : [5, 6]});
-      pv.add('structure.subset', pv.lineTrace(subset, { lineWidth: 5, color : color.uniform('red')}));
-      pv.add('structure.full', pv.lineTrace(structure, { color: color.uniform('black')}));
-    }
-
     function load(pdb_id) {
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = mol.pdb(data);
-        cartoon();
+        preset();
         pv.centerOn(structure);
       }});
     }
@@ -347,7 +343,6 @@
     $('#trace').click(trace);
     $('#sline').click(sline);
     $('#spheres').click(spheres);
-    $('#test').click(test);
     $('#balls-and-sticks').click(ballsAndSticks);
     $('#tube').click(tube);
     $('#1ake').click(kinase);

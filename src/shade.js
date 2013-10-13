@@ -236,11 +236,12 @@ exports.color.rainbow = function(grad) {
       if (bb.length === 0) {
         continue;
       }
-      var minIndex = bb[0][0].index(), maxIndex = bb[0][bb[0].length-1].index();
+      var minIndex = bb[0].residueAt(0).index(), 
+          maxIndex = bb[0].residueAt(bb[0].length()-1).index();
       for (var j = 1; j < bb.length; ++j) {
         var bbj = bb[j];
-        minIndex = Math.min(minIndex, bbj[0].index());
-        maxIndex = Math.max(maxIndex, bbj[bb[j].length-1].index());
+        minIndex = Math.min(minIndex, bbj.residueAt(0).index());
+        maxIndex = Math.max(maxIndex, bbj.residueAt(bbj.length()-1).index());
       }
       this.chainLimits[chains[i].name()] = [minIndex, maxIndex];
     }
@@ -269,7 +270,6 @@ exports.color.ssSuccession = function(grad, coilColor) {
     }
     var t = 0.0;
     if (limits.max === null) {
-      console.log(a.residue().ss(), a.residue().chain().name(),ssIndex, idx);
     }
     if (limits.max !== null) {
       t =  ssIndex/(limits.max > 0 ? limits.max : 1);
@@ -341,7 +341,7 @@ exports.color.byChain = function(grad) {
 // linearly interpolates the array of colors and returns it as a Float32Array
 // color must be an array containing a sequence of R,G,B triples.
 exports.interpolateColor = function(colors, num) {
-  var out = new Float32Array((colors.length-3)*num);
+  var out = new Float32Array((num*(colors.length/3-1) + 1)*3);
   var index = 0;
   var bf = vec3.create(), af = vec3.create();
   var delta = 1/num;

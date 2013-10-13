@@ -1,27 +1,25 @@
 // Copyright (c) 2013 Marco Biasini
 // 
-// Permission is hereby granted, free of charge, to any person obtaining a copy 
-// of this software and associated documentation files (the "Software"), to deal 
-// in the Software without restriction, including without limitation the rights 
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-// copies of the Software, and to permit persons to whom the Software is 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to 
+// deal in the Software without restriction, including without limitation the 
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
+// sell copies of the Software, and to permit persons to whom the Software is 
 // furnished to do so, subject to the following conditions:
 // 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in 
+// all copies or substantial portions of the Software.
 // 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
-// SOFTWARE.
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+// DEALINGS IN THE SOFTWARE.
+
 (function(exports) {
 "use strict";
-
-
-
 
 // atom covalent radii by element derived from Cambrige Structural Database. 
 // Source: http://profmokeur.ca/chemistry/covalent_radii.htm
@@ -106,6 +104,24 @@ MolBase.prototype.center = function() {
   return sum;
 };
 
+MolBase.prototype.select = function(what) {
+
+  if (what === 'protein') {
+    return this.residueSelect(function(r) { return r.isAminoacid(); });
+  }
+  if (what === 'water') {
+    return this.residueSelect(function(r) { return r.isWater(); });
+  }
+  if (what === 'ligand') {
+    return this.residueSelect(function(r) { 
+      return !r.isAminoacid() && !r.isWater();
+    });
+  }
+  // when what is not one of the simple strings above, we assume what
+  // is a dictionary containing predicates which have to be fulfilled.
+  return this._dictSelect(what);
+};
+
 MolBase.prototype.selectWithin = (function() {
   var dist = vec3.create();
   return function(mol, options) {
@@ -158,6 +174,147 @@ MolBase.prototype.selectWithin = (function() {
   };
 })();
 
+MolBase.prototype.residueSelect = function(predicate) {
+  console.time('Mol.residueSelect');
+  var view = new MolView(this.full());
+  for (var ci = 0; ci < this._chains.length; ++ci) {
+    var chain = this._chains[ci];
+    var chain_view = null;
+    var residues = chain.residues();
+    for (var ri = 0; ri < residues.length; ++ri) {
+      if (predicate(residues[ri])) {
+        if (!chain_view) {
+          chain_view = view.addChain(chain, false);
+        }
+        chain_view.addResidue(residues[ri], true);
+      }
+    }
+  }
+  console.timeEnd('Mol.residueSelect');
+  return view;
+};
+
+MolBase.prototype._atomPredicates = function(dict) {
+
+  var predicates = [];
+  if (dict.aname !== undefined) {
+    predicates.push(function(a) { return a.name() === dict.aname; });
+  }
+  if (dict.anames !== undefined) {
+    predicates.push(function(a) { 
+      var n = a.name();
+      for (var k = 0; k < dict.anames.length; ++k) {
+        if (n === dict.anames[k]) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }
+  return predicates;
+};
+// extracts the residue predicates from the dictionary. 
+// ignores rindices, rindexRange because they are handled separately.
+MolBase.prototype._residuePredicates = function(dict) {
+
+  var predicates = [];
+  if (dict.rname !== undefined) {
+    predicates.push(function(r) { return r.name() === dict.rname; });
+  }
+  if (dict.rnames !== undefined) {
+    predicates.push(function(r) { 
+      var n = r.name();
+      for (var k = 0; k < dict.rnames.length; ++k) {
+        if (n === dict.rnames[k]) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }
+  return predicates;
+};
+
+MolBase.prototype._chainPredicates = function(dict) {
+  var predicates = [];
+  if (dict.chain !== undefined) {
+    predicates.push(function(c) { return c.name() === dict.chain; });
+  }
+  if (dict.chains !== undefined) {
+    predicates.push(function(c) { 
+      var n = c.name();
+      for (var k = 0; k < dict.chains.length; ++k) {
+        if (n === dict.chains[k]) {
+          return true;
+        }
+      }
+      return false;
+    });
+  }
+  return predicates;
+};
+
+function fulfillsPredicates(obj, predicates) {
+  for (var i = 0; i < predicates.length; ++i) {
+    if (!predicates[i](obj)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+MolBase.prototype._dictSelect = function(dict) {
+  var view = new MolView(this);
+  var residuePredicates = this._residuePredicates(dict);
+  var atomPredicates = this._atomPredicates(dict);
+  var chainPredicates = this._chainPredicates(dict);
+
+  for (var ci = 0; ci < this._chains.length; ++ci) {
+    var chain = this._chains[ci];
+    if (!fulfillsPredicates(chain, chainPredicates)) {
+      continue;
+    }
+    var chainView = null;
+    var residues = chain.residues();
+    var selResidues = [], i, e;
+    if (dict.rindexRange !== undefined) {
+      for (i = dict.rindexRange[0], 
+           e = Math.min(residues.length, dict.rindexRange[1]); i < e; ++i) {
+        selResidues.push(residues[i]);
+      }
+      residues = selResidues;
+    }  else if (dict.rindices) {
+      if (dict.rindices.length !== undefined) {
+        selResidues = [];
+        for (i = 0; i < dict.rindices.length; ++i) {
+          selResidues.push(residues[dict.rindices[i]]);
+        }
+        residues = selResidues;
+      }
+    }
+    for (var ri = 0; ri < residues.length; ++ri) {
+      if (!fulfillsPredicates(residues[ri], residuePredicates)) {
+        continue;
+      }
+      if (!chainView) {
+        chainView = view.addChain(chain, false);
+      }
+      var residueView = null;
+      var atoms = residues[ri].atoms();
+      for (var ai = 0; ai < atoms.length; ++ai) {
+        if (!fulfillsPredicates(atoms[ai], atomPredicates)) {
+          continue;
+        }
+        if (!residueView) {
+          residueView = chainView.addResidue(residues[ri], false);
+        }
+        residueView.addAtom(atoms[ai]);
+      }
+    }
+  }
+  return view;
+};
+
 function ChainBase() {
 
 }
@@ -190,49 +347,6 @@ ChainBase.prototype.asView = function() {
 
 };
 
-// invokes a callback for each connected stretch of amino acids. these 
-// stretches are used for all trace-based rendering styles, e.g. sline, 
-// line_trace, tube, cartoon etc. 
-ChainBase.prototype.eachBackboneTrace = function(callback) {
-  var  stretch = [];
-  for (var i = 0; i < this._residues.length; i+=1) {
-    var residue = this._residues[i];
-    if (!residue.isAminoacid()) {
-      if (stretch.length > 1) {
-        callback(stretch);
-        stretch = [];
-      }
-      continue;
-    }
-    if (stretch.length === 0) {
-      stretch.push(residue);
-      continue;
-    }
-    var ca_prev = this._residues[i-1].atom('C');
-    var n_this = residue.atom('N');
-    if (Math.abs(vec3.sqrDist(ca_prev.pos(), n_this.pos()) - 1.5*1.5) < 1) {
-      stretch.push(residue);
-    } else {
-      if (stretch.length > 1) {
-        callback(stretch);
-        stretch = [];
-      }
-    }
-  }
-  if (stretch.length > 1) {
-    callback(stretch);
-  }
-};
-
-
-// returns all connected stretches of amino acids found in this chain as 
-// a list.
-ChainBase.prototype.backboneTraces = function() {
-  var traces = [];
-  this.eachBackboneTrace(function(trace) { traces.push(trace); });
-  return traces;
-
-};
 
 function ResidueBase() {
 
@@ -300,168 +414,11 @@ derive(Mol, MolBase);
 
 
 Mol.prototype.chains = function() { return this._chains; };
+
 Mol.prototype.full = function() { return this; };
 
-
-
-Mol.prototype.residueSelect = function(predicate) {
-  console.time('Mol.residueSelect');
-  var view = new MolView(this);
-  for (var ci = 0; ci < this._chains.length; ++ci) {
-    var chain = this._chains[ci];
-    var chain_view = null;
-    var residues = chain.residues();
-    for (var ri = 0; ri < residues.length; ++ri) {
-      if (predicate(residues[ri])) {
-        if (!chain_view) {
-          chain_view = view.addChain(chain, false);
-        }
-        chain_view.addResidue(residues[ri], true);
-      }
-    }
-  }
-  console.timeEnd('Mol.residueSelect');
-  return view;
-};
-
-Mol.prototype._atomPredicates = function(dict) {
-
-  var predicates = [];
-  if (dict.aname !== undefined) {
-    predicates.push(function(a) { return a.name() === dict.aname; });
-  }
-  if (dict.anames !== undefined) {
-    predicates.push(function(a) { 
-      var n = a.name();
-      for (var k = 0; k < dict.anames.length; ++k) {
-        if (n === dict.anames[k]) {
-          return true;
-        }
-      }
-      return false;
-    });
-  }
-  return predicates;
-};
-
-// extracts the residue predicates from the dictionary. 
-// ignores rindices, rindexRange because they are handled separately.
-Mol.prototype._residuePredicates = function(dict) {
-
-  var predicates = [];
-  if (dict.rname !== undefined) {
-    predicates.push(function(r) { return r.name() === dict.rname; });
-  }
-  if (dict.rnames !== undefined) {
-    predicates.push(function(r) { 
-      var n = r.name();
-      for (var k = 0; k < dict.rnames.length; ++k) {
-        if (n === dict.rnames[k]) {
-          return true;
-        }
-      }
-      return false;
-    });
-  }
-  return predicates;
-};
-
-Mol.prototype._chainPredicates = function(dict) {
-  var predicates = [];
-  if (dict.chain !== undefined) {
-    predicates.push(function(c) { return c.name() === dict.chain; });
-  }
-  if (dict.chains !== undefined) {
-    predicates.push(function(c) { 
-      var n = c.name();
-      for (var k = 0; k < dict.chains.length; ++k) {
-        if (n === dict.chains[k]) {
-          return true;
-        }
-      }
-      return false;
-    });
-  }
-  return predicates;
-};
-
-function fulfillsPredicates(obj, predicates) {
-  for (var i = 0; i < predicates.length; ++i) {
-    if (!predicates[i](obj)) {
-      return false;
-    }
-  }
-  return true;
-}
-
-Mol.prototype._dictSelect = function(dict) {
-  var view = new MolView(this);
-  var residuePredicates = this._residuePredicates(dict);
-  var atomPredicates = this._atomPredicates(dict);
-  var chainPredicates = this._chainPredicates(dict);
-
-  for (var ci = 0; ci < this._chains.length; ++ci) {
-    var chain = this._chains[ci];
-    if (!fulfillsPredicates(chain, chainPredicates)) {
-      continue;
-    }
-    var chainView = null;
-    var residues = chain.residues();
-    var selResidues = [], i, e;
-    if (dict.rindexRange !== undefined) {
-      for (i = dict.rindexRange[0], 
-           e = Math.min(residues.length, dict.rindexRange[1]); i < e; ++i) {
-        selResidues.push(residues[i]);
-      }
-      residues = selResidues;
-    }  else if (dict.rindices) {
-      if (dict.rindices.length !== undefined) {
-        selResidues = [];
-        for (i = 0; i < dict.rindices.length; ++i) {
-          selResidues.push(residues[dict.rindices[i]]);
-        }
-        residues = selResidues;
-      }
-    }
-    for (var ri = 0; ri < residues.length; ++ri) {
-      if (!fulfillsPredicates(residues[ri], residuePredicates)) {
-        continue;
-      }
-      if (!chainView) {
-        chainView = view.addChain(chain, false);
-      }
-      var residueView = null;
-      var atoms = residues[ri].atoms();
-      for (var ai = 0; ai < atoms.length; ++ai) {
-        if (!fulfillsPredicates(atoms[ai], atomPredicates)) {
-          continue;
-        }
-        if (!residueView) {
-          residueView = chainView.addResidue(residues[ri], false);
-        }
-        residueView.addAtom(atoms[ai]);
-      }
-    }
-  }
-  return view;
-};
-
-Mol.prototype.select = function(what) {
-
-  if (what === 'protein') {
-    return this.residueSelect(function(r) { return r.isAminoacid(); });
-  }
-  if (what === 'water') {
-    return this.residueSelect(function(r) { return r.isWater(); });
-  }
-  if (what === 'ligand') {
-    return this.residueSelect(function(r) { 
-      return !r.isAminoacid() && !r.isWater();
-    });
-  }
-  // when what is not one of the simple strings above, we assume what
-  // is a dictionary containing predicates which have to be fulfilled.
-  return this._dictSelect(what);
+Mol.prototype.containsResidue = function(residue) {
+  return residue.full().structure() === this;
 };
 
 Mol.prototype.chain = function(name) { 
@@ -535,6 +492,7 @@ function Chain(structure, name) {
   ChainBase.prototype.constructor.call(this);
   this._structure = structure;
   this._name = name;
+  this._cachedTraces = [];
   this._residues = [];
 }
 
@@ -565,6 +523,60 @@ Chain.prototype.assign_ss = function(from_num, to_num, ss) {
     }
     res.set_ss(ss);
   }
+};
+
+// invokes a callback for each connected stretch of amino acids. these 
+// stretches are used for all trace-based rendering styles, e.g. sline, 
+// line_trace, tube, cartoon etc. 
+Chain.prototype.eachBackboneTrace = function(callback) {
+  this._cacheBackboneTraces();
+  for (var i=0; i < this._cachedTraces.length; ++i) {
+    callback(this._cachedTraces[i]);
+  }
+};
+
+Chain.prototype._cacheBackboneTraces = function() {
+  if (this._cachedTraces.length > 0) {
+    return;
+  }
+  var  stretch = new BackboneTrace();
+  for (var i = 0; i < this._residues.length; i+=1) {
+    var residue = this._residues[i];
+    if (!residue.isAminoacid()) {
+      if (stretch.length() > 1) {
+        this._cachedTraces.push(stretch);
+        stretch = new BackboneTrace();
+      }
+      continue;
+    }
+    if (stretch.length() === 0) {
+      stretch.push(residue);
+      continue;
+    }
+    var ca_prev = this._residues[i-1].atom('C');
+    var n_this = residue.atom('N');
+    if (Math.abs(vec3.sqrDist(ca_prev.pos(), n_this.pos()) - 1.5*1.5) < 1) {
+      stretch.push(residue);
+    } else {
+      if (stretch.length() > 1) {
+        this._cachedTraces.push(stretch);
+        stretch = new BackboneTrace();
+      }
+    }
+  }
+  if (stretch.length() > 1) {
+    this._cachedTraces.push(stretch);
+  }
+};
+
+
+// returns all connected stretches of amino acids found in this chain as 
+// a list.
+Chain.prototype.backboneTraces = function() {
+  var traces = [];
+  this.eachBackboneTrace(function(trace) { traces.push(trace); });
+  return traces;
+
 };
 
 function Residue(chain, name, num) {
@@ -671,34 +683,95 @@ MolView.prototype.addChain = function(chain, recurse) {
 };
 
 
+MolView.prototype.containsResidue = function(residue) {
+  if (!residue) {
+    return false;
+  }
+  var chain = this.chain(residue.chain().name());
+  if (!chain) {
+    return false;
+  }
+  return chain.containsResidue(residue);
+};
+
+
 MolView.prototype.chains = function() { return this._chains; };
 
-function ChainView(mol_view, chain) {
+
+MolView.prototype.chain = function(name) {
+  for (var i = 0; i < this._chains.length; ++i) {
+    if (this._chains[i].name() === name) {
+      return this._chains[i];
+    }
+  }
+  return null;
+};
+
+function ChainView(molView, chain) {
   ChainBase.prototype.constructor.call(this);
   this._chain = chain;
   this._residues = [];
-  this._mol_view = mol_view;
-
+  this._molView = molView;
+  this._residueMap = {};
 }
 
 
-ChainView.prototype = new ChainBase();
+derive(ChainView, ChainBase);
 
 ChainView.prototype.addResidue = function(residue, recurse) {
-  var res_view = new ResidueView(this, residue.full());
-  this._residues.push(res_view);
+  var resView = new ResidueView(this, residue.full());
+  this._residues.push(resView);
+  this._residueMap[residue.full().index()] = resView;
   if (recurse) {
     var atoms = residue.atoms();
     for (var i = 0; i < atoms.length; ++i) {
-      res_view.addAtom(atoms[i].full());
+      resView.addAtom(atoms[i].full());
     }
   }
-  return res_view;
+  return resView;
+};
+
+ChainView.prototype.containsResidue = function(residue) {
+  var resView = this._residueMap[residue.full().index()];
+  if (resView === undefined) {
+    return false;
+  }
+  return resView.full() === residue.full();
+};
+
+
+ChainView.prototype.eachBackboneTrace = function(callback) {
+  // backbone traces for the view must be based on the the full 
+  // traces for the following reasons:
+  //  - we must be able to display subsets with one residue in length,
+  //    when they are part of a larger trace. 
+  //  - when a trace residue is not at the end, e.g. the C-terminal or
+  //    N-terminal end of the full trace, the trace residue starts
+  //    midway between the residue and the previous, and ends midway
+  //    between the residue and the next.
+  //  - the tangents for the Catmull-Rom spline depend on the residues
+  //    before and after. Thus, to get the same curvature for a 
+  //    trace subset, the residues before and after must be taken
+  //    into account.
+  var fullTraces = this._chain.backboneTraces();
+  var traceSubsets = [];
+  for (var i = 0; i < fullTraces.length; ++i) {
+    var subsets = fullTraces[i].subsets(this._residues);
+    for (var j = 0; j < subsets.length; ++j) {
+      callback(subsets[j]);
+    }
+  }
+};
+
+ChainView.prototype.backboneTraces = function() {
+  var traces = [];
+  this.eachBackboneTrace(function(trace) { traces.push(trace); });
+  return traces;
 };
 
 ChainView.prototype.full = function() { return this._chain; };
 
-ChainView.prototype.structure = function() { return this._mol_view; };
+ChainView.prototype.structure = function() { return this._molView; };
 
 function ResidueView(chain_view, residue) {
   ResidueBase.prototype.constructor.call(this);
@@ -720,15 +793,16 @@ ResidueView.prototype.num = function() { return this._residue.num(); };
 ResidueView.prototype.ss = function() { return this._residue.ss(); };
 ResidueView.prototype.index = function() { return this._residue.index(); };
 ResidueView.prototype.chain = function() { return this._chain_view; };
+ResidueView.prototype.name = function() { return this._residue.name(); };
 
 ResidueView.prototype.atoms = function() { return this._atoms; };
 
 
 ChainView.prototype.name = function () { return this._chain.name(); };
 
-function AtomView(res_view, atom) {
+function AtomView(resView, atom) {
   AtomBase.prototype.constructor.call(this);
-  this._res_view = res_view;
+  this._resView = resView;
   this._atom = atom;
   this._bonds = [];
 }
@@ -740,7 +814,7 @@ AtomView.prototype.full = function() { return this._atom; };
 AtomView.prototype.name = function() { return this._atom.name(); };
 AtomView.prototype.pos = function() { return this._atom.pos(); };
 AtomView.prototype.element = function() { return this._atom.element(); };
-AtomView.prototype.residue = function() { return this._res_view; };
+AtomView.prototype.residue = function() { return this._resView; };
 AtomView.prototype.bonds = function() { return this._atom.bonds(); };
 AtomView.prototype.index = function() { return this._atom.index(); };
 

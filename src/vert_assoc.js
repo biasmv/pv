@@ -1,22 +1,23 @@
 // Copyright (c) 2013 Marco Biasini
 // 
-// Permission is hereby granted, free of charge, to any person obtaining a copy 
-// of this software and associated documentation files (the "Software"), to deal 
-// in the Software without restriction, including without limitation the rights 
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
-// copies of the Software, and to permit persons to whom the Software is 
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to 
+// deal in the Software without restriction, including without limitation the 
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
+// sell copies of the Software, and to permit persons to whom the Software is 
 // furnished to do so, subject to the following conditions:
 // 
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in 
+// all copies or substantial portions of the Software.
 // 
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
 // AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
-// SOFTWARE.
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+// DEALINGS IN THE SOFTWARE.
+
 
 // During recoloring of a render style, most of the vertex attributes, e.g.
 // normals and positions do not change. Only the color information for each
@@ -50,8 +51,7 @@ AtomVertexAssoc.prototype.recolor = function(colorOp, view, buffer, offset,
     // view?
     colorOp.begin(this._structure);
   }
-  // loop over all atoms in the view, calculate its color and store the
-  // index in to the colorData array.
+
   var atomMap = {};
   view.eachAtom(function(atom, index) {
     atomMap[atom.index()] = index;
@@ -77,17 +77,26 @@ AtomVertexAssoc.prototype.recolor = function(colorOp, view, buffer, offset,
 };
 
 // handles the association between a trace element, and sets of vertices.
-function TraceVertexAssoc(structure, interpolation, callColoringBeginEnd) {
+function TraceVertexAssoc(structure, interpolation, callColoringBeginEnd,
+                          perResidueColors) {
   this._structure = structure;
   this._assocs = [];
   this._callBeginEnd = callColoringBeginEnd;
   this._interpolation = interpolation || 1;
+  this._perResidueColors = {};
 }
 
-TraceVertexAssoc.prototype.addAssoc = function(traceIndex, slice, vertStart, vertEnd) {
-  this._assocs.push({ traceIndex: traceIndex, slice : slice, vertStart : vertStart, 
-                      vertEnd : vertEnd});
+TraceVertexAssoc.prototype.setPerResidueColors = function(traceIndex, colors) {
+  this._perResidueColors[traceIndex] = colors;
 };
+
+TraceVertexAssoc.prototype.addAssoc = function(traceIndex, slice, vertStart, 
+                                               vertEnd) {
+  this._assocs.push({ traceIndex: traceIndex, slice : slice, 
+                      vertStart : vertStart, vertEnd : vertEnd});
+};
+
+
 
 
 TraceVertexAssoc.prototype.recolor = function(colorOp, view, buffer, offset, 
@@ -101,30 +110,37 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, view, buffer, offset,
   }
   var colorData = [];
   var i, j;
-  var chains = view.chains();
+  var chains = this._structure.chains();
   for (var ci = 0; ci < chains.length; ++ci) {
     var chain = chains[ci];
     var traces = chain.backboneTraces();
     for (i = 0; i < traces.length; ++i) {
-      var data = new Float32Array(traces[i].length*3); 
+      // get current residue colors
+      var data = this._perResidueColors[i];
       var index = 0;
-      for (j = 0; j < traces[i].length; ++j) {
-        colorOp.colorFor(traces[i][j].atom('CA'), data, index);
+      var trace = traces[i];
+      for (j = 0; j < trace.length(); ++j) {
+        if (!view.containsResidue(trace.residueAt(j))) {
+          index+=3;
+          continue;
+        }
+        colorOp.colorFor(trace.centralAtomAt(j), data, index);
         index+=3;
       }
-      if (this._interpolation>1) {
+      if (this._interpolation > 1) {
         colorData.push(interpolateColor(data, this._interpolation));
       } else {
         colorData.push(data);
       }
     }
   }
+
   // store the color in the actual interleaved vertex array.
   for (i = 0; i < this._assocs.length; ++i) {
     var assoc = this._assocs[i];
     var ai = assoc.slice;
-    var d = colorData[assoc.traceIndex];
-    var r = d[ai*3], g = d[ai*3+1], b = d[ai*3+2];
+    var newColors = colorData[assoc.traceIndex];
+    var r = newColors[ai*3], g = newColors[ai*3+1], b = newColors[ai*3+2];
     for (j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
       buffer[offset+j*stride+0] = r;  
       buffer[offset+j*stride+1] = g;  
