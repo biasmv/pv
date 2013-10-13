@@ -98,6 +98,7 @@ void main(void) {\n\
   vertNormal = n.xyz;\n\
   vertColor = attrColor;\n\
 }';
+
 // outline shader. mixes outlineColor with fogColor
 var OUTLINE_FS = '\n\
 precision mediump float;\n\
@@ -117,7 +118,8 @@ void main() {\n\
                         fog_factor);\n\
   }\n\
 }';
-// outline vertex shader. expands vertices along the (in-screen) xy
+
+// outline vertex shader. Expands vertices along the (in-screen) xy
 // components of the normals.
 var OUTLINE_VS = '\n\
 \n\

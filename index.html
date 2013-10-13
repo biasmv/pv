@@ -167,6 +167,7 @@
       <li id=trace>Trace</li>
       <li id=spheres>Spheres</li>
       <li id=balls-and-sticks>Balls and Sticks</li>
+      <li id=test>Test</li>
     </ul>
     <ul id=colorTab>
       <h1></h1>
@@ -250,6 +251,14 @@
       pv.add('structure.ligand', pv.ballsAndSticks(ligand));
       pv.add('structure.protein', pv.cartoon(structure));
     }
+
+    function test() {
+      pv.clear();
+      var subset = structure.select({rindexRange : [5, 6]});
+      pv.add('structure.subset', pv.lineTrace(subset, { lineWidth: 5, color : color.uniform('red')}));
+      pv.add('structure.full', pv.lineTrace(structure, { color: color.uniform('black')}));
+    }
+
     function load(pdb_id) {
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = mol.pdb(data);
@@ -336,6 +345,7 @@
     $('#trace').click(trace);
     $('#sline').click(sline);
     $('#spheres').click(spheres);
+    $('#test').click(test);
     $('#balls-and-sticks').click(ballsAndSticks);
     $('#tube').click(tube);
     $('#1ake').click(kinase);
