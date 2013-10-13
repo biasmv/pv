@@ -565,7 +565,6 @@ PV.prototype._mouseRotate = function(event) {
 };
 
 PV.prototype._mousePan = function(event){
-  console.log(event);
   var newMousePos = { x : event.pageX, y : event.pageY };
   var delta = { x : newMousePos.x - this._lastMousePos.x,
                 y : newMousePos.y - this._lastMousePos.y};
