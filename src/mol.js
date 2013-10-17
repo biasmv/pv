@@ -784,8 +784,8 @@ function ResidueView(chainView, residue) {
 derive(ResidueView, ResidueBase);
 
 ResidueView.prototype.addAtom = function(atom) {
-  var atom_view = new AtomView(this, atom.full());
-  this._atoms.push(atom_view);
+  var atomView = new AtomView(this, atom.full());
+  this._atoms.push(atomView);
 };
 
 ResidueView.prototype.full = function() { return this._residue; };
@@ -938,6 +938,7 @@ function pdb(text) {
 
   return structure;
 }
+
 exports.mol = {};
 
 exports.mol.Mol = Mol;
