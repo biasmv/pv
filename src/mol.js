@@ -865,7 +865,7 @@ function pdb(text) {
     var res_name = line.substr(17, 3);
     var atomName = line.substr(12, 4).trim();
     var rnumNum = parseInt(line.substr(22, 4), 10);
-    var ins_code = line[26];
+    var insCode = line[26];
     var updateResidue = false;
     var updateChain = false;
     if (!currChain || currChain.name() !== chainName) {
