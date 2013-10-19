@@ -141,9 +141,13 @@ Cam.prototype.bind = function(shader) {
   this._gl.viewport(0, 0, this._gl.viewportWidth, this._gl.viewportHeight);
   shader.projection = this._gl.getUniformLocation(shader, 'projectionMat');
   shader.modelview = this._gl.getUniformLocation(shader, 'modelviewMat');
+  shader.rotation = this._gl.getUniformLocation(shader, 'rotationMat');
   this._gl.uniformMatrix4fv(shader.projection, false, this._projection);
   this._gl.uniformMatrix4fv(shader.modelview, false, this._modelview);
   this._gl.uniformMatrix4fv(shader.modelview, false, this._modelview);
+  if (shader.rotation !== -1) {
+    this._gl.uniformMatrix4fv(shader.rotation, false, this._rotation);
+  }
   this._gl.uniform1i(this._gl.getUniformLocation(shader, 'fog'), this._fog);
   this._gl.uniform1f(this._gl.getUniformLocation(shader, 'fogFar'),
                 this._fogFar+this._zoom);

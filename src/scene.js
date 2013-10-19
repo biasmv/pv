@@ -505,6 +505,146 @@ MeshGeom.prototype.bind = function() {
 };
 
 
+function TextLabel(gl, canvas, context, pos, text) {
+  SceneNode.prototype.constructor.call(this, gl);
+  this._gl = gl;
+  this._pos = pos;
+  this._interleavedBuffer = this._gl.createBuffer();
+  this._interleavedData = new Float32Array(5*6);
+
+  this._prepareText(canvas, context, text);
+
+  var halfWidth = this._width/2;
+  var halfHeight = this._height/2;
+  this._interleavedData[0] = pos[0];
+  this._interleavedData[1] = pos[1];
+  this._interleavedData[2] = pos[2];
+  this._interleavedData[3] = -halfWidth;
+  this._interleavedData[4] = -halfHeight;
+
+  this._interleavedData[5] = pos[0];
+  this._interleavedData[6] = pos[1];
+  this._interleavedData[7] = pos[2];
+  this._interleavedData[8] = halfWidth;
+  this._interleavedData[9] = halfHeight;
+
+  this._interleavedData[10] = pos[0];
+  this._interleavedData[11] = pos[1];
+  this._interleavedData[12] = pos[2];
+  this._interleavedData[13] =  halfWidth;
+  this._interleavedData[14] = -halfHeight;
+
+
+  this._interleavedData[15] = pos[0];
+  this._interleavedData[16] = pos[1];
+  this._interleavedData[17] = pos[2];
+  this._interleavedData[18] = -halfWidth;
+  this._interleavedData[19] = -halfHeight;
+
+  this._interleavedData[20] = pos[0];
+  this._interleavedData[21] = pos[1];
+  this._interleavedData[22] = pos[2];
+  this._interleavedData[23] = -halfWidth;
+  this._interleavedData[24] = halfHeight;
+
+  this._interleavedData[25] = pos[0];
+  this._interleavedData[26] = pos[1];
+  this._interleavedData[27] = pos[2];
+  this._interleavedData[28] = halfWidth;
+  this._interleavedData[29] = halfHeight;
+
+
+}
+
+derive(TextLabel, SceneNode);
+
+TextLabel.prototype._setupTextParameters = function(ctx) {
+  ctx.fillStyle = 'black';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'bottom';
+  ctx.font = '30px Menlo';
+}
+
+function smallestPowerOfTwo(size) {
+  var s = 1;
+  while (s < size) {
+    s *= 2;
+  }
+  return s;
+}
+
+TextLabel.prototype._prepareText = function(canvas, ctx, text) {
+  this._setupTextParameters(ctx);
+  var estimatedWidth = ctx.measureText(text).width;
+  var estimatedHeight = 30;
+  canvas.width = smallestPowerOfTwo(estimatedWidth);
+  canvas.height = smallestPowerOfTwo(estimatedHeight);
+  this._setupTextParameters(ctx);
+  ctx.fillText(text, 0, canvas.height);
+  this._texture = this._gl.createTexture();
+  this._textureFromCanvas(this._texture, canvas);
+  this._xScale = estimatedWidth/canvas.width;
+  this._yScale = estimatedHeight/canvas.height;
+  console.log(this._xScale, this._yScale);
+  this._width = estimatedWidth*0.1;
+  this._height = estimatedHeight*0.1;
+};
+
+TextLabel.prototype._textureFromCanvas = function(targetTexture, srcCanvas) {
+  this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, true);
+  this._gl.bindTexture(this._gl.TEXTURE_2D, targetTexture);
+  this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._gl.RGBA, 
+                      this._gl.UNSIGNED_BYTE, srcCanvas);
+  this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, 
+                         this._gl.LINEAR);
+  this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, 
+                   gl.LINEAR_MIPMAP_LINEAR);
+  this._gl.generateMipmap(this._gl.TEXTURE_2D);
+  this._gl.bindTexture(this._gl.TEXTURE_2D, null);
+}
+
+TextLabel.prototype.bind = function() {
+  this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._interleavedBuffer);
+  this._gl.activeTexture(this._gl.TEXTURE0);
+  this._gl.bindTexture(this._gl.TEXTURE_2D, this._texture);
+  if (this._ready) {
+    return;
+  }
+  this._gl.bufferData(this._gl.ARRAY_BUFFER, this._interleavedData, 
+                      this._gl.STATIC_DRAW);
+  this._ready = true;
+};
+
+TextLabel.prototype.draw = function(cam, shaderCatalog, style, pass) {
+  if (!this._visible) { return; }
+  
+  if (pass !== 'normal') {
+    return;
+  }
+  var shader = shaderCatalog.text;
+  cam.bind(shader);
+  this.bind();
+  this._gl.uniform1f(this._gl.getUniformLocation(shader, 'xScale'),
+                     this._xScale);
+  this._gl.uniform1f(this._gl.getUniformLocation(shader, 'yScale'),
+                     this._yScale);
+  this._gl.uniform1i(this._gl.getUniformLocation(shader, 'sampler'),
+                     0);
+  var vertAttrib = this._gl.getAttribLocation(shader, 'attrCenter');
+  this._gl.enableVertexAttribArray(vertAttrib);
+  this._gl.vertexAttribPointer(vertAttrib, 3, this._gl.FLOAT, false, 5*4, 0*4);
+  var texAttrib = this._gl.getAttribLocation(shader, 'attrCorner');
+  this._gl.vertexAttribPointer(texAttrib, 2, this._gl.FLOAT, 
+                               false, 5*4, 3*4);
+  this._gl.enableVertexAttribArray(texAttrib);
+  this._gl.enable(this._gl.BLEND);
+  this._gl.blendFunc(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA);
+  this._gl.drawArrays(this._gl.TRIANGLES, 0, 6);
+  this._gl.disableVertexAttribArray(vertAttrib);
+  this._gl.disableVertexAttribArray(texAttrib);
+  this._gl.disable(this._gl.BLEND);
+};
+
 exports.SceneNode = SceneNode;
 exports.AtomVertexAssoc = AtomVertexAssoc;
 exports.TraceVertexAssoc = TraceVertexAssoc;
@@ -514,6 +654,7 @@ exports.CompositeGeom = CompositeGeom;
 exports.TubeProfile = TubeProfile;
 exports.ProtoSphere = ProtoSphere;
 exports.ProtoCylinder = ProtoCylinder;
+exports.TextLabel = TextLabel;
 
 })(this);
 

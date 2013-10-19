@@ -208,7 +208,7 @@
     $('#colorTab').hide();
     var pv = pv.Viewer(document.getElementById('gl'), 
                        { quality : 'medium', width: 800, height : 600,
-                         antialias : true, outline : false});
+                         antialias : false, outline : false});
     var structure;
     function lines() {
       pv.clear();
@@ -255,6 +255,7 @@
       var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
       pv.add('structure.ligand', pv.ballsAndSticks(ligand));
       pv.add('structure.protein', pv.cartoon(structure));
+      pv.add('label', pv.label(structure.center(), 'gnome'));
     }
 
     function load(pdb_id) {

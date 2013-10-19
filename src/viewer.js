@@ -123,6 +123,7 @@ void main() {\n\
 // outline vertex shader. Expands vertices along the (in-screen) xy
 // components of the normals.
 var OUTLINE_VS = '\n\
+precision mediump float;\n\
 \n\
 attribute vec3 attrPos;\n\
 attribute vec3 attrNormal;\n\
@@ -135,6 +136,35 @@ void main(void) {\n\
   gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
   vec4 normal = modelviewMat * vec4(attrNormal, 0.0);\n\
   gl_Position.xy += normal.xy*0.200;\n\
+}';
+
+var TEXT_VS = '\n\
+precision mediump float;\n\
+\n\
+attribute vec3 attrCenter;\n\
+attribute vec2 attrCorner;\n\
+uniform mat4 projectionMat;\n\
+uniform mat4 modelviewMat;\n\
+uniform mat4 rotationMat;\n\
+varying vec2 vertTex;\n\
+void main() { \n\
+  vec4 rotated = vec4(attrCorner.x, attrCorner.y, 0.0, 0.0)*rotationMat;\n\
+  vec4 adjustedPos = vec4(attrCenter, 1.0)+rotated;\n\
+  gl_Position = projectionMat* modelviewMat* adjustedPos;\n\
+  vertTex = (attrCorner+abs(attrCorner))/(2.0*abs(attrCorner)); \n\
+}';
+
+var TEXT_FS = '\n\
+precision mediump float;\n\
+\n\
+uniform mat4 projectionMat;\n\
+uniform mat4 modelviewMat;\n\
+uniform sampler2D sampler;\n\
+uniform float xScale;\n\
+uniform float yScale;\n\
+varying vec2 vertTex;\n\
+void main() { \n\
+  gl_FragColor = texture2D(sampler, vec2(vertTex.x*xScale, vertTex.y*yScale));\n\
 }';
 
 function bind(obj, fn) { 
@@ -165,6 +195,9 @@ function PV(domElement, opts) {
   };
   this._domElement = domElement;
   this._canvas = document.createElement('canvas');
+  this._textureCanvas = document.createElement('canvas');
+  //this._textureCanvas.style.display = 'none';
+  this._2dcontext = this._textureCanvas.getContext('2d');
   if ('outline' in opts) {
     this._options.outline = opts.outline;
   } else {
@@ -175,6 +208,7 @@ function PV(domElement, opts) {
   this._canvas.width = this._options.width;
   this._canvas.height = this._options.height;
   this._domElement.appendChild(this._canvas);
+  this._domElement.appendChild(this._textureCanvas);
 
   document.addEventListener('DOMContentLoaded', 
                             bind(this, this._initPV));
@@ -338,7 +372,8 @@ PV.prototype._initPV = function() {
   this._shaderCatalog = {
     hemilight : this._initShader(HEMILIGHT_VS, HEMILIGHT_FS),
     outline : this._initShader(OUTLINE_VS, OUTLINE_FS),
-    lines : this._initShader(HEMILIGHT_VS, LINES_FS)
+    lines : this._initShader(HEMILIGHT_VS, LINES_FS),
+    text : this._initShader(TEXT_VS, TEXT_FS)
   };
   this._mousePanListener = bind(this, this._mousePan);
   this._mouseRotateListener = bind(this, this._mouseRotate);
@@ -551,6 +586,12 @@ PV.prototype.trace = function(structure, opts) {
     sphereDetail : opts.sphereDetail || this.options('sphereDetail')
   };
   return render.trace(structure, this._gl, options);
+};
+
+
+PV.prototype.label = function(pos, text) {
+  return new TextLabel(this._gl, this._textureCanvas, 
+                       this._2dcontext, pos, text);
 };
 
 PV.prototype.add = function(name, obj) {
