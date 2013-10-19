@@ -563,7 +563,7 @@ TextLabel.prototype._setupTextParameters = function(ctx) {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
   ctx.font = '30px Menlo';
-}
+};
 
 function smallestPowerOfTwo(size) {
   var s = 1;
@@ -601,7 +601,7 @@ TextLabel.prototype._textureFromCanvas = function(targetTexture, srcCanvas) {
                    gl.LINEAR_MIPMAP_LINEAR);
   this._gl.generateMipmap(this._gl.TEXTURE_2D);
   this._gl.bindTexture(this._gl.TEXTURE_2D, null);
-}
+};
 
 TextLabel.prototype.bind = function() {
   this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._interleavedBuffer);
