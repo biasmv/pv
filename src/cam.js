@@ -126,7 +126,17 @@ Cam.prototype.zoom = function(delta) {
 
 Cam.prototype.currentShader = function() { return this._currentShader; };
 
-// sets all OpenGL parameters to make this camera active.
+// sets all OpenGL parameters to make this camera active. 
+//
+// among other things, it sets the follow uniforms on the shader:
+//
+// - projectionMat   - the 4x4 projection matrix
+// - modelviewMat    - the 4x4 modelview matrix
+// - rotationMat     - the rotational part of the modelview matrix
+// - fog             - boolean indicating whether fog is enabled
+// - fogNear,fogFar  - near and far offset of fog
+// - fogColor        - the color of fog
+// - outlineColor    - color to be used for the outline shader
 Cam.prototype.bind = function(shader) {
   var shaderChanged = false;
   if (this._currentShader !== shader)
