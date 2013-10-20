@@ -7,6 +7,7 @@ SOURCE_FILES = [
   'src/mol.js', 
   'src/render.js', 
   'src/cam.js',
+  'src/shaders.js',
   'src/viewer.js'
 ];
 
