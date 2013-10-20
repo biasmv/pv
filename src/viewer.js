@@ -69,7 +69,7 @@ function PV(domElement, opts) {
   this._domElement = domElement;
   this._canvas = document.createElement('canvas');
   this._textureCanvas = document.createElement('canvas');
-  //this._textureCanvas.style.display = 'none';
+  this._textureCanvas.style.display = 'none';
   this._2dcontext = this._textureCanvas.getContext('2d');
   if ('outline' in opts) {
     this._options.outline = opts.outline;
