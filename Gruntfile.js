@@ -5,14 +5,15 @@ SOURCE_FILES = [
   'src/vert_assoc.js',
   'src/scene.js',
   'src/mol.js', 
+  'src/trace.js',
   'src/render.js', 
   'src/cam.js',
   'src/shaders.js',
   'src/viewer.js'
 ];
 
-ALL_FILES = new Array(SOURCE_FILES);
-ALL_FILES.push('src/gl-matrix.js');
+ALL_FILES = ['src/gl-matrix.js'];
+Array.prototype.push.apply(ALL_FILES, SOURCE_FILES);
 module.exports = function(grunt) {
 
   // Project configuration.

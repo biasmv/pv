@@ -161,7 +161,7 @@ TraceSubset.prototype._interpolate = (function() {
                                    this.centralAtomAt(indexTwo).pos(),
                                    tangentTwo, 0.5, 0);
       return out;
-  }
+  };
 })();
 
 // like posAt, but interpolates the position for the ends with a Catmull-Rom 
@@ -196,20 +196,21 @@ TraceSubset.prototype.smoothNormalAt = (function() {
     */
     this._fullTrace.normalAt(out, index+this._fullTraceBegin);
     return out;
-  }
+  };
 })();
 
 
 TraceSubset.prototype.posAt = function(out, index) { 
   var atom = this.centralAtomAt(index);
+  var atom2 = null;
   vec3.copy(out, atom.pos()); 
   if (index === 0 && !this._isNTerminal) {
-    var atom2 = this.centralAtomAt(index+1);
+    atom2 = this.centralAtomAt(index+1);
     vec3.add(out, out, atom2.pos());
     vec3.scale(out, out, 0.5);
   }
   if (index === this._length-1 && !this._isCTerminal) {
-    var atom2 = this.centralAtomAt(index-1);
+    atom2 = this.centralAtomAt(index-1);
     vec3.add(out, out, atom2.pos());
     vec3.scale(out, out, 0.5);
   }
