@@ -186,14 +186,6 @@ TraceSubset.prototype.smoothPosAt = (function() {
 
 TraceSubset.prototype.smoothNormalAt = (function() {
   return function(out, index, strength) {
-    /*
-    if (index === 0 && !this._isNTerminal) {
-      return this._interpolate(out, index, index+1, strength);
-    }
-    if (index === this._length-1 && !this._isCTerminal) {
-      return this._interpolate(out, index-1, index, strength);
-    }
-    */
     this._fullTrace.normalAt(out, index+this._fullTraceBegin);
     return out;
   };
