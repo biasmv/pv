@@ -152,4 +152,36 @@ void main() { \n\
   gl_FragColor = texture2D(sampler, vec2(vertTex.x*xScale, vertTex.y*yScale));\n\
 }';
 
+exports.shaders.SELECT_VS = '\n\
+precision mediump float;\n\
+uniform mat4 projectionMat;\n\
+uniform mat4 modelviewMat;\n\
+attribute vec3 attrPos;\n\
+attribute float attrObjId;\n\
+\n\
+varying float objId;\n\
+\n\
+void main(void) {\n\
+  gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
+  objId = attrObjId;\n\
+}';
+
+exports.shaders.SELECT_FS = '\n\
+precision mediump float;\n\
+\n\
+varying float objId;\n\
+\n\
+int intMod(int x, int y) { \n\
+  int z = x/y;\n\
+  return x-y*z;\n\
+}\n\
+void main(void) {\n\
+  int integralObjId = int(objId+0.5);\n\
+  int red = intMod(integralObjId, 256);\n\
+  integralObjId/=256;\n\
+  int green = intMod(integralObjId, 256);\n\
+  integralObjId/=256;\n\
+  int blue = intMod(integralObjId, 256);\n\
+  gl_FragColor = vec4(float(red), float(green), float(blue), 255.0)/255.0;\n\
+}';
 })(this);

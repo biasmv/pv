@@ -93,7 +93,7 @@ MolBase.prototype.atomCount = function() {
 
 MolBase.prototype.center = function() {
   var sum = vec3.create();
-  var count = 1;
+  var count = 0;
   this.eachAtom(function(atom) {
     vec3.add(sum, sum, atom.pos());
     count+=1;
@@ -381,6 +381,19 @@ ResidueBase.prototype.atom = function(index_or_name) {
 };
 
 
+ResidueBase.prototype.center = function() {
+  var count = 0;
+  var c = vec3.create();
+  this.eachAtom(function(atom) {
+    vec3.add(c, c, atom.pos());
+    count += 1;
+  });
+  if (count > 0) {
+    vec3.scale(c, c, 1.0/count);
+  }
+  return c;
+}
+
 ResidueBase.prototype.isAminoacid = function() { 
   return this.atom('N') && this.atom('CA') && this.atom('C') && this.atom('O');
 };
@@ -633,6 +646,9 @@ Atom.prototype.bonds = function() { return this._bonds; };
 Atom.prototype.residue = function() { return this._residue; };
 Atom.prototype.structure = function() { return this._residue.structure(); };
 Atom.prototype.full = function() { return this; };
+Atom.prototype.qualifiedName = function() {
+  return this.residue().qualifiedName()+'.'+this.name();
+};
 
 var Bond = function(atom_a, atom_b) {
   var self = {
@@ -771,6 +787,8 @@ ChainView.prototype.backboneTraces = function() {
 
 ChainView.prototype.full = function() { return this._chain; };
 
+ChainView.prototype.name = function () { return this._chain.name(); };
+
 ChainView.prototype.structure = function() { return this._molView; };
 
 function ResidueView(chainView, residue) {
@@ -796,9 +814,11 @@ ResidueView.prototype.chain = function() { return this._chainView; };
 ResidueView.prototype.name = function() { return this._residue.name(); };
 
 ResidueView.prototype.atoms = function() { return this._atoms; };
+ResidueView.prototype.qualifiedName = function() {
+  return this._residue.qualifiedName();
+};
 
 
-ChainView.prototype.name = function () { return this._chain.name(); };
 
 function AtomView(resView, atom) {
   AtomBase.prototype.constructor.call(this);
@@ -817,6 +837,9 @@ AtomView.prototype.element = function() { return this._atom.element(); };
 AtomView.prototype.residue = function() { return this._resView; };
 AtomView.prototype.bonds = function() { return this._atom.bonds(); };
 AtomView.prototype.index = function() { return this._atom.index(); };
+AtomView.prototype.qualifiedName = function() {
+  return this._atom.qualifiedName();
+};
 
 
 function parseHelixRecord(line) {

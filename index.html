@@ -16,6 +16,7 @@
     <script src='src/shade.js'></script>
     <script src='src/cam.js'></script>
     <script src='src/shaders.js'></script>
+    <script src='src/framebuffer.js'></script>
     <script src='src/viewer.js'></script>
     <style>
     body {
@@ -171,6 +172,7 @@
       <li id=trace>Trace</li>
       <li id=spheres>Spheres</li>
       <li id=balls-and-sticks>Balls and Sticks</li>
+      <li id=test>Test</li>
     </ul>
     <ul id=colorTab>
       <h1></h1>
@@ -209,53 +211,54 @@
     $('#colorTab').hide();
     var pv = pv.Viewer(document.getElementById('gl'), 
                        { quality : 'medium', width: 800, height : 600,
-                         antialias : true, outline : false});
+                         antialias : false, outline : false});
     var structure;
     function lines() {
       pv.clear();
-      pv.add('structure', pv.lines(structure));
+      pv.lines('structure', structure);
     }
     function cartoon() {
       pv.clear();
-      pv.add('structure', pv.cartoon(structure, 
-             { color : color.rainbow() }));
+      pv.cartoon('structure', structure, { color : color.rainbow() });
     }
     function line_trace() {
       pv.clear();
-      pv.add('structure', pv.lineTrace(structure));
+      pv.lineTrace('structure', structure);
     }
 
     function spheres() {
       pv.clear();
-      pv.add('structure', pv.spheres(structure));
+      pv.spheres('structure', structure);
     }
 
     function sline() {
       pv.clear();
-      pv.add('structure', pv.sline(structure, { color : color.uniform('black')}));
+      pv.sline('structure', structure, 
+              { color : color.uniform('black')});
     }
 
     function tube() {
       pv.clear();
-      pv.add('structure', pv.tube(structure));
-      pv.add('structure.ca', pv.lines(structure.select({aname :'CA'}), { color: color.uniform('blue'), lineWidth : 1}));
+      pv.tube('structure', structure);
+      pv.lines('structure.ca', structure.select({aname :'CA'}), 
+               { color: color.uniform('blue'), lineWidth : 1});
     }
 
     function trace() {
       pv.clear();
-      pv.add('structure', pv.trace(structure));
+      pv.trace('structure', structure);
     }
     function ballsAndSticks() {
       pv.clear();
       var ligand = structure.select('ligand');
-      pv.add('structure.ligand', pv.ballsAndSticks(ligand));
+      pv.ballsAndSticks('structure.ligand', ligand);
     }
 
     function preset() {
       pv.clear();
       var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
-      pv.add('structure.ligand', pv.ballsAndSticks(ligand));
-      pv.add('structure.protein', pv.cartoon(structure));
+      pv.ballsAndSticks('structure.ligand', ligand);
+      pv.cartoon('structure.protein', structure);
     }
 
     function load(pdb_id) {
@@ -337,6 +340,13 @@
       pv.requestRedraw();
     }
 
+    function test() {
+      pv.clear();
+      var sel = structure.select({aname:'CA',rindices:[1]});
+      pv.spheres('wow', sel);
+      pv.centerOn(sel);
+    }
+
     $('#cartoon').click(cartoon);
     $('#line-trace').click(line_trace);
     $('#preset').click(preset);
@@ -345,6 +355,7 @@
     $('#sline').click(sline);
     $('#spheres').click(spheres);
     $('#balls-and-sticks').click(ballsAndSticks);
+    $('#test').click(test);
     $('#tube').click(tube);
     $('#1ake').click(kinase);
     $('#1r6a').click(transferase);
@@ -392,6 +403,6 @@
       pv.requestRedraw();
     });
 
-    document.addEventListener('DOMContentLoaded', transferase);
+    document.addEventListener('DOMContentLoaded', crambin);
   </script>
 </html>

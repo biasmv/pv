@@ -54,19 +54,16 @@ The following code defines a new viewer. This can be done during page load time,
 Rendering
 --------------------------------------------------------------------------------
 
-This section describes the high-level API for displaying molecular structures on screen. The interface consists of render methods part of :class:`~pv.Viewer` which accept a structure and create a graphical representation out of it. For example, to create a cartoon representation, the following code will do:
+This section describes the high-level API for displaying molecular structures on screen. The interface consists of render methods part of :class:`~pv.Viewer` which accept a name and a structure and create a graphical representation out of it. For example, to create a cartoon representation, the following code will do:
 
 .. code-block:: javascript
 
   // creates a cartoon representation with standard parameters
-  var myCartoon = viewer.cartoon(myMolecule);
+  var myCartoon = viewer.cartoon('molecule', myMolecule);
 
 
-While these methods create the graphical representation, they do not directly add the object to the viewer. The object will not be rendered and is not visible. To register them for rendering, they need to be added:
+These methods will automatically add the object to the viewer, there is not need to call :meth:`pv.Viewer.add` on the object.
 
-.. code-block:: javascript
-
-  viewer.add('myCartoon', myCartoon);
 
 .. function:: pv.Viewer.lines(structure[, options])
 

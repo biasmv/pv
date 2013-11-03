@@ -71,6 +71,7 @@ function PV(domElement, opts) {
   this._textureCanvas = document.createElement('canvas');
   this._textureCanvas.style.display = 'none';
   this._2dcontext = this._textureCanvas.getContext('2d');
+  this._objectIdManager = new ObjectIdManager();
   if ('outline' in opts) {
     this._options.outline = opts.outline;
   } else {
@@ -134,8 +135,7 @@ PV.prototype.imageData = function() {
   return this._canvas.toDataURL();
 };
 
-PV.prototype._initGL = function () {
-  var samples = 1;
+PV.prototype._initContext = function() {
   try {
     var contextOpts = { 
       antialias : this._options.antialias,
@@ -143,13 +143,6 @@ PV.prototype._initGL = function () {
     };
     this._gl = this._canvas.getContext('experimental-webgl', 
                                        contextOpts);
-
-    if (!this._gl.getContextAttributes().antialias &&
-        this._options.antialias) {
-      console.info('hardware antialising not supported.',
-                   'will use manual antialiasing instead.');
-      samples = 2;
-    }
   } catch (err) {
     console.error('WebGL not supported', err);
     return false;
@@ -158,9 +151,10 @@ PV.prototype._initGL = function () {
     console.error('WebGL not supported');
     return false;
   }
-  this._options.real_width = this._options.width * samples;
-  this._options.real_height = this._options.height * samples;
-  if (samples > 1) {
+  return true;
+}
+
+PV.prototype._initManualAntialiasing = function() {
     var scale_factor = 1.0/samples;
     var trans_x = -(1-scale_factor)*0.5*this._options.real_width;
     var trans_y = -(1-scale_factor)*0.5*this._options.real_height;
@@ -176,6 +170,32 @@ PV.prototype._initGL = function () {
     this._canvas.style.ieTransform = transform;
     this._canvas.width = this._options.real_width;
     this._canvas.height = this._options.real_height;
+}
+
+PV.prototype._initPickBuffer = function(){
+  var fbOptions = {
+    width : this._options.width,
+    height: this._options.height
+  }
+  this._pickBuffer = new FrameBuffer(this._gl, fbOptions);
+}
+
+PV.prototype._initGL = function () {
+  var samples = 1;
+  if (!this._initContext()) {
+    return false;
+  }
+
+  if (!this._gl.getContextAttributes().antialias &&
+      this._options.antialias) {
+    console.info('hardware antialising not supported.',
+                  'will use manual antialiasing instead.');
+    samples = 2;
+  }
+  this._options.real_width = this._options.width * samples;
+  this._options.real_height = this._options.height * samples;
+  if (samples > 1) {
+    this._initManualAntialiasing();
   }
   this._gl.viewportWidth = this._options.real_width;
   this._gl.viewportHeight = this._options.real_height;
@@ -185,6 +205,7 @@ PV.prototype._initGL = function () {
   this._gl.cullFace(this._gl.FRONT);
   this._gl.enable(this._gl.CULL_FACE);
   this._gl.enable(this._gl.DEPTH_TEST);
+  this._initPickBuffer();
   return true;
 };
 
@@ -216,6 +237,8 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
   this._gl.linkProgram(shaderProgram);
   if (!this._gl.getProgramParameter(shaderProgram, this._gl.LINK_STATUS)) {
     console.error('could not initialise shaders');
+    console.error(this._gl.getShaderInfoLog(shaderProgram));
+    return null;
   }
   return shaderProgram;
 };
@@ -246,7 +269,8 @@ PV.prototype._initPV = function() {
     hemilight : this._initShader(shaders.HEMILIGHT_VS, shaders.HEMILIGHT_FS),
     outline : this._initShader(shaders.OUTLINE_VS, shaders.OUTLINE_FS),
     lines : this._initShader(shaders.HEMILIGHT_VS, shaders.LINES_FS),
-    text : this._initShader(shaders.TEXT_VS, shaders.TEXT_FS)
+    text : this._initShader(shaders.TEXT_VS, shaders.TEXT_FS),
+    select : this._initShader(shaders.SELECT_VS, shaders.SELECT_FS)
   };
   this._mousePanListener = bind(this, this._mousePan);
   this._mouseRotateListener = bind(this, this._mouseRotate);
@@ -261,6 +285,8 @@ PV.prototype._initPV = function() {
     this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel), 
                                   false);
   }
+  this._canvas.addEventListener('dblclick', bind(this, this._mouseDoubleClick),
+                                false);
   this._canvas.addEventListener('mousedown', bind(this, this._mouseDown), 
                                 false);
   return true;
@@ -271,25 +297,26 @@ PV.prototype.requestRedraw = function() {
   requestAnimFrame(bind(this, this._draw));
 };
 
+PV.prototype._drawWithPass = function(pass) {
+  for (var i=0; i < this._objects.length; ++i) {
+    this._objects[i].draw(this._cam, this._shaderCatalog, this._options.style, 
+                          pass);
+  }
+}
+
 PV.prototype._draw = function() {
 
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
 
   this._gl.cullFace(this._gl.FRONT);
   this._gl.enable(this._gl.CULL_FACE);
-  for (var i=0; i<this._objects.length; i+=1) {
-    this._objects[i].draw(this._cam, this._shaderCatalog, this._options.style, 
-                          'normal');
-  }
+  this._drawWithPass('normal');
   if (!this._options.outline) {
     return;
   }
   this._gl.cullFace(this._gl.BACK);
   this._gl.enable(this._gl.CULL_FACE);
-  for (i = 0; i < this._objects.length; i+=1) {
-    this._objects[i].draw(this._cam, this._shaderCatalog, this._options.style, 
-                          'outline');
-  }
+  this._drawWithPass('outline');
 };
 
 
@@ -313,6 +340,19 @@ PV.prototype._mouseWheelFF = function(event) {
   this._cam.zoom(-event.deltaY*0.60);
   this.requestRedraw();
 };
+
+PV.prototype._mouseDoubleClick = function(event) {
+  var rect = this._canvas.getBoundingClientRect();
+  var objects = this.pick({x : event.clientX-rect.left,
+                           y: event.clientY - rect.top});
+  if (objects.length > 0) {
+    if (objects[0].pos)
+      this._cam.setCenter(objects[0].pos());
+    else
+      this._cam.setCenter(objects[0].atom('CA').pos());
+    this.requestRedraw();
+  }
+}
 
 PV.prototype._mouseDown = function(event) {
   if (event.button !== 0) {
@@ -379,36 +419,42 @@ PV.prototype.renderAs = function(structure, mode, opts) {
 
 };
 
-PV.prototype.lineTrace = function(structure, opts) {
+PV.prototype.lineTrace = function(name, structure, opts) {
   opts = opts || {};
   var options = {
     color : opts.color || color.uniform([1, 0, 1]),
-    lineWidth : opts.lineWidth || 4.0
+    lineWidth : opts.lineWidth || 4.0,
+    objIdManager : this._objectIdManager
   };
-  return render.lineTrace(structure, this._gl, options);
+  var obj = render.lineTrace(structure, this._gl, options);
+  return this.add(name, obj);
 };
 
-PV.prototype.spheres = function(structure, opts) {
+PV.prototype.spheres = function(name, structure, opts) {
   opts = opts || {};
   var options = {
     color : opts.color || color.byElement(),
-    sphereDetail : this.options('sphereDetail')
+    sphereDetail : this.options('sphereDetail'),
+    objIdManager : this._objectIdManager
   };
-  return render.spheres(structure, this._gl, options);
+  var obj = render.spheres(structure, this._gl, options);
+  return this.add(name, obj);
 };
 
-PV.prototype.sline = function(structure, opts) {
+PV.prototype.sline = function(name, structure, opts) {
   opts = opts || {};
   var options = {
     color : opts.color || color.uniform([1, 0, 1]),
     splineDetail : opts.splineDetail || this.options('splineDetail'),
     strength: opts.strength || 1.0,
-    lineWidth : opts.lineWidth || 4.0
+    lineWidth : opts.lineWidth || 4.0,
+    objIdManager : this._objectIdManager
   };
-  return render.sline(structure, this._gl, options);
+  var obj =  render.sline(structure, this._gl, options);
+  return this.add(name, obj);
 };
 
-PV.prototype.cartoon = function(structure, opts) {
+PV.prototype.cartoon = function(name, structure, opts) {
   opts = opts || {};
   var options = {
     color : opts.color || color.bySS(),
@@ -416,9 +462,11 @@ PV.prototype.cartoon = function(structure, opts) {
     splineDetail : opts.splineDetail || this.options('splineDetail'),
     arcDetail : opts.arcDetail || this.options('arcDetail'),
     radius : opts.radius || 0.3,
-    forceTube: opts.forceTube || false
+    forceTube: opts.forceTube || false,
+    objIdManager : this._objectIdManager
   };
-  return render.cartoon(structure, this._gl, options);
+  var obj =  render.cartoon(structure, this._gl, options);
+  return this.add(name, obj);
 };
 
 // renders the protein using a smoothly interpolated tube, essentially 
@@ -430,35 +478,41 @@ PV.prototype.tube = function(structure, opts) {
   return this.cartoon(structure, opts);
 };
 
-PV.prototype.ballsAndSticks = function(structure, opts) {
+PV.prototype.ballsAndSticks = function(name, structure, opts) {
   opts = opts || {};
   var options = {
     color : opts.color || color.byElement(),
     radius: opts.radius || 0.3,
     arcDetail : (opts.arcDetail || this.options('arcDetail'))*2,
-    sphereDetail : opts.sphereDetail || this.options('sphereDetail')
+    sphereDetail : opts.sphereDetail || this.options('sphereDetail'),
+    objIdManager : this._objectIdManager
   };
-  return render.ballsAndSticks(structure, this._gl, options);
+  var obj = render.ballsAndSticks(structure, this._gl, options);
+  return this.add(name, obj);
 };
 
-PV.prototype.lines = function(structure, opts) {
+PV.prototype.lines = function(name, structure, opts) {
   opts = opts || {};
   var options = {
     color : opts.color || color.byElement(),
-    lineWidth : opts.lineWidth || 4.0
+    lineWidth : opts.lineWidth || 4.0,
+    objIdManager : this._objectIdManager
   };
-  return render.lines(structure, this._gl, options);
+  var obj =  render.lines(structure, this._gl, options);
+  return this.add(name, obj);
 };
 
-PV.prototype.trace = function(structure, opts) {
+PV.prototype.trace = function(name, structure, opts) {
   opts = opts || {};
   var options = {
     color : opts.color || color.uniform([1, 0, 0]),
     radius: opts.radius || 0.3,
     arcDetail : (opts.arcDetail || this.options('arcDetail'))*2,
-    sphereDetail : opts.sphereDetail || this.options('sphereDetail')
+    sphereDetail : opts.sphereDetail || this.options('sphereDetail'),
+    objIdManager : this._objectIdManager
   };
-  return render.trace(structure, this._gl, options);
+  var obj = render.trace(structure, this._gl, options);
+  return this.add(name, obj);
 };
 
 
@@ -466,6 +520,51 @@ PV.prototype.label = function(pos, text) {
   return new TextLabel(this._gl, this._textureCanvas, 
                        this._2dcontext, pos, text);
 };
+
+// INTERNAL: draws scene into offscreen pick buffer with the "select"
+// shader.
+PV.prototype._drawPickingScene = function() {
+  this._gl.clearColor(1.0, 0.0, 1.0, 1.0);
+  this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
+  this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
+  this._gl.cullFace(this._gl.FRONT);
+  this._gl.enable(this._gl.CULL_FACE);
+  this._drawWithPass('select');
+}
+
+PV.prototype.pick = function(pos) {
+  this._pickBuffer.bind();
+  this._drawPickingScene();
+  var pixels = new Uint8Array(4*4*4);
+  this._gl.readPixels(pos.x-2, this._options.height-(pos.y-2),
+                      4, 4, this._gl.RGBA, this._gl.UNSIGNED_BYTE,
+                      pixels);
+  if (pixels.data) {
+    pixels = pixels.data;
+  }
+  var pickedIds = {};
+  var pickedObjects = [];
+  for (var y = 0; y < 4; ++y) {
+    for (var x = 0; x < 4; ++x) {
+      var baseIndex = (y*4 + x)*4;
+      if (pixels[baseIndex+0] === 255 && pixels[baseIndex+1] === 255 &&
+          pixels[baseIndex+2] === 255 && pixels[baseIndex+3] === 255) {
+        continue;
+      }
+      var objId = pixels[baseIndex+0] | pixels[baseIndex+1] << 8 |
+                  pixels[baseIndex+2] << 16;
+      if (pickedIds[objId] === undefined) {
+        var obj = this._objectIdManager.objectFor(objId);
+        if (obj !== undefined) {
+          pickedObjects.push(obj);
+          pickedIds[objId] = true;
+        }
+      }
+    }
+  }
+  this._pickBuffer.release();
+  return pickedObjects;
+}
 
 PV.prototype.add = function(name, obj) {
   obj.name(name);

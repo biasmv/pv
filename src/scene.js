@@ -97,8 +97,15 @@ LineGeom.prototype.shaderForStyleAndPass = function(shaderCatalog, style, pass) 
   if (pass === 'outline') {
     return null;
   }
+  if (pass == 'select')
+    return shaderCatalog.select;
   return shaderCatalog.lines;
 };
+
+LineGeom.prototype._FLOATS_PER_VERT = 7;
+LineGeom.prototype._POS_OFFSET = 0;
+LineGeom.prototype._COLOR_OFFSET = 3;
+LineGeom.prototype._ID_OFFSET = 6;
 
 LineGeom.prototype.numVerts = function() { return this._numLines*2; };
 
@@ -113,13 +120,24 @@ LineGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   this._gl.lineWidth(this._lineWidth);
   var vertAttrib = this._gl.getAttribLocation(shader, 'attrPos');
   this._gl.enableVertexAttribArray(vertAttrib);
-  this._gl.vertexAttribPointer(vertAttrib, 3, this._gl.FLOAT, false, 6*4, 0*4);
+  this._gl.vertexAttribPointer(vertAttrib, 3, this._gl.FLOAT, false, 
+                               this._FLOATS_PER_VERT*4, this._POS_OFFSET*4);
   var clrAttrib = this._gl.getAttribLocation(shader, 'attrColor');
-  this._gl.vertexAttribPointer(clrAttrib, 3, this._gl.FLOAT, false, 6*4, 3*4);
+  this._gl.vertexAttribPointer(clrAttrib, 3, this._gl.FLOAT, false, 
+                               this._FLOATS_PER_VERT*4, this._COLOR_OFFSET*4);
   this._gl.enableVertexAttribArray(clrAttrib);
+  var idAttrib = this._gl.getAttribLocation(shader, 'attrObjId');
+  if (idAttrib !== -1) {
+    this._gl.vertexAttribPointer(idAttrib, 1, this._gl.FLOAT, false,
+                                 this._FLOATS_PER_VERT*4, this._ID_OFFSET*4);
+    this._gl.enableVertexAttribArray(idAttrib);
+  }
   this._gl.drawArrays(this._gl.LINES, 0, this._numLines*2);
   this._gl.disableVertexAttribArray(vertAttrib);
   this._gl.disableVertexAttribArray(clrAttrib);
+  if (idAttrib !== -1) { 
+    this._gl.disableVertexAttribArray(idAttrib);
+  }
 };
 
 
@@ -127,7 +145,8 @@ LineGeom.prototype.colorBy = function(colorFunc, view) {
   console.time('LineGeom.colorBy');
   this._ready = false;
   view = view || this.structure();
-  this._vertAssoc.recolor(colorFunc, view, this._data, 3, 6);
+  this._vertAssoc.recolor(colorFunc, view, this._data, 
+                          this._COLOR_OFFSET, this._FLOATS_PER_VERT);
   console.timeEnd('LineGeom.colorBy');
 };
 
@@ -141,11 +160,12 @@ LineGeom.prototype.bind = function() {
   this._ready = true;
 };
 
-LineGeom.prototype.addLine = function(startPos, startColor, endPos, endColor) {
+LineGeom.prototype.addLine = function(startPos, startColor, endPos, 
+                                      endColor, idOne, idTwo) {
   this._data.push(startPos[0], startPos[1], startPos[2],
-                  startColor[0], startColor[1], startColor[2],
+                  startColor[0], startColor[1], startColor[2], idOne,
                   endPos[0], endPos[1], endPos[2],
-                  endColor[0], endColor[1], endColor[2]);
+                  endColor[0], endColor[1], endColor[2], idTwo);
   this._numLines += 1;
   this._ready = false;
 };
@@ -239,7 +259,7 @@ ProtoSphere.prototype.addTransformed = (function() {
   
   var pos = vec3.create(), normal = vec3.create();
 
-  return function(geom, center, radius, color) {
+  return function(geom, center, radius, color, objId) {
     var baseIndex = geom.numVerts();
     for (var i = 0; i < this._stacks*this._arcs; ++i) {
       vec3.set(normal, this._verts[3*i], this._verts[3*i+1], 
@@ -247,7 +267,7 @@ ProtoSphere.prototype.addTransformed = (function() {
       vec3.copy(pos, normal);
       vec3.scale(pos, pos, radius);
       vec3.add(pos, pos, center);
-      geom.addVertex(pos, normal, color);
+      geom.addVertex(pos, normal, color, objId);
     }
     for (i = 0; i < this._indices.length/3; ++i) {
       geom.addTriangle(baseIndex+this._indices[i*3], 
@@ -301,8 +321,8 @@ function TubeProfile(points, num, strength) {
 
 TubeProfile.prototype.addTransformed = (function() {
   var pos = vec3.create(), normal = vec3.create();
-  return function(geom, center, radius, rotation, color, first,
-                              offset) {
+  return function(geom, center, radius, rotation, color, first, offset,
+                  objId) {
     var baseIndex = geom.numVerts() - this._arcs;
     for (var i = 0; i < this._arcs; ++i) {
       vec3.set(pos, radius*this._verts[3*i], radius*this._verts[3*i+1], 0.0);
@@ -310,7 +330,7 @@ TubeProfile.prototype.addTransformed = (function() {
       vec3.add(pos, pos, center);
       vec3.set(normal, this._normals[3*i], this._normals[3*i+1], 0.0);
       vec3.transformMat3(normal, normal, rotation);
-      geom.addVertex(pos, normal, color);
+      geom.addVertex(pos, normal, color, objId);
     }
     if (first) {
       return;
@@ -371,7 +391,7 @@ function ProtoCylinder(arcs) {
 ProtoCylinder.prototype.addTransformed = (function() {
   var pos = vec3.create(), normal = vec3.create();
   return function(geom, center, length, radius, rotation, colorOne, 
-                              colorTwo) {
+                  colorTwo, idOne, idTwo) {
     var baseIndex = geom.numVerts();
     for (var i = 0; i < 2*this._arcs; ++i) {
       vec3.set(pos, radius*this._verts[3*i], radius*this._verts[3*i+1], 
@@ -380,7 +400,8 @@ ProtoCylinder.prototype.addTransformed = (function() {
       vec3.add(pos, pos, center);
       vec3.set(normal, this._normals[3*i], this._normals[3*i+1], this._normals[3*i+2]);
       vec3.transformMat3(normal, normal, rotation);
-      geom.addVertex(pos, normal, i < this._arcs ? colorOne : colorTwo);
+      var objId =i < this._arcs ? idOne : idTwo;
+      geom.addVertex(pos, normal, i < this._arcs ? colorOne : colorTwo, objId);
     }
     for (i = 0; i < this._indices.length/3; ++i) {
       geom.addTriangle(baseIndex+this._indices[i*3], 
@@ -398,7 +419,7 @@ ProtoCylinder.prototype.addTransformed = (function() {
 //
 // the vertex data is stored in the following format;
 //
-// Px Py Pz Nx Ny Nz Cr Cg Cb
+// Px Py Pz Nx Ny Nz Cr Cg Cb Id
 //
 // , where P is the position, N the normal and C the color information
 // of the vertex.
@@ -414,6 +435,11 @@ function MeshGeom(gl) {
   this._vertAssoc = null;
 }
 
+MeshGeom.prototype._FLOATS_PER_VERT = 10;
+MeshGeom.prototype._COLOR_OFFSET = 6;
+MeshGeom.prototype._POS_OFFSET = 0;
+MeshGeom.prototype._NORMAL_OFFSET = 3;
+
 derive(MeshGeom, BaseGeom);
 
 MeshGeom.prototype.setVertAssoc = function(assoc) {
@@ -426,6 +452,9 @@ MeshGeom.prototype.shaderForStyleAndPass = function(shaderCatalog, style, pass) 
   if (pass === 'outline') {
     return shaderCatalog.outline;
   }
+  if (pass === 'select') {
+    return shaderCatalog.select;
+  }
   var shader = shaderCatalog[style];
   return shader !== undefined ? shader : null;
 };
@@ -435,7 +464,8 @@ MeshGeom.prototype.colorBy = function(colorFunc, view) {
   console.time('MeshGeom.colorBy');
   this._ready = false;
   view = view || this.structure();
-  this._vertAssoc.recolor(colorFunc, view, this._vertData, 6, 9);
+  this._vertAssoc.recolor(colorFunc, view, this._vertData, this._COLOR_OFFSET,
+                          this._FLOATS_PER_VERT);
   console.timeEnd('MeshGeom.colorBy');
 };
 
@@ -450,19 +480,27 @@ MeshGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
 
   var posAttrib = this._gl.getAttribLocation(shader, 'attrPos');
   this._gl.enableVertexAttribArray(posAttrib);
-  this._gl.vertexAttribPointer(posAttrib, 3, this._gl.FLOAT, false, 9*4, 0*4);
+  this._gl.vertexAttribPointer(posAttrib, 3, this._gl.FLOAT, false,
+                               this._FLOATS_PER_VERT*4, this._POS_OFFSET*4);
 
   var normalAttrib = this._gl.getAttribLocation(shader, 'attrNormal');
   if (normalAttrib !== -1) {
     this._gl.enableVertexAttribArray(normalAttrib);
     this._gl.vertexAttribPointer(normalAttrib, 3, this._gl.FLOAT, false, 
-                                 9*4, 3*4);
+                                 this._FLOATS_PER_VERT*4, this._NORMAL_OFFSET*4);
   }
 
   var clrAttrib = this._gl.getAttribLocation(shader, 'attrColor');
   if (clrAttrib !== -1) {
-    this._gl.vertexAttribPointer(clrAttrib, 3, this._gl.FLOAT, false, 9*4, 6*4);
+    this._gl.vertexAttribPointer(clrAttrib, 3, this._gl.FLOAT, false,
+                                 this._FLOATS_PER_VERT*4, this._COLOR_OFFSET*4);
     this._gl.enableVertexAttribArray(clrAttrib);
+  }
+  var idAttrib = this._gl.getAttribLocation(shader, 'attrObjId');
+  if (idAttrib !== -1) {
+    this._gl.vertexAttribPointer(idAttrib, 1, this._gl.FLOAT, false,
+                                 this._FLOATS_PER_VERT*4, 9*4);
+    this._gl.enableVertexAttribArray(idAttrib);
   }
   this._gl.drawElements(this._gl.TRIANGLES, this._numTriangles*3, 
                         this._gl.UNSIGNED_SHORT, 0);
@@ -473,14 +511,17 @@ MeshGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   if (normalAttrib !== -1) {
     this._gl.disableVertexAttribArray(normalAttrib);
   }
+  if (idAttrib !== -1) {
+    this._gl.disableVertexAttribArray(idAttrib);
+  }
 };
 
-MeshGeom.prototype.addVertex = function(pos, normal, color) {
+MeshGeom.prototype.addVertex = function(pos, normal, color, objId) {
   // pushing all values at once seems to be more efficient than pushing
   // separately. resizing the vertData prior and setting the elements
   // is substantially slower.
   this._vertData.push(pos[0], pos[1], pos[2], normal[0], normal[1], normal[2],
-                      color[0], color[1], color[2]);
+                      color[0], color[1], color[2], objId);
   this._numVerts += 1;
 };
 
@@ -586,7 +627,6 @@ TextLabel.prototype._prepareText = function(canvas, ctx, text) {
   this._textureFromCanvas(this._texture, canvas);
   this._xScale = estimatedWidth/canvas.width;
   this._yScale = estimatedHeight/canvas.height;
-  console.log(this._xScale, this._yScale);
   this._width = estimatedWidth*0.1;
   this._height = estimatedHeight*0.1;
 };
@@ -646,6 +686,24 @@ TextLabel.prototype.draw = function(cam, shaderCatalog, style, pass) {
   this._gl.disable(this._gl.BLEND);
 };
 
+
+function ObjectIdManager() {
+  this._objects = {};
+  this._nextId = 0;
+}
+
+ObjectIdManager.prototype.idFor = function(obj) {
+  var id = this._nextId;
+  this._nextId += 1;
+  this._objects[id] = obj;
+  return id;
+};
+
+ObjectIdManager.prototype.objectFor = function(id) {
+  return this._objects[id];
+};
+
+
 exports.SceneNode = SceneNode;
 exports.AtomVertexAssoc = AtomVertexAssoc;
 exports.TraceVertexAssoc = TraceVertexAssoc;
@@ -656,6 +714,7 @@ exports.TubeProfile = TubeProfile;
 exports.ProtoSphere = ProtoSphere;
 exports.ProtoCylinder = ProtoCylinder;
 exports.TextLabel = TextLabel;
+exports.ObjectIdManager = ObjectIdManager;
 
 })(this);
 
