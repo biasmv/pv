@@ -77,26 +77,35 @@ Cam.prototype.fog =function(value) {
   return this._fog;
 };
 
-Cam.prototype.rotateZ = function(delta) {
-  this._updateMat = true;
+Cam.prototype.rotateZ = (function() {
   var tm = mat4.create();
-  mat4.rotate(tm, tm, delta, [0,0,1]);
-  mat4.mul(this._rotation, tm, this._rotation);
-};
+  return function(delta) {
+    mat4.identity(tm);
+    this._updateMat = true;
+    mat4.rotate(tm, tm, delta, [0,0,1]);
+    mat4.mul(this._rotation, tm, this._rotation);
+  };
+})();
 
-Cam.prototype.rotateX= function(delta) {
-  this._updateMat = true;
+Cam.prototype.rotateX= (function(){
   var tm = mat4.create();
-  mat4.rotate(tm, tm, delta, [1,0,0]);
-  mat4.mul(this._rotation, tm, this._rotation);
-};
+  return function(delta) {
+    mat4.identity(tm);
+    this._updateMat = true;
+    mat4.rotate(tm, tm, delta, [1,0,0]);
+    mat4.mul(this._rotation, tm, this._rotation);
+  };
+})();
 
-Cam.prototype.rotateY = function(delta) {
-  this._updateMat = true;
+Cam.prototype.rotateY = (function() {
   var tm = mat4.create();
-  mat4.rotate(tm, tm, delta, [0,1,0]);
-  mat4.mul(this._rotation, tm, this._rotation);
-};
+  return function(delta) {
+    mat4.identity(tm);
+    this._updateMat = true;
+    mat4.rotate(tm, tm, delta, [0,1,0]);
+    mat4.mul(this._rotation, tm, this._rotation);
+  };
+})();
 
 Cam.prototype.panX = function(delta) {
   return this.panXY(delta, 0);
