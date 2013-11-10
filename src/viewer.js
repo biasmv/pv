@@ -152,7 +152,7 @@ PV.prototype._initContext = function() {
     return false;
   }
   return true;
-}
+};
 
 PV.prototype._initManualAntialiasing = function() {
     var scale_factor = 1.0/samples;
@@ -170,15 +170,15 @@ PV.prototype._initManualAntialiasing = function() {
     this._canvas.style.ieTransform = transform;
     this._canvas.width = this._options.real_width;
     this._canvas.height = this._options.real_height;
-}
+};
 
 PV.prototype._initPickBuffer = function(){
   var fbOptions = {
     width : this._options.width,
     height: this._options.height
-  }
+  };
   this._pickBuffer = new FrameBuffer(this._gl, fbOptions);
-}
+};
 
 PV.prototype._initGL = function () {
   var samples = 1;
@@ -302,7 +302,7 @@ PV.prototype._drawWithPass = function(pass) {
     this._objects[i].draw(this._cam, this._shaderCatalog, this._options.style, 
                           pass);
   }
-}
+};
 
 PV.prototype._draw = function() {
 
@@ -346,13 +346,15 @@ PV.prototype._mouseDoubleClick = function(event) {
   var objects = this.pick({x : event.clientX-rect.left,
                            y: event.clientY - rect.top});
   if (objects.length > 0) {
-    if (objects[0].pos)
+    if (objects[0].pos) {
       this._cam.setCenter(objects[0].pos());
-    else
+    }
+    else {
       this._cam.setCenter(objects[0].atom('CA').pos());
+    }
     this.requestRedraw();
   }
-}
+};
 
 PV.prototype._mouseDown = function(event) {
   if (event.button !== 0) {
@@ -530,7 +532,7 @@ PV.prototype._drawPickingScene = function() {
   this._gl.cullFace(this._gl.FRONT);
   this._gl.enable(this._gl.CULL_FACE);
   this._drawWithPass('select');
-}
+};
 
 PV.prototype.pick = function(pos) {
   this._pickBuffer.bind();
@@ -564,7 +566,7 @@ PV.prototype.pick = function(pos) {
   }
   this._pickBuffer.release();
   return pickedObjects;
-}
+};
 
 PV.prototype.add = function(name, obj) {
   obj.name(name);

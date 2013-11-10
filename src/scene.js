@@ -97,8 +97,9 @@ LineGeom.prototype.shaderForStyleAndPass = function(shaderCatalog, style, pass) 
   if (pass === 'outline') {
     return null;
   }
-  if (pass == 'select')
+  if (pass === 'select') {
     return shaderCatalog.select;
+  }
   return shaderCatalog.lines;
 };
 

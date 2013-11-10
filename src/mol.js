@@ -392,7 +392,7 @@ ResidueBase.prototype.center = function() {
     vec3.scale(c, c, 1.0/count);
   }
   return c;
-}
+};
 
 ResidueBase.prototype.isAminoacid = function() { 
   return this.atom('N') && this.atom('CA') && this.atom('C') && this.atom('O');
