@@ -472,10 +472,10 @@ PV.prototype.cartoon = function(name, structure, opts) {
 // renders the protein using a smoothly interpolated tube, essentially 
 // identical to the cartoon render mode, but without special treatment for 
 // helices and strands.
-PV.prototype.tube = function(structure, opts) {
+PV.prototype.tube = function(name, structure, opts) {
   opts = opts || {};
   opts.forceTube = true;
-  return this.cartoon(structure, opts);
+  return this.cartoon(name, structure, opts);
 };
 
 PV.prototype.ballsAndSticks = function(name, structure, opts) {
