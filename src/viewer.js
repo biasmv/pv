@@ -307,7 +307,7 @@ PV.prototype._drawWithPass = function(pass) {
 PV.prototype._draw = function() {
 
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
-
+  this._gl.viewport(0, 0, this._options.realWidth, this._options.realHeight);
   this._gl.cullFace(this._gl.FRONT);
   this._gl.enable(this._gl.CULL_FACE);
   this._drawWithPass('normal');
@@ -526,7 +526,8 @@ PV.prototype.label = function(pos, text) {
 // INTERNAL: draws scene into offscreen pick buffer with the "select"
 // shader.
 PV.prototype._drawPickingScene = function() {
-  this._gl.clearColor(1.0, 0.0, 1.0, 1.0);
+  this._gl.clearColor(0.0, 0.0, 0.0, 0.0);
+  this._gl.disable(this._gl.BLEND);
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
   this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
   this._gl.cullFace(this._gl.FRONT);
@@ -549,8 +550,7 @@ PV.prototype.pick = function(pos) {
   for (var y = 0; y < 4; ++y) {
     for (var x = 0; x < 4; ++x) {
       var baseIndex = (y*4 + x)*4;
-      if (pixels[baseIndex+0] === 255 && pixels[baseIndex+1] === 255 &&
-          pixels[baseIndex+2] === 255 && pixels[baseIndex+3] === 255) {
+      if (pixels[baseIndex+3] === 0) {
         continue;
       }
       var objId = pixels[baseIndex+0] | pixels[baseIndex+1] << 8 |

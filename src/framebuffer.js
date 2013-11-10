@@ -25,6 +25,7 @@
 function FrameBuffer(gl, options) {
   this._width = options.width;
   this._height = options.height;
+  console.log('frame buffer', this._width, this._height);
   this._gl = gl;
   this._colorHandle = this._gl.createFramebuffer();
   this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._colorHandle);

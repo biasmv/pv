@@ -157,7 +157,6 @@ Cam.prototype.bind = function(shader) {
   if (!this._updateIfRequired() && !shaderChanged) {
     return;
   }
-  this._gl.viewport(0, 0, this._gl.viewportWidth, this._gl.viewportHeight);
   shader.projection = this._gl.getUniformLocation(shader, 'projectionMat');
   shader.modelview = this._gl.getUniformLocation(shader, 'modelviewMat');
   shader.rotation = this._gl.getUniformLocation(shader, 'rotationMat');
