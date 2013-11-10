@@ -154,10 +154,10 @@ PV.prototype._initContext = function() {
   return true;
 };
 
-PV.prototype._initManualAntialiasing = function() {
+PV.prototype._initManualAntialiasing = function(samples) {
     var scale_factor = 1.0/samples;
-    var trans_x = -(1-scale_factor)*0.5*this._options.real_width;
-    var trans_y = -(1-scale_factor)*0.5*this._options.real_height;
+    var trans_x = -(1-scale_factor)*0.5*this._options.realWidth;
+    var trans_y = -(1-scale_factor)*0.5*this._options.realHeight;
     var translate = 'translate('+trans_x+'px, '+trans_y+'px)';
     var scale = 'scale('+scale_factor+', '+scale_factor+')';
     var transform = translate+' '+scale;
@@ -168,8 +168,8 @@ PV.prototype._initManualAntialiasing = function() {
     this._canvas.style.webkitTransform = transform;
     this._canvas.style.transform = transform;
     this._canvas.style.ieTransform = transform;
-    this._canvas.width = this._options.real_width;
-    this._canvas.height = this._options.real_height;
+    this._canvas.width = this._options.realWidth;
+    this._canvas.height = this._options.realHeight;
 };
 
 PV.prototype._initPickBuffer = function(){
@@ -192,13 +192,13 @@ PV.prototype._initGL = function () {
                   'will use manual antialiasing instead.');
     samples = 2;
   }
-  this._options.real_width = this._options.width * samples;
-  this._options.real_height = this._options.height * samples;
+  this._options.realWidth = this._options.width * samples;
+  this._options.realHeight = this._options.height * samples;
   if (samples > 1) {
-    this._initManualAntialiasing();
+    this._initManualAntialiasing(samples);
   }
-  this._gl.viewportWidth = this._options.real_width;
-  this._gl.viewportHeight = this._options.real_height;
+  this._gl.viewportWidth = this._options.realWidth;
+  this._gl.viewportHeight = this._options.realHeight;
 
   this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
   this._gl.lineWidth(2.0);
