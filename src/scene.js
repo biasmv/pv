@@ -59,7 +59,7 @@ SceneNode.prototype.destroy = function() {
   for (var i = 0; i < this._children.length; ++i) {
     this._children[i].destroy();
   }
-}
+};
 
 function BaseGeom(gl) {
   SceneNode.prototype.constructor.call(this, gl);
@@ -215,7 +215,7 @@ CompositeGeom.prototype.destroy = function() {
     this._geoms[i].destroy();
   }
   this._geoms = [];
-}
+};
 
 CompositeGeom.prototype.structure = function() { 
   return this._structure;
