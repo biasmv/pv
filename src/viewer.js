@@ -66,12 +66,13 @@ function PV(domElement, opts) {
     quality : opts.quality || 'low',
     style : opts.style || 'hemilight'
   };
+  this._objects = [];
   this._domElement = domElement;
   this._canvas = document.createElement('canvas');
   this._textureCanvas = document.createElement('canvas');
   this._textureCanvas.style.display = 'none';
   this._2dcontext = this._textureCanvas.getContext('2d');
-  this._objectIdManager = new ObjectIdManager();
+  this._objectIdManager = new UniqueObjectIdPool();
   if ('outline' in opts) {
     this._options.outline = opts.outline;
   } else {
@@ -326,10 +327,11 @@ PV.prototype.centerOn = function(what) {
 };
 
 PV.prototype.clear = function() {
+  for (var i = 0; i < this._objects.length; ++i) {
+    this._objects[i].destroy();
+  }
   this._objects = [];
 };
-
-
 
 PV.prototype._mouseWheel = function(event) {
   this._cam.zoom(event.wheelDelta*0.05);
@@ -426,7 +428,7 @@ PV.prototype.lineTrace = function(name, structure, opts) {
   var options = {
     color : opts.color || color.uniform([1, 0, 1]),
     lineWidth : opts.lineWidth || 4.0,
-    objIdManager : this._objectIdManager
+    idPool : this._objectIdManager
   };
   var obj = render.lineTrace(structure, this._gl, options);
   return this.add(name, obj);
@@ -437,7 +439,7 @@ PV.prototype.spheres = function(name, structure, opts) {
   var options = {
     color : opts.color || color.byElement(),
     sphereDetail : this.options('sphereDetail'),
-    objIdManager : this._objectIdManager
+    idPool : this._objectIdManager
   };
   var obj = render.spheres(structure, this._gl, options);
   return this.add(name, obj);
@@ -450,7 +452,7 @@ PV.prototype.sline = function(name, structure, opts) {
     splineDetail : opts.splineDetail || this.options('splineDetail'),
     strength: opts.strength || 1.0,
     lineWidth : opts.lineWidth || 4.0,
-    objIdManager : this._objectIdManager
+    idPool : this._objectIdManager
   };
   var obj =  render.sline(structure, this._gl, options);
   return this.add(name, obj);
@@ -465,7 +467,7 @@ PV.prototype.cartoon = function(name, structure, opts) {
     arcDetail : opts.arcDetail || this.options('arcDetail'),
     radius : opts.radius || 0.3,
     forceTube: opts.forceTube || false,
-    objIdManager : this._objectIdManager
+    idPool : this._objectIdManager
   };
   var obj =  render.cartoon(structure, this._gl, options);
   return this.add(name, obj);
@@ -487,7 +489,7 @@ PV.prototype.ballsAndSticks = function(name, structure, opts) {
     radius: opts.radius || 0.3,
     arcDetail : (opts.arcDetail || this.options('arcDetail'))*2,
     sphereDetail : opts.sphereDetail || this.options('sphereDetail'),
-    objIdManager : this._objectIdManager
+    idPool : this._objectIdManager
   };
   var obj = render.ballsAndSticks(structure, this._gl, options);
   return this.add(name, obj);
@@ -498,7 +500,7 @@ PV.prototype.lines = function(name, structure, opts) {
   var options = {
     color : opts.color || color.byElement(),
     lineWidth : opts.lineWidth || 4.0,
-    objIdManager : this._objectIdManager
+    idPool : this._objectIdManager
   };
   var obj =  render.lines(structure, this._gl, options);
   return this.add(name, obj);
@@ -511,7 +513,7 @@ PV.prototype.trace = function(name, structure, opts) {
     radius: opts.radius || 0.3,
     arcDetail : (opts.arcDetail || this.options('arcDetail'))*2,
     sphereDetail : opts.sphereDetail || this.options('sphereDetail'),
-    objIdManager : this._objectIdManager
+    idPool : this._objectIdManager
   };
   var obj = render.trace(structure, this._gl, options);
   return this.add(name, obj);
@@ -556,7 +558,7 @@ PV.prototype.pick = function(pos) {
       var objId = pixels[baseIndex+0] | pixels[baseIndex+1] << 8 |
                   pixels[baseIndex+2] << 16;
       if (pickedIds[objId] === undefined) {
-        var obj = this._objectIdManager.objectFor(objId);
+        var obj = this._objectIdManager.objectForId(objId);
         if (obj !== undefined) {
           pickedObjects.push(obj);
           pickedIds[objId] = true;
@@ -629,6 +631,7 @@ PV.prototype.rm = function(glob) {
     if (!regex.test(obj.name())) {
       newObjects.push(obj);
     }
+    obj.destroy();
   }
   this._objects = newObjects;
 };

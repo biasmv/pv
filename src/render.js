@@ -95,10 +95,13 @@ exports.spheres = function(structure, gl, options) {
   var protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
   var vertAssoc = new AtomVertexAssoc(structure, true);
   options.color.begin(structure);
+  var atomCount = structure.atomCount();
+  var idRange = options.idPool.getContinuousRange(atomCount);
+  geom.addIdRange(idRange);
   structure.eachAtom(function(atom) {
     options.color.colorFor(atom, clr, 0);
     var vertStart = geom.numVerts();
-    var objId = options.objIdManager.idFor(atom);
+    var objId = idRange.nextId(atom);
     protoSphere.addTransformed(geom, atom.pos(), 1.5, clr, objId);
     var vertEnd = geom.numVerts();
     vertAssoc.addAssoc(atom, vertStart, vertEnd);
@@ -121,9 +124,12 @@ exports.ballsAndSticks = (function() {
     var vertAssoc = new AtomVertexAssoc(structure, true);
     var protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
     var protoCyl = new ProtoCylinder(options.arcDetail);
+    var atomCount = structure.atomCount();
+    var idRange = options.idPool.getContinuousRange(atomCount);
+    meshGeom.addIdRange(idRange);
     options.color.begin(structure);
     structure.eachAtom(function(atom) {
-      var objId = options.objIdManager.idFor(atom);
+      var objId = idRange.nextId(atom);
       var vertStart = meshGeom.numVerts();
       options.color.colorFor(atom, clr, 0);
       protoSphere.addTransformed(meshGeom, atom.pos(), options.radius, clr,
@@ -160,11 +166,14 @@ exports.lines = function(structure, gl, options) {
   var clr = vec3.create();
   var vertAssoc = new AtomVertexAssoc(structure, true);
   options.color.begin(structure);
+  var atomCount = structure.atomCount();
+  var idRange = options.idPool.getContinuousRange(atomCount);
+  lineGeom.addIdRange(idRange);
   structure.eachAtom(function(atom) {
     // for atoms without bonds, we draw a small cross, otherwise these atoms 
     // would be invisible on the screen.
     var vertStart = lineGeom.numVerts();
-    var objId = options.objIdManager.idFor(atom);
+    var objId = idRange.nextId(atom);
     if (atom.bonds().length) {
       atom.eachBond(function(bond) {
         bond.mid_point(mp); 
@@ -219,7 +228,9 @@ exports.lineTrace = (function() {
       vertAssoc.addAssoc(traceIndex, 0, lineGeom.numVerts(), 
                         lineGeom.numVerts()+1);
       var colors = new Float32Array(trace.length()*3);
-      var idOne = options.objIdManager.idFor(trace.residueAt(0)), idTwo;
+      var idRange = options.idPool.getContinuousRange(trace.length());
+      var idOne = idRange.nextId(trace.residueAt(0)), idTwo;
+      lineGeom.addIdRange(idRange);
       for (var i = 1; i < trace.length(); ++i) {
         options.color.colorFor(trace.centralAtomAt(i-1), colorOne, 0);
         colors[(i-1)*3] = colorOne[0]; colors[(i-1)*3+1] = colorOne[1];
@@ -227,7 +238,7 @@ exports.lineTrace = (function() {
         options.color.colorFor(trace.centralAtomAt(i), colorTwo, 0);
         trace.posAt(posOne, i-1);
         trace.posAt(posTwo, i);
-        idTwo = options.objIdManager.idFor(trace.residueAt(i));
+        idTwo = idRange.nextId(trace.residueAt(i));
 
         lineGeom.addLine(posOne, colorOne, posTwo, colorTwo, 
                          idOne, idTwo);
@@ -258,7 +269,7 @@ exports.lineTrace = (function() {
 
 exports.sline = function(structure, gl, options) {
   console.time('sline');
-  var lineGeom =new  LineGeom(gl);
+  var lineGeom = new LineGeom(gl);
   options.color.begin(structure);
   var vertAssoc = new TraceVertexAssoc(structure, options.splineDetail, 1, true);
   lineGeom.setLineWidth(options.lineWidth);
@@ -271,6 +282,9 @@ exports.sline = function(structure, gl, options) {
     var positions = new Float32Array(trace.length()*3);
     var colors = new Float32Array(trace.length()*3);
     var objIds = [];
+    var idRange = options.idPool.getContinuousRange(trace.length());
+    lineGeom.addIdRange(idRange);
+
     for (i = 0; i < trace.length(); ++i) {
       var atom = trace.centralAtomAt(i);
       trace.smoothPosAt(posOne, i, options.strength);
@@ -278,7 +292,7 @@ exports.sline = function(structure, gl, options) {
       positions[i*3] = posOne[0];
       positions[i*3+1] = posOne[1];
       positions[i*3+2] = posOne[2];
-      objIds.push(options.objIdManager.idFor(atom.residue()));
+      objIds.push(idRange.nextId(atom.residue()));
     }
     var idStart = objIds[0], idEnd = 0;
     vertAssoc.setPerResidueColors(traceIndex, colors);
@@ -396,11 +410,11 @@ var _colorPosNormalsFromTrace = (function() {
   var pos = vec3.create();
   var normal = vec3.create(), lastNormal = vec3.create();
                                  
-  return function(trace, colors, positions, normals, objIds, options) {
+  return function(trace, colors, positions, normals, objIds, pool, options) {
     var strand_start = null, strand_end = null;
     vec3.set(lastNormal, 0.0, 0.0, 0.0);
     for (var i = 0; i < trace.length(); ++i) {
-      objIds.push(options.objIdManager.idFor(trace.residueAt(i)));
+      objIds.push(pool.nextId(trace.residueAt(i)));
       trace.smoothPosAt(pos, i, options.strength);
       positions[i*3] = pos[0]; 
       positions[i*3+1] = pos[1]; 
@@ -460,8 +474,10 @@ var _cartoonForChain = (function() {
       var normals = new Float32Array(trace.length()*3);
 
       var objIds = [];
+      var idRange = options.idPool.getContinuousRange(trace.length());
       _colorPosNormalsFromTrace(trace, colors, positions, normals, objIds, 
-                                options);
+                                idRange, options);
+      meshGeom.addIdRange(idRange);
       var sdiv = geom.catmullRomSpline(positions, options.splineDetail, 
                                        options.strength, false);
       var normalSdiv = geom.catmullRomSpline(normals, options.splineDetail,
@@ -560,9 +576,6 @@ var _cartoonForChain = (function() {
   };
 })();
 
-
-
-
 var _traceForChain = (function() {
 
   var rotation = mat3.create();
@@ -582,11 +595,12 @@ var _traceForChain = (function() {
     var traceIndex = 0;
     for (var ti = 0; ti < traces.length; ++ti) {
       var trace = traces[ti];
-
+      var idRange = options.idPool.getContinuousRange(trace.length());
+      meshGeom.addIdRange(idRange);
       options.color.colorFor(trace.centralAtomAt(0), colorOne, 0);
       var vertStart = meshGeom.numVerts();
       trace.posAt(caPrevPos, 0);
-      var idStart = options.objIdManager.idFor(trace.residueAt(0)), idEnd = 0;
+      var idStart = idRange.nextId(trace.residueAt(0)), idEnd = 0;
       options.protoSphere.addTransformed(meshGeom, caPrevPos, options.radius, 
                                          colorOne, idStart);
       var vertEnd = null;
@@ -596,7 +610,7 @@ var _traceForChain = (function() {
       colors[1] = colorOne[1];
       colors[2] = colorOne[2];
       for (var i = 1; i < trace.length(); ++i) {
-        idEnd = options.objIdManager.idFor(trace.residueAt(i));
+        idEnd = idRange.nextId(trace.residueAt(i));
         trace.posAt(caPrevPos, i-1);
         trace.posAt(caThisPos, i);
         options.color.colorFor(trace.centralAtomAt(i), colorTwo, 0);

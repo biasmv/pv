@@ -55,11 +55,16 @@ SceneNode.prototype.name = function(name) {
   return this._name; 
 };
 
-
+SceneNode.prototype.destroy = function() {
+  for (var i = 0; i < this._children.length; ++i) {
+    this._children[i].destroy();
+  }
+}
 
 function BaseGeom(gl) {
   SceneNode.prototype.constructor.call(this, gl);
   this._gl = gl;
+  this._idRanges = [];
 }
 
 
@@ -69,10 +74,22 @@ BaseGeom.prototype.select = function(what) {
   return this.structure().select(what);
 };
 
+
 BaseGeom.prototype.structure = function() { return this._vertAssoc._structure; };
 
 BaseGeom.prototype.setVertAssoc = function(assoc) {
   this._vertAssoc = assoc;
+};
+
+BaseGeom.prototype.addIdRange = function(range) {
+  this._idRanges.push(range);
+};
+
+BaseGeom.prototype.destroy = function() {
+  SceneNode.prototype.destroy.call(this);
+  for (var i = 0; i < this._idRanges.length; ++i) {
+    this._idRanges[i].recycle();
+  }
 };
 
 // Holds geometrical data for objects rendered as lines. For each vertex,
@@ -192,6 +209,13 @@ CompositeGeom.prototype.addGeom = function(geom) {
   this._geoms.push(geom);
 };
 
+CompositeGeom.prototype.destroy = function() {
+  BaseGeom.prototype.destroy.call(this);
+  for (var i = 0; i < this._geoms.length; ++i) {
+    this._geoms[i].destroy();
+  }
+  this._geoms = [];
+}
 
 CompositeGeom.prototype.structure = function() { 
   return this._structure;
@@ -687,20 +711,67 @@ TextLabel.prototype.draw = function(cam, shaderCatalog, style, pass) {
   this._gl.disable(this._gl.BLEND);
 };
 
-
-function ObjectIdManager() {
-  this._objects = {};
-  this._nextId = 0;
+// A continous range of object identifiers.
+//
+function ContinuousIdRange(pool, start, end) {
+  this._pool = pool;
+  this._start = start;
+  this._next = start;
+  this._end = end;
 }
 
-ObjectIdManager.prototype.idFor = function(obj) {
-  var id = this._nextId;
-  this._nextId += 1;
-  this._objects[id] = obj;
+ContinuousIdRange.prototype.nextId = function(obj) {
+  var id = this._next;
+  this._next++;
+  this._pool._objects[id] = obj;
   return id;
 };
+ContinuousIdRange.prototype.recycle = function() { 
+  this._pool.recycle(this); 
+};
+ContinuousIdRange.prototype.length = function() { 
+  return this._end - this._start; 
+};
 
-ObjectIdManager.prototype.objectFor = function(id) {
+function UniqueObjectIdPool() {
+  this._objects = {};
+  this._unusedRangeStart = 0;
+  this._free = [];
+}
+
+UniqueObjectIdPool.prototype.getContinuousRange = function(num) {
+  // FIXME: keep the "free" list sorted
+  var bestIndex = -1;
+  var bestLength = null;
+  for (var i = 0; i < this._free.length; ++i) {
+    var free = this._free[i];
+    var length = free.length();
+    if (length >= num && (bestLength === null || length < bestLength)) {
+      bestLength = length;
+      bestIndex = i;
+    }
+  }
+  if (bestIndex !== -1) {
+    var result = this._free[bestIndex];
+    this._free.splice(bestIndex, 1);
+    return result;
+  }
+  var start = this._unusedRangeStart;
+  var end = start + num;
+  this._unusedRangeStart = end;
+  return new ContinuousIdRange(this, start, end);
+};
+
+UniqueObjectIdPool.prototype.recycle = function(range) {
+  for (var i = range._start; i < range._next; ++i) {
+    delete this._objects[i];
+  }
+  range._next = range._start;
+  this._free.push(range);
+};
+
+
+UniqueObjectIdPool.prototype.objectForId = function(id) {
   return this._objects[id];
 };
 
@@ -715,7 +786,7 @@ exports.TubeProfile = TubeProfile;
 exports.ProtoSphere = ProtoSphere;
 exports.ProtoCylinder = ProtoCylinder;
 exports.TextLabel = TextLabel;
-exports.ObjectIdManager = ObjectIdManager;
+exports.UniqueObjectIdPool = UniqueObjectIdPool;
 
 })(this);
 
