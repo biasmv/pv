@@ -88,7 +88,7 @@ FrameBuffer.prototype._resizeBuffers = function() {
 FrameBuffer.prototype.resize = function(width, height) {
   this._width = width;
   this._height = height;
-}
+};
 
 FrameBuffer.prototype.release = function() {
   this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);

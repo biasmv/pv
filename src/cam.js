@@ -67,7 +67,7 @@ Cam.prototype.setViewportSize = function(width, height) {
   mat4.identity(this._projection);
   mat4.perspective(this._projection, 45.0, width / height, this._near, 
                    this._far);
-}
+};
 
 Cam.prototype.setCenter = function(point) {
   this._updateMat = true;
