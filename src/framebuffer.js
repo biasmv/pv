@@ -25,7 +25,8 @@
 function FrameBuffer(gl, options) {
   this._width = options.width;
   this._height = options.height;
-  console.log('frame buffer', this._width, this._height);
+  this._colorBufferWidth = this._width;
+  this._colorBufferHeight = this._height;
   this._gl = gl;
   this._colorHandle = this._gl.createFramebuffer();
   this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._colorHandle);
@@ -37,15 +38,7 @@ function FrameBuffer(gl, options) {
                                      this._gl.DEPTH_ATTACHMENT,
                                      this._gl.RENDERBUFFER, this._depthHandle);
   this._colorTexture = this._gl.createTexture();
-  this._gl.bindTexture(this._gl.TEXTURE_2D, this._colorTexture);
-  this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._width,
-                      this._height, 0, this._gl.RGBA,
-                      this._gl.UNSIGNED_BYTE, null);
-  // create texture and use it for colors
-  this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0,
-                                this._gl.TEXTURE_2D, this._colorTexture, 0);
-  this._gl.bindTexture(this._gl.TEXTURE_2D, null);
-  this.release();
+  this._initColorBuffer();
 }
 
 FrameBuffer.prototype.width = function() { return this._width; };
@@ -54,8 +47,48 @@ FrameBuffer.prototype.height = function() { return this._height; };
 FrameBuffer.prototype.bind = function() {
   this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._colorHandle);
   this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._depthHandle);
+  if (this._colorBufferWidth !== this._width ||
+      this._colorBufferHeight !== this._height) {
+    this._resizeBuffers();
+  }
   this._gl.viewport(0, 0, this._width, this._height);
 };
+
+FrameBuffer.prototype._initColorBuffer = function() {
+  this.bind();
+  this._gl.bindTexture(this._gl.TEXTURE_2D, this._colorTexture);
+  this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._width,
+                      this._height, 0, this._gl.RGBA, this._gl.UNSIGNED_BYTE, 
+                      null);
+  this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0,
+                                this._gl.TEXTURE_2D, this._colorTexture, 0);
+  this._gl.bindTexture(this._gl.TEXTURE_2D, null);
+
+  this.release();
+};
+
+FrameBuffer.prototype._resizeBuffers = function() {
+  this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._depthHandle);
+  this._gl.renderbufferStorage(this._gl.RENDERBUFFER, this._gl.DEPTH_COMPONENT16,
+                               this._width, this._height);
+  this._gl.bindTexture(this._gl.TEXTURE_2D, this._colorTexture);
+  this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._width,
+                      this._height, 0, this._gl.RGBA, this._gl.UNSIGNED_BYTE, 
+                      null);
+  this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0,
+                                this._gl.TEXTURE_2D, this._colorTexture, 0);
+  this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER,
+                                     this._gl.DEPTH_ATTACHMENT,
+                                     this._gl.RENDERBUFFER, this._depthHandle);
+  this._gl.bindTexture(this._gl.TEXTURE_2D, null);
+  this._colorBufferWidth = this._width;
+  this._colorBufferHeight = this._height;
+};
+
+FrameBuffer.prototype.resize = function(width, height) {
+  this._width = width;
+  this._height = height;
+}
 
 FrameBuffer.prototype.release = function() {
   this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);

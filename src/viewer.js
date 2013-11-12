@@ -73,6 +73,13 @@ function PV(domElement, opts) {
   this._textureCanvas.style.display = 'none';
   this._2dcontext = this._textureCanvas.getContext('2d');
   this._objectIdManager = new UniqueObjectIdPool();
+  var parentRect = domElement.getBoundingClientRect();
+  if (this._options.width === 'auto') {
+    this._options.width = parentRect.width;
+  }
+  if (this._options.height === 'auto') {
+    this._options.height = parentRect.height;
+  }
   if ('outline' in opts) {
     this._options.outline = opts.outline;
   } else {
@@ -88,6 +95,26 @@ function PV(domElement, opts) {
   document.addEventListener('DOMContentLoaded', 
                             bind(this, this._initPV));
 }
+PV.prototype.resize = function(width, height) {
+  this._options.width = width;
+  this._options.height = height;
+  this._options.realWidth = width * this._options.samples;
+  this._options.realHeight = height * this._options.samples;
+  this._gl.viewport(0, 0, this._options.realWidth, 
+                    this._options._realHeight);
+  this._canvas.width = width;
+  this._canvas.height = height;
+  this._cam.setViewportSize(this._options.realWidth, 
+                            this._options.realHeight);
+  this._pickBuffer.resize(width, height);
+  this.requestRedraw();
+};
+
+PV.prototype.fitParent = function() {
+  var parentRect = this._domElement.getBoundingClientRect();
+  console.log(parentRect.width, parentRect.height);
+  this.resize(parentRect.width, parentRect.height);
+};
 
 PV.prototype.gl = function() { return this._gl; };
 
@@ -195,6 +222,7 @@ PV.prototype._initGL = function () {
   }
   this._options.realWidth = this._options.width * samples;
   this._options.realHeight = this._options.height * samples;
+  this._options.samples = samples;
   if (samples > 1) {
     this._initManualAntialiasing(samples);
   }

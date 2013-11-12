@@ -43,9 +43,7 @@ function Cam(gl) {
   this._updateMat = true;
   this._gl = gl;
   this._currentShader = null;
-  mat4.perspective(this._projection, 45.0, 
-                   gl.viewportWidth / gl.viewportHeight, this._near, 
-                   this._far);
+  this.setViewportSize(gl.viewportWidth, gl.viewportHeight);
   mat4.translate(this._modelview, this._modelview, [0, 0, -20]);
 }
 
@@ -64,6 +62,12 @@ Cam.prototype._updateIfRequired = function() {
   return true;
 };
 
+Cam.prototype.setViewportSize = function(width, height) {
+  this._updateMat = true;
+  mat4.identity(this._projection);
+  mat4.perspective(this._projection, 45.0, width / height, this._near, 
+                   this._far);
+}
 
 Cam.prototype.setCenter = function(point) {
   this._updateMat = true;
