@@ -134,8 +134,11 @@ Cam.prototype.panXY = (function () {
 
 Cam.prototype.zoom = function(delta) {
   this._updateMat = true;
-  var factor = 1.0+delta*0.005;
-  this._zoom = (this._zoom - 2)*factor+2;
+  var factor = 1.0-delta*1e-5;
+  var shift = factor*Math.sqrt(this._zoom);
+  if (delta < 0)
+    shift *= -1;
+  this._zoom = Math.max(2.0, this._zoom+shift); 
 };
 
 Cam.prototype.currentShader = function() { return this._currentShader; };

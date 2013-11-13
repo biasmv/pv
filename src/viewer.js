@@ -384,7 +384,7 @@ PV.prototype._mouseWheel = function(event) {
 };
 
 PV.prototype._mouseWheelFF = function(event) {
-  this._cam.zoom(-event.deltaY*4.00);
+  this._cam.zoom(-event.deltaY*2.00);
   this.requestRedraw();
 };
 
