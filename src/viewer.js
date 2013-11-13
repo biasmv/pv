@@ -96,23 +96,29 @@ function PV(domElement, opts) {
                             bind(this, this._initPV));
 }
 PV.prototype.resize = function(width, height) {
+  if (width === this._options.width && height === this._options.height) {
+    return;
+  }
+  console.log('resizing canvas to', width, height);
   this._options.width = width;
   this._options.height = height;
   this._options.realWidth = width * this._options.samples;
   this._options.realHeight = height * this._options.samples;
   this._gl.viewport(0, 0, this._options.realWidth, 
                     this._options._realHeight);
-  this._canvas.width = width;
-  this._canvas.height = height;
+  this._canvas.width = this._options.realWidth;
+  this._canvas.height = this._options.realHeight;
   this._cam.setViewportSize(this._options.realWidth, 
                             this._options.realHeight);
+  if (this._options.samples > 1)  {
+    this._initManualAntialiasing(this._options.samples);
+  }
   this._pickBuffer.resize(width, height);
   this.requestRedraw();
 };
 
 PV.prototype.fitParent = function() {
   var parentRect = this._domElement.getBoundingClientRect();
-  console.log(parentRect.width, parentRect.height);
   this.resize(parentRect.width, parentRect.height);
 };
 
@@ -190,9 +196,6 @@ PV.prototype._initManualAntialiasing = function(samples) {
     var scale = 'scale('+scale_factor+', '+scale_factor+')';
     var transform = translate+' '+scale;
 
-    this._domElement.style.width = this._options.width+'px';
-    this._domElement.style.height = this._options.height+'px';
-    this._domElement.style.overflow = 'hidden';
     this._canvas.style.webkitTransform = transform;
     this._canvas.style.transform = transform;
     this._canvas.style.ieTransform = transform;
