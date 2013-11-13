@@ -68,6 +68,7 @@ function PV(domElement, opts) {
   };
   this._objects = [];
   this._domElement = domElement;
+  this._resize = false;
   this._canvas = document.createElement('canvas');
   this._textureCanvas = document.createElement('canvas');
   this._textureCanvas.style.display = 'none';
@@ -95,15 +96,17 @@ function PV(domElement, opts) {
   document.addEventListener('DOMContentLoaded', 
                             bind(this, this._initPV));
 }
-PV.prototype.resize = function(width, height) {
-  if (width === this._options.width && height === this._options.height) {
+
+// resizes the canvas, separated out from PV.resize because we want
+// to call this function directly in a requestAnimationFrame together 
+// with rendering to avoid flickering.
+PV.prototype._ensureSize = function() {
+  if (!this._resize) {
     return;
   }
-  console.log('resizing canvas to', width, height);
-  this._options.width = width;
-  this._options.height = height;
-  this._options.realWidth = width * this._options.samples;
-  this._options.realHeight = height * this._options.samples;
+  this._resize = false;
+  this._options.realWidth = this._options.width * this._options.samples;
+  this._options.realHeight = this._options.height * this._options.samples;
   this._gl.viewport(0, 0, this._options.realWidth, 
                     this._options._realHeight);
   this._canvas.width = this._options.realWidth;
@@ -113,7 +116,17 @@ PV.prototype.resize = function(width, height) {
   if (this._options.samples > 1)  {
     this._initManualAntialiasing(this._options.samples);
   }
-  this._pickBuffer.resize(width, height);
+  this._pickBuffer.resize(this._options.width, this._options.height);
+};
+
+PV.prototype.resize = function(width, height) {
+  if (width === this._options.width && height === this._options.height) {
+    return;
+  }
+  console.log('resizing canvas to', width, height);
+  this._resize = true;
+  this._options.width = width;
+  this._options.height = height;
   this.requestRedraw();
 };
 
@@ -337,6 +350,7 @@ PV.prototype._drawWithPass = function(pass) {
 };
 
 PV.prototype._draw = function() {
+  this._ensureSize();
 
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
   this._gl.viewport(0, 0, this._options.realWidth, this._options.realHeight);
