@@ -165,26 +165,16 @@ Cam.prototype.bind = function(shader) {
   if (!this._updateIfRequired() && !shaderChanged) {
     return;
   }
-  shader.projection = this._gl.getUniformLocation(shader, 'projectionMat');
-  shader.modelview = this._gl.getUniformLocation(shader, 'modelviewMat');
-  shader.rotation = this._gl.getUniformLocation(shader, 'rotationMat');
   this._gl.uniformMatrix4fv(shader.projection, false, this._projection);
   this._gl.uniformMatrix4fv(shader.modelview, false, this._modelview);
-  this._gl.uniformMatrix4fv(shader.modelview, false, this._modelview);
-  if (shader.rotation !== -1) {
+  if (shader.rotation) {
     this._gl.uniformMatrix4fv(shader.rotation, false, this._rotation);
   }
-  this._gl.uniform1i(this._gl.getUniformLocation(shader, 'fog'), this._fog);
-  this._gl.uniform1f(this._gl.getUniformLocation(shader, 'fogFar'),
-                this._fogFar+this._zoom);
-  this._gl.uniform1f(this._gl.getUniformLocation(shader, 'fogNear'),
-                this._fogNear+this._zoom);
-  if (this._gl.getUniformLocation(shader, 'outlineColor')) {
-    this._gl.uniform3fv(this._gl.getUniformLocation(shader, 'outlineColor'),
-                  this._outlineColor);
-  }
-  this._gl.uniform3fv(this._gl.getUniformLocation(shader, 'fogColor'),
-                this._fogColor);
+  this._gl.uniform1i(shader.fog, this._fog);
+  this._gl.uniform1f(shader.fogFar, this._fogFar+this._zoom);
+  this._gl.uniform1f(shader.fogNear, this._fogNear+this._zoom);
+  this._gl.uniform3fv(shader.fogColor, this._fogColor);
+  this._gl.uniform3fv(shader.outlineColor, this._outlineColor);
 };
 
 exports.Cam = Cam;

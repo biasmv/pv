@@ -34,7 +34,7 @@ SceneNode.prototype.add = function(node) {
 };
 
 SceneNode.prototype.draw = function(cam, shaderCatalog, style, pass) {
-  for (var i = 0; i < this._children.length; ++i) {
+  for (var i = 0, e = this._children.length; i != e; ++i) {
     this._children[i].draw(cam, shaderCatalog, style, pass);
   }
 };
@@ -496,48 +496,48 @@ MeshGeom.prototype.colorBy = function(colorFunc, view) {
 
 MeshGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
 
-  if (!this._visible) { return; }
+  if (!this._visible) { 
+    return; 
+  }
   
   var shader = this.shaderForStyleAndPass(shaderCatalog, style, pass);
-  if (!shader) { return; }
+  if (!shader) { 
+    return; 
+  }
   cam.bind(shader);
   this.bind();
 
-  var posAttrib = this._gl.getAttribLocation(shader, 'attrPos');
-  this._gl.enableVertexAttribArray(posAttrib);
-  this._gl.vertexAttribPointer(posAttrib, 3, this._gl.FLOAT, false,
+  this._gl.enableVertexAttribArray(shader.posAttrib);
+  this._gl.vertexAttribPointer(shader.posAttrib, 3, this._gl.FLOAT, false,
                                this._FLOATS_PER_VERT*4, this._POS_OFFSET*4);
 
-  var normalAttrib = this._gl.getAttribLocation(shader, 'attrNormal');
-  if (normalAttrib !== -1) {
-    this._gl.enableVertexAttribArray(normalAttrib);
-    this._gl.vertexAttribPointer(normalAttrib, 3, this._gl.FLOAT, false, 
+  if (shader.normalAttrib !== -1) {
+    this._gl.enableVertexAttribArray(shader.normalAttrib);
+    this._gl.vertexAttribPointer(shader.normalAttrib, 3, this._gl.FLOAT, false, 
                                  this._FLOATS_PER_VERT*4, this._NORMAL_OFFSET*4);
   }
 
-  var clrAttrib = this._gl.getAttribLocation(shader, 'attrColor');
-  if (clrAttrib !== -1) {
-    this._gl.vertexAttribPointer(clrAttrib, 3, this._gl.FLOAT, false,
+  if (shader.colorAttrib !== -1) {
+    this._gl.vertexAttribPointer(shader.colorAttrib, 3, this._gl.FLOAT, false,
                                  this._FLOATS_PER_VERT*4, this._COLOR_OFFSET*4);
-    this._gl.enableVertexAttribArray(clrAttrib);
+    this._gl.enableVertexAttribArray(shader.colorAttrib);
   }
-  var idAttrib = this._gl.getAttribLocation(shader, 'attrObjId');
-  if (idAttrib !== -1) {
-    this._gl.vertexAttribPointer(idAttrib, 1, this._gl.FLOAT, false,
+  if (shader.objIdAttrib !== -1) {
+    this._gl.vertexAttribPointer(shader.objIdAttrib, 1, this._gl.FLOAT, false,
                                  this._FLOATS_PER_VERT*4, 9*4);
-    this._gl.enableVertexAttribArray(idAttrib);
+    this._gl.enableVertexAttribArray(shader.objIdAttrib);
   }
   this._gl.drawElements(this._gl.TRIANGLES, this._numTriangles*3, 
                         this._gl.UNSIGNED_SHORT, 0);
-  this._gl.disableVertexAttribArray(posAttrib);
-  if (clrAttrib !==-1) {
-    this._gl.disableVertexAttribArray(clrAttrib);
+  this._gl.disableVertexAttribArray(shader.posAttrib);
+  if (shader.colorAttrib !==-1) {
+    this._gl.disableVertexAttribArray(shader.colorAttrib);
   }
-  if (normalAttrib !== -1) {
-    this._gl.disableVertexAttribArray(normalAttrib);
+  if (shader.normalAttrib !== -1) {
+    this._gl.disableVertexAttribArray(shader.normalAttrib);
   }
-  if (idAttrib !== -1) {
-    this._gl.disableVertexAttribArray(idAttrib);
+  if (shader.objIdAttrib !== -1) {
+    this._gl.disableVertexAttribArray(shader.objIdAttrib);
   }
 };
 

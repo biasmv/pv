@@ -285,6 +285,25 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
     console.error(this._gl.getShaderInfoLog(shaderProgram));
     return null;
   }
+  // get vertex attribute location for the shader once to
+  // avoid repeated calls to
+  var getAttribLoc = bind(this._gl, this._gl.getAttribLocation);
+  var getUniformLoc = bind(this._gl, this._gl.getUniformLocation);
+  shaderProgram.posAttrib    = getAttribLoc(shaderProgram, 'attrPos');
+  shaderProgram.colorAttrib  = getAttribLoc(shaderProgram, 'attrColor');
+  shaderProgram.normalAttrib = getAttribLoc(shaderProgram, 'attrNormal');
+  shaderProgram.objIdAttrib  = getAttribLoc(shaderProgram, 'attrObjId');
+  shaderProgram.projection   = getUniformLoc(shaderProgram, 'projectionMat');
+  shaderProgram.modelview    = getUniformLoc(shaderProgram, 'modelviewMat');
+  shaderProgram.rotation     = getUniformLoc(shaderProgram, 'rotationMat');
+  shaderProgram.fog          = getUniformLoc(shaderProgram, 'fog');
+  shaderProgram.fogFar       = getUniformLoc(shaderProgram, 'fogFar');
+  shaderProgram.fogNear      = getUniformLoc(shaderProgram, 'fogNear');
+  shaderProgram.fogColor     = getUniformLoc(shaderProgram, 'fogColor');
+  shaderProgram.outlineColor = getUniformLoc(shaderProgram, 'outlineColor');
+
+  console.log(shaderProgram);
+
   return shaderProgram;
 };
 
@@ -320,6 +339,7 @@ PV.prototype._initPV = function() {
   this._mousePanListener = bind(this, this._mousePan);
   this._mouseRotateListener = bind(this, this._mouseRotate);
   this._mouseUpListener = bind(this, this._mouseUp);
+  this._boundDraw = bind(this, this._draw);
   // Firefox responds to the wheel event, whereas other browsers listen to
   // the mousewheel event. Register different event handlers, depending on
   // what properties are available.
@@ -339,11 +359,11 @@ PV.prototype._initPV = function() {
 
 
 PV.prototype.requestRedraw = function() {
-  requestAnimFrame(bind(this, this._draw));
+  requestAnimFrame(this._boundDraw);
 };
 
 PV.prototype._drawWithPass = function(pass) {
-  for (var i=0; i < this._objects.length; ++i) {
+  for (var i = 0, e = this._objects.length; i != e; ++i) {
     this._objects[i].draw(this._cam, this._shaderCatalog, this._options.style, 
                           pass);
   }
