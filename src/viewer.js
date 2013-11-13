@@ -68,6 +68,7 @@ function PV(domElement, opts) {
   };
   this._objects = [];
   this._domElement = domElement;
+  this._redrawRequested = false;
   this._resize = false;
   this._canvas = document.createElement('canvas');
   this._textureCanvas = document.createElement('canvas');
@@ -359,6 +360,9 @@ PV.prototype._initPV = function() {
 
 
 PV.prototype.requestRedraw = function() {
+  if (this._redrawRequested)
+    return;
+  this._redrawRequested = true;
   requestAnimFrame(this._boundDraw);
 };
 
@@ -371,6 +375,7 @@ PV.prototype._drawWithPass = function(pass) {
 
 PV.prototype._draw = function() {
   this._ensureSize();
+  this._redrawRequested = false;
 
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
   this._gl.viewport(0, 0, this._options.realWidth, this._options.realHeight);
