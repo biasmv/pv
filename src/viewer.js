@@ -124,7 +124,6 @@ PV.prototype.resize = function(width, height) {
   if (width === this._options.width && height === this._options.height) {
     return;
   }
-  console.log('resizing canvas to', width, height);
   this._resize = true;
   this._options.width = width;
   this._options.height = height;
@@ -287,7 +286,7 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
     return null;
   }
   // get vertex attribute location for the shader once to
-  // avoid repeated calls to
+  // avoid repeated calls to getAttribLocation/getUniformLocation
   var getAttribLoc = bind(this._gl, this._gl.getAttribLocation);
   var getUniformLoc = bind(this._gl, this._gl.getUniformLocation);
   shaderProgram.posAttrib    = getAttribLoc(shaderProgram, 'attrPos');
@@ -302,8 +301,6 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
   shaderProgram.fogNear      = getUniformLoc(shaderProgram, 'fogNear');
   shaderProgram.fogColor     = getUniformLoc(shaderProgram, 'fogColor');
   shaderProgram.outlineColor = getUniformLoc(shaderProgram, 'outlineColor');
-
-  console.log(shaderProgram);
 
   return shaderProgram;
 };
