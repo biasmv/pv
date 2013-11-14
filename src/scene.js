@@ -125,6 +125,11 @@ LineGeom.prototype._POS_OFFSET = 0;
 LineGeom.prototype._COLOR_OFFSET = 3;
 LineGeom.prototype._ID_OFFSET = 6;
 
+LineGeom.prototype.destroy = function() {
+  BaseGeom.prototype.destroy.call(this);
+  this._gl.deleteBuffer(this._interleavedBuffer);
+}
+
 LineGeom.prototype.numVerts = function() { return this._numLines*2; };
 
 LineGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
@@ -471,6 +476,12 @@ MeshGeom.prototype.setVertAssoc = function(assoc) {
   this._vertAssoc = assoc;
 };
 
+MeshGeom.prototype.destroy = function() {
+  BaseGeom.prototype.destroy.call(this);
+  this._gl.deleteBuffer(this._interleavedBuffer);
+  this._gl.deleteBuffer(this._indexBuffer);
+}
+
 MeshGeom.prototype.numVerts = function() { return this._numVerts; };
 
 MeshGeom.prototype.shaderForStyleAndPass = function(shaderCatalog, style, pass) {
@@ -740,7 +751,8 @@ function UniqueObjectIdPool() {
 }
 
 UniqueObjectIdPool.prototype.getContinuousRange = function(num) {
-  // FIXME: keep the "free" list sorted
+  // FIXME: keep the "free" list sorted, so we can binary search it
+  // for a good match
   var bestIndex = -1;
   var bestLength = null;
   for (var i = 0; i < this._free.length; ++i) {
