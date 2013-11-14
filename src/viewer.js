@@ -357,14 +357,15 @@ PV.prototype._initPV = function() {
 
 
 PV.prototype.requestRedraw = function() {
-  if (this._redrawRequested)
+  if (this._redrawRequested) {
     return;
+  }
   this._redrawRequested = true;
   requestAnimFrame(this._boundDraw);
 };
 
 PV.prototype._drawWithPass = function(pass) {
-  for (var i = 0, e = this._objects.length; i != e; ++i) {
+  for (var i = 0, e = this._objects.length; i !== e; ++i) {
     this._objects[i].draw(this._cam, this._shaderCatalog, this._options.style, 
                           pass);
   }

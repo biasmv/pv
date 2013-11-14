@@ -34,7 +34,7 @@ SceneNode.prototype.add = function(node) {
 };
 
 SceneNode.prototype.draw = function(cam, shaderCatalog, style, pass) {
-  for (var i = 0, e = this._children.length; i != e; ++i) {
+  for (var i = 0, e = this._children.length; i !== e; ++i) {
     this._children[i].draw(cam, shaderCatalog, style, pass);
   }
 };
