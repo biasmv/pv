@@ -360,7 +360,7 @@ var gradColor = (function() {
     out[index+0] = color[0];
     out[index+1] = color[1];
     out[index+2] = color[2];
-  }
+  };
 })();
 
 function colorByItemProp(propName, grad, options, iter, item) {

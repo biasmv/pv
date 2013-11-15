@@ -128,7 +128,7 @@ LineGeom.prototype._ID_OFFSET = 6;
 LineGeom.prototype.destroy = function() {
   BaseGeom.prototype.destroy.call(this);
   this._gl.deleteBuffer(this._interleavedBuffer);
-}
+};
 
 LineGeom.prototype.numVerts = function() { return this._numLines*2; };
 
@@ -480,7 +480,7 @@ MeshGeom.prototype.destroy = function() {
   BaseGeom.prototype.destroy.call(this);
   this._gl.deleteBuffer(this._interleavedBuffer);
   this._gl.deleteBuffer(this._indexBuffer);
-}
+};
 
 MeshGeom.prototype.numVerts = function() { return this._numVerts; };
 
