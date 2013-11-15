@@ -10,18 +10,20 @@
       background-color: #fff;/*#f0f0f0;*/
       font-weight: lighter;
       margin: 0px;
-      overflow: hidden;
+      width:100%;
+      height:100%x;
     }
     #gl {
-      margin-left:50px;
-      margin-top:50px;
-      float: left;
-      width:600px;
-      height:600px;
+      position:fixed;
+      bottom:0px;
+      top:0px;
+      left:0px;
+      right:0px;
     }
     #inspector {
-      margin-top:10px;
-      float : left;
+      top:10px;
+      left:10px;
+      position:absolute;
       background-color:#fafafa;
       padding:10px;
       border-style:solid;
@@ -68,44 +70,43 @@
   </div>
   <div id=status>initialising...</div>
 </body>
-  <script src='js/gl-matrix.min.js'></script>
   <script src='js/pv.min.js'></script>
   <script>
     var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'medium', width: 600, height : 600,
+                       { quality : 'high', width: 'auto', height : 'auto',
                          antialias : true, outline : true});
     var structure;
     function lines() {
       pv.clear();
-      pv.add('structure', pv.lines(structure));
+      pv.lines('structure', structure);
     }
     function cartoon() {
       pv.clear();
-      pv.add('structure', pv.cartoon(structure));
+      pv.cartoon('structure', structure, { color: color.ssSuccession() });
     }
-    function line_trace() {
+    function lineTrace() {
       pv.clear();
-      pv.add('structure', pv.lineTrace(structure));
+      pv.lineTrace('structure', structure);
     }
     function sline() {
       pv.clear();
-      pv.add('structure', pv.sline(structure));
+      pv.sline('structure', structure);
     }
 
     function tube() {
       pv.clear();
-      pv.add('structure', pv.tube(structure));
+      pv.tube('structure', structure);
     }
 
     function trace() {
       pv.clear();
-      pv.add('structure', pv.trace(structure));
+      pv.trace('structure', structure);
     }
     function preset() {
       pv.clear();
       var ligand = structure.select({rnames : ['RVP', 'SAH']});
-      pv.add('ligand', pv.spheres(ligand));
-      pv.add('protein', pv.cartoon(structure));
+      pv.ballsAndSticks('ligand', ligand);
+      pv.cartoon('protein', structure);
     }
     function load(pdb_id) {
       document.getElementById('status').innerHTML ='loading '+pdb_id;
@@ -126,12 +127,15 @@
       load('1r6a');
     }
     document.getElementById('cartoon').onclick = cartoon;
-    document.getElementById('line-trace').onclick = cartoon;
+    document.getElementById('line-trace').onclick = lineTrace;
     document.getElementById('preset').onclick = preset;
     document.getElementById('lines').onclick = lines;
     document.getElementById('trace').onclick = trace;
     document.getElementById('sline').onclick = sline;
     document.getElementById('tube').onclick = tube;
+    window.onresize = function(event) {
+      pv.fitParent();
+    }
     document.addEventListener('DOMContentLoaded', transferase);
   </script>
 </html>
