@@ -91,11 +91,12 @@ var buildRotation = (function() {
 exports.spheres = function(structure, gl, options) {
   console.time('spheres');
   var clr = vec3.create();
-  var geom = new MeshGeom(gl);
   var protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
+  var atomCount = structure.atomCount();
+  var geom = new MeshGeom(gl, atomCount*protoSphere.numVerts());
+  protoSphere.numVerts();
   var vertAssoc = new AtomVertexAssoc(structure, true);
   options.color.begin(structure);
-  var atomCount = structure.atomCount();
   var idRange = options.idPool.getContinuousRange(atomCount);
   geom.addIdRange(idRange);
   structure.eachAtom(function(atom) {
@@ -120,11 +121,16 @@ exports.ballsAndSticks = (function() {
 
   return function(structure, gl, options) {
     console.time('ballsAndSticks');
-    var meshGeom = new MeshGeom(gl);
     var vertAssoc = new AtomVertexAssoc(structure, true);
     var protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
     var protoCyl = new ProtoCylinder(options.arcDetail);
     var atomCount = structure.atomCount();
+    var bondCount = 0; 
+    structure.eachAtom(function(a) { bondCount+= a.bonds().length; });
+    console.log(bondCount);
+    var numVerts = atomCount*protoSphere.numVerts()+
+                   bondCount*protoCyl.numVerts();
+    var meshGeom = new MeshGeom(gl, numVerts);
     var idRange = options.idPool.getContinuousRange(atomCount);
     meshGeom.addIdRange(idRange);
     options.color.begin(structure);
@@ -161,12 +167,21 @@ exports.ballsAndSticks = (function() {
 exports.lines = function(structure, gl, options) {
   console.time('lines');
   var mp = vec3.create();
-  var lineGeom = new LineGeom(gl);
-  lineGeom.setLineWidth(options.lineWidth);
   var clr = vec3.create();
   var vertAssoc = new AtomVertexAssoc(structure, true);
   options.color.begin(structure);
   var atomCount = structure.atomCount();
+  var lineCount = 0;
+  structure.eachAtom(function(atom) { 
+    var numBonds = atom.bonds().length;
+    if (numBonds) {
+      lineCount += numBonds;
+    } else {
+      lineCount += 3;
+    }
+  });
+  var lineGeom = new LineGeom(gl, lineCount*2);
+  lineGeom.setLineWidth(options.lineWidth);
   var idRange = options.idPool.getContinuousRange(atomCount);
   lineGeom.addIdRange(idRange);
   structure.eachAtom(function(atom) {
@@ -200,6 +215,13 @@ exports.lines = function(structure, gl, options) {
   return lineGeom;
 };
 
+var _lineTraceNumVerts = function(traces) {
+  var numVerts = 0;
+  for (var i = 0; i < traces.length; ++i) {
+    numVerts += 2* (traces[i].length()-1);
+  }
+  return numVerts;
+}
 //--------------------------------------------------------------------------
 // Some thoughts on trace-based render styles
 //
@@ -218,12 +240,16 @@ exports.lineTrace = (function() {
   
   return function(structure, gl, options) {
     console.time('lineTrace');
-    var lineGeom = new LineGeom(gl);
     var vertAssoc = new TraceVertexAssoc(structure, 1, true);
-    lineGeom.setLineWidth(options.lineWidth);
     options.color.begin(structure);
     var chains = structure.chains();
     var traceIndex = 0;
+    var numVerts = 0; 
+    for (var ci = 0; ci < chains.length; ++ci) {
+      numVerts += _lineTraceNumVerts(chains[ci].backboneTraces());
+    }
+    var lineGeom = new LineGeom(gl, numVerts);
+    lineGeom.setLineWidth(options.lineWidth);
     function makeLineTrace(trace) {
       vertAssoc.addAssoc(traceIndex, 0, lineGeom.numVerts(), 
                         lineGeom.numVerts()+1);
@@ -266,17 +292,28 @@ exports.lineTrace = (function() {
 
 })();
 
+var _slineNumVerts = function(traces, splineDetail) {
+  var numVerts = 0;
+  for (var i = 0; i < traces.length; ++i) {
+    numVerts += 2*(splineDetail*(traces[i].length()-1)+1);
+  }
+  return numVerts;
+}
 
 exports.sline = function(structure, gl, options) {
   console.time('sline');
-  var lineGeom = new LineGeom(gl);
   options.color.begin(structure);
   var vertAssoc = new TraceVertexAssoc(structure, options.splineDetail, 1, true);
-  lineGeom.setLineWidth(options.lineWidth);
   var posOne = vec3.create(), posTwo = vec3.create();
   var colorOne = vec3.create(), colorTwo = vec3.create();
   var chains = structure.chains();
   var i, e, traceIndex = 0;
+  var numVerts = 0;
+  for (var ci = 0; ci < chains.length; ++ci) {
+    numVerts += _slineNumVerts(chains[ci].backboneTraces(), options.splineDetail);
+  }
+  var lineGeom = new LineGeom(gl, numVerts);
+  lineGeom.setLineWidth(options.lineWidth);
   function makeTrace(trace) {
     var firstSlice = trace.fullTraceIndex(0);
     var positions = new Float32Array(trace.length()*3);
@@ -450,6 +487,16 @@ var _colorPosNormalsFromTrace = (function() {
   };
 })();
 
+// calculates the number of vertices required for the cartoon and
+// tube render styles
+var _cartoonNumVerts = function(traces, vertsPerSlice, splineDetail) {
+  var numVerts = 0;
+  for (var i = 0; i < traces.length; ++i) {
+    numVerts += ((traces[i].length()-1)*splineDetail+1)*vertsPerSlice;
+  }
+  return numVerts;
+};
+
 // constructs a cartoon representation for all consecutive backbone traces found
 // in the given chain. 
 var _cartoonForChain = (function() {
@@ -463,7 +510,9 @@ var _cartoonForChain = (function() {
     if (traces.length === 0) {
       return null;
     }
-    var meshGeom = new MeshGeom(gl);
+    var numVerts = _cartoonNumVerts(traces, options.arcDetail*4, 
+                                    options.splineDetail);
+    var meshGeom = new MeshGeom(gl, numVerts);
     var vertAssoc = new TraceVertexAssoc(chain.asView(), options.splineDetail,
                                          false);
     for (var ti = 0; ti < traces.length; ++ti) {
@@ -576,6 +625,15 @@ var _cartoonForChain = (function() {
   };
 })();
 
+var _traceNumVerts = function(traces, sphereNumVerts, cylNumVerts) {
+  var numVerts = 0;
+  for (var i = 0; i < traces.length; ++i) {
+    numVerts += traces[i].length()*sphereNumVerts;
+    numVerts += (traces[i].length()-1)*cylNumVerts;
+  }
+  return numVerts;
+};
+
 var _traceForChain = (function() {
 
   var rotation = mat3.create();
@@ -590,7 +648,9 @@ var _traceForChain = (function() {
     if (traces.length === 0) {
       return null;
     }
-    var meshGeom = new MeshGeom(gl);
+    var numVerts = _traceNumVerts(traces, options.protoSphere.numVerts(),
+                                  options.protoCyl.numVerts());
+    var meshGeom = new MeshGeom(gl, numVerts);
     var vertAssoc = new TraceVertexAssoc(chain.asView(), 1, false);
     var traceIndex = 0;
     for (var ti = 0; ti < traces.length; ++ti) {

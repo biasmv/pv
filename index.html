@@ -265,7 +265,7 @@
     function load(pdb_id) {
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = mol.pdb(data);
-        preset();
+        lines();
         pv.centerOn(structure);
       }});
     }
@@ -404,7 +404,7 @@
       pv.requestRedraw();
     });
 
-    document.addEventListener('DOMContentLoaded', crambin);
+    document.addEventListener('DOMContentLoaded', kinase);
     window.addEventListener('resize', function() {
       pv.fitParent();
     });

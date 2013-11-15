@@ -475,7 +475,7 @@ PV.prototype.RENDER_MODES = [
 
 /// simple dispatcher which allows to render using a certain style.
 //  will bail out if the render mode does not exist.
-PV.prototype.renderAs = function(structure, mode, opts) {
+PV.prototype.renderAs = function(name, structure, mode, opts) {
   var found = false;
   for (var i = 0; i < this.RENDER_MODES.length; ++i) {
     if (this.RENDER_MODES[i] === mode) {
@@ -487,7 +487,7 @@ PV.prototype.renderAs = function(structure, mode, opts) {
     console.error('render mode', mode, 'not supported');
     return;
   }
-  return this[mode](structure, opts);
+  return this[mode](name, structure, opts);
 
 };
 

@@ -94,9 +94,9 @@ BaseGeom.prototype.destroy = function() {
 
 // Holds geometrical data for objects rendered as lines. For each vertex,
 // the color and position is stored in an interleaved format.
-function LineGeom(gl) {
+function LineGeom(gl, numVerts) {
   BaseGeom.prototype.constructor.call(this, gl);
-  this._data = [];
+  this._data = new Float32Array(numVerts*this._FLOATS_PER_VERT);
   this._ready = false;
   this._interleavedBuffer = gl.createBuffer();
   this._numLines = 0;
@@ -130,7 +130,9 @@ LineGeom.prototype.destroy = function() {
   this._gl.deleteBuffer(this._interleavedBuffer);
 };
 
-LineGeom.prototype.numVerts = function() { return this._numLines*2; };
+LineGeom.prototype.numVerts = function() { 
+  return this._numLines*2; 
+};
 
 LineGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
 
@@ -178,17 +180,29 @@ LineGeom.prototype.bind = function() {
   if (this._ready) {
     return;
   }
-  var floatArray = new Float32Array(this._data);
-  this._gl.bufferData(this._gl.ARRAY_BUFFER, floatArray, this._gl.STATIC_DRAW);
+  this._gl.bufferData(this._gl.ARRAY_BUFFER, this._data, 
+                      this._gl.STATIC_DRAW);
   this._ready = true;
 };
 
 LineGeom.prototype.addLine = function(startPos, startColor, endPos, 
                                       endColor, idOne, idTwo) {
-  this._data.push(startPos[0], startPos[1], startPos[2],
-                  startColor[0], startColor[1], startColor[2], idOne,
-                  endPos[0], endPos[1], endPos[2],
-                  endColor[0], endColor[1], endColor[2], idTwo);
+  var index = this._FLOATS_PER_VERT * this._numLines * 2;
+  this._data[index++] = startPos[0];
+  this._data[index++] = startPos[1];
+  this._data[index++] = startPos[2];
+  this._data[index++] = startColor[0];
+  this._data[index++] = startColor[1];
+  this._data[index++] = startColor[2];
+  this._data[index++] = idOne;
+  this._data[index++] = endPos[0];
+  this._data[index++] = endPos[1];
+  this._data[index++] = endPos[2];
+  this._data[index++] = endColor[0];
+  this._data[index++] = endColor[1];
+  this._data[index++] = endColor[2];
+  this._data[index++] = idTwo;
+
   this._numLines += 1;
   this._ready = false;
 };
@@ -307,12 +321,12 @@ ProtoSphere.prototype.addTransformed = (function() {
   };
 })();
 
-ProtoSphere.prototype.num_indices = function() { 
+ProtoSphere.prototype.numIndices = function() { 
   return this._indices.length; 
 };
 
-ProtoSphere.prototype.num_vertices = function() { 
-  return this._verts.length; 
+ProtoSphere.prototype.numVerts = function() { 
+  return this._verts.length/3; 
 };
 
 // A tube profile is a cross-section of a tube, e.g. a circle or a 'flat' square.
@@ -418,6 +432,12 @@ function ProtoCylinder(arcs) {
   }
 }
 
+ProtoCylinder.prototype.numVerts = function() {
+  return this._verts.length/3;
+};
+
+ProtoCylinder.prototype.numIndices = function() { return this._indices; };
+
 ProtoCylinder.prototype.addTransformed = (function() {
   var pos = vec3.create(), normal = vec3.create();
   return function(geom, center, length, radius, rotation, colorOne, 
@@ -453,11 +473,11 @@ ProtoCylinder.prototype.addTransformed = (function() {
 //
 // , where P is the position, N the normal and C the color information
 // of the vertex.
-function MeshGeom(gl) {
+function MeshGeom(gl, numVerts) {
   BaseGeom.prototype.constructor.call(this, gl);
   this._interleavedBuffer = gl.createBuffer();
   this._indexBuffer = gl.createBuffer();
-  this._vertData = [];
+  this._vertData = new Float32Array(numVerts*this._FLOATS_PER_VERT);
   this._indexData = [];
   this._numVerts = 0;
   this._numTriangles = 0;
@@ -553,11 +573,24 @@ MeshGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
 };
 
 MeshGeom.prototype.addVertex = function(pos, normal, color, objId) {
+  /*
   // pushing all values at once seems to be more efficient than pushing
   // separately. resizing the vertData prior and setting the elements
   // is substantially slower.
   this._vertData.push(pos[0], pos[1], pos[2], normal[0], normal[1], normal[2],
                       color[0], color[1], color[2], objId);
+  */
+  var i = this._numVerts*this._FLOATS_PER_VERT;
+  this._vertData[i++] = pos[0];
+  this._vertData[i++] = pos[1];
+  this._vertData[i++] = pos[2];
+  this._vertData[i++] = normal[0];
+  this._vertData[i++] = normal[1];
+  this._vertData[i++] = normal[2];
+  this._vertData[i++] = color[0];
+  this._vertData[i++] = color[1];
+  this._vertData[i++] = color[2];
+  this._vertData[i++] = objId;
   this._numVerts += 1;
 };
 
@@ -572,8 +605,7 @@ MeshGeom.prototype.bind = function() {
   if (this._ready) {
     return;
   }
-  var floatArray = new Float32Array(this._vertData);
-  this._gl.bufferData(this._gl.ARRAY_BUFFER, floatArray, 
+  this._gl.bufferData(this._gl.ARRAY_BUFFER, this._vertData, 
                       this._gl.STATIC_DRAW);
   var indexArray = new Uint16Array(this._indexData);
   this._gl.bufferData(this._gl.ELEMENT_ARRAY_BUFFER, indexArray, 
