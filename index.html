@@ -216,7 +216,7 @@
     var structure;
     function lines() {
       pv.clear();
-      pv.lines('structure', structure, { color: color.byAtomProp('index')});
+      pv.lines('structure', structure, { color: color.byResidueProp('num')});
     }
     function cartoon() {
       pv.clear();

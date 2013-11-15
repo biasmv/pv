@@ -338,7 +338,32 @@ exports.color.byChain = function(grad) {
   return colorFunc;
 };
 
-exports.color.byAtomProp = function(propName, grad, options) {
+function getMinMaxRange(obj, iter, propName) {
+  var min = null;
+  var max = null;
+  obj[iter](function(item) {
+    var value = item.prop(propName);
+    if (min === null && max === null) {
+      min = max = value;
+      return;
+    }
+    min = Math.min(min, value);
+    max = Math.max(max, value);
+  });
+  return { min: min, max: max };
+}
+
+var gradColor = (function() {
+  var color = vec3.create();
+  return function(out, index, grad, t) {
+    grad.colorAt(color, t);
+    out[index+0] = color[0];
+    out[index+1] = color[1];
+    out[index+2] = color[2];
+  }
+})();
+
+function colorByItemProp(propName, grad, options, iter, item) {
   if (!grad) {
     grad = gradient('rainbow');
   }
@@ -346,13 +371,9 @@ exports.color.byAtomProp = function(propName, grad, options) {
   return new ColorOp(function(a, out, index) {
       var t = 0.0;
       if (this._min !== this._max) {
-        t = (a.prop(propName) - this._min)/(this._max - this._min);
+        t = (item(a).prop(propName) - this._min)/(this._max - this._min);
       }
-      var color = [0, 0, 0];
-      grad.colorAt(color, t);
-      out[index+0] = color[0];
-      out[index+1] = color[1];
-      out[index+2] = color[2];
+      gradColor(out, index, grad, t);
     }, 
     function(obj) {
       if (options.range) {
@@ -360,22 +381,22 @@ exports.color.byAtomProp = function(propName, grad, options) {
         this._max = options.range[1];
         return;
       }
-      var min = null;
-      var max = null;
-      obj.eachAtom(function(atom) {
-        var value = atom.prop(propName);
-        if (min === null && max === null) {
-          min = max = value;
-          return;
-        }
-        min = Math.min(min, value);
-        max = Math.max(max, value);
-      });
-      this._min = min;
-      this._max = max;
+      var range = getMinMaxRange(obj, iter, propName);
+      this._min = range.min;
+      this._max = range.max;
     }, 
     function(obj) { }
   );
+}
+
+exports.color.byAtomProp = function(propName, grad, options) {
+  return colorByItemProp(propName, grad, options, 'eachAtom', 
+                         function(a) {return a;});
+};
+
+exports.color.byResidueProp = function(propName, grad, options) {
+  return colorByItemProp(propName, grad, options, 'eachResidue', 
+                         function(a) {return a.residue();});
 };
 
 // linearly interpolates the array of colors and returns it as a Float32Array
