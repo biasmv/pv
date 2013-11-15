@@ -338,6 +338,46 @@ exports.color.byChain = function(grad) {
   return colorFunc;
 };
 
+exports.color.byAtomProp = function(propName, grad, options) {
+  if (!grad) {
+    grad = gradient('rainbow');
+  }
+  options = options || {};
+  return new ColorOp(function(a, out, index) {
+      var t = 0.0;
+      if (this._min !== this._max) {
+        t = (a.prop(propName) - this._min)/(this._max - this._min);
+      }
+      var color = [0, 0, 0];
+      grad.colorAt(color, t);
+      out[index+0] = color[0];
+      out[index+1] = color[1];
+      out[index+2] = color[2];
+    }, 
+    function(obj) {
+      if (options.range) {
+        this._min = options.range[0];
+        this._max = options.range[1];
+        return;
+      }
+      var min = null;
+      var max = null;
+      obj.eachAtom(function(atom) {
+        var value = atom.prop(propName);
+        if (min === null && max === null) {
+          min = max = value;
+          return;
+        }
+        min = Math.min(min, value);
+        max = Math.max(max, value);
+      });
+      this._min = min;
+      this._max = max;
+    }, 
+    function(obj) { }
+  );
+};
+
 // linearly interpolates the array of colors and returns it as a Float32Array
 // color must be an array containing a sequence of R,G,B triples.
 exports.interpolateColor = function(colors, num) {

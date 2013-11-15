@@ -347,10 +347,17 @@ ChainBase.prototype.asView = function() {
 
 };
 
+ChainBase.prototype.prop = function(propName) { 
+  return this[propName]();
+};
 
 function ResidueBase() {
 
 }
+
+ResidueBase.prototype.prop = function(propName) { 
+  return this[propName]();
+};
 
 ResidueBase.prototype.isWater = function() {
   return this.name() === 'HOH' || this.name() === 'DOD';
@@ -404,6 +411,10 @@ AtomBase.prototype.name = function() { return this._name; };
 AtomBase.prototype.pos = function() { return this._pos; };
 AtomBase.prototype.element = function() { return this._element; };
 AtomBase.prototype.index = function() { return this._index; };
+
+AtomBase.prototype.prop = function(propName) { 
+  return this[propName]();
+};
 
 AtomBase.prototype.eachBond = function(callback) {
   var bonds = this.bonds();
