@@ -221,7 +221,7 @@ var _lineTraceNumVerts = function(traces) {
     numVerts += 2* (traces[i].length()-1);
   }
   return numVerts;
-}
+};
 //--------------------------------------------------------------------------
 // Some thoughts on trace-based render styles
 //
@@ -280,7 +280,7 @@ exports.lineTrace = (function() {
       vertAssoc.setPerResidueColors(traceIndex, colors);
       traceIndex += 1;
     }
-    for (var ci = 0; ci < chains.length; ++ci) {
+    for (ci = 0; ci < chains.length; ++ci) {
       var chain = chains[ci];
       chain.eachBackboneTrace(makeLineTrace);
     }
@@ -298,7 +298,7 @@ var _slineNumVerts = function(traces, splineDetail) {
     numVerts += 2*(splineDetail*(traces[i].length()-1)+1);
   }
   return numVerts;
-}
+};
 
 exports.sline = function(structure, gl, options) {
   console.time('sline');
@@ -364,7 +364,7 @@ exports.sline = function(structure, gl, options) {
     }
     traceIndex += 1;
   }
-  for (var ci = 0; ci < chains.length; ++ci) {
+  for (ci = 0; ci < chains.length; ++ci) {
     var chain = chains[ci];
     chain.eachBackboneTrace(makeTrace);
   }
