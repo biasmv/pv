@@ -436,7 +436,7 @@ ProtoCylinder.prototype.numVerts = function() {
   return this._verts.length/3;
 };
 
-ProtoCylinder.prototype.numIndices = function() { return this._indices; };
+ProtoCylinder.prototype.numIndices = function() { return this._indices.length; };
 
 ProtoCylinder.prototype.addTransformed = (function() {
   var pos = vec3.create(), normal = vec3.create();
@@ -473,12 +473,12 @@ ProtoCylinder.prototype.addTransformed = (function() {
 //
 // , where P is the position, N the normal and C the color information
 // of the vertex.
-function MeshGeom(gl, numVerts) {
+function MeshGeom(gl, numVerts, numIndices) {
   BaseGeom.prototype.constructor.call(this, gl);
   this._interleavedBuffer = gl.createBuffer();
   this._indexBuffer = gl.createBuffer();
   this._vertData = new Float32Array(numVerts*this._FLOATS_PER_VERT);
-  this._indexData = [];
+  this._indexData = new Uint16Array(numIndices);
   this._numVerts = 0;
   this._numTriangles = 0;
   this._ready = false;
@@ -500,6 +500,8 @@ MeshGeom.prototype.destroy = function() {
   BaseGeom.prototype.destroy.call(this);
   this._gl.deleteBuffer(this._interleavedBuffer);
   this._gl.deleteBuffer(this._indexBuffer);
+  delete this._vertData;
+  delete this._indexData;
 };
 
 MeshGeom.prototype.numVerts = function() { return this._numVerts; };
@@ -595,7 +597,13 @@ MeshGeom.prototype.addVertex = function(pos, normal, color, objId) {
 };
 
 MeshGeom.prototype.addTriangle = function(idx1, idx2, idx3) {
-  this._indexData.push(idx1, idx2, idx3);
+  var index = 3 * this._numTriangles;
+  if (index >= this._indexData.length) {
+    return;
+  }
+  this._indexData[index++] = idx1;
+  this._indexData[index++] = idx2;
+  this._indexData[index++] = idx3;
   this._numTriangles += 1;
 };
 
@@ -607,8 +615,7 @@ MeshGeom.prototype.bind = function() {
   }
   this._gl.bufferData(this._gl.ARRAY_BUFFER, this._vertData, 
                       this._gl.STATIC_DRAW);
-  var indexArray = new Uint16Array(this._indexData);
-  this._gl.bufferData(this._gl.ELEMENT_ARRAY_BUFFER, indexArray, 
+  this._gl.bufferData(this._gl.ELEMENT_ARRAY_BUFFER, this._indexData, 
                       this._gl.STATIC_DRAW);
   this._ready = true;
 };

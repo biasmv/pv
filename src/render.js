@@ -93,7 +93,8 @@ exports.spheres = function(structure, gl, options) {
   var clr = vec3.create();
   var protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
   var atomCount = structure.atomCount();
-  var geom = new MeshGeom(gl, atomCount*protoSphere.numVerts());
+  var geom = new MeshGeom(gl, atomCount*protoSphere.numVerts(),
+                          atomCount*protoSphere.numIndices());
   protoSphere.numVerts();
   var vertAssoc = new AtomVertexAssoc(structure, true);
   options.color.begin(structure);
@@ -126,11 +127,15 @@ exports.ballsAndSticks = (function() {
     var protoCyl = new ProtoCylinder(options.arcDetail);
     var atomCount = structure.atomCount();
     var bondCount = 0; 
-    structure.eachAtom(function(a) { bondCount+= a.bonds().length; });
-    console.log(bondCount);
+    structure.eachAtom(function(a) { 
+      bondCount+= a.bonds().length; 
+    });
     var numVerts = atomCount*protoSphere.numVerts()+
                    bondCount*protoCyl.numVerts();
-    var meshGeom = new MeshGeom(gl, numVerts);
+    var numIndices = atomCount*protoSphere.numIndices()+
+                     bondCount*protoCyl.numIndices();
+    console.log(numIndices);
+    var meshGeom = new MeshGeom(gl, numVerts, numIndices);
     var idRange = options.idPool.getContinuousRange(atomCount);
     meshGeom.addIdRange(idRange);
     options.color.begin(structure);
@@ -497,6 +502,14 @@ var _cartoonNumVerts = function(traces, vertsPerSlice, splineDetail) {
   return numVerts;
 };
 
+var _cartoonNumIndices = function(traces, vertsPerSlice, splineDetail) {
+  var numIndices = 0;
+  for (var i = 0; i < traces.length; ++i) {
+    numIndices += (traces[i].length()*splineDetail-1)*vertsPerSlice*6;
+  }
+  return numIndices;
+};
+
 // constructs a cartoon representation for all consecutive backbone traces found
 // in the given chain. 
 var _cartoonForChain = (function() {
@@ -512,7 +525,9 @@ var _cartoonForChain = (function() {
     }
     var numVerts = _cartoonNumVerts(traces, options.arcDetail*4, 
                                     options.splineDetail);
-    var meshGeom = new MeshGeom(gl, numVerts);
+    var numIndices = _cartoonNumIndices(traces, options.arcDetail*4,
+                                        options.splineDetail);
+    var meshGeom = new MeshGeom(gl, numVerts, numIndices);
     var vertAssoc = new TraceVertexAssoc(chain.asView(), options.splineDetail,
                                          false);
     for (var ti = 0; ti < traces.length; ++ti) {
@@ -634,6 +649,15 @@ var _traceNumVerts = function(traces, sphereNumVerts, cylNumVerts) {
   return numVerts;
 };
 
+var _traceNumIndices = function(traces, sphereNumIndices, cylNumIndices) {
+  var numIndices = 0;
+  for (var i = 0; i < traces.length; ++i) {
+    numIndices += traces[i].length()*sphereNumIndices;
+    numIndices += (traces[i].length()-1)*cylNumIndices;
+  }
+  return numIndices;
+};
+
 var _traceForChain = (function() {
 
   var rotation = mat3.create();
@@ -650,7 +674,9 @@ var _traceForChain = (function() {
     }
     var numVerts = _traceNumVerts(traces, options.protoSphere.numVerts(),
                                   options.protoCyl.numVerts());
-    var meshGeom = new MeshGeom(gl, numVerts);
+    var numIndices = _traceNumIndices(traces, options.protoSphere.numIndices(),
+                                      options.protoCyl.numIndices());
+    var meshGeom = new MeshGeom(gl, numVerts, numIndices);
     var vertAssoc = new TraceVertexAssoc(chain.asView(), 1, false);
     var traceIndex = 0;
     for (var ti = 0; ti < traces.length; ++ti) {

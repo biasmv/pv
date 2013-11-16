@@ -265,7 +265,7 @@
     function load(pdb_id) {
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = mol.pdb(data);
-        lines();
+        cartoon();
         pv.centerOn(structure);
       }});
     }
