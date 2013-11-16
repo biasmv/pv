@@ -29,7 +29,13 @@ Open a WebGL-enabled web browser and visit http://localhost:8000
 Should I use it on my website?
 ----------------------------------------
 
-Probably not yet. There are a few essential features missing, but they should be available soon.
+I would love you to! Most features you would expect from a protein viewer are already present and working. Two considerations are important though:
+
+ * WebGL is only supported in a subset of browsers. If you can afford to lose users of IE and older versions of browsers, `pv` is a good solution for protein visualisation.
+
+  * DNA/RNA visualisation is not implemented yet, for protein-centrict workflows that's fine though. In case you are interested in DNA/RNA rendering, just open a feature request and I'll try to get around to it.
+
+  * At the moment, the PDB files are required to have secondary structure information assigned, as PV does not implement algorithm to assign secondary structure yet. That's on the TODO list though and will be added soon.
 
 
 Documentation
