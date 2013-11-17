@@ -94,7 +94,9 @@ exports.spheres = function(structure, gl, options) {
   var protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
   var atomCount = structure.atomCount();
   var geom = new MeshGeom(gl, atomCount*protoSphere.numVerts(),
-                          atomCount*protoSphere.numIndices());
+                          atomCount*protoSphere.numIndices(),
+                          options.float32BufferPool, 
+                          options.uint16BufferPool);
   protoSphere.numVerts();
   var vertAssoc = new AtomVertexAssoc(structure, true);
   options.color.begin(structure);
@@ -134,8 +136,9 @@ exports.ballsAndSticks = (function() {
                    bondCount*protoCyl.numVerts();
     var numIndices = atomCount*protoSphere.numIndices()+
                      bondCount*protoCyl.numIndices();
-    console.log(numIndices);
-    var meshGeom = new MeshGeom(gl, numVerts, numIndices);
+    var meshGeom = new MeshGeom(gl, numVerts, numIndices, 
+                                options.float32BufferPool, 
+                                options.uint16BufferPool);
     var idRange = options.idPool.getContinuousRange(atomCount);
     meshGeom.addIdRange(idRange);
     options.color.begin(structure);
@@ -185,7 +188,7 @@ exports.lines = function(structure, gl, options) {
       lineCount += 3;
     }
   });
-  var lineGeom = new LineGeom(gl, lineCount*2);
+  var lineGeom = new LineGeom(gl, lineCount*2, options.float32BufferPool);
   lineGeom.setLineWidth(options.lineWidth);
   var idRange = options.idPool.getContinuousRange(atomCount);
   lineGeom.addIdRange(idRange);
@@ -253,12 +256,13 @@ exports.lineTrace = (function() {
     for (var ci = 0; ci < chains.length; ++ci) {
       numVerts += _lineTraceNumVerts(chains[ci].backboneTraces());
     }
-    var lineGeom = new LineGeom(gl, numVerts);
+    var lineGeom = new LineGeom(gl, numVerts, options.float32BufferPool);
     lineGeom.setLineWidth(options.lineWidth);
     function makeLineTrace(trace) {
       vertAssoc.addAssoc(traceIndex, 0, lineGeom.numVerts(), 
                         lineGeom.numVerts()+1);
-      var colors = new Float32Array(trace.length()*3);
+
+      var colors = options.float32BufferPool.request(trace.length()*3);
       var idRange = options.idPool.getContinuousRange(trace.length());
       var idOne = idRange.nextId(trace.residueAt(0)), idTwo;
       lineGeom.addIdRange(idRange);
@@ -284,6 +288,7 @@ exports.lineTrace = (function() {
       colors[trace.length()*3-1] = colorTwo[2];
       vertAssoc.setPerResidueColors(traceIndex, colors);
       traceIndex += 1;
+      options.float32BufferPool.release(colors);
     }
     for (ci = 0; ci < chains.length; ++ci) {
       var chain = chains[ci];
@@ -317,12 +322,12 @@ exports.sline = function(structure, gl, options) {
   for (var ci = 0; ci < chains.length; ++ci) {
     numVerts += _slineNumVerts(chains[ci].backboneTraces(), options.splineDetail);
   }
-  var lineGeom = new LineGeom(gl, numVerts);
+  var lineGeom = new LineGeom(gl, numVerts, options.float32BufferPool);
   lineGeom.setLineWidth(options.lineWidth);
   function makeTrace(trace) {
     var firstSlice = trace.fullTraceIndex(0);
-    var positions = new Float32Array(trace.length()*3);
-    var colors = new Float32Array(trace.length()*3);
+    var positions = options.float32BufferPool.request(trace.length()*3);
+    var colors = options.float32BufferPool.request(trace.length()*3);
     var objIds = [];
     var idRange = options.idPool.getContinuousRange(trace.length());
     lineGeom.addIdRange(idRange);
@@ -338,14 +343,17 @@ exports.sline = function(structure, gl, options) {
     }
     var idStart = objIds[0], idEnd = 0;
     vertAssoc.setPerResidueColors(traceIndex, colors);
-    var sdiv = geom.catmullRomSpline(positions, options.splineDetail, 
-                                      options.strength, false);
+    var sdiv = geom.catmullRomSpline(positions, trace.length(), options.splineDetail, 
+                                      options.strength, false, 
+                                      options.float32BufferPool);
     var interpColors = interpolateColor(colors, options.splineDetail);
     var vertStart = lineGeom.numVerts();
     vertAssoc.addAssoc(traceIndex, firstSlice,
                        vertStart, vertStart+1);
     var halfSplineDetail = Math.floor(options.splineDetail/2);
-    for (i = 1, e = sdiv.length/3; i < e; ++i) {
+    var steps = geom.catmullRomSplineNumPoints(trace.length(), options.splineDetail, 
+                                               false);
+    for (i = 1; i < steps; ++i) {
       posOne[0] = sdiv[3*(i-1)];
       posOne[1] = sdiv[3*(i-1)+1];
       posOne[2] = sdiv[3*(i-1)+2];
@@ -367,6 +375,9 @@ exports.sline = function(structure, gl, options) {
       vertAssoc.addAssoc(traceIndex, firstSlice+i, vertEnd-1, 
                          vertEnd+((i === trace.length-1) ? 0 : 1));
     }
+    options.float32BufferPool.release(colors);
+    options.float32BufferPool.release(positions);
+    options.float32BufferPool.release(sdiv);
     traceIndex += 1;
   }
   for (ci = 0; ci < chains.length; ++ci) {
@@ -527,25 +538,31 @@ var _cartoonForChain = (function() {
                                     options.splineDetail);
     var numIndices = _cartoonNumIndices(traces, options.arcDetail*4,
                                         options.splineDetail);
-    var meshGeom = new MeshGeom(gl, numVerts, numIndices);
+    var meshGeom = new MeshGeom(gl, numVerts, numIndices, 
+                                options.float32BufferPool, 
+                                options.uint16BufferPool);
     var vertAssoc = new TraceVertexAssoc(chain.asView(), options.splineDetail,
                                          false);
     for (var ti = 0; ti < traces.length; ++ti) {
       var trace = traces[ti];
 
-      var positions = new Float32Array(trace.length()*3);
-      var colors = new Float32Array(trace.length()*3);
-      var normals = new Float32Array(trace.length()*3);
+      var positions = options.float32BufferPool.request(trace.length()*3);
+      var colors = options.float32BufferPool.request(trace.length()*3);
+      var normals = options.float32BufferPool.request(trace.length()*3);
 
       var objIds = [];
       var idRange = options.idPool.getContinuousRange(trace.length());
       _colorPosNormalsFromTrace(trace, colors, positions, normals, objIds, 
                                 idRange, options);
       meshGeom.addIdRange(idRange);
-      var sdiv = geom.catmullRomSpline(positions, options.splineDetail, 
-                                       options.strength, false);
-      var normalSdiv = geom.catmullRomSpline(normals, options.splineDetail,
-                                              options.strength, false);
+      var sdiv = geom.catmullRomSpline(positions, trace.length(), 
+                                       options.splineDetail, 
+                                       options.strength, false,
+                                       options.float32BufferPool);
+      var normalSdiv = geom.catmullRomSpline(normals, trace.length(), 
+                                             options.splineDetail,
+                                             options.strength, false,
+                                            options.float32BufferPool);
       vertAssoc.setPerResidueColors(ti, colors);
       var interpColors = interpolateColor(colors, options.splineDetail);
       // handle start of trace. this could be moved inside the for-loop, but
@@ -573,7 +590,10 @@ var _cartoonForChain = (function() {
       var halfSplineDetail = Math.floor(options.splineDetail/2);
 
       // handle the bulk of the trace
-      for (var i = 1, e = sdiv.length/3 ; i < e; ++i) {
+      var steps = geom.catmullRomSplineNumPoints(trace.length(), 
+                                                 options.splineDetail, false);
+
+      for (var i = 1, e = steps; i < e; ++i) {
         // compute 3*i, 3*(i-1), 3*(i+1) once and reuse
         var ix3 = 3*i, ipox3 = 3*(i+1), imox3  = 3*(i-1);
 
@@ -634,6 +654,9 @@ var _cartoonForChain = (function() {
         vertAssoc.addAssoc(ti, slice, vertStart, vertEnd);
         slice += 1;
       }
+      options.float32BufferPool.release(normals);
+      options.float32BufferPool.release(positions);
+      options.float32BufferPool.release(colors);
     }
     meshGeom.setVertAssoc(vertAssoc);
     return meshGeom;
@@ -676,7 +699,9 @@ var _traceForChain = (function() {
                                   options.protoCyl.numVerts());
     var numIndices = _traceNumIndices(traces, options.protoSphere.numIndices(),
                                       options.protoCyl.numIndices());
-    var meshGeom = new MeshGeom(gl, numVerts, numIndices);
+    var meshGeom = new MeshGeom(gl, numVerts, numIndices, 
+                                options.float32BufferPool, 
+                                options.uint16BufferPool);
     var vertAssoc = new TraceVertexAssoc(chain.asView(), 1, false);
     var traceIndex = 0;
     for (var ti = 0; ti < traces.length; ++ti) {
@@ -691,7 +716,7 @@ var _traceForChain = (function() {
                                          colorOne, idStart);
       var vertEnd = null;
       vertAssoc.addAssoc(traceIndex, 0, vertStart, vertEnd);
-      var colors = new Float32Array(trace.length()*3);
+      var colors = options.float32BufferPool.request(trace.length()*3);
       colors[0] = colorOne[0];
       colors[1] = colorOne[1];
       colors[2] = colorOne[2];
@@ -732,6 +757,7 @@ var _traceForChain = (function() {
       vertAssoc.addAssoc(traceIndex, trace.length()-1, vertStart, 
                          meshGeom.numVerts());
       traceIndex += 1;
+      options.float32BufferPool.release(colors);
     }
     meshGeom.setVertAssoc(vertAssoc);
     return meshGeom;

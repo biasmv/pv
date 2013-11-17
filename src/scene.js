@@ -94,9 +94,14 @@ BaseGeom.prototype.destroy = function() {
 
 // Holds geometrical data for objects rendered as lines. For each vertex,
 // the color and position is stored in an interleaved format.
-function LineGeom(gl, numVerts) {
+function LineGeom(gl, numVerts, float32BufferPool) {
   BaseGeom.prototype.constructor.call(this, gl);
-  this._data = new Float32Array(numVerts*this._FLOATS_PER_VERT);
+  this._float32BufferPool = float32BufferPool || null;
+  if (this._float32BufferPool) {
+    this._data = this._float32BufferPool.request(numVerts*this._FLOATS_PER_VERT);
+  } else {
+    this._data = new Float32Array(numVerts*this._FLOATS_PER_VERT);
+  }
   this._ready = false;
   this._interleavedBuffer = gl.createBuffer();
   this._numLines = 0;
@@ -128,6 +133,11 @@ LineGeom.prototype._ID_OFFSET = 6;
 LineGeom.prototype.destroy = function() {
   BaseGeom.prototype.destroy.call(this);
   this._gl.deleteBuffer(this._interleavedBuffer);
+  if (this._float32BufferPool) {
+    this._float32BufferPool.release(this._data);
+  } else {
+    delete this._data;
+  }
 };
 
 LineGeom.prototype.numVerts = function() { 
@@ -333,7 +343,8 @@ ProtoSphere.prototype.numVerts = function() {
 // They are used to control the style of helices, strands and coils for the 
 // cartoon render mode. 
 function TubeProfile(points, num, strength) {
-  var interpolated = geom.catmullRomSpline(points, num, strength, true);
+  var interpolated = geom.catmullRomSpline(points, points.length/3, num, 
+                                           strength, true);
 
   this._indices = new Uint16Array(interpolated.length*2);
   this._verts = interpolated;
@@ -473,12 +484,24 @@ ProtoCylinder.prototype.addTransformed = (function() {
 //
 // , where P is the position, N the normal and C the color information
 // of the vertex.
-function MeshGeom(gl, numVerts, numIndices) {
+function MeshGeom(gl, numVerts, numIndices, float32BufferPool,
+                  uint16BufferPool) {
   BaseGeom.prototype.constructor.call(this, gl);
   this._interleavedBuffer = gl.createBuffer();
   this._indexBuffer = gl.createBuffer();
-  this._vertData = new Float32Array(numVerts*this._FLOATS_PER_VERT);
-  this._indexData = new Uint16Array(numIndices);
+  this._float32BufferPool = float32BufferPool || null;
+  this._uint16BufferPool = uint16BufferPool || null;
+  var numFloats = numVerts * this._FLOATS_PER_VERT;
+  if (this._float32BufferPool) {
+    this._vertData = this._float32BufferPool.request(numFloats);
+  } else {
+    this._vertData = new Float32Array(numFloats);
+  }
+  if (this._uint16BufferPool) {
+    this._indexData = this._uint16BufferPool.request(numIndices);
+  } else {
+    this._indexData = new Uint16Array(numIndices);
+  }
   this._numVerts = 0;
   this._numTriangles = 0;
   this._ready = false;
@@ -500,8 +523,16 @@ MeshGeom.prototype.destroy = function() {
   BaseGeom.prototype.destroy.call(this);
   this._gl.deleteBuffer(this._interleavedBuffer);
   this._gl.deleteBuffer(this._indexBuffer);
-  delete this._vertData;
-  delete this._indexData;
+  if (this._float32BufferPool) {
+    this._float32BufferPool.release(this._vertData);
+  } else {
+    delete this._vertData;
+  }
+  if (this._uint16BufferPool) {
+    this._uint16BufferPool.release(this._indexData);
+  } else {
+    delete this._indexData;
+  }
 };
 
 MeshGeom.prototype.numVerts = function() { return this._numVerts; };

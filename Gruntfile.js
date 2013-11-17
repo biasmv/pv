@@ -8,6 +8,7 @@ SOURCE_FILES = [
   'src/trace.js',
   'src/render.js', 
   'src/cam.js',
+  'src/buffer-pool.js',
   'src/framebuffer.js',
   'src/shaders.js',
   'src/viewer.js'

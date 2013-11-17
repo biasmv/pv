@@ -88,17 +88,28 @@ var cubicHermiteInterpolate = (function() {
 };
 })();
 
+
+// returns the number of interpolation points for the given settings
+function catmullRomSplineNumPoints(numPoints, subdiv, circular) {
+  if (circular) {
+    return numPoints*subdiv;
+  } else {
+    return subdiv*(numPoints-1)+1;
+  }
+}
 // interpolates the given list of points (stored in a Float32Array) with a 
 // Cubic Hermite spline using the method of Catmull and Rom to calculate the 
 // tangents.
-function catmullRomSpline(points, num, strength, circular) {
+function catmullRomSpline(points, numPoints, num, strength, circular,
+                          float32BufferPool) {
   circular = circular || false;
   strength = strength || 0.5;
   var out = null;
-  if (circular) {
-    out = new Float32Array(points.length*num);
+  var outLength = catmullRomSplineNumPoints(numPoints, num, circular) * 3;
+  if (float32BufferPool) {
+    out = float32BufferPool.request(outLength);
   } else {
-    out = new Float32Array(3*(num*(points.length/3-1)+1));
+    out = new Float32Array(outLength);
   }
   var index = 0;
   var delta_t = 1.0/num;
@@ -118,7 +129,7 @@ function catmullRomSpline(points, num, strength, circular) {
     vec3.set(p_k,   points[0], points[1], points[2]);
     vec3.set(m_k, 0, 0, 0);
   }
-  for (i = 1, e = points.length/3-1; i < e; ++i) {
+  for (i = 1, e = numPoints-1; i < e; ++i) {
     vec3.set(p_kp3, points[3*(i+1)], points[3*(i+1)+1], points[3*(i+1)+2]);
     vec3.sub(m_kp1, p_kp3, p_kp1);
     vec3.scale(m_kp1, m_kp1, strength);
@@ -144,9 +155,9 @@ function catmullRomSpline(points, num, strength, circular) {
     index+=3;
   }
   if (!circular) {
-    out[index] = points[points.length-3];
-    out[index+1] = points[points.length-2];
-    out[index+2] = points[points.length-1];
+    out[index] = points[3*(numPoints-1)+0];
+    out[index+1] = points[3*(numPoints-1)+1];
+    out[index+2] = points[3*(numPoints-1)+2];
     return out;
   }
   vec3.copy(p_k, p_kp1);
@@ -162,11 +173,13 @@ function catmullRomSpline(points, num, strength, circular) {
   }
   return out;
 }
+
 return {
   signedAngle : signedAngle,
   axisRotation : axisRotation,
   ortho : ortho,
   catmullRomSpline : catmullRomSpline,
-  cubicHermiteInterpolate : cubicHermiteInterpolate
+  cubicHermiteInterpolate : cubicHermiteInterpolate,
+  catmullRomSplineNumPoints : catmullRomSplineNumPoints
 };
 })();

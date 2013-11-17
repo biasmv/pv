@@ -75,6 +75,8 @@ function PV(domElement, opts) {
   this._textureCanvas.style.display = 'none';
   this._2dcontext = this._textureCanvas.getContext('2d');
   this._objectIdManager = new UniqueObjectIdPool();
+  this._float32BufferPool = new BufferPool(Float32Array);
+  this._uint16BufferPool = new BufferPool(Uint16Array);
   var parentRect = domElement.getBoundingClientRect();
   if (this._options.width === 'auto') {
     this._options.width = parentRect.width;
@@ -496,7 +498,9 @@ PV.prototype.lineTrace = function(name, structure, opts) {
   var options = {
     color : opts.color || color.uniform([1, 0, 1]),
     lineWidth : opts.lineWidth || 4.0,
-    idPool : this._objectIdManager
+    idPool : this._objectIdManager,
+    float32BufferPool : this._float32BufferPool,
+    uint16BufferPool : this._uint16BufferPool,
   };
   var obj = render.lineTrace(structure, this._gl, options);
   return this.add(name, obj);
@@ -507,7 +511,9 @@ PV.prototype.spheres = function(name, structure, opts) {
   var options = {
     color : opts.color || color.byElement(),
     sphereDetail : this.options('sphereDetail'),
-    idPool : this._objectIdManager
+    idPool : this._objectIdManager,
+    float32BufferPool : this._float32BufferPool,
+    uint16BufferPool : this._uint16BufferPool,
   };
   var obj = render.spheres(structure, this._gl, options);
   return this.add(name, obj);
@@ -520,7 +526,9 @@ PV.prototype.sline = function(name, structure, opts) {
     splineDetail : opts.splineDetail || this.options('splineDetail'),
     strength: opts.strength || 1.0,
     lineWidth : opts.lineWidth || 4.0,
-    idPool : this._objectIdManager
+    idPool : this._objectIdManager,
+    float32BufferPool : this._float32BufferPool,
+    uint16BufferPool : this._uint16BufferPool,
   };
   var obj =  render.sline(structure, this._gl, options);
   return this.add(name, obj);
@@ -535,7 +543,9 @@ PV.prototype.cartoon = function(name, structure, opts) {
     arcDetail : opts.arcDetail || this.options('arcDetail'),
     radius : opts.radius || 0.3,
     forceTube: opts.forceTube || false,
-    idPool : this._objectIdManager
+    idPool : this._objectIdManager,
+    float32BufferPool : this._float32BufferPool,
+    uint16BufferPool : this._uint16BufferPool,
   };
   var obj =  render.cartoon(structure, this._gl, options);
   return this.add(name, obj);
@@ -557,7 +567,9 @@ PV.prototype.ballsAndSticks = function(name, structure, opts) {
     radius: opts.radius || 0.3,
     arcDetail : (opts.arcDetail || this.options('arcDetail'))*2,
     sphereDetail : opts.sphereDetail || this.options('sphereDetail'),
-    idPool : this._objectIdManager
+    idPool : this._objectIdManager,
+    float32BufferPool : this._float32BufferPool,
+    uint16BufferPool : this._uint16BufferPool,
   };
   var obj = render.ballsAndSticks(structure, this._gl, options);
   return this.add(name, obj);
@@ -568,7 +580,9 @@ PV.prototype.lines = function(name, structure, opts) {
   var options = {
     color : opts.color || color.byElement(),
     lineWidth : opts.lineWidth || 4.0,
-    idPool : this._objectIdManager
+    idPool : this._objectIdManager,
+    float32BufferPool : this._float32BufferPool,
+    uint16BufferPool : this._uint16BufferPool,
   };
   var obj =  render.lines(structure, this._gl, options);
   return this.add(name, obj);
@@ -581,7 +595,9 @@ PV.prototype.trace = function(name, structure, opts) {
     radius: opts.radius || 0.3,
     arcDetail : (opts.arcDetail || this.options('arcDetail'))*2,
     sphereDetail : opts.sphereDetail || this.options('sphereDetail'),
-    idPool : this._objectIdManager
+    idPool : this._objectIdManager,
+    float32BufferPool : this._float32BufferPool,
+    uint16BufferPool : this._uint16BufferPool,
   };
   var obj = render.trace(structure, this._gl, options);
   return this.add(name, obj);
