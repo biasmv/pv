@@ -34,6 +34,7 @@ function Cam(gl) {
   this._fogNear = -5;
   this._fogFar = 10;
   this._fog = true;
+  this._paramsChanged = false;
   this._fogColor = vec3.fromValues(1, 1, 1);
   this._outlineColor = vec3.fromValues(0.1, 0.1, 0.1);
   this._center = vec3.create();
@@ -77,6 +78,7 @@ Cam.prototype.setCenter = function(point) {
 Cam.prototype.fog =function(value) {
   if (value !== undefined) {
     this._fog = value;
+    this._paramsChanged = true;
   }
   return this._fog;
 };
@@ -159,9 +161,10 @@ Cam.prototype.bind = function(shader) {
     this._gl.useProgram(shader);
     shaderChanged = true;
   }
-  if (!this._updateIfRequired() && !shaderChanged) {
+  if (!this._updateIfRequired() && !shaderChanged && !this._paramsChanged) {
     return;
   }
+  this._paramsChanged = false;
   this._gl.uniformMatrix4fv(shader.projection, false, this._projection);
   this._gl.uniformMatrix4fv(shader.modelview, false, this._modelview);
   if (shader.rotation) {

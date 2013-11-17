@@ -146,6 +146,7 @@ PV.prototype.options = function(optName, value) {
   if (value !== undefined) {
     if (optName === 'fog') {
       this._cam.fog(value);
+      this.requestRedraw();
     } else {
       this._options[optName] = value;
     }
