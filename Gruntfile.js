@@ -2,7 +2,7 @@ SOURCE_FILES = [
   'src/core.js', 
   'src/geom.js', 
   'src/shade.js', 
-  'src/vert_assoc.js',
+  'src/vert-assoc.js',
   'src/scene.js',
   'src/mol.js', 
   'src/trace.js',
