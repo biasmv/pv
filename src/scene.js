@@ -153,25 +153,22 @@ LineGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   cam.bind(shader);
   this.bind();
   this._gl.lineWidth(this._lineWidth);
-  var vertAttrib = this._gl.getAttribLocation(shader, 'attrPos');
-  this._gl.enableVertexAttribArray(vertAttrib);
-  this._gl.vertexAttribPointer(vertAttrib, 3, this._gl.FLOAT, false, 
+  this._gl.enableVertexAttribArray(shader.posAttrib);
+  this._gl.vertexAttribPointer(shader.posAttrib, 3, this._gl.FLOAT, false, 
                                this._FLOATS_PER_VERT*4, this._POS_OFFSET*4);
-  var clrAttrib = this._gl.getAttribLocation(shader, 'attrColor');
-  this._gl.vertexAttribPointer(clrAttrib, 3, this._gl.FLOAT, false, 
+  this._gl.vertexAttribPointer(shader.colorAttrib, 3, this._gl.FLOAT, false, 
                                this._FLOATS_PER_VERT*4, this._COLOR_OFFSET*4);
-  this._gl.enableVertexAttribArray(clrAttrib);
-  var idAttrib = this._gl.getAttribLocation(shader, 'attrObjId');
-  if (idAttrib !== -1) {
-    this._gl.vertexAttribPointer(idAttrib, 1, this._gl.FLOAT, false,
+  this._gl.enableVertexAttribArray(shader.colorAttrib);
+  if (shader.objIdAttrib !== -1) {
+    this._gl.vertexAttribPointer(shader.objIdAttrib, 1, this._gl.FLOAT, false,
                                  this._FLOATS_PER_VERT*4, this._ID_OFFSET*4);
-    this._gl.enableVertexAttribArray(idAttrib);
+    this._gl.enableVertexAttribArray(shader.objIdAttrib);
   }
   this._gl.drawArrays(this._gl.LINES, 0, this._numLines*2);
-  this._gl.disableVertexAttribArray(vertAttrib);
-  this._gl.disableVertexAttribArray(clrAttrib);
+  this._gl.disableVertexAttribArray(shader.posAttrib);
+  this._gl.disableVertexAttribArray(shader.colorAttrib);
   if (idAttrib !== -1) { 
-    this._gl.disableVertexAttribArray(idAttrib);
+    this._gl.disableVertexAttribArray(shader.objIdAttrib);
   }
 };
 
