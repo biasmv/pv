@@ -533,7 +533,7 @@ Chain.prototype.addResidue = function(name, num) {
 };
 
 // assigns secondary structure to residues in range from_num to to_num.
-Chain.prototype.assign_ss = function(from_num, to_num, ss) {
+Chain.prototype.assignSS = function(from_num, to_num, ss) {
   // FIXME: when the chain numbers are completely ordered, perform binary 
   // search to identify range of residues to assign secondary structure to.
   for (var i = 1; i < this._residues.length-1; ++i) {
@@ -955,14 +955,14 @@ function pdb(text) {
     var sheet = sheets[i];
     chain = structure.chain(sheet.chainName);
     if (chain) {
-      chain.assign_ss(sheet.first, sheet.last, 'E');
+      chain.assignSS(sheet.first, sheet.last, 'E');
     }
   }
   for (i = 0; i < helices.length; ++i) {
     var helix = helices[i];
     chain = structure.chain(helix.chainName);
     if (chain) {
-      chain.assign_ss(helix.first, helix.last, 'H');
+      chain.assignSS(helix.first, helix.last, 'H');
     }
   }
   structure.deriveConnectivity();
@@ -972,6 +972,7 @@ function pdb(text) {
 
   return structure;
 }
+
 
 exports.mol = {};
 
