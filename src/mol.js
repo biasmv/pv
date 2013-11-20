@@ -979,8 +979,9 @@ var zhangSkolnickSS = (function() {
   return function(trace, i, distances, delta) {
     for (var j = Math.max(0, i-2); j <= i; ++j) {
       for (var k = 2;  k < 5; ++k) {
-        if (j+k >= trace.length())
+        if (j+k >= trace.length()) {
           continue;
+        }
         var d = vec3.dist(trace.posAt(posOne, j), 
                           trace.posAt(posTwo, j+k));
         if (Math.abs(d - distances[k-2]) > delta) {
@@ -1004,6 +1005,20 @@ var isSheet = function(trace, i) {
   return zhangSkolnickSS(trace, i, sheetDistances, sheetDelta);
 };
 
+function traceAssignHelixSheet(trace) {
+  for (var i = 0; i < trace.length(); ++i) {
+    if (isHelical(trace, i)) {
+      trace.residueAt(i).setSS('H');
+      continue;
+    } 
+    if (isSheet(trace, i)) {
+      trace.residueAt(i).setSS('E');
+      continue;
+    }
+    trace.residueAt(i).setSS('C');
+  }
+}
+
 
 // assigns secondary structure information based on a simple and very fast 
 // algorithm published by Zhang and Skolnick in their TM-align paper. 
@@ -1016,19 +1031,7 @@ function assignHelixSheet(structure) {
   var chains = structure.chains();
   for (var ci = 0; ci < chains.length; ++ci) {
     var chain = chains[ci];
-    chain.eachBackboneTrace(function(trace) {
-      for (var i = 0; i < trace.length(); ++i) {
-        if (isHelical(trace, i)) {
-          trace.residueAt(i).setSS('H');
-          continue;
-        } 
-        if (isSheet(trace, i)) {
-          trace.residueAt(i).setSS('E');
-          continue;
-        }
-        trace.residueAt(i).setSS('C');
-      }
-    });
+    chain.eachBackboneTrace(traceAssignHelixSheet);
   }
   console.timeEnd('mol.assignHelixSheet');
 }
