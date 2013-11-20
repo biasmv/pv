@@ -35,9 +35,6 @@ I would love you to! Most features you would expect from a protein viewer are al
 
  * DNA/RNA visualisation is not implemented yet, for protein-centrict workflows that's fine though. In case you are interested in DNA/RNA rendering, just open a feature request and I'll try to get around to it.
 
- * At the moment, the PDB files are required to have secondary structure information assigned, as PV does not implement algorithm to assign secondary structure yet. That's on the TODO list though and will be added soon.
-
-
 Documentation
 ---------------------------------------
 
