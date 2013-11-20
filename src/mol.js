@@ -545,7 +545,7 @@ Chain.prototype.assignSS = function(from_num, to_num, ss) {
     if (res.num() <=  from_num || res.num() >= to_num) {
       continue;
     }
-    res.set_ss(ss);
+    res.setSS(ss);
   }
 };
 
@@ -628,7 +628,7 @@ Residue.prototype.addAtom = function(name, pos, element) {
 };
 
 Residue.prototype.ss = function() { return this._ss; };
-Residue.prototype.set_ss = function(ss) { this._ss = ss; };
+Residue.prototype.setSS = function(ss) { this._ss = ss; };
 Residue.prototype.index = function() { return this._index; };
 
 Residue.prototype.atoms = function() { return this._atoms; };
@@ -973,6 +973,65 @@ function pdb(text) {
   return structure;
 }
 
+var zhangSkolnickSS = (function() {
+  var posOne = vec3.create();
+  var posTwo = vec3.create();
+  return function(trace, i, distances, delta) {
+    for (var j = Math.max(0, i-2); j <= i; ++j) {
+      for (var k = 2;  k < 5; ++k) {
+        if (j+k >= trace.length())
+          continue;
+        var d = vec3.dist(trace.posAt(posOne, j), 
+                          trace.posAt(posTwo, j+k));
+        if (Math.abs(d - distances[k-2]) > delta) {
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+})();
+
+var isHelical = function(trace, i) {
+  var helixDistances = [5.45, 5.18, 6.37];
+  var helixDelta = 2.1;
+  return zhangSkolnickSS(trace, i, helixDistances, helixDelta);
+};
+
+var isSheet = function(trace, i) {
+  var sheetDistances = [6.1, 10.4, 13.0];
+  var sheetDelta = 1.42;
+  return zhangSkolnickSS(trace, i, sheetDistances, sheetDelta);
+};
+
+
+// assigns secondary structure information based on a simple and very fast 
+// algorithm published by Zhang and Skolnick in their TM-align paper. 
+// Reference:
+//
+// TM-align: a protein structure alignment algorithm based on the Tm-score 
+// (2005) NAR, 33(7) 2302-2309
+function assignHelixSheet(structure) {
+  console.time('mol.assignHelixSheet');
+  var chains = structure.chains();
+  for (var ci = 0; ci < chains.length; ++ci) {
+    var chain = chains[ci];
+    chain.eachBackboneTrace(function(trace) {
+      for (var i = 0; i < trace.length(); ++i) {
+        if (isHelical(trace, i)) {
+          trace.residueAt(i).setSS('H');
+          continue;
+        } 
+        if (isSheet(trace, i)) {
+          trace.residueAt(i).setSS('E');
+          continue;
+        }
+        trace.residueAt(i).setSS('C');
+      }
+    });
+  }
+  console.timeEnd('mol.assignHelixSheet');
+}
 
 exports.mol = {};
 
@@ -986,6 +1045,7 @@ exports.mol.ChainView = ChainView;
 exports.mol.ResidueView = ResidueView;
 exports.mol.AtomView = AtomView;
 exports.mol.pdb = pdb;
+exports.mol.assignHelixSheet = assignHelixSheet;
 
 return true;
 
