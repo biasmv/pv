@@ -167,7 +167,7 @@ LineGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   this._gl.drawArrays(this._gl.LINES, 0, this._numLines*2);
   this._gl.disableVertexAttribArray(shader.posAttrib);
   this._gl.disableVertexAttribArray(shader.colorAttrib);
-  if (idAttrib !== -1) { 
+  if (shader.objIdAttrib !== -1) { 
     this._gl.disableVertexAttribArray(shader.objIdAttrib);
   }
 };
