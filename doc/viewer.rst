@@ -62,7 +62,7 @@ This section describes the high-level API for displaying molecular structures on
   var myCartoon = viewer.cartoon('molecule', myMolecule);
 
 
-These methods will automatically add the object to the viewer, there is not need to call :meth:`pv.Viewer.add` on the object.
+These methods will automatically add the object to the viewer, there is not need to call :func`pv.Viewer.add` on the object.
 
 
 .. function:: pv.Viewer.lines(structure[, options])

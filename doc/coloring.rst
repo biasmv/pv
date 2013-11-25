@@ -2,19 +2,18 @@ Coloring Molecular Structures
 ============================================================================
 
 
-This document describes how structures can be colored.
+This document describes how a molecular structure's color can be controlled. 
 
-
-Coloring is achieved by coloring operations, which can be understood as actions that are applied to a structure. Coloring operations can be as simple as "assign a uniform color" to the complete structure, or as complex as mapping a custom float property to a color gradient.
-
-Coloring operations are either supplied directly when generating the geometry of an object, or passed at a later point through :func:`RenderGeom.colorBy`. Internally these two scenarios are handled differently, but from the point of the user, they work exactly the same. These two different ways of coloring are illustrated in the following code example:
+The coloring scheme can be specified when generating the render geometry, e.g. when using one of the :ref:`render <pv.viewer.rendering>`. functions. Coloring can also be changed later on using the :func:`BaseGeom.colorBy` function. The latter also allows to apply coloring to subparts of the structure only. These two different ways to control the coloring is displayed in the following code example:
 
 .. code-block:: javascript
 
   // color the whole structure in red, while generating the geometry.
-  var geom = pv.lines(myStructure,  { color: color.uniform('red') });
+  var geom = pv.lines('myStructure', myStructure,  { color: color.uniform('red') });
   // oh, no, I changed my mind: We wan't everything in blue!
   geom.colorBy(color.uniform('blue'));
+
+Coloring is implemented with coloring operations. These operations are small objects which map a certain atom or residue to a color. They can be as simple as coloring a complete structure in :func:`one color <color.uniform>`, or as complex as mapping a :func:`float property to a color gradient <color.byAtomProp>`. PV includes a variety of coloring operations for the most common tasks. For more complex applications it is also possible to extend the coloring with new operations.
 
 Available color operations
 --------------------------------------------------------------------------
@@ -56,6 +55,20 @@ The following color operations are available:
   Maps the residue's chain position (its index) to a color gradient. 
 
   :param gradient: An optional gradient to draw colors from. Defaults to a rainbow gradient.
+
+.. function:: color.byAtomProp(prop [,gradient [,options]])
+              color.byResidueProp(prop [,gradient [,options]])
+
+  Colors the structure by mapping a float property to a color gradient. :func:`color.byAtomProp` uses properties from atoms, whereas :func:`color.byResidueProp` uses properties from residues. By default, the range of values is automatically determined from the property values and set to the minimum and maximum of observed values. Alternatively, the range can also be specified with in the options dictionary.
+
+  :param prop: name of the property to use for coloring. It is assumed that
+     the property is numeric (floating point or integral). The name can either
+     refer to a custom property, or a built-in property of atoms or residues.
+  :param gradient: The graident to use for coloring. Defaults to rainbow.
+  :param options: A dictionary of options. Possible keys are : 
+    *range*: an array of length two specifying the minimum and maximum value of the float properties.
+
+
 
 Adding a new color operation
 --------------------------------------------------------------------------
