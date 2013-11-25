@@ -363,11 +363,10 @@ var gradColor = (function() {
   };
 })();
 
-function colorByItemProp(propName, grad, options, iter, item) {
+function colorByItemProp(propName, grad, range, iter, item) {
   if (!grad) {
     grad = gradient('rainbow');
   }
-  options = options || {};
   return new ColorOp(function(a, out, index) {
       var t = 0.0;
       if (this._min !== this._max) {
@@ -376,9 +375,9 @@ function colorByItemProp(propName, grad, options, iter, item) {
       gradColor(out, index, grad, t);
     }, 
     function(obj) {
-      if (options.range) {
-        this._min = options.range[0];
-        this._max = options.range[1];
+      if (range !== undefined) {
+        this._min = range[0];
+        this._max = range[1];
         return;
       }
       var range = getMinMaxRange(obj, iter, propName);
@@ -389,13 +388,13 @@ function colorByItemProp(propName, grad, options, iter, item) {
   );
 }
 
-exports.color.byAtomProp = function(propName, grad, options) {
-  return colorByItemProp(propName, grad, options, 'eachAtom', 
+exports.color.byAtomProp = function(propName, grad, range) {
+  return colorByItemProp(propName, grad, range, 'eachAtom', 
                          function(a) {return a;});
 };
 
-exports.color.byResidueProp = function(propName, grad, options) {
-  return colorByItemProp(propName, grad, options, 'eachResidue', 
+exports.color.byResidueProp = function(propName, grad, range) {
+  return colorByItemProp(propName, grad, range, 'eachResidue', 
                          function(a) {return a.residue();});
 };
 

@@ -56,17 +56,16 @@ The following color operations are available:
 
   :param gradient: An optional gradient to draw colors from. Defaults to a rainbow gradient.
 
-.. function:: color.byAtomProp(prop [,gradient [,options]])
-              color.byResidueProp(prop [,gradient [,options]])
+.. function:: color.byAtomProp(prop [,gradient [,range]])
+              color.byResidueProp(prop [,gradient [,range]])
 
-  Colors the structure by mapping a float property to a color gradient. :func:`color.byAtomProp` uses properties from atoms, whereas :func:`color.byResidueProp` uses properties from residues. By default, the range of values is automatically determined from the property values and set to the minimum and maximum of observed values. Alternatively, the range can also be specified with in the options dictionary.
+  Colors the structure by mapping a float property to a color gradient. :func:`color.byAtomProp` uses properties from atoms, whereas :func:`color.byResidueProp` uses properties from residues. By default, the range of values is automatically determined from the property values and set to the minimum and maximum of observed values. Alternatively, the range can also be specified as the last argument.
 
   :param prop: name of the property to use for coloring. It is assumed that
      the property is numeric (floating point or integral). The name can either
      refer to a custom property, or a built-in property of atoms or residues.
   :param gradient: The graident to use for coloring. Defaults to rainbow.
-  :param options: A dictionary of options. Possible keys are : 
-    *range*: an array of length two specifying the minimum and maximum value of the float properties.
+  :param range: an array of length two specifying the minimum and maximum value of the float properties. When not specified, the value range is determined from observed values.
 
 
 
