@@ -18,8 +18,8 @@ Initialization and Configuration
 
   Construct a new viewer, inserting it as the last child of parentElement. *options* is as dictionary that allows to control the initial settings for the viewer. Many of these settings can be changed later. The default options are chosen very restrictive on purpose. Valid options are:
 
-  * *width* The width (in pixels) of the viewer. Defaults to 500.
-  * *height* The height (in pixels) of the viewer. Defaults to 500.
+  * *width* The width (in pixels) of the viewer. The special value 'auto' can be used to set the width to the width of the parent element. Defaults to 500.
+  * *height* The height (in pixels) of the viewer. The special value 'auto' can be used to set the height to the height of the parent element. Defaults to 500.
   * *antialias*: whether full-scene antialiasing should be enabled. When available, antialiasing will use the built-in WebGL antialiasing. When not, it will fall back to a manual supersampling of the scene. Enabling antialiasing improve the visual results considerably, but also slows down rendering. When rendering speed is a concern, the *antialias* option should be set to false. Defaults to false.
   * *quality* the level of detail for the geometry. Accepted values are *low*, *medium*, and *high*. See :func:`~pv.Viewer.quality` for a description of these values. Defaults to *low*.
 
@@ -65,7 +65,7 @@ This section describes the high-level API for displaying molecular structures on
 These methods will automatically add the object to the viewer, there is not need to call :func`pv.Viewer.add` on the object.
 
 
-.. function:: pv.Viewer.lines(structure[, options])
+.. function:: pv.Viewer.lines(name, structure[, options])
 
   Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) at full connectivity level, using lines for the bonds. Atoms with no bonds are represented as small crosses. Valid *options* are:
 
@@ -74,7 +74,7 @@ These methods will automatically add the object to the viewer, there is not need
 
   :returns: The geometry of the object. 
 
-.. function:: pv.Viewer.spheres(structure[, options])
+.. function:: pv.Viewer.spheres(name, structure[, options])
 
   Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) at full-atom level using a sphere for each atom. Valid *options* are:
 
@@ -82,14 +82,14 @@ These methods will automatically add the object to the viewer, there is not need
   * *sphereDetail*: the number of horizontal and vertical arcs for the sphere. The default *sphereDetail* is determined by :func:`pv.Viewer.quality()`.
 
 
-.. function:: pv.Viewer.lineTrace(structure[, options])
+.. function:: pv.Viewer.lineTrace(name, structure[, options])
 
   Renders the protein part of the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a Carbon-alpha trace using lines. Consecutive carton alpha atoms are connected by a straight line. For a mesh-based version of the Carbon-alpha trace, see :func:`pv.Viewer.trace`.
 
   * *color*: the color operation to be used. Defaults to :func:`color.uniform`.
   * *lineWidth*: The line width for bonds and atoms. Defaults to 4.0
 
-.. function:: pv.Viewer.sline(structure[, options])
+.. function:: pv.Viewer.sline(name, structure[, options])
 
   Renders the protein part of the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a smooth line trace. The Carbon-alpha atoms are used as the control points for a Catmull-Rom spline. For a mesh-based version of the smooth line trace, see :func:`pv.Viewer.tube`.
 
@@ -98,7 +98,7 @@ These methods will automatically add the object to the viewer, there is not need
   * *strength*: influences the magnitude of the tangents for the Catmull-Rom spline. Defaults to 0.5. Meaningful values are between 0 and 1.
   * *splineDetail*: Number of subdivision per Carbon alpha atom. The default value is is determined by :func:`pv.Viewer.quality`.
 
-.. function:: pv.Viewer.trace(structure[, options])
+.. function:: pv.Viewer.trace(name, structure[, options])
 
   Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a carbon-alpha trace. Consecutive Carbon alpha atoms (CA) are connected by a cylinder. For a line-based version of the trace render style, see :func:`pv.viewer.lineTrace`. Accepted *options* are:
 
@@ -110,7 +110,7 @@ These methods will automatically add the object to the viewer, there is not need
 
 
 
-.. function:: pv.Viewer.tube(structure[, options])
+.. function:: pv.Viewer.tube(name, structure[, options])
 
   Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a smoothly interpolated tube. 
 
@@ -120,7 +120,7 @@ These methods will automatically add the object to the viewer, there is not need
   * *strength*: influences the magnitude of the tangents for the Catmull-Rom spline. Defaults to 1.0. Meaningful values are between 0 and 1.
   * *splineDetail* number of subdivisions per Carbon-alpha atom. The default is termined by :func:`pv.Viewer.quality`.
 
-.. function:: pv.Viewer.cartoon(structure[, options])
+.. function:: pv.Viewer.cartoon(name, structure[, options])
 
   Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a 
   helix, strand coil cartoon. Accepted *options* are:
@@ -143,12 +143,7 @@ Multiple render objects can be displayed at once. To be able to refer to these o
 
 .. function:: pv.Viewer.add(name, obj)
 
-  Add a new object to the viewer. The object's name property will be set to name, under which it can be referenced in the future. Typically, add is used together with one of the render commands, e.g.
-
-  .. code-block:: javascript
-
-    var myMolecule = mol.pdb(pdbData);
-    var linesObject = viewer.add('mol', viewer.lines(myMolecule));
+  Add a new object to the viewer. The object's name property will be set to name, under which it can be referenced in the future. Typically, there is no need to call add, since the objecs will be automatically added to the viewer when they are created.
 
   :returns: A reference to *obj*.
 
