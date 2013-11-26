@@ -405,12 +405,14 @@ PV.prototype.clear = function() {
 };
 
 PV.prototype._mouseWheel = function(event) {
-  this._cam.zoom(event.wheelDelta*0.05);
+  this._cam.zoom(event.wheelDelta < 0 ? -1 : 1);
+  event.preventDefault();
   this.requestRedraw();
 };
 
 PV.prototype._mouseWheelFF = function(event) {
-  this._cam.zoom(-event.deltaY*2.00);
+  this._cam.zoom(event.deltaY < 0 ? -1 : 1);
+  event.preventDefault();
   this.requestRedraw();
 };
 
