@@ -380,7 +380,7 @@ function colorByItemProp(propName, grad, range, iter, item) {
         this._max = range[1];
         return;
       }
-      var range = getMinMaxRange(obj, iter, propName);
+      range = getMinMaxRange(obj, iter, propName);
       this._min = range.min;
       this._max = range.max;
     }, 
