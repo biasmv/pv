@@ -411,7 +411,7 @@ PV.prototype._mouseWheel = function(event) {
 };
 
 PV.prototype._mouseWheelFF = function(event) {
-  this._cam.zoom(event.deltaY < 0 ? -1 : 1);
+  this._cam.zoom(event.deltaY < 0 ? 1 : -1);
   event.preventDefault();
   this.requestRedraw();
 };
