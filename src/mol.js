@@ -569,17 +569,17 @@ Chain.prototype._cacheBackboneTraces = function() {
     if (!residue.isAminoacid()) {
       if (stretch.length() > 1) {
         this._cachedTraces.push(stretch);
-        stretch = new BackboneTrace();
       }
+      stretch = new BackboneTrace();
       continue;
     }
     if (stretch.length() === 0) {
       stretch.push(residue);
       continue;
     }
-    var ca_prev = this._residues[i-1].atom('C');
-    var n_this = residue.atom('N');
-    if (Math.abs(vec3.sqrDist(ca_prev.pos(), n_this.pos()) - 1.5*1.5) < 1) {
+    var caPrev = this._residues[i-1].atom('C');
+    var nThis = residue.atom('N');
+    if (Math.abs(vec3.sqrDist(caPrev.pos(), nThis.pos()) - 1.5*1.5) < 1) {
       stretch.push(residue);
     } else {
       if (stretch.length() > 1) {
