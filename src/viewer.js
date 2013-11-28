@@ -75,8 +75,6 @@ function PV(domElement, opts) {
   this._textureCanvas.style.display = 'none';
   this._2dcontext = this._textureCanvas.getContext('2d');
   this._objectIdManager = new UniqueObjectIdPool();
-  this._float32BufferPool = new BufferPool(Float32Array);
-  this._uint16BufferPool = new BufferPool(Uint16Array);
   var parentRect = domElement.getBoundingClientRect();
   if (this._options.width === 'auto') {
     this._options.width = parentRect.width;
@@ -329,6 +327,8 @@ PV.prototype._initPV = function() {
     return false; 
   }
   this._ok = true;
+  this._float32BufferPool = new BufferPool(Float32Array);
+  this._uint16BufferPool = new BufferPool(Uint16Array);
   this._cam = new Cam(this._gl);
   this._shaderCatalog = {
     hemilight : this._initShader(shaders.HEMILIGHT_VS, shaders.HEMILIGHT_FS),
