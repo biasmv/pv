@@ -70,12 +70,19 @@ The Mol (and MolView) API
 
   Matching by predicate dictionary provides a flexible way to specify selections without having to write custom callbacks. A predicate is a condition which has to be fullfilled in order to include a chain, residue or atom in the results. Some of the predicates match against chain ,e.g. *cname*, others against residues, e.g. *rname*, and others against atoms, e.g. *ele*. When multiple predicates are specified in the dictionary, all of them have to match for an item to be included in the results.
 
-  **Available Predicates:**
+  **Available Chain Predicates:**
 
   * *cname*/*chain*: A chain is included iff the chain name it is equal to the *cname*/*chain*. To match against multiple chain names, use the plural forms cnames/chains.
-  * *cnames*/*chains*: A chain is included iff its name is identical to one of the names in the *cnames*/*chains* array. To match against a single chain name, use the singular forms *cname*/*chain*.
 
-  * to be continued...
+  **Available Residue Predicates:**
+
+  * *rname*: A residue is included iff the residue name it is equal to *rname*/*chain*. To match against multiple residue names, use the plural form rnames.
+  * *rindexRange* include residues at position in a chain in the half-closed interval *rindexRange[0]* and *rindexRange[1]*. The residue at *rindexRange[1]* is not included. Indices are zero-based. 
+  * *rindices* includes residues at certain positions in the chain. Indices are zero based.
+
+  **Available Atom Predicates:**
+
+  * *aname* An atom is included iff the atom name it is equal to *aname*. To match against multiple atom names, use the plural forms cnames/chains.
 
   **Examples:**
 
@@ -100,6 +107,18 @@ The Mol (and MolView) API
 
   :param structure: :class:`mol.Mol` or :class:`mol.MolView` to which proximity is required.
   :param options: An optional dictionary of options to control the behavior of selectWithin.  **radius** sets the distance cutoff in Angstrom. The default radius is 4.   **matchResidues** whether to use residue matching mode. When set to true, all atom of a residue are included in result as soon as one atom is in proximity.
+
+
+.. function:: mol.Mol.residueSelect(predicate)
+              mol.MolView.residueSelect(predicate)
+
+  Returns an instance of :class:`mol.MolView` only containing residues which match the predicate function. The predicate must be a function which accepts a residue as its only argument and return true for residues to be included. For all other residues, the predicate must return false. All atoms of matching residues will be included in the view.
+
+  **Example:**
+
+  .. code-block:: javascript
+
+    var oddResidues = structure.residueSelect(function(res) { return res.index() % 2; });
 
 .. function:: mol.pdb(pdbData)
 

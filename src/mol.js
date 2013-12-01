@@ -213,6 +213,7 @@ MolBase.prototype._atomPredicates = function(dict) {
   }
   return predicates;
 };
+
 // extracts the residue predicates from the dictionary. 
 // ignores rindices, rindexRange because they are handled separately.
 MolBase.prototype._residuePredicates = function(dict) {
@@ -237,6 +238,12 @@ MolBase.prototype._residuePredicates = function(dict) {
 
 MolBase.prototype._chainPredicates = function(dict) {
   var predicates = [];
+  if (dict.cname !== undefined) {
+    dict.chain = dict.cname;
+  }
+  if (dict.cnames !== undefined) {
+    dict.chains = dict.cnames;
+  }
   if (dict.chain !== undefined) {
     predicates.push(function(c) { return c.name() === dict.chain; });
   }
