@@ -288,6 +288,10 @@ MolBase.prototype._dictSelect = function(dict) {
     }
     var chainView = null;
     var residues = chain.residues();
+    if (dict.rnumRange) {
+      residues = chain.residuesInRnumRange(dict.rnumRange[0], 
+                                           dict.rnumRange[1]);
+    } 
     var selResidues = [], i, e;
     if (dict.rindexRange !== undefined) {
       for (i = dict.rindexRange[0], 
@@ -537,6 +541,7 @@ function Chain(structure, name) {
   this._name = name;
   this._cachedTraces = [];
   this._residues = [];
+  this._rnumsOrdered = true;
 }
 
 derive(Chain, ChainBase);
@@ -547,9 +552,43 @@ Chain.prototype.full = function() { return this; };
 
 Chain.prototype.addResidue = function(name, num) {
   var residue = new Residue(this, name, num);
+  this._rnumsOrdered = this._residues.length === 0 || 
+    (this._rnumsOrdered && this._residues[this._residues.length-1].num() <= num);
   this._residues.push(residue);
   return residue;
 };
+
+function rnumComp(lhs, rhs) {
+  return lhs.num() < rhs.num();
+}
+
+function numify(val) {
+  return { num : function() { return val; }};
+}
+
+Chain.prototype.residuesInRnumRange = function(start, end) {
+  var matching = [];
+  if (this._rnumsOrdered === true) {
+    // binary search our way to heaven
+    var startIdx = indexFirstLargerEqualThan(this._residues, numify(start), rnumComp);
+    if (startIdx === -1)
+      return matching;
+    var endIdx = indexLastSmallerEqualThan(this._residues, numify(end), rnumComp);
+    if (endIdx === -1)
+      return matching;
+    for (var i = startIdx; i <= endIdx; ++i) {
+      matching.push(this._residues[i]);
+    }
+  } else {
+    for (var i = 0, e = this._residues.length; i != e; ++i) {
+      var res = this._residues[i];
+      if (res.num() >= start && res.num() <= end) {
+        matching.push(res);
+      }
+    }
+  }
+  return matching;
+}
 
 // assigns secondary structure to residues in range from_num to to_num.
 Chain.prototype.assignSS = function(from_num, to_num, ss) {

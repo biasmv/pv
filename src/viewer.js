@@ -713,7 +713,6 @@ PV.prototype.show = function(glob) {
 PV.prototype.rm = function(glob) {
   var newObjects = [];
   var regex = this._globToRegex(glob);
-  console.log(regex);
   for (var i = 0; i < this._objects.length; ++i) {
     var obj = this._objects[i];
     if (!regex.test(obj.name())) {

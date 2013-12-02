@@ -41,5 +41,24 @@ test("index of last smaller than", function() {
   strictEqual(indexLastSmallerThan(VALUES, 7), 6);
   strictEqual(indexLastSmallerThan(VALUES, 8), 7);
   strictEqual(indexLastSmallerThan(VALUES, -1), -1);
+  strictEqual(indexLastSmallerThan(VALUES, -2), -1);
   strictEqual(indexLastSmallerThan(VALUES, 9), 8);
+  strictEqual(indexLastSmallerThan(VALUES, 20), 8);
+});
+
+test("index of last smaller equal than", function() {
+  var VALUES = [0, 1, 2, 4, 5, 5, 6, 7, 8];
+  strictEqual(indexLastSmallerEqualThan(VALUES, 0), 0);
+  strictEqual(indexLastSmallerEqualThan(VALUES, 1), 1);
+  strictEqual(indexLastSmallerEqualThan(VALUES, 2), 2);
+  strictEqual(indexLastSmallerEqualThan(VALUES, 3), 2);
+  strictEqual(indexLastSmallerEqualThan(VALUES, 4), 3);
+  strictEqual(indexLastSmallerEqualThan(VALUES, 5), 5);
+  strictEqual(indexLastSmallerEqualThan(VALUES, 6), 6);
+  strictEqual(indexLastSmallerEqualThan(VALUES, 7), 7);
+  strictEqual(indexLastSmallerEqualThan(VALUES, 8), 8);
+  strictEqual(indexLastSmallerEqualThan(VALUES, -1), -1);
+  strictEqual(indexLastSmallerEqualThan(VALUES, -2), -1);
+  strictEqual(indexLastSmallerEqualThan(VALUES, -3), -1);
+  strictEqual(indexLastSmallerEqualThan(VALUES, 9), 8);
 });

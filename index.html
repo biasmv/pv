@@ -223,7 +223,7 @@
       pv.clear();
       pv.cartoon('structure', structure, { color : color.rainbow() });
     }
-    function line_trace() {
+    function lineTrace() {
       pv.clear();
       pv.lineTrace('structure', structure);
     }
@@ -344,14 +344,13 @@
     }
 
     function test() {
-      pv.clear();
-      var sel = structure.select({aname:'CA',rindices:[1]});
-      pv.spheres('wow', sel);
-      pv.centerOn(sel);
+      console.time('a');
+      var part = structure.select({chain: 'A', rnumRange : [20, 60]});
+      pv.lines('part', part);
     }
 
     $('#cartoon').click(cartoon);
-    $('#line-trace').click(line_trace);
+    $('#line-trace').click(lineTrace);
     $('#preset').click(preset);
     $('#lines').click(lines);
     $('#trace').click(trace);

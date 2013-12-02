@@ -115,6 +115,32 @@ exports.indexLastSmallerThan = function(values, value, comp) {
   }
 }
 
+exports.indexLastSmallerEqualThan = function(values, value, comp) {
+  comp = comp || defaultComp;
+  if (values.length === 0 || comp(values[values.length-1], value)) {
+    return values.length-1;
+  }
+  if (comp(value, values[0]))
+  {
+    return -1;
+  }
+  var low = 0, high = values.length;
+  var mid = (low + high) >> 1;
+  var cnt = 0;
+  while (true) {
+    var midValue = values[mid];
+    if (comp(value, midValue)) {
+      high = mid;
+    } else {
+      low = mid;
+    }
+    var newMid  = (low + high) >> 1;
+    if (newMid === mid)
+      return mid;
+    mid = newMid;
+  }
+}
+
 
 return true;
 
