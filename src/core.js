@@ -19,21 +19,103 @@
 // DEALINGS IN THE SOFTWARE.
 
 (function(exports) {
-  if (window.console === 'undefined') {
-    window.console = {};
-    window.console.log = function() {};
-    window.console.error = function() {};
-    window.console.time = function() {};
-    window.console.timeEnd = function() {};
-    window.console.info = function() {};
+"use strict";
+
+if (window.console === 'undefined') {
+  window.console = {};
+  window.console.log = function() {};
+  window.console.error = function() {};
+  window.console.time = function() {};
+  window.console.timeEnd = function() {};
+  window.console.info = function() {};
+}
+
+exports.derive = function(subclass, baseclass) {
+  for (var prop in baseclass.prototype) {
+    subclass.prototype[prop] = baseclass.prototype[prop];
   }
+};
 
-  exports.derive = function(subclass, baseclass) {
-    for (var prop in baseclass.prototype) {
-      subclass.prototype[prop] = baseclass.prototype[prop];
+function defaultComp(lhs, rhs) {
+  return lhs < rhs;
+}
+
+// returns the index into the values array for the first value identical to
+// *value*.
+exports.binarySearch = function(values, value, comp) {
+  if (values.length === 0) {
+    return -1;
+  }
+  comp = comp || defaultComp;
+  var low = 0, high = values.length;
+  var mid  = (low + high) >> 1;
+  while (true) {
+    var midValue = values[mid];
+    if (comp(value, midValue)) {
+      high = mid;
+    } else if (comp(midValue, value)) {
+      low = mid;
+    } else {
+      return mid;
     }
-  };
+    var newMid  = (low + high) >> 1;
+    if (newMid === mid)
+      return -1;
+    mid = newMid;
+  }
+  return -1;
+};
 
-  return true;
+// returns the index of the first item in the list whose value is 
+// larger or equal than *value*.
+exports.indexFirstLargerEqualThan = function(values, value, comp) {
+  comp = comp || defaultComp;
+  if (values.length === 0 || comp(value, values[0])) {
+    return -1;
+  }
+  var low = 0, high = values.length;
+  var mid = (low + high) >> 1;
+  while (true) {
+    var midValue = values[mid];
+    if (comp(value, midValue)) {
+      // there might be other values larger than value with an index
+      // lower than mid.
+      high = mid;
+    } else if (comp(midValue, value)) {
+      low = mid;
+    } else {
+      high = mid+1;
+    }
+    var newMid  = (low + high) >> 1;
+    if (newMid === mid)
+      return mid;
+    mid = newMid;
+  }
+}
+
+exports.indexLastSmallerThan = function(values, value, comp) {
+  comp = comp || defaultComp;
+  if (values.length === 0 || comp(values[values.length-1], value)) {
+    return values.length-1;
+  }
+  var low = 0, high = values.length;
+  var mid = (low + high) >> 1;
+  var cnt = 0;
+  while (true) {
+    var midValue = values[mid];
+    if (comp(value, midValue)) {
+      high = mid;
+    } else {
+      low = mid;
+    }
+    var newMid  = (low + high) >> 1;
+    if (newMid === mid)
+      return mid-1;
+    mid = newMid;
+  }
+}
+
+
+return true;
 
 })(this);
