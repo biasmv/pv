@@ -59,7 +59,9 @@ function MolBase() {
 
 MolBase.prototype.eachResidue = function(callback) {
   for (var i = 0; i < this._chains.length; i+=1) {
-    this._chains[i].eachResidue(callback);
+    if (this._chains[i].eachResidue(callback) === false) {
+      return false;
+    }
   }
 };
 
@@ -67,6 +69,9 @@ MolBase.prototype.eachAtom = function(callback, index) {
   index |= 0;
   for (var i = 0; i < this._chains.length; i+=1) {
     index = this._chains[i].eachAtom(callback, index);
+    if (index === false) {
+      return false;
+    }
   }
 };
 
@@ -330,13 +335,18 @@ ChainBase.prototype.eachAtom = function(callback, index) {
   index |= 0;
   for (var i = 0; i< this._residues.length; i+=1) {
     index = this._residues[i].eachAtom(callback, index);
+    if (index === false) {
+      return false;
+    }
   }
   return index;
 };
 
 ChainBase.prototype.eachResidue = function(callback) {
   for (var i = 0; i < this._residues.length; i+=1) {
-    callback(this._residues[i]);
+    if (callback(this._residues[i]) === false) {
+      return false;
+    }
   }
 };
 
@@ -373,7 +383,9 @@ ResidueBase.prototype.isWater = function() {
 ResidueBase.prototype.eachAtom = function(callback, index) {
   index |= 0;
   for (var i =0; i< this._atoms.length; i+=1) {
-    callback(this._atoms[i], index);
+    if (callback(this._atoms[i], index) === false) {
+      return false;
+    }
     index +=1;
   }
   return index;
