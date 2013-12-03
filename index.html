@@ -345,8 +345,10 @@
 
     function test() {
       console.time('a');
-      var part = structure.select({chain: 'A', rnumRange : [20, 60]});
-      pv.lines('part', part);
+
+      var part = structure.select({rname: 'RVP'});
+      pv.ballsAndSticks('rvp', part);
+      var obj = pv.label('name', 'Ribavirin', part.center());
     }
 
     $('#cartoon').click(cartoon);

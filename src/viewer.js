@@ -607,9 +607,11 @@ PV.prototype.trace = function(name, structure, opts) {
 };
 
 
-PV.prototype.label = function(pos, text) {
-  return new TextLabel(this._gl, this._textureCanvas, 
+PV.prototype.label = function(name, text, pos) {
+  var label = new TextLabel(this._gl, this._textureCanvas, 
                        this._2dcontext, pos, text);
+  this.add(name, label);
+  return label;
 };
 
 // INTERNAL: draws scene into offscreen pick buffer with the "select"

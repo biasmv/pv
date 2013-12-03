@@ -725,13 +725,16 @@ TextLabel.prototype._prepareText = function(canvas, ctx, text) {
   canvas.width = smallestPowerOfTwo(estimatedWidth);
   canvas.height = smallestPowerOfTwo(estimatedHeight);
   this._setupTextParameters(ctx);
+  ctx.strokeStyle = 'white';
+  ctx.lineWidth = 0.5;
   ctx.fillText(text, 0, canvas.height);
+  ctx.strokeText(text, 0, canvas.height);
   this._texture = this._gl.createTexture();
   this._textureFromCanvas(this._texture, canvas);
   this._xScale = estimatedWidth/canvas.width;
   this._yScale = estimatedHeight/canvas.height;
-  this._width = estimatedWidth*0.1;
-  this._height = estimatedHeight*0.1;
+  this._width = estimatedWidth*0.002;
+  this._height = estimatedHeight*0.002;
 };
 
 TextLabel.prototype._textureFromCanvas = function(targetTexture, srcCanvas) {

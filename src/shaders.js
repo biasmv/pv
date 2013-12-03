@@ -133,9 +133,8 @@ uniform mat4 modelviewMat;\n\
 uniform mat4 rotationMat;\n\
 varying vec2 vertTex;\n\
 void main() { \n\
-  vec4 rotated = vec4(attrCorner.x, attrCorner.y, 0.0, 0.0)*rotationMat;\n\
-  vec4 adjustedPos = vec4(attrCenter, 1.0)+rotated;\n\
-  gl_Position = projectionMat* modelviewMat* adjustedPos;\n\
+  gl_Position = projectionMat* modelviewMat* vec4(attrCenter, 1.0);\n\
+  gl_Position.xy += attrCorner*gl_Position.w; \n\
   vertTex = (attrCorner+abs(attrCorner))/(2.0*abs(attrCorner)); \n\
 }';
 
