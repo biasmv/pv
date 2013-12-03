@@ -135,6 +135,7 @@ varying vec2 vertTex;\n\
 void main() { \n\
   gl_Position = projectionMat* modelviewMat* vec4(attrCenter, 1.0);\n\
   gl_Position.xy += attrCorner*gl_Position.w; \n\
+  gl_Position.z -= gl_Position.w*0.0005;\n\
   vertTex = (attrCorner+abs(attrCorner))/(2.0*abs(attrCorner)); \n\
 }';
 

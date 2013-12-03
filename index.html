@@ -348,7 +348,8 @@
 
       var part = structure.select({rname: 'RVP'});
       pv.ballsAndSticks('rvp', part);
-      var obj = pv.label('name', 'Ribavirin', part.center());
+      var obj = pv.label('name', 'Ribavirin', 
+                         part.select({aname:'P'}).center());
     }
 
     $('#cartoon').click(cartoon);
