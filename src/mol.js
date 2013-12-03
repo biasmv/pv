@@ -288,6 +288,9 @@ MolBase.prototype._dictSelect = function(dict) {
     }
     var chainView = null;
     var residues = chain.residues();
+    if (dict.rindex) {
+      dict.rindices = [dict.rindex];
+    }
     if (dict.rnumRange) {
       residues = chain.residuesInRnumRange(dict.rnumRange[0], 
                                            dict.rnumRange[1]);
