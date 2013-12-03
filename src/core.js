@@ -59,8 +59,9 @@ exports.binarySearch = function(values, value, comp) {
       return mid;
     }
     var newMid  = (low + high) >> 1;
-    if (newMid === mid)
+    if (newMid === mid) {
       return -1;
+    }
     mid = newMid;
   }
   return -1;
@@ -87,11 +88,12 @@ exports.indexFirstLargerEqualThan = function(values, value, comp) {
       high = mid+1;
     }
     var newMid  = (low + high) >> 1;
-    if (newMid === mid)
+    if (newMid === mid) {
       return mid;
+    }
     mid = newMid;
   }
-}
+};
 
 exports.indexLastSmallerThan = function(values, value, comp) {
   comp = comp || defaultComp;
@@ -109,19 +111,19 @@ exports.indexLastSmallerThan = function(values, value, comp) {
       low = mid;
     }
     var newMid  = (low + high) >> 1;
-    if (newMid === mid)
+    if (newMid === mid) {
       return mid-1;
+    }
     mid = newMid;
   }
-}
+};
 
 exports.indexLastSmallerEqualThan = function(values, value, comp) {
   comp = comp || defaultComp;
   if (values.length === 0 || comp(values[values.length-1], value)) {
     return values.length-1;
   }
-  if (comp(value, values[0]))
-  {
+  if (comp(value, values[0])) {
     return -1;
   }
   var low = 0, high = values.length;
@@ -135,11 +137,12 @@ exports.indexLastSmallerEqualThan = function(values, value, comp) {
       low = mid;
     }
     var newMid  = (low + high) >> 1;
-    if (newMid === mid)
+    if (newMid === mid) {
       return mid;
+    }
     mid = newMid;
   }
-}
+};
 
 
 return true;

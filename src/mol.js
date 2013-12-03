@@ -568,19 +568,22 @@ function numify(val) {
 
 Chain.prototype.residuesInRnumRange = function(start, end) {
   var matching = [];
+  var i;
   if (this._rnumsOrdered === true) {
     // binary search our way to heaven
     var startIdx = indexFirstLargerEqualThan(this._residues, numify(start), rnumComp);
-    if (startIdx === -1)
+    if (startIdx === -1) {
       return matching;
+    }
     var endIdx = indexLastSmallerEqualThan(this._residues, numify(end), rnumComp);
-    if (endIdx === -1)
+    if (endIdx === -1) {
       return matching;
-    for (var i = startIdx; i <= endIdx; ++i) {
+    }
+    for (i = startIdx; i <= endIdx; ++i) {
       matching.push(this._residues[i]);
     }
   } else {
-    for (var i = 0, e = this._residues.length; i != e; ++i) {
+    for (i = 0, e = this._residues.length; i !== e; ++i) {
       var res = this._residues[i];
       if (res.num() >= start && res.num() <= end) {
         matching.push(res);
@@ -588,7 +591,7 @@ Chain.prototype.residuesInRnumRange = function(start, end) {
     }
   }
   return matching;
-}
+};
 
 // assigns secondary structure to residues in range from_num to to_num.
 Chain.prototype.assignSS = function(from_num, to_num, ss) {
