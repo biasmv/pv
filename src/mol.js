@@ -96,6 +96,12 @@ MolBase.prototype.atomCount = function() {
   return count;
 };
 
+MolBase.prototype.atoms = function() {
+  var atoms = [];
+  this.eachAtom(function(atom) { atoms.push(atom); });
+  return atoms;
+};
+
 MolBase.prototype.center = function() {
   var sum = vec3.create();
   var count = 0;
