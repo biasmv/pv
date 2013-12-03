@@ -662,6 +662,9 @@ PV.prototype.pick = function(pos) {
 PV.prototype.add = function(name, obj) {
   obj.name(name);
   this._objects.push(obj);
+  // keep items sorted according to order. that's quick hack to fix
+  // issues with transparent object. 
+  this._objects.sort(function(lhs, rhs) { return lhs.order() - rhs.order() });
   this.requestRedraw();
   return obj;
 };

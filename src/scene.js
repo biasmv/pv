@@ -27,7 +27,10 @@ function SceneNode(name) {
   this._children = [];
   this._visible = true;
   this._name = name || '';
+  this._order = 1;
 }
+
+SceneNode.prototype.order = function() { return this._order; };
 
 SceneNode.prototype.add = function(node) {
   this._children.push(node);
@@ -652,6 +655,7 @@ MeshGeom.prototype.bind = function() {
 function TextLabel(gl, canvas, context, pos, text) {
   SceneNode.prototype.constructor.call(this, gl);
   this._gl = gl;
+  this._order = 2;
   this._pos = pos;
   this._interleavedBuffer = this._gl.createBuffer();
   this._interleavedData = new Float32Array(5*6);
