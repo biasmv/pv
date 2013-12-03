@@ -568,7 +568,7 @@ function numify(val) {
 
 Chain.prototype.residuesInRnumRange = function(start, end) {
   var matching = [];
-  var i;
+  var i, e;
   if (this._rnumsOrdered === true) {
     // binary search our way to heaven
     var startIdx = indexFirstLargerEqualThan(this._residues, numify(start), rnumComp);
