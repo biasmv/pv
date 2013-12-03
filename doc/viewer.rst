@@ -131,7 +131,14 @@ These methods will automatically add the object to the viewer, there is not need
   * *strength*: influences the magnitude of the tangents for the Catmull-Rom spline. Defaults to 1.0. Meaningful values are between 0 and 1.
   * *splineDetail* number of subdivisions per Carbon-alpha atom. The default is termined by :func:`pv.Viewer.quality`.
 
+.. function:: pv.Viewer.label(name, text, pos)
 
+  Places a label with *text* at the given position. At the moment, there is no way to control the size and color of the text.
+
+  :param name: Uniquely identifies the label
+  :param text: The text to be shown
+  :param pos: A :class:`vec3`, or array of length 3 holding the x, y, and z coordinate of the label's center.
+  :returns: the created label. 
 
 .. _pv.viewer.management:
 
