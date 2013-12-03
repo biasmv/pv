@@ -664,7 +664,9 @@ PV.prototype.add = function(name, obj) {
   this._objects.push(obj);
   // keep items sorted according to order. that's quick hack to fix
   // issues with transparent object. 
-  this._objects.sort(function(lhs, rhs) { return lhs.order() - rhs.order() });
+  this._objects.sort(function(lhs, rhs) { 
+    return lhs.order() - rhs.order(); 
+  });
   this.requestRedraw();
   return obj;
 };
