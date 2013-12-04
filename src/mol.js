@@ -966,7 +966,7 @@ function pdb(text) {
       return;
     }
     var chainName = line[21];
-    var res_name = line.substr(17, 3);
+    var resName = line.substr(17, 3).trim();
     var atomName = line.substr(12, 4).trim();
     var rnumNum = parseInt(line.substr(22, 4), 10);
     var insCode = line[26];
@@ -985,7 +985,7 @@ function pdb(text) {
       currChain = structure.chain(chainName) || structure.addChain(chainName);
     }
     if (updateResidue) {
-      currRes = currChain.addResidue(res_name, rnumNum,
+      currRes = currChain.addResidue(resName, rnumNum,
                                        currChain.residues().length);
     }
     var pos = vec3.create();
