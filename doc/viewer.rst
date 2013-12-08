@@ -6,6 +6,7 @@ The 3D molecules are managed and rendered by an instance of the viewer class. It
 
  * :ref:`pv.viewer.init`
  * :ref:`pv.viewer.rendering`
+ * :ref:`pv.viewer.camera`
  * :ref:`pv.viewer.management`
 
 
@@ -142,12 +143,36 @@ These methods will automatically add the object to the viewer, there is not need
 
 .. _pv.viewer.camera:
 
-Camera Positioning
+Camera Positioning/Orientation
 ---------------------------------------------------------------------------------
 
+.. function:: pv.Viewer.centerOn(obj)
+
+  Center the camera on a given object, leaving the zoom level and orientation untouched.
+
+  :param obj: Must be an object implementing a *center* method returning the center of the object, e.g. an instance of :class:`mol.MolView`, :class:`mol.Mol`
+
+  
 .. function:: pv.Viewer.autoZoom()
 
   Adjusts the zoom level such that all objects are visible on screen and occupy as much space as possible. The center and orientation of the camera are not modified.  
+
+.. function:: pv.Viewer.fitTo(obj)
+
+  Adjust the zoom level and center of the camera to fit the viewport to a given object. The method supports fitting to selections, or arbitrary SceneNodes. To fit to a subset of atoms, pass the selection as the *obj* argument:
+
+  .. code-block:: javascript
+
+    viewer.fitTo(structure.select({rname : 'RVP'});
+  
+  To fit to an entire render objects, pass the object as the *obj* argument:
+
+  .. code-block:: javascript
+
+    var obj = viewer.cartoon('obj', structure);
+    viewer.fitTo(obj);
+
+  :param what: must be an object which implements updateProjectionInterval, e.g. a SceneNode, a :class:`mol.MolView`, or :class:`mol.Mol`.
 
 .. _pv.viewer.management:
 
