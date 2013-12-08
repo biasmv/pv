@@ -676,7 +676,7 @@ PV.prototype.autoZoom = function() {
     obj.updateProjectionIntervals(axes[0], axes[1], axes[2],
                                   intervals[0], intervals[1], intervals[2]);
   });
-  this._fitToIntervals(axes, intervals, true);
+  this._fitToIntervals(axes, intervals, false);
 };
 
 
