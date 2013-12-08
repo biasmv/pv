@@ -267,7 +267,7 @@
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = mol.pdb(data);
         //mol.assignHelixSheet(structure);
-        lines();
+        preset();
         pv.centerOn(structure);
       }});
     }
@@ -344,7 +344,7 @@
     }
 
     function test() {
-      pv.autoZoom();
+      pv.fitTo(structure.select({rname : 'RVP'}));
     }
 
     $('#cartoon').click(cartoon);

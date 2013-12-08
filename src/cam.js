@@ -36,7 +36,7 @@ function Cam(gl) {
   this._fogNear = -5;
   this._fogFar = 10;
   this._fog = true;
-  this._fovY = 45.0;
+  this._fovY = Math.PI*45.0/180.0;
   this._paramsChanged = false;
   this._fogColor = vec3.fromValues(1, 1, 1);
   this._outlineColor = vec3.fromValues(0.1, 0.1, 0.1);
@@ -78,7 +78,7 @@ Cam.prototype.setViewportSize = function(width, height) {
   this._width = width;
   this._height = height;
   mat4.identity(this._projection);
-  mat4.perspective(this._projection, 45.0, width / height, this._near, 
+  mat4.perspective(this._projection, this._fovY, width / height, this._near, 
                    this._far);
 };
 

@@ -606,36 +606,77 @@ PV.prototype.trace = function(name, structure, opts) {
   return this.add(name, obj);
 };
 
+PV.prototype._axesFromCamRotation = function() {
+  var rotation = this._cam.rotation();
+  return [vec3.fromValues(rotation[0], rotation[4], rotation[8]),
+          vec3.fromValues(rotation[1], rotation[5], rotation[9]),
+          vec3.fromValues(rotation[2], rotation[6], rotation[10])];
+};
+
+PV.prototype.fitTo = function(what) {
+  var axes = this._axesFromCamRotation();
+  var intervals = [new Range(), new Range(), new Range()];
+  if (what instanceof SceneNode) {
+    what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0], 
+                                   intervals[1], intervals[2]);
+  } else if (what instanceof mol.MolView || what instanceof mol.Mol) {
+    what.eachAtom(function(atom) {
+      var pos = atom.pos();
+      for (var i = 0; i < 3; ++i) {
+        intervals[i].update(vec3.dot(pos, axes[i]));
+      }
+    });
+    for (var i = 0; i < 3; ++i) {
+      intervals[i].extend(3.0);
+    }
+  }
+  this._fitToIntervals(axes, intervals, true);
+}
+
+PV.prototype._fitToIntervals = function(axes, intervals, setCenter) {
+  if (intervals[0].empty() || intervals[1].empty() || intervals[2].empty()) {
+    console.error('could not determine interval. No objects shown?');
+    return;
+  }
+  if (setCenter === true) {
+    var cx = intervals[0].center();
+    var cy = intervals[1].center();
+    var cz = intervals[2].center();
+    var center = [
+      cx*axes[0][0]+cy*axes[1][0]+cz*axes[2][0],
+      cx*axes[0][1]+cy*axes[1][1]+cz*axes[2][1],
+      cx*axes[0][2]+cy*axes[1][2]+cz*axes[2][2]
+    ];
+    this._cam.setCenter(center);
+  }
+  var camPosXProj = vec3.dot(this._cam.center(), axes[0]);
+  var camPosYProj = vec3.dot(this._cam.center(), axes[1]);
+  var camPosZProj = vec3.dot(this._cam.center(), axes[2]);
+  var fovY = this._cam.fieldOfViewY();
+  
+  var aspect = this._cam.aspectRatio();
+  var maxExtend = Math.max(intervals[1].max()-camPosYProj,
+                           camPosYProj-intervals[1].min(),
+                           (intervals[0].max()-camPosXProj)/aspect,
+                           (camPosXProj-intervals[0].min())/aspect);
+
+  var newZoom = 2.0*(maxExtend/Math.tan(fovY) + (intervals[2].max() - camPosZProj));
+  this._cam.setZoom(newZoom);
+  this.requestRedraw();
+}
+
 // adapt the zoom level to fit the viewport to all visible objects.
 PV.prototype.autoZoom = function() {
-  var rotation = this._cam.rotation();
-  var xAxis = vec3.fromValues(rotation[0], rotation[4], rotation[8]);
-  var yAxis = vec3.fromValues(rotation[1], rotation[5], rotation[9]);
-  var zAxis = vec3.fromValues(rotation[2], rotation[6], rotation[10]);
-  var xInterval = new Range(); 
-  var yInterval = new Range(); 
-  var zInterval = new Range();
+  var axes = this._axesFromCamRotation();
+  var intervals = [ new Range(), new Range(), new Range()];
   this.forEach(function(obj) {
     if (!obj.visible()) {
       return;
     }
-    obj.updateProjectionIntervals(xAxis, yAxis, zAxis, 
-                                  xInterval, yInterval, zInterval); 
+    obj.updateProjectionIntervals(axes[0], axes[1], axes[2],
+                                  intervals[0], intervals[1], intervals[2]);
   });
-  if (xInterval.empty() || yInterval.empty() || zInterval.empty()) {
-    console.error('could not determine interval. No objects shown?');
-    return;
-  }
-  var camPosZProj = vec3.dot(this._cam.center(), zAxis);
-  var fovY = Math.PI*this._cam.fieldOfViewY()/180.0;
-  
-  var zDist = Math.max(yInterval.length()*Math.tan(fovY),
-                        xInterval.length()*Math.tan(fovY)/
-                          this._cam.aspectRatio());
-  var newZoom = zDist + (camPosZProj - zInterval.min());
-  this._cam.setZoom(newZoom);
-
-  this.requestRedraw();
+  this._fitToIntervals(axes, intervals, true);
 };
 
 

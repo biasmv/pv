@@ -37,6 +37,11 @@ Range.prototype.length = function() { return this._max - this._min; };
 Range.prototype.empty = function() { return this._empty; };
 Range.prototype.center = function() { return (this._max + this._min)*0.5; };
 
+Range.prototype.extend = function(amount) {
+  this._min -= amount;
+  this._max += amount;
+};
+
 Range.prototype.update = function(val) {
   if (!this._empty) {
     if (val < this._min) {
@@ -955,7 +960,6 @@ function OrientedBoundingBox(gl, center, halfExtents) {
   tf[6] = halfExtents[2][0]; 
   tf[7] = halfExtents[2][1];
   tf[8] = halfExtents[2][2];
-  console.log(mat3.str(tf));
   var a = vec3.create(), b = vec3.create();
   this.addLine(vec3.add(a, center, vec3.transformMat3(a, [-1, -1, -1], tf)),
                color,
