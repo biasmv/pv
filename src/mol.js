@@ -168,8 +168,8 @@ MolBase.prototype.selectWithin = (function() {
               addedChain = view.addChain(chains[ci].full(), false);
             }
             if (!addedRes) {
-              addedRes = addedChain.addResidue(residues[ri].full(), 
-                                               matchResidues);
+              addedRes =
+                  addedChain.addResidue(residues[ri].full(), matchResidues);
             }
             if (matchResidues) {
               skipResidue = true;
@@ -298,17 +298,18 @@ MolBase.prototype._dictSelect = function(dict) {
       dict.rindices = [dict.rindex];
     }
     if (dict.rnumRange) {
-      residues = chain.residuesInRnumRange(dict.rnumRange[0], 
-                                           dict.rnumRange[1]);
-    } 
+      residues =
+          chain.residuesInRnumRange(dict.rnumRange[0], dict.rnumRange[1]);
+    }
     var selResidues = [], i, e;
     if (dict.rindexRange !== undefined) {
-      for (i = dict.rindexRange[0], 
-           e = Math.min(residues.length, dict.rindexRange[1]); i < e; ++i) {
+      for (i = dict.rindexRange[0],
+          e = Math.min(residues.length, dict.rindexRange[1]);
+           i < e; ++i) {
         selResidues.push(residues[i]);
       }
       residues = selResidues;
-    }  else if (dict.rindices) {
+    } else if (dict.rindices) {
       if (dict.rindices.length !== undefined) {
         selResidues = [];
         for (i = 0; i < dict.rindices.length; ++i) {

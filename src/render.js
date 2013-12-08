@@ -132,13 +132,13 @@ exports.ballsAndSticks = (function() {
     structure.eachAtom(function(a) { 
       bondCount+= a.bonds().length; 
     });
-    var numVerts = atomCount*protoSphere.numVerts()+
-                   bondCount*protoCyl.numVerts();
-    var numIndices = atomCount*protoSphere.numIndices()+
-                     bondCount*protoCyl.numIndices();
-    var meshGeom = new MeshGeom(gl, numVerts, numIndices, 
-                                options.float32BufferPool, 
-                                options.uint16BufferPool);
+    var numVerts =
+        atomCount * protoSphere.numVerts() + bondCount * protoCyl.numVerts();
+    var numIndices = atomCount * protoSphere.numIndices() +
+                     bondCount * protoCyl.numIndices();
+    var meshGeom =
+        new MeshGeom(gl, numVerts, numIndices, options.float32BufferPool,
+                     options.uint16BufferPool);
     var idRange = options.idPool.getContinuousRange(atomCount);
     meshGeom.addIdRange(idRange);
     options.color.begin(structure);
@@ -149,17 +149,17 @@ exports.ballsAndSticks = (function() {
       protoSphere.addTransformed(meshGeom, atom.pos(), options.radius, clr,
                                  objId);
       atom.eachBond(function(bond) {
-        bond.mid_point(mp); 
+        bond.mid_point(mp);
         vec3.sub(dir, atom.pos(), mp);
         var length = vec3.length(dir);
 
-        vec3.scale(dir, dir, 1.0/length);
+        vec3.scale(dir, dir, 1.0 / length);
 
         buildRotation(rotation, dir, left, up, false);
 
         vec3.add(mp, mp, atom.pos());
         vec3.scale(mp, mp, 0.5);
-        protoCyl.addTransformed(meshGeom, mp, length, options.radius, rotation, 
+        protoCyl.addTransformed(meshGeom, mp, length, options.radius, rotation,
                                 clr, clr, objId);
       });
       var vertEnd = meshGeom.numVerts();
@@ -343,16 +343,15 @@ exports.sline = function(structure, gl, options) {
     }
     var idStart = objIds[0], idEnd = 0;
     vertAssoc.setPerResidueColors(traceIndex, colors);
-    var sdiv = geom.catmullRomSpline(positions, trace.length(), options.splineDetail, 
-                                      options.strength, false, 
-                                      options.float32BufferPool);
+    var sdiv = geom.catmullRomSpline(positions, trace.length(),
+                                     options.splineDetail, options.strength,
+                                     false, options.float32BufferPool);
     var interpColors = interpolateColor(colors, options.splineDetail);
     var vertStart = lineGeom.numVerts();
-    vertAssoc.addAssoc(traceIndex, firstSlice,
-                       vertStart, vertStart+1);
-    var halfSplineDetail = Math.floor(options.splineDetail/2);
-    var steps = geom.catmullRomSplineNumPoints(trace.length(), options.splineDetail, 
-                                               false);
+    vertAssoc.addAssoc(traceIndex, firstSlice, vertStart, vertStart + 1);
+    var halfSplineDetail = Math.floor(options.splineDetail / 2);
+    var steps = geom.catmullRomSplineNumPoints(trace.length(),
+                                               options.splineDetail, false);
     for (i = 1; i < steps; ++i) {
       posOne[0] = sdiv[3*(i-1)];
       posOne[1] = sdiv[3*(i-1)+1];
@@ -372,8 +371,8 @@ exports.sline = function(structure, gl, options) {
       lineGeom.addLine(posOne, colorOne, posTwo, colorTwo, idStart, idEnd);
       idStart = idEnd;
       var vertEnd = lineGeom.numVerts();
-      vertAssoc.addAssoc(traceIndex, firstSlice+i, vertEnd-1, 
-                         vertEnd+((i === trace.length-1) ? 0 : 1));
+      vertAssoc.addAssoc(traceIndex, firstSlice + i, vertEnd - 1,
+                         vertEnd + ((i === trace.length - 1) ? 0 : 1));
     }
     options.float32BufferPool.release(colors);
     options.float32BufferPool.release(positions);
@@ -534,15 +533,15 @@ var _cartoonForChain = (function() {
     if (traces.length === 0) {
       return null;
     }
-    var numVerts = _cartoonNumVerts(traces, options.arcDetail*4, 
-                                    options.splineDetail);
-    var numIndices = _cartoonNumIndices(traces, options.arcDetail*4,
-                                        options.splineDetail);
-    var meshGeom = new MeshGeom(gl, numVerts, numIndices, 
-                                options.float32BufferPool, 
-                                options.uint16BufferPool);
-    var vertAssoc = new TraceVertexAssoc(chain.asView(), options.splineDetail,
-                                         false);
+    var numVerts =
+        _cartoonNumVerts(traces, options.arcDetail * 4, options.splineDetail);
+    var numIndices =
+        _cartoonNumIndices(traces, options.arcDetail * 4, options.splineDetail);
+    var meshGeom =
+        new MeshGeom(gl, numVerts, numIndices, options.float32BufferPool,
+                     options.uint16BufferPool);
+    var vertAssoc =
+        new TraceVertexAssoc(chain.asView(), options.splineDetail, false);
     for (var ti = 0; ti < traces.length; ++ti) {
       var trace = traces[ti];
 
@@ -740,13 +739,13 @@ var _traceForChain = (function() {
         vec3.add(midPoint, midPoint, caThisPos);
         vec3.scale(midPoint, midPoint, 0.5);
         var endSphere = meshGeom.numVerts();
-        options.protoCyl.addTransformed(meshGeom, midPoint, length, 
-                                        options.radius, rotation, 
-                                        colorOne, colorTwo, idStart, idEnd);
+        options.protoCyl.addTransformed(meshGeom, midPoint, length,
+                                        options.radius, rotation, colorOne,
+                                        colorTwo, idStart, idEnd);
         vertEnd = meshGeom.numVerts();
         vertEnd = vertEnd - (vertEnd-endSphere)/2;
 
-        options.protoSphere.addTransformed(meshGeom, caThisPos, options.radius, 
+        options.protoSphere.addTransformed(meshGeom, caThisPos, options.radius,
                                            colorTwo, idEnd);
         idStart = idEnd;
         vertAssoc.addAssoc(traceIndex, i, vertStart, vertEnd);

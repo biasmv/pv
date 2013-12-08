@@ -450,9 +450,11 @@ PV.prototype._mouseDown = function(event) {
 
 PV.prototype._mouseRotate = function(event) {
   var newMousePos = { x : event.pageX, y : event.pageY };
-  var delta = { x : newMousePos.x - this._lastMousePos.x,
-                y : newMousePos.y - this._lastMousePos.y};
-                
+  var delta = {
+    x : newMousePos.x - this._lastMousePos.x,
+    y : newMousePos.y - this._lastMousePos.y
+  };
+
   var speed = 0.005;
   this._cam.rotateX(speed*delta.y);
   this._cam.rotateY(speed*delta.x);
@@ -462,9 +464,11 @@ PV.prototype._mouseRotate = function(event) {
 
 PV.prototype._mousePan = function(event){
   var newMousePos = { x : event.pageX, y : event.pageY };
-  var delta = { x : newMousePos.x - this._lastMousePos.x,
-                y : newMousePos.y - this._lastMousePos.y};
-                
+  var delta = {
+    x : newMousePos.x - this._lastMousePos.x,
+    y : newMousePos.y - this._lastMousePos.y
+  };
+
   var speed = 0.05;
   this._cam.panXY(speed*delta.x, speed*delta.y);
   this._lastMousePos = newMousePos;
@@ -525,9 +529,9 @@ PV.prototype.spheres = function(name, structure, opts) {
 PV.prototype.sline = function(name, structure, opts) {
   opts = opts || {};
   var options = {
-    color : opts.color || color.uniform([1, 0, 1]),
+    color : opts.color || color.uniform([ 1, 0, 1 ]),
     splineDetail : opts.splineDetail || this.options('splineDetail'),
-    strength: opts.strength || 1.0,
+    strength : opts.strength || 1.0,
     lineWidth : opts.lineWidth || 4.0,
     idPool : this._objectIdManager,
     float32BufferPool : this._float32BufferPool,
@@ -567,8 +571,8 @@ PV.prototype.ballsAndSticks = function(name, structure, opts) {
   opts = opts || {};
   var options = {
     color : opts.color || color.byElement(),
-    radius: opts.radius || 0.3,
-    arcDetail : (opts.arcDetail || this.options('arcDetail'))*2,
+    radius : opts.radius || 0.3,
+    arcDetail : (opts.arcDetail || this.options('arcDetail')) * 2,
     sphereDetail : opts.sphereDetail || this.options('sphereDetail'),
     idPool : this._objectIdManager,
     float32BufferPool : this._float32BufferPool,
@@ -594,9 +598,9 @@ PV.prototype.lines = function(name, structure, opts) {
 PV.prototype.trace = function(name, structure, opts) {
   opts = opts || {};
   var options = {
-    color : opts.color || color.uniform([1, 0, 0]),
-    radius: opts.radius || 0.3,
-    arcDetail : (opts.arcDetail || this.options('arcDetail'))*2,
+    color : opts.color || color.uniform([ 1, 0, 0 ]),
+    radius : opts.radius || 0.3,
+    arcDetail : (opts.arcDetail || this.options('arcDetail')) * 2,
     sphereDetail : opts.sphereDetail || this.options('sphereDetail'),
     idPool : this._objectIdManager,
     float32BufferPool : this._float32BufferPool,
@@ -608,16 +612,18 @@ PV.prototype.trace = function(name, structure, opts) {
 
 PV.prototype._axesFromCamRotation = function() {
   var rotation = this._cam.rotation();
-  return [vec3.fromValues(rotation[0], rotation[4], rotation[8]),
-          vec3.fromValues(rotation[1], rotation[5], rotation[9]),
-          vec3.fromValues(rotation[2], rotation[6], rotation[10])];
+  return[
+    vec3.fromValues(rotation[0], rotation[4], rotation[8]),
+    vec3.fromValues(rotation[1], rotation[5], rotation[9]),
+    vec3.fromValues(rotation[2], rotation[6], rotation[10])
+  ];
 };
 
 PV.prototype.fitTo = function(what) {
   var axes = this._axesFromCamRotation();
   var intervals = [new Range(), new Range(), new Range()];
   if (what instanceof SceneNode) {
-    what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0], 
+    what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                    intervals[1], intervals[2]);
   } else if (what instanceof mol.MolView || what instanceof mol.Mol) {
     what.eachAtom(function(atom) {
@@ -631,7 +637,7 @@ PV.prototype.fitTo = function(what) {
     }
   }
   this._fitToIntervals(axes, intervals, true);
-}
+};
 
 PV.prototype._fitToIntervals = function(axes, intervals, setCenter) {
   if (intervals[0].empty() || intervals[1].empty() || intervals[2].empty()) {
@@ -660,10 +666,11 @@ PV.prototype._fitToIntervals = function(axes, intervals, setCenter) {
                            (intervals[0].max()-camPosXProj)/aspect,
                            (camPosXProj-intervals[0].min())/aspect);
 
-  var newZoom = 2.0*(maxExtend/Math.tan(fovY) + (intervals[2].max() - camPosZProj));
+  var newZoom =
+      2.0 * (maxExtend / Math.tan(fovY) + (intervals[2].max() - camPosZProj));
   this._cam.setZoom(newZoom);
   this.requestRedraw();
-}
+};
 
 // adapt the zoom level to fit the viewport to all visible objects.
 PV.prototype.autoZoom = function() {
@@ -673,8 +680,8 @@ PV.prototype.autoZoom = function() {
     if (!obj.visible()) {
       return;
     }
-    obj.updateProjectionIntervals(axes[0], axes[1], axes[2],
-                                  intervals[0], intervals[1], intervals[2]);
+    obj.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
+                                  intervals[1], intervals[2]);
   });
   this._fitToIntervals(axes, intervals, false);
 };
@@ -704,9 +711,8 @@ PV.prototype.pick = function(pos) {
   this._pickBuffer.bind();
   this._drawPickingScene();
   var pixels = new Uint8Array(4*4*4);
-  this._gl.readPixels(pos.x-2, this._options.height-(pos.y-2),
-                      4, 4, this._gl.RGBA, this._gl.UNSIGNED_BYTE,
-                      pixels);
+  this._gl.readPixels(pos.x - 2, this._options.height - (pos.y - 2), 4, 4,
+                      this._gl.RGBA, this._gl.UNSIGNED_BYTE, pixels);
   if (pixels.data) {
     pixels = pixels.data;
   }
@@ -718,8 +724,8 @@ PV.prototype.pick = function(pos) {
       if (pixels[baseIndex+3] === 0) {
         continue;
       }
-      var objId = pixels[baseIndex+0] | pixels[baseIndex+1] << 8 |
-                  pixels[baseIndex+2] << 16;
+      var objId = pixels[baseIndex + 0] | pixels[baseIndex + 1] << 8 |
+                  pixels[baseIndex + 2] << 16;
       if (pickedIds[objId] === undefined) {
         var obj = this._objectIdManager.objectForId(objId);
         if (obj !== undefined) {
