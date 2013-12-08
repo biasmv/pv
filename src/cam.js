@@ -29,24 +29,34 @@
 function Cam(gl) {
   this._projection = mat4.create();
   this._modelview = mat4.create();
+  this._rotation = mat4.create();
+  this._translation = mat4.create();
   this._near = 0.1;
   this._far = 400.0;
   this._fogNear = -5;
   this._fogFar = 10;
   this._fog = true;
+  this._fovY = 45.0;
   this._paramsChanged = false;
   this._fogColor = vec3.fromValues(1, 1, 1);
   this._outlineColor = vec3.fromValues(0.1, 0.1, 0.1);
   this._center = vec3.create();
   this._zoom = 50;
-  this._rotation = mat4.create();
-  this._translation = mat4.create();
   this._updateMat = true;
   this._gl = gl;
   this._currentShader = null;
   this.setViewportSize(gl.viewportWidth, gl.viewportHeight);
   mat4.translate(this._modelview, this._modelview, [0, 0, -20]);
 }
+
+
+Cam.prototype.fieldOfViewY = function() { return this._fovY; };
+
+Cam.prototype.aspectRatio = function() { 
+  return this._width/this._height; 
+};
+
+Cam.prototype.rotation = function() { return this._rotation; };
 
 Cam.prototype._updateIfRequired = function() {
   if (!this._updateMat) {
@@ -65,6 +75,8 @@ Cam.prototype._updateIfRequired = function() {
 
 Cam.prototype.setViewportSize = function(width, height) {
   this._updateMat = true;
+  this._width = width;
+  this._height = height;
   mat4.identity(this._projection);
   mat4.perspective(this._projection, 45.0, width / height, this._near, 
                    this._far);
@@ -134,11 +146,23 @@ Cam.prototype.panXY = (function () {
   };
 })();
 
+Cam.prototype.setZoom = function(zoom) {
+  this._updateMat = true;
+  this._zoom = zoom;
+  return this._zoom;
+};
+
 Cam.prototype.zoom = function(delta) {
+  if (delta === undefined) {
+    return this._zoom;
+  }
   this._updateMat = true;
   var factor = 1.0+delta*0.1;
   this._zoom = Math.min(1000.0, Math.max(2.0, factor*this._zoom));
+  return this._zoom;
 };
+
+Cam.prototype.center = function() { return this._center; };
 
 Cam.prototype.currentShader = function() { return this._currentShader; };
 

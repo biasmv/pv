@@ -20,6 +20,36 @@
 
 (function(exports) {
 
+function Range(min, max) {
+  if (min === undefined || max === undefined) {
+    this._empty = true;
+    this._min = this._max = null;
+  } else {
+    this._empty = false;
+    this._min = min;
+    this._max = max;
+  }
+}
+
+Range.prototype.min = function() { return this._min; };
+Range.prototype.max = function() { return this._max; };
+Range.prototype.length = function() { return this._max - this._min; };
+Range.prototype.empty = function() { return this._empty; };
+Range.prototype.center = function() { return (this._max + this._min)*0.5; };
+
+Range.prototype.update = function(val) {
+  if (!this._empty) {
+    if (val < this._min) {
+      this._min = val;
+    } else if (val > this._max) {
+      this._max = val;
+    }
+    return;
+  } 
+  this._min = this._max = val;
+  this._empty = false;
+};
+
 // A scene node holds a set of child nodes to be rendered on screen. Later on, 
 // the SceneNode might grow additional functionality commonly found in a scene 
 // graph, e.g. coordinate transformations.
@@ -62,6 +92,10 @@ SceneNode.prototype.destroy = function() {
   for (var i = 0; i < this._children.length; ++i) {
     this._children[i].destroy();
   }
+};
+
+SceneNode.prototype.visible = function() {
+  return this._visible;
 };
 
 function BaseGeom(gl) {
@@ -116,6 +150,31 @@ derive(LineGeom, BaseGeom);
 
 LineGeom.prototype.setLineWidth = function(width) {
   this._lineWidth = width;
+};
+
+
+function updateProjectionIntervalsForBuffer(xAxis, yAxis, zAxis, data, stride, 
+                                            numVerts, xInterval, yInterval, 
+                                            zInterval) {
+  var end = stride*numVerts;
+  for (var i = 0; i < end; i+=stride) {
+    var x = data[i], y = data[i+1], z = data[i+2];
+    xInterval.update(xAxis[0]*x+xAxis[1]*y+xAxis[2]*z);
+    yInterval.update(yAxis[0]*x+yAxis[1]*y+yAxis[2]*z);
+    zInterval.update(zAxis[0]*x+zAxis[1]*y+zAxis[2]*z);
+  }
+}
+
+
+
+
+LineGeom.prototype.updateProjectionIntervals = function(xAxis, yAxis, zAxis, 
+                                                        xInterval, yInterval, 
+                                                        zInterval) {
+  updateProjectionIntervalsForBuffer(xAxis, yAxis, zAxis, this._data, 
+                                     this._FLOATS_PER_VERT, this._numLines*2,
+                                     xInterval, 
+                                     yInterval, zInterval);
 };
 
 LineGeom.prototype.shaderForStyleAndPass = function(shaderCatalog, style, pass) {
@@ -261,6 +320,15 @@ CompositeGeom.prototype.colorBy = function() {
   colorFunc.begin(this._structure);
   this.forwardMethod('colorBy', arguments);
   colorFunc.end(this._structure);
+};
+
+CompositeGeom.prototype.updateProjectionIntervals = function(xAxis, yAxis, zAxis, 
+                                                             xInterval, yInterval, 
+                                                             zInterval) {
+  for (var i = 0; i < this._geoms.length; ++i) {
+    this._geoms[i].updateProjectionIntervals(xAxis, yAxis, zAxis, xInterval, 
+                                             yInterval, zInterval);
+  }
 };
 
 CompositeGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
@@ -518,7 +586,14 @@ derive(MeshGeom, BaseGeom);
 MeshGeom.prototype.setVertAssoc = function(assoc) {
   this._vertAssoc = assoc;
 };
-
+MeshGeom.prototype.updateProjectionIntervals = function(xAxis, yAxis, zAxis, 
+                                                        xInterval, yInterval, 
+                                                        zInterval) {
+  updateProjectionIntervalsForBuffer(xAxis, yAxis, zAxis, this._vertData,  
+                                     this._FLOATS_PER_VERT, this._numVerts,
+                                     xInterval,
+                                     yInterval, zInterval);
+};
 MeshGeom.prototype.destroy = function() {
   BaseGeom.prototype.destroy.call(this);
   this._gl.deleteBuffer(this._interleavedBuffer);
@@ -704,6 +779,10 @@ function TextLabel(gl, canvas, context, pos, text) {
 
 }
 
+TextLabel.prototype.updateProjectionIntervals = function() {
+  // text labels don't affect the projection interval. Don't do anything.
+};
+
 derive(TextLabel, SceneNode);
 
 TextLabel.prototype._setupTextParameters = function(ctx) {
@@ -861,8 +940,81 @@ UniqueObjectIdPool.prototype.objectForId = function(id) {
   return this._objects[id];
 };
 
+function OrientedBoundingBox(gl, center, halfExtents) {
+  LineGeom.prototype.constructor.call(this, gl, 24);
+  var color = rgb.create();
+  var tf = mat3.create();
+  tf[0] = halfExtents[0][0];
+  tf[1] = halfExtents[0][1];
+  tf[2] = halfExtents[0][2]; 
+
+  tf[3] = halfExtents[1][0];
+  tf[4] = halfExtents[1][1];
+  tf[5] = halfExtents[1][2];
+
+  tf[6] = halfExtents[2][0]; 
+  tf[7] = halfExtents[2][1];
+  tf[8] = halfExtents[2][2];
+  console.log(mat3.str(tf));
+  var a = vec3.create(), b = vec3.create();
+  this.addLine(vec3.add(a, center, vec3.transformMat3(a, [-1, -1, -1], tf)),
+               color,
+               vec3.add(b, center, vec3.transformMat3(b, [ 1, -1, -1], tf)),
+               color, -1);
+
+  this.addLine(vec3.add(a, center, vec3.transformMat3(a, [ 1, -1, -1], tf)),
+               color,
+               vec3.add(b, center, vec3.transformMat3(b, [ 1,  1, -1], tf)),
+               color, -1);
+  this.addLine(vec3.add(a, center, vec3.transformMat3(a, [ 1,  1, -1], tf)),
+               color,
+               vec3.add(b, center, vec3.transformMat3(b, [-1,  1, -1], tf)),
+               color, -1);
+  this.addLine(vec3.add(a, center, vec3.transformMat3(a, [-1,  1, -1], tf)),
+               color,
+               vec3.add(b, center, vec3.transformMat3(b, [-1, -1, -1], tf)),
+               color, -1);
+
+  this.addLine(vec3.add(a, center, vec3.transformMat3(a, [-1, -1,  1], tf)),
+               color,
+               vec3.add(b, center, vec3.transformMat3(b, [ 1, -1,  1], tf)),
+               color, -1);
+  this.addLine(vec3.add(a, center, vec3.transformMat3(a, [ 1, -1,  1], tf)),
+               color,
+               vec3.add(b, center, vec3.transformMat3(b, [ 1,  1,  1], tf)),
+               color, -1);
+  this.addLine(vec3.add(a, center, vec3.transformMat3(a, [ 1,  1,  1], tf)),
+               color,
+               vec3.add(b, center, vec3.transformMat3(b, [-1,  1,  1], tf)),
+               color, -1);
+  this.addLine(vec3.add(a, center, vec3.transformMat3(a, [-1,  1,  1], tf)),
+               color,
+               vec3.add(b, center, vec3.transformMat3(b, [-1, -1,  1], tf)),
+               color, -1);
+
+  this.addLine(vec3.add(a, center, vec3.transformMat3(a, [-1, -1, -1], tf)),
+               color,
+               vec3.add(b, center, vec3.transformMat3(b, [-1, -1,  1], tf)),
+               color, -1);
+  this.addLine(vec3.add(a, center, vec3.transformMat3(a, [ 1, -1, -1], tf)),
+               color,
+               vec3.add(b, center, vec3.transformMat3(b, [ 1, -1,  1], tf)),
+               color, -1);
+  this.addLine(vec3.add(a, center, vec3.transformMat3(a, [ 1,  1, -1], tf)),
+               color,
+               vec3.add(b, center, vec3.transformMat3(b, [ 1,  1,  1], tf)),
+               color, -1);
+  this.addLine(vec3.add(a, center, vec3.transformMat3(a, [-1,  1, -1], tf)),
+               color,
+               vec3.add(b, center, vec3.transformMat3(b, [-1,  1,  1], tf)),
+               color, -1);
+}
+
+derive(OrientedBoundingBox, LineGeom);
+
 
 exports.SceneNode = SceneNode;
+exports.OrientedBoundingBox = OrientedBoundingBox;
 exports.AtomVertexAssoc = AtomVertexAssoc;
 exports.TraceVertexAssoc = TraceVertexAssoc;
 exports.MeshGeom = MeshGeom;
@@ -873,6 +1025,7 @@ exports.ProtoSphere = ProtoSphere;
 exports.ProtoCylinder = ProtoCylinder;
 exports.TextLabel = TextLabel;
 exports.UniqueObjectIdPool = UniqueObjectIdPool;
+exports.Range = Range;
 
 })(this);
 

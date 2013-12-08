@@ -140,6 +140,15 @@ These methods will automatically add the object to the viewer, there is not need
   :param pos: A :class:`vec3`, or array of length 3 holding the x, y, and z coordinate of the label's center.
   :returns: the created label. 
 
+.. _pv.viewer.camera:
+
+Camera Positioning
+---------------------------------------------------------------------------------
+
+.. function:: pv.Viewer.autoZoom()
+
+  Adjusts the zoom level such that all objects are visible on screen and occupy as much space as possible. The center and orientation of the camera are not modified.  
+
 .. _pv.viewer.management:
 
 Object Management
