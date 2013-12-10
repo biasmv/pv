@@ -102,6 +102,19 @@ MolBase.prototype.atoms = function() {
   return atoms;
 };
 
+MolBase.prototype.atom = function(name) {
+  var parts = name.split('.');
+  var chain = this.chain(parts[0]);
+  if (chain === null) {
+    return null;
+  }
+  var residue = chain.residueByRnum(parseInt(parts[1], 10));
+  if (residue === null) {
+    return null;
+  }
+  return residue.atom(parts[2]);
+};
+
 MolBase.prototype.center = function() {
   var sum = vec3.create();
   var count = 0;
@@ -341,6 +354,14 @@ MolBase.prototype._dictSelect = function(dict) {
   return view;
 };
 
+function rnumComp(lhs, rhs) {
+  return lhs.num() < rhs.num();
+}
+
+function numify(val) {
+  return { num : function() { return val; }};
+}
+
 function ChainBase() {
 
 }
@@ -377,6 +398,25 @@ ChainBase.prototype.asView = function() {
   return view;
 
 };
+
+ChainBase.prototype.residueByRnum = function(rnum) {
+  var residues = this.residues();
+  if (this._rnumsOrdered) {
+    var index = binarySearch(residues, numify(rnum), rnumComp);
+    if (index === -1) {
+      return null;
+    }
+    return residues[index];
+  } else {
+    for (var i = 0; i < residues.length; ++i) {
+      if (residues[i].num() === rnum) {
+        return residues[i];
+      }
+    }
+    return null;
+  }
+};
+
 
 ChainBase.prototype.prop = function(propName) { 
   return this[propName]();
@@ -568,13 +608,6 @@ Chain.prototype.addResidue = function(name, num) {
   return residue;
 };
 
-function rnumComp(lhs, rhs) {
-  return lhs.num() < rhs.num();
-}
-
-function numify(val) {
-  return { num : function() { return val; }};
-}
 
 Chain.prototype.residuesInRnumRange = function(start, end) {
   var matching = [];

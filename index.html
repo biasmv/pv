@@ -344,7 +344,10 @@
     }
 
     function test() {
-      pv.fitTo(structure.select({rname : 'RVP'}));
+      var rvp = structure.select({rname : 'RVP'});
+      var phosphate = structure.atom('A.300.P');
+      pv.fitTo(rvp);
+      pv.label('rvp', phosphate.qualifiedName(), phosphate.pos());
     }
 
     $('#cartoon').click(cartoon);
