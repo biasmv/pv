@@ -834,12 +834,12 @@ TextLabel.prototype._prepareText = function(canvas, ctx, text) {
 TextLabel.prototype._textureFromCanvas = function(targetTexture, srcCanvas) {
   this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, true);
   this._gl.bindTexture(this._gl.TEXTURE_2D, targetTexture);
-  this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._gl.RGBA, 
+  this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._gl.RGBA,
                       this._gl.UNSIGNED_BYTE, srcCanvas);
-  this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER, 
+  this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER,
                          this._gl.LINEAR);
-  this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER, 
-                   gl.LINEAR_MIPMAP_LINEAR);
+  this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER,
+                         this._gl.LINEAR_MIPMAP_LINEAR);
   this._gl.generateMipmap(this._gl.TEXTURE_2D);
   this._gl.bindTexture(this._gl.TEXTURE_2D, null);
 };
