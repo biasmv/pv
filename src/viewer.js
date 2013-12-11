@@ -1,35 +1,34 @@
 // Copyright (c) 2013 Marco Biasini
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to 
-// deal in the Software without restriction, including without limitation the 
-// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
-// sell copies of the Software, and to permit persons to whom the Software is 
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in 
+//
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
 var pv = (function(){
-"use strict";
+  "use strict";
 
-
-// FIXME: Browser vendors tend to block quite a few graphic cards. Instead
-//   of showing this very generic message, implement a per-browser 
-//   diagnostic. For example, when we detect that we are running a recent
-//   Chrome and Webgl is not available, we should say that the user is
-//   supposed to check chrome://gpu for details on why WebGL is not
-//   available. Similar troubleshooting pages are available for other
-//   browsers.
-var WEBGL_NOT_SUPPORTED = '\
+  // FIXME: Browser vendors tend to block quite a few graphic cards. Instead
+  //   of showing this very generic message, implement a per-browser
+  //   diagnostic. For example, when we detect that we are running a recent
+  //   Chrome and Webgl is not available, we should say that the user is
+  //   supposed to check chrome://gpu for details on why WebGL is not
+  //   available. Similar troubleshooting pages are available for other
+  //   browsers.
+  var WEBGL_NOT_SUPPORTED = '\
 <div style="vertical-align:middle; text-align:center;">\
 <h1>Oink</h1><p>Your browser does not support WebGL. \
 You might want to try Chrome, Firefox, IE 11, or newer versions of Safari\
@@ -39,29 +38,26 @@ graphic card might be blocked. Check the browser documentation for details\
 </p>\
 </div>';
 
-
-function bind(obj, fn) { 
-  return function() { return fn.apply(obj, arguments); };
+  function bind(obj, fn) {
+    return function() {
+      return fn.apply(obj, arguments);
+  };
 }
 
 
 var requestAnimFrame = (function(){
-  return  window.requestAnimationFrame       ||
-          window.webkitRequestAnimationFrame ||
-          window.mozRequestAnimationFrame    ||
-          function( callback ){
-            window.setTimeout(callback, 1000 / 60);
+  return window.requestAnimationFrame || window.webkitRequestAnimationFrame ||
+         window.mozRequestAnimationFrame ||
+         function(callback) {
+           window.setTimeout(callback, 1000 / 60);
           };
 })();
-
-
-
 
 function PV(domElement, opts) {
   opts = opts || {};
   this._options = {
     width : (opts.width || 500),
-    height: (opts.height || 500),
+    height : (opts.height || 500),
     antialias : opts.antialias,
     quality : opts.quality || 'low',
     style : opts.style || 'hemilight'
@@ -94,12 +90,11 @@ function PV(domElement, opts) {
   this._domElement.appendChild(this._canvas);
   this._domElement.appendChild(this._textureCanvas);
 
-  document.addEventListener('DOMContentLoaded', 
-                            bind(this, this._initPV));
+  document.addEventListener('DOMContentLoaded', bind(this, this._initPV));
 }
 
 // resizes the canvas, separated out from PV.resize because we want
-// to call this function directly in a requestAnimationFrame together 
+// to call this function directly in a requestAnimationFrame together
 // with rendering to avoid flickering.
 PV.prototype._ensureSize = function() {
   if (!this._resize) {
@@ -108,13 +103,11 @@ PV.prototype._ensureSize = function() {
   this._resize = false;
   this._options.realWidth = this._options.width * this._options.samples;
   this._options.realHeight = this._options.height * this._options.samples;
-  this._gl.viewport(0, 0, this._options.realWidth, 
-                    this._options._realHeight);
+  this._gl.viewport(0, 0, this._options.realWidth, this._options._realHeight);
   this._canvas.width = this._options.realWidth;
   this._canvas.height = this._options.realHeight;
-  this._cam.setViewportSize(this._options.realWidth, 
-                            this._options.realHeight);
-  if (this._options.samples > 1)  {
+  this._cam.setViewportSize(this._options.realWidth, this._options.realHeight);
+  if (this._options.samples > 1) {
     this._initManualAntialiasing(this._options.samples);
   }
   this._pickBuffer.resize(this._options.width, this._options.height);
@@ -135,10 +128,13 @@ PV.prototype.fitParent = function() {
   this.resize(parentRect.width, parentRect.height);
 };
 
-PV.prototype.gl = function() { return this._gl; };
+PV.prototype.gl = function() {
+  return this._gl;
+};
 
-PV.prototype.ok = function() { return this._ok; };
-
+PV.prototype.ok = function() {
+  return this._ok;
+};
 
 PV.prototype.options = function(optName, value) {
   if (value !== undefined) {
@@ -161,7 +157,7 @@ PV.prototype.quality = function(qual) {
     this._options.sphereDetail = 16;
     this._options.splineDetail = 8;
     return;
-  } 
+  }
   if (qual === 'medium') {
     this._options.arcDetail = 3;
     this._options.sphereDetail = 10;
@@ -177,7 +173,7 @@ PV.prototype.quality = function(qual) {
   console.error('invalid quality argument', qual);
 };
 
-// returns the content of the WebGL context as a data URL element which can be 
+// returns the content of the WebGL context as a data URL element which can be
 // inserted into an img element. This allows users to save a picture to disk
 PV.prototype.imageData = function() {
   return this._canvas.toDataURL();
@@ -185,13 +181,13 @@ PV.prototype.imageData = function() {
 
 PV.prototype._initContext = function() {
   try {
-    var contextOpts = { 
+    var contextOpts = {
       antialias : this._options.antialias,
       preserveDrawingBuffer : true // for image export
     };
-    this._gl = this._canvas.getContext('experimental-webgl', 
-                                       contextOpts);
-  } catch (err) {
+    this._gl = this._canvas.getContext('experimental-webgl', contextOpts);
+  }
+  catch (err) {
     console.error('WebGL not supported', err);
     return false;
   }
@@ -203,38 +199,36 @@ PV.prototype._initContext = function() {
 };
 
 PV.prototype._initManualAntialiasing = function(samples) {
-    var scale_factor = 1.0/samples;
-    var trans_x = -(1-scale_factor)*0.5*this._options.realWidth;
-    var trans_y = -(1-scale_factor)*0.5*this._options.realHeight;
-    var translate = 'translate('+trans_x+'px, '+trans_y+'px)';
-    var scale = 'scale('+scale_factor+', '+scale_factor+')';
-    var transform = translate+' '+scale;
+  var scale_factor = 1.0 / samples;
+  var trans_x = -(1 - scale_factor) * 0.5 * this._options.realWidth;
+  var trans_y = -(1 - scale_factor) * 0.5 * this._options.realHeight;
+  var translate = 'translate(' + trans_x + 'px, ' + trans_y + 'px)';
+  var scale = 'scale(' + scale_factor + ', ' + scale_factor + ')';
+  var transform = translate + ' ' + scale;
 
-    this._canvas.style.webkitTransform = transform;
-    this._canvas.style.transform = transform;
-    this._canvas.style.ieTransform = transform;
-    this._canvas.width = this._options.realWidth;
-    this._canvas.height = this._options.realHeight;
+  this._canvas.style.webkitTransform = transform;
+  this._canvas.style.transform = transform;
+  this._canvas.style.ieTransform = transform;
+  this._canvas.width = this._options.realWidth;
+  this._canvas.height = this._options.realHeight;
 };
 
-PV.prototype._initPickBuffer = function(){
+PV.prototype._initPickBuffer = function() {
   var fbOptions = {
-    width : this._options.width,
-    height: this._options.height
+    width : this._options.width, height : this._options.height
   };
   this._pickBuffer = new FrameBuffer(this._gl, fbOptions);
 };
 
-PV.prototype._initGL = function () {
+PV.prototype._initGL = function() {
   var samples = 1;
   if (!this._initContext()) {
     return false;
   }
 
-  if (!this._gl.getContextAttributes().antialias &&
-      this._options.antialias) {
+  if (!this._gl.getContextAttributes().antialias && this._options.antialias) {
     console.info('hardware antialising not supported.',
-                  'will use manual antialiasing instead.');
+                 'will use manual antialiasing instead.');
     samples = 2;
   }
   this._options.realWidth = this._options.width * samples;
@@ -290,41 +284,39 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
   // avoid repeated calls to getAttribLocation/getUniformLocation
   var getAttribLoc = bind(this._gl, this._gl.getAttribLocation);
   var getUniformLoc = bind(this._gl, this._gl.getUniformLocation);
-  shaderProgram.posAttrib    = getAttribLoc(shaderProgram, 'attrPos');
-  shaderProgram.colorAttrib  = getAttribLoc(shaderProgram, 'attrColor');
+  shaderProgram.posAttrib = getAttribLoc(shaderProgram, 'attrPos');
+  shaderProgram.colorAttrib = getAttribLoc(shaderProgram, 'attrColor');
   shaderProgram.normalAttrib = getAttribLoc(shaderProgram, 'attrNormal');
-  shaderProgram.objIdAttrib  = getAttribLoc(shaderProgram, 'attrObjId');
-  shaderProgram.projection   = getUniformLoc(shaderProgram, 'projectionMat');
-  shaderProgram.modelview    = getUniformLoc(shaderProgram, 'modelviewMat');
-  shaderProgram.rotation     = getUniformLoc(shaderProgram, 'rotationMat');
-  shaderProgram.fog          = getUniformLoc(shaderProgram, 'fog');
-  shaderProgram.fogFar       = getUniformLoc(shaderProgram, 'fogFar');
-  shaderProgram.fogNear      = getUniformLoc(shaderProgram, 'fogNear');
-  shaderProgram.fogColor     = getUniformLoc(shaderProgram, 'fogColor');
+  shaderProgram.objIdAttrib = getAttribLoc(shaderProgram, 'attrObjId');
+  shaderProgram.projection = getUniformLoc(shaderProgram, 'projectionMat');
+  shaderProgram.modelview = getUniformLoc(shaderProgram, 'modelviewMat');
+  shaderProgram.rotation = getUniformLoc(shaderProgram, 'rotationMat');
+  shaderProgram.fog = getUniformLoc(shaderProgram, 'fog');
+  shaderProgram.fogFar = getUniformLoc(shaderProgram, 'fogFar');
+  shaderProgram.fogNear = getUniformLoc(shaderProgram, 'fogNear');
+  shaderProgram.fogColor = getUniformLoc(shaderProgram, 'fogColor');
   shaderProgram.outlineColor = getUniformLoc(shaderProgram, 'outlineColor');
 
   return shaderProgram;
 };
 
 PV.prototype._mouseUp = function(event) {
-  this._canvas.removeEventListener('mousemove', this._mouseRotateListener, 
+  this._canvas.removeEventListener('mousemove', this._mouseRotateListener,
                                    false);
-  this._canvas.removeEventListener('mousemove', this._mousePanListener, 
-                                   false);
+  this._canvas.removeEventListener('mousemove', this._mousePanListener, false);
   this._canvas.removeEventListener('mouseup', this._mouseUpListener, false);
   document.removeEventListener('mouseup', this._mouseUpListener, false);
   document.removeEventListener('mousemove', this._mouseRotateListener);
   document.removeEventListener('mousemove', this._mousePanListener);
 };
 
-
 PV.prototype._initPV = function() {
   if (!this._initGL()) {
     this._domElement.removeChild(this._canvas);
     this._domElement.innerHTML = WEBGL_NOT_SUPPORTED;
-    this._domElement.style.width = this._options.width+'px';
-    this._domElement.style.height = this._options.height+'px';
-    return false; 
+    this._domElement.style.width = this._options.width + 'px';
+    this._domElement.style.height = this._options.height + 'px';
+    return false;
   }
   this._ok = true;
   this._float32BufferPool = new BufferPool(Float32Array);
@@ -345,19 +337,18 @@ PV.prototype._initPV = function() {
   // the mousewheel event. Register different event handlers, depending on
   // what properties are available.
   if ('onwheel' in this._canvas) {
-    this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF), 
+    this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF),
                                   false);
   } else {
-    this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel), 
+    this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel),
                                   false);
   }
   this._canvas.addEventListener('dblclick', bind(this, this._mouseDoubleClick),
                                 false);
-  this._canvas.addEventListener('mousedown', bind(this, this._mouseDown), 
+  this._canvas.addEventListener('mousedown', bind(this, this._mouseDown),
                                 false);
   return true;
 };
-
 
 PV.prototype.requestRedraw = function() {
   if (this._redrawRequested) {
@@ -369,8 +360,8 @@ PV.prototype.requestRedraw = function() {
 
 PV.prototype._drawWithPass = function(pass) {
   for (var i = 0, e = this._objects.length; i !== e; ++i) {
-    this._objects[i].draw(this._cam, this._shaderCatalog, this._options.style, 
-                          pass);
+    this._objects[i]
+        .draw(this._cam, this._shaderCatalog, this._options.style, pass);
   }
 };
 
@@ -390,8 +381,6 @@ PV.prototype._draw = function() {
   this._gl.enable(this._gl.CULL_FACE);
   this._drawWithPass('outline');
 };
-
-
 
 PV.prototype.centerOn = function(what) {
   this._cam.setCenter(what.center());
@@ -418,13 +407,12 @@ PV.prototype._mouseWheelFF = function(event) {
 
 PV.prototype._mouseDoubleClick = function(event) {
   var rect = this._canvas.getBoundingClientRect();
-  var objects = this.pick({x : event.clientX-rect.left,
-                           y: event.clientY - rect.top});
+  var objects = this.pick(
+      { x : event.clientX - rect.left, y : event.clientY - rect.top });
   if (objects.length > 0) {
     if (objects[0].pos) {
       this._cam.setCenter(objects[0].pos());
-    }
-    else {
+    } else {
       this._cam.setCenter(objects[0].atom('CA').pos());
     }
     this.requestRedraw();
@@ -436,16 +424,17 @@ PV.prototype._mouseDown = function(event) {
     return;
   }
   event.preventDefault();
-  if (event.shiftKey === true){
+  if (event.shiftKey === true) {
     this._canvas.addEventListener('mousemove', this._mousePanListener, false);
     document.addEventListener('mousemove', this._mousePanListener, false);
   } else {
-    this._canvas.addEventListener('mousemove', this._mouseRotateListener, false);
+    this._canvas.addEventListener('mousemove', this._mouseRotateListener,
+                                  false);
     document.addEventListener('mousemove', this._mouseRotateListener, false);
   }
   this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
   document.addEventListener('mouseup', this._mouseUpListener, false);
-  this._lastMousePos = { x: event.pageX, y: event.pageY };
+  this._lastMousePos = { x : event.pageX, y : event.pageY };
 };
 
 PV.prototype._mouseRotate = function(event) {
@@ -456,13 +445,13 @@ PV.prototype._mouseRotate = function(event) {
   };
 
   var speed = 0.005;
-  this._cam.rotateX(speed*delta.y);
-  this._cam.rotateY(speed*delta.x);
+  this._cam.rotateX(speed * delta.y);
+  this._cam.rotateY(speed * delta.x);
   this._lastMousePos = newMousePos;
   this.requestRedraw();
 };
 
-PV.prototype._mousePan = function(event){
+PV.prototype._mousePan = function(event) {
   var newMousePos = { x : event.pageX, y : event.pageY };
   var delta = {
     x : newMousePos.x - this._lastMousePos.x,
@@ -470,17 +459,13 @@ PV.prototype._mousePan = function(event){
   };
 
   var speed = 0.05;
-  this._cam.panXY(speed*delta.x, speed*delta.y);
+  this._cam.panXY(speed * delta.x, speed * delta.y);
   this._lastMousePos = newMousePos;
   this.requestRedraw();
 };
 
-
-PV.prototype.RENDER_MODES = [
-  'sline', 'line', 'trace', 'lineTrace', 'cartoon', 'tube',
-  'spheres'
-];
-
+PV.prototype.RENDER_MODES =
+    [ 'sline', 'line', 'trace', 'lineTrace', 'cartoon', 'tube', 'spheres' ];
 
 /// simple dispatcher which allows to render using a certain style.
 //  will bail out if the render mode does not exist.
@@ -497,13 +482,12 @@ PV.prototype.renderAs = function(name, structure, mode, opts) {
     return;
   }
   return this[mode](name, structure, opts);
-
 };
 
 PV.prototype.lineTrace = function(name, structure, opts) {
   opts = opts || {};
   var options = {
-    color : opts.color || color.uniform([1, 0, 1]),
+    color : opts.color || color.uniform([ 1, 0, 1 ]),
     lineWidth : opts.lineWidth || 4.0,
     idPool : this._objectIdManager,
     float32BufferPool : this._float32BufferPool,
@@ -537,7 +521,7 @@ PV.prototype.sline = function(name, structure, opts) {
     float32BufferPool : this._float32BufferPool,
     uint16BufferPool : this._uint16BufferPool,
   };
-  var obj =  render.sline(structure, this._gl, options);
+  var obj = render.sline(structure, this._gl, options);
   return this.add(name, obj);
 };
 
@@ -545,21 +529,21 @@ PV.prototype.cartoon = function(name, structure, opts) {
   opts = opts || {};
   var options = {
     color : opts.color || color.bySS(),
-    strength: opts.strength || 1.0,
+    strength : opts.strength || 1.0,
     splineDetail : opts.splineDetail || this.options('splineDetail'),
     arcDetail : opts.arcDetail || this.options('arcDetail'),
     radius : opts.radius || 0.3,
-    forceTube: opts.forceTube || false,
+    forceTube : opts.forceTube || false,
     idPool : this._objectIdManager,
     float32BufferPool : this._float32BufferPool,
     uint16BufferPool : this._uint16BufferPool,
   };
-  var obj =  render.cartoon(structure, this._gl, options);
+  var obj = render.cartoon(structure, this._gl, options);
   return this.add(name, obj);
 };
 
-// renders the protein using a smoothly interpolated tube, essentially 
-// identical to the cartoon render mode, but without special treatment for 
+// renders the protein using a smoothly interpolated tube, essentially
+// identical to the cartoon render mode, but without special treatment for
 // helices and strands.
 PV.prototype.tube = function(name, structure, opts) {
   opts = opts || {};
@@ -591,7 +575,7 @@ PV.prototype.lines = function(name, structure, opts) {
     float32BufferPool : this._float32BufferPool,
     uint16BufferPool : this._uint16BufferPool,
   };
-  var obj =  render.lines(structure, this._gl, options);
+  var obj = render.lines(structure, this._gl, options);
   return this.add(name, obj);
 };
 
@@ -621,7 +605,7 @@ PV.prototype._axesFromCamRotation = function() {
 
 PV.prototype.fitTo = function(what) {
   var axes = this._axesFromCamRotation();
-  var intervals = [new Range(), new Range(), new Range()];
+  var intervals = [ new Range(), new Range(), new Range() ];
   if (what instanceof SceneNode) {
     what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                    intervals[1], intervals[2]);
@@ -649,9 +633,9 @@ PV.prototype._fitToIntervals = function(axes, intervals, setCenter) {
     var cy = intervals[1].center();
     var cz = intervals[2].center();
     var center = [
-      cx*axes[0][0]+cy*axes[1][0]+cz*axes[2][0],
-      cx*axes[0][1]+cy*axes[1][1]+cz*axes[2][1],
-      cx*axes[0][2]+cy*axes[1][2]+cz*axes[2][2]
+      cx * axes[0][0] + cy * axes[1][0] + cz * axes[2][0],
+      cx * axes[0][1] + cy * axes[1][1] + cz * axes[2][1],
+      cx * axes[0][2] + cy * axes[1][2] + cz * axes[2][2]
     ];
     this._cam.setCenter(center);
   }
@@ -659,12 +643,12 @@ PV.prototype._fitToIntervals = function(axes, intervals, setCenter) {
   var camPosYProj = vec3.dot(this._cam.center(), axes[1]);
   var camPosZProj = vec3.dot(this._cam.center(), axes[2]);
   var fovY = this._cam.fieldOfViewY();
-  
+
   var aspect = this._cam.aspectRatio();
-  var maxExtend = Math.max(intervals[1].max()-camPosYProj,
-                           camPosYProj-intervals[1].min(),
-                           (intervals[0].max()-camPosXProj)/aspect,
-                           (camPosXProj-intervals[0].min())/aspect);
+  var maxExtend = Math.max(intervals[1].max() - camPosYProj,
+                           camPosYProj - intervals[1].min(),
+                           (intervals[0].max() - camPosXProj) / aspect,
+                           (camPosXProj - intervals[0].min()) / aspect);
 
   var newZoom =
       2.0 * (maxExtend / Math.tan(fovY) + (intervals[2].max() - camPosZProj));
@@ -675,7 +659,7 @@ PV.prototype._fitToIntervals = function(axes, intervals, setCenter) {
 // adapt the zoom level to fit the viewport to all visible objects.
 PV.prototype.autoZoom = function() {
   var axes = this._axesFromCamRotation();
-  var intervals = [ new Range(), new Range(), new Range()];
+  var intervals = [ new Range(), new Range(), new Range() ];
   this.forEach(function(obj) {
     if (!obj.visible()) {
       return;
@@ -686,11 +670,9 @@ PV.prototype.autoZoom = function() {
   this._fitToIntervals(axes, intervals, false);
 };
 
-
-
 PV.prototype.label = function(name, text, pos) {
-  var label = new TextLabel(this._gl, this._textureCanvas, 
-                       this._2dcontext, pos, text);
+  var label =
+      new TextLabel(this._gl, this._textureCanvas, this._2dcontext, pos, text);
   this.add(name, label);
   return label;
 };
@@ -710,7 +692,7 @@ PV.prototype._drawPickingScene = function() {
 PV.prototype.pick = function(pos) {
   this._pickBuffer.bind();
   this._drawPickingScene();
-  var pixels = new Uint8Array(4*4*4);
+  var pixels = new Uint8Array(4 * 4 * 4);
   this._gl.readPixels(pos.x - 2, this._options.height - (pos.y - 2), 4, 4,
                       this._gl.RGBA, this._gl.UNSIGNED_BYTE, pixels);
   if (pixels.data) {
@@ -720,8 +702,8 @@ PV.prototype.pick = function(pos) {
   var pickedObjects = [];
   for (var y = 0; y < 4; ++y) {
     for (var x = 0; x < 4; ++x) {
-      var baseIndex = (y*4 + x)*4;
-      if (pixels[baseIndex+3] === 0) {
+      var baseIndex = (y * 4 + x) * 4;
+      if (pixels[baseIndex + 3] === 0) {
         continue;
       }
       var objId = pixels[baseIndex + 0] | pixels[baseIndex + 1] << 8 |
@@ -743,17 +725,15 @@ PV.prototype.add = function(name, obj) {
   obj.name(name);
   this._objects.push(obj);
   // keep items sorted according to order. that's quick hack to fix
-  // issues with transparent object. 
-  this._objects.sort(function(lhs, rhs) { 
-    return lhs.order() - rhs.order(); 
-  });
+  // issues with transparent object.
+  this._objects.sort(function(lhs, rhs) { return lhs.order() - rhs.order(); });
   this.requestRedraw();
   return obj;
 };
 
 PV.prototype._globToRegex = function(glob) {
   var r = glob.replace('.', '\\.').replace('*', '.*');
-  return new RegExp('^'+r+'$');
+  return new RegExp('^' + r + '$');
 };
 
 PV.prototype.forEach = function() {
@@ -784,19 +764,15 @@ PV.prototype.get = function(name) {
 };
 
 PV.prototype.hide = function(glob) {
-  this.forEach(glob, function(obj) {
-    obj.hide();
-  });
+  this.forEach(glob, function(obj) { obj.hide(); });
 };
 
 PV.prototype.show = function(glob) {
-  this.forEach(glob, function(obj) {
-    obj.show();
-  });
+  this.forEach(glob, function(obj) { obj.show(); });
 };
 
-// remove all objects whose names match the provided glob pattern from 
-// the viewer. 
+// remove all objects whose names match the provided glob pattern from
+// the viewer.
 PV.prototype.rm = function(glob) {
   var newObjects = [];
   var regex = this._globToRegex(glob);
@@ -811,11 +787,13 @@ PV.prototype.rm = function(glob) {
   this._objects = newObjects;
 };
 
-
 PV.prototype.all = function() {
   return this._objects;
 };
 
-return { Viewer: function(elem, options) { return new PV(elem, options); }};
+return { Viewer : function(elem, options) { return new PV(elem, options);
+}
+}
+;
 })();
 
