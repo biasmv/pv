@@ -21,381 +21,383 @@
 
 (function(exports) {
 
-  function Range(min, max) {
-    if (min === undefined || max === undefined) {
-      this._empty = true;
-      this._min = this._max = null;
-    } else {
-      this._empty = false;
-      this._min = min;
-      this._max = max;
-    }
-  }
+"use strict";
 
-  Range.prototype.min = function() {
-    return this._min;
-  };
-  Range.prototype.max = function() {
-    return this._max;
-  };
-  Range.prototype.length = function() {
-    return this._max - this._min;
-  };
-  Range.prototype.empty = function() {
-    return this._empty;
-  };
-  Range.prototype.center = function() {
-    return (this._max + this._min) * 0.5;
-  };
-
-  Range.prototype.extend = function(amount) {
-    this._min -= amount;
-    this._max += amount;
-  };
-
-  Range.prototype.update = function(val) {
-    if (!this._empty) {
-      if (val < this._min) {
-        this._min = val;
-      } else if (val > this._max) {
-        this._max = val;
-      }
-      return;
-    }
-    this._min = this._max = val;
+function Range(min, max) {
+  if (min === undefined || max === undefined) {
+    this._empty = true;
+    this._min = this._max = null;
+  } else {
     this._empty = false;
-  };
+    this._min = min;
+    this._max = max;
+  }
+}
 
-  // A scene node holds a set of child nodes to be rendered on screen. Later on,
-  // the SceneNode might grow additional functionality commonly found in a scene
-  // graph, e.g. coordinate transformations.
-  function SceneNode(name) {
-    this._children = [];
-    this._visible = true;
-    this._name = name || '';
-    this._order = 1;
+Range.prototype.min = function() {
+  return this._min;
+};
+Range.prototype.max = function() {
+  return this._max;
+};
+Range.prototype.length = function() {
+  return this._max - this._min;
+};
+Range.prototype.empty = function() {
+  return this._empty;
+};
+Range.prototype.center = function() {
+  return (this._max + this._min) * 0.5;
+};
+
+Range.prototype.extend = function(amount) {
+  this._min -= amount;
+  this._max += amount;
+};
+
+Range.prototype.update = function(val) {
+  if (!this._empty) {
+    if (val < this._min) {
+      this._min = val;
+    } else if (val > this._max) {
+      this._max = val;
+    }
+    return;
+  }
+  this._min = this._max = val;
+  this._empty = false;
+};
+
+// A scene node holds a set of child nodes to be rendered on screen. Later on,
+// the SceneNode might grow additional functionality commonly found in a scene
+// graph, e.g. coordinate transformations.
+function SceneNode(name) {
+  this._children = [];
+  this._visible = true;
+  this._name = name || '';
+  this._order = 1;
+}
+
+SceneNode.prototype.order = function(order) {
+  if (order !== undefined) {
+    this._order = order;
+  }
+  return this._order;
+};
+
+SceneNode.prototype.add = function(node) {
+  this._children.push(node);
+};
+
+SceneNode.prototype.draw = function(cam, shaderCatalog, style, pass) {
+  for (var i = 0, e = this._children.length; i !== e; ++i) {
+    this._children[i].draw(cam, shaderCatalog, style, pass);
+  }
+};
+
+SceneNode.prototype.show = function() {
+  this._visible = true;
+};
+
+SceneNode.prototype.hide = function() {
+  this._visible = false;
+};
+
+SceneNode.prototype.name = function(name) {
+  if (name !== undefined) {
+    this._name = name;
+  }
+  return this._name;
+};
+
+SceneNode.prototype.destroy = function() {
+  for (var i = 0; i < this._children.length; ++i) {
+    this._children[i].destroy();
+  }
+};
+
+SceneNode.prototype.visible = function() {
+  return this._visible;
+};
+
+function BaseGeom(gl) {
+  SceneNode.prototype.constructor.call(this, gl);
+  this._gl = gl;
+  this._idRanges = [];
+}
+
+derive(BaseGeom, SceneNode);
+
+BaseGeom.prototype.select = function(what) {
+  return this.structure().select(what);
+};
+
+BaseGeom.prototype.structure = function() {
+  return this._vertAssoc._structure;
+};
+
+BaseGeom.prototype.setVertAssoc = function(assoc) {
+  this._vertAssoc = assoc;
+};
+
+BaseGeom.prototype.addIdRange = function(range) {
+  this._idRanges.push(range);
+};
+
+BaseGeom.prototype.destroy = function() {
+  SceneNode.prototype.destroy.call(this);
+  for (var i = 0; i < this._idRanges.length; ++i) {
+    this._idRanges[i].recycle();
+  }
+};
+
+// Holds geometrical data for objects rendered as lines. For each vertex,
+// the color and position is stored in an interleaved format.
+function LineGeom(gl, numVerts, float32BufferPool) {
+  BaseGeom.prototype.constructor.call(this, gl);
+  this._float32BufferPool = float32BufferPool || null;
+  if (this._float32BufferPool) {
+    this._data =
+        this._float32BufferPool.request(numVerts * this._FLOATS_PER_VERT);
+  } else {
+    this._data = new Float32Array(numVerts * this._FLOATS_PER_VERT);
+  }
+  this._ready = false;
+  this._interleavedBuffer = gl.createBuffer();
+  this._numLines = 0;
+  this._vertAssoc = null;
+  this._lineWidth = 1.0;
+}
+
+derive(LineGeom, BaseGeom);
+
+LineGeom.prototype.setLineWidth = function(width) {
+  this._lineWidth = width;
+};
+
+function updateProjectionIntervalsForBuffer(xAxis, yAxis, zAxis, data, stride,
+                                            numVerts, xInterval, yInterval,
+                                            zInterval) {
+  var end = stride * numVerts;
+  for (var i = 0; i < end; i += stride) {
+    var x = data[i], y = data[i + 1], z = data[i + 2];
+    xInterval.update(xAxis[0] * x + xAxis[1] * y + xAxis[2] * z);
+    yInterval.update(yAxis[0] * x + yAxis[1] * y + yAxis[2] * z);
+    zInterval.update(zAxis[0] * x + zAxis[1] * y + zAxis[2] * z);
+  }
+}
+
+LineGeom.prototype.updateProjectionIntervals =
+    function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
+  updateProjectionIntervalsForBuffer(
+      xAxis, yAxis, zAxis, this._data, this._FLOATS_PER_VERT,
+      this._numLines * 2, xInterval, yInterval, zInterval);
+};
+
+LineGeom.prototype.shaderForStyleAndPass =
+    function(shaderCatalog, style, pass) {
+  if (pass === 'outline') {
+    return null;
+  }
+  if (pass === 'select') {
+    return shaderCatalog.select;
+  }
+  return shaderCatalog.lines;
+};
+
+LineGeom.prototype._FLOATS_PER_VERT = 7;
+LineGeom.prototype._POS_OFFSET = 0;
+LineGeom.prototype._COLOR_OFFSET = 3;
+LineGeom.prototype._ID_OFFSET = 6;
+
+LineGeom.prototype.destroy = function() {
+  BaseGeom.prototype.destroy.call(this);
+  this._gl.deleteBuffer(this._interleavedBuffer);
+  if (this._float32BufferPool) {
+    this._float32BufferPool.release(this._data);
+  } else {
+    delete this._data;
+  }
+};
+
+LineGeom.prototype.numVerts = function() {
+  return this._numLines * 2;
+};
+
+LineGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
+
+  if (!this._visible) {
+    return;
   }
 
-  SceneNode.prototype.order = function(order) {
-    if (order !== undefined) {
-      this._order = order;
-    }
-    return this._order;
-  };
-
-  SceneNode.prototype.add = function(node) {
-    this._children.push(node);
-  };
-
-  SceneNode.prototype.draw = function(cam, shaderCatalog, style, pass) {
-    for (var i = 0, e = this._children.length; i !== e; ++i) {
-      this._children[i].draw(cam, shaderCatalog, style, pass);
-    }
-  };
-
-  SceneNode.prototype.show = function() {
-    this._visible = true;
-  };
-
-  SceneNode.prototype.hide = function() {
-    this._visible = false;
-  };
-
-  SceneNode.prototype.name = function(name) {
-    if (name !== undefined) {
-      this._name = name;
-    }
-    return this._name;
-  };
-
-  SceneNode.prototype.destroy = function() {
-    for (var i = 0; i < this._children.length; ++i) {
-      this._children[i].destroy();
-    }
-  };
-
-  SceneNode.prototype.visible = function() {
-    return this._visible;
-  };
-
-  function BaseGeom(gl) {
-    SceneNode.prototype.constructor.call(this, gl);
-    this._gl = gl;
-    this._idRanges = [];
+  var shader = this.shaderForStyleAndPass(shaderCatalog, style, pass);
+  if (!shader) {
+    return;
   }
-
-  derive(BaseGeom, SceneNode);
-
-  BaseGeom.prototype.select = function(what) {
-    return this.structure().select(what);
-  };
-
-  BaseGeom.prototype.structure = function() {
-    return this._vertAssoc._structure;
-  };
-
-  BaseGeom.prototype.setVertAssoc = function(assoc) {
-    this._vertAssoc = assoc;
-  };
-
-  BaseGeom.prototype.addIdRange = function(range) {
-    this._idRanges.push(range);
-  };
-
-  BaseGeom.prototype.destroy = function() {
-    SceneNode.prototype.destroy.call(this);
-    for (var i = 0; i < this._idRanges.length; ++i) {
-      this._idRanges[i].recycle();
-    }
-  };
-
-  // Holds geometrical data for objects rendered as lines. For each vertex,
-  // the color and position is stored in an interleaved format.
-  function LineGeom(gl, numVerts, float32BufferPool) {
-    BaseGeom.prototype.constructor.call(this, gl);
-    this._float32BufferPool = float32BufferPool || null;
-    if (this._float32BufferPool) {
-      this._data =
-          this._float32BufferPool.request(numVerts * this._FLOATS_PER_VERT);
-    } else {
-      this._data = new Float32Array(numVerts * this._FLOATS_PER_VERT);
-    }
-    this._ready = false;
-    this._interleavedBuffer = gl.createBuffer();
-    this._numLines = 0;
-    this._vertAssoc = null;
-    this._lineWidth = 1.0;
+  cam.bind(shader);
+  this.bind();
+  this._gl.lineWidth(this._lineWidth);
+  this._gl.enableVertexAttribArray(shader.posAttrib);
+  this._gl.vertexAttribPointer(shader.posAttrib, 3, this._gl.FLOAT, false,
+                                this._FLOATS_PER_VERT * 4,
+                                this._POS_OFFSET * 4);
+  this._gl.vertexAttribPointer(shader.colorAttrib, 3, this._gl.FLOAT, false,
+                                this._FLOATS_PER_VERT * 4,
+                                this._COLOR_OFFSET * 4);
+  this._gl.enableVertexAttribArray(shader.colorAttrib);
+  if (shader.objIdAttrib !== -1) {
+    this._gl.vertexAttribPointer(shader.objIdAttrib, 1, this._gl.FLOAT, false,
+                                  this._FLOATS_PER_VERT * 4,
+                                  this._ID_OFFSET * 4);
+    this._gl.enableVertexAttribArray(shader.objIdAttrib);
   }
-
-  derive(LineGeom, BaseGeom);
-
-  LineGeom.prototype.setLineWidth = function(width) {
-    this._lineWidth = width;
-  };
-
-  function updateProjectionIntervalsForBuffer(xAxis, yAxis, zAxis, data, stride,
-                                              numVerts, xInterval, yInterval,
-                                              zInterval) {
-    var end = stride * numVerts;
-    for (var i = 0; i < end; i += stride) {
-      var x = data[i], y = data[i + 1], z = data[i + 2];
-      xInterval.update(xAxis[0] * x + xAxis[1] * y + xAxis[2] * z);
-      yInterval.update(yAxis[0] * x + yAxis[1] * y + yAxis[2] * z);
-      zInterval.update(zAxis[0] * x + zAxis[1] * y + zAxis[2] * z);
-    }
+  this._gl.drawArrays(this._gl.LINES, 0, this._numLines * 2);
+  this._gl.disableVertexAttribArray(shader.posAttrib);
+  this._gl.disableVertexAttribArray(shader.colorAttrib);
+  if (shader.objIdAttrib !== -1) {
+    this._gl.disableVertexAttribArray(shader.objIdAttrib);
   }
+};
 
-  LineGeom.prototype.updateProjectionIntervals =
-      function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
-    updateProjectionIntervalsForBuffer(
-        xAxis, yAxis, zAxis, this._data, this._FLOATS_PER_VERT,
-        this._numLines * 2, xInterval, yInterval, zInterval);
-  };
+LineGeom.prototype.colorBy = function(colorFunc, view) {
+  console.time('LineGeom.colorBy');
+  this._ready = false;
+  view = view || this.structure();
+  this._vertAssoc.recolor(colorFunc, view, this._data, this._COLOR_OFFSET,
+                          this._FLOATS_PER_VERT);
+  console.timeEnd('LineGeom.colorBy');
+};
 
-  LineGeom.prototype.shaderForStyleAndPass =
-      function(shaderCatalog, style, pass) {
-    if (pass === 'outline') {
-      return null;
-    }
-    if (pass === 'select') {
-      return shaderCatalog.select;
-    }
-    return shaderCatalog.lines;
-  };
-
-  LineGeom.prototype._FLOATS_PER_VERT = 7;
-  LineGeom.prototype._POS_OFFSET = 0;
-  LineGeom.prototype._COLOR_OFFSET = 3;
-  LineGeom.prototype._ID_OFFSET = 6;
-
-  LineGeom.prototype.destroy = function() {
-    BaseGeom.prototype.destroy.call(this);
-    this._gl.deleteBuffer(this._interleavedBuffer);
-    if (this._float32BufferPool) {
-      this._float32BufferPool.release(this._data);
-    } else {
-      delete this._data;
-    }
-  };
-
-  LineGeom.prototype.numVerts = function() {
-    return this._numLines * 2;
-  };
-
-  LineGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
-
-    if (!this._visible) {
-      return;
-    }
-
-    var shader = this.shaderForStyleAndPass(shaderCatalog, style, pass);
-    if (!shader) {
-      return;
-    }
-    cam.bind(shader);
-    this.bind();
-    this._gl.lineWidth(this._lineWidth);
-    this._gl.enableVertexAttribArray(shader.posAttrib);
-    this._gl.vertexAttribPointer(shader.posAttrib, 3, this._gl.FLOAT, false,
-                                 this._FLOATS_PER_VERT * 4,
-                                 this._POS_OFFSET * 4);
-    this._gl.vertexAttribPointer(shader.colorAttrib, 3, this._gl.FLOAT, false,
-                                 this._FLOATS_PER_VERT * 4,
-                                 this._COLOR_OFFSET * 4);
-    this._gl.enableVertexAttribArray(shader.colorAttrib);
-    if (shader.objIdAttrib !== -1) {
-      this._gl.vertexAttribPointer(shader.objIdAttrib, 1, this._gl.FLOAT, false,
-                                   this._FLOATS_PER_VERT * 4,
-                                   this._ID_OFFSET * 4);
-      this._gl.enableVertexAttribArray(shader.objIdAttrib);
-    }
-    this._gl.drawArrays(this._gl.LINES, 0, this._numLines * 2);
-    this._gl.disableVertexAttribArray(shader.posAttrib);
-    this._gl.disableVertexAttribArray(shader.colorAttrib);
-    if (shader.objIdAttrib !== -1) {
-      this._gl.disableVertexAttribArray(shader.objIdAttrib);
-    }
-  };
-
-  LineGeom.prototype.colorBy = function(colorFunc, view) {
-    console.time('LineGeom.colorBy');
-    this._ready = false;
-    view = view || this.structure();
-    this._vertAssoc.recolor(colorFunc, view, this._data, this._COLOR_OFFSET,
-                            this._FLOATS_PER_VERT);
-    console.timeEnd('LineGeom.colorBy');
-  };
-
-  LineGeom.prototype.bind = function() {
-    this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._interleavedBuffer);
-    if (this._ready) {
-      return;
-    }
-    this._gl.bufferData(this._gl.ARRAY_BUFFER, this._data,
-                        this._gl.STATIC_DRAW);
-    this._ready = true;
-  };
-
-  LineGeom.prototype.addLine =
-      function(startPos, startColor, endPos, endColor, idOne, idTwo) {
-    var index = this._FLOATS_PER_VERT * this._numLines * 2;
-    this._data[index++] = startPos[0];
-    this._data[index++] = startPos[1];
-    this._data[index++] = startPos[2];
-    this._data[index++] = startColor[0];
-    this._data[index++] = startColor[1];
-    this._data[index++] = startColor[2];
-    this._data[index++] = idOne;
-    this._data[index++] = endPos[0];
-    this._data[index++] = endPos[1];
-    this._data[index++] = endPos[2];
-    this._data[index++] = endColor[0];
-    this._data[index++] = endColor[1];
-    this._data[index++] = endColor[2];
-    this._data[index++] = idTwo;
-
-    this._numLines += 1;
-    this._ready = false;
-  };
-
-  // a SceneNode which aggregates one or more (unnamed) geometries into one
-  // named object. It forwards coloring and configuration calls to all
-  // geometries it contains.
-  //
-  // FIXME: CompositeGeom could possibly be merged directly into the
-  // SceneNode by introducing named and unnamed child nodes at the SceneNode
-  // level. It only exists to support unnamed child nodes and hide the fact
-  // that some render styles require multiple MeshGeoms to be constructed.
-  function CompositeGeom(structure) {
-    BaseGeom.prototype.constructor.call(this, null);
-    this._geoms = [];
-    this._structure = structure;
+LineGeom.prototype.bind = function() {
+  this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._interleavedBuffer);
+  if (this._ready) {
+    return;
   }
+  this._gl.bufferData(this._gl.ARRAY_BUFFER, this._data,
+                      this._gl.STATIC_DRAW);
+  this._ready = true;
+};
 
-  derive(CompositeGeom, BaseGeom);
+LineGeom.prototype.addLine =
+    function(startPos, startColor, endPos, endColor, idOne, idTwo) {
+  var index = this._FLOATS_PER_VERT * this._numLines * 2;
+  this._data[index++] = startPos[0];
+  this._data[index++] = startPos[1];
+  this._data[index++] = startPos[2];
+  this._data[index++] = startColor[0];
+  this._data[index++] = startColor[1];
+  this._data[index++] = startColor[2];
+  this._data[index++] = idOne;
+  this._data[index++] = endPos[0];
+  this._data[index++] = endPos[1];
+  this._data[index++] = endPos[2];
+  this._data[index++] = endColor[0];
+  this._data[index++] = endColor[1];
+  this._data[index++] = endColor[2];
+  this._data[index++] = idTwo;
 
-  CompositeGeom.prototype.addGeom = function(geom) {
-    this._geoms.push(geom);
-  };
+  this._numLines += 1;
+  this._ready = false;
+};
 
-  CompositeGeom.prototype.destroy = function() {
-    BaseGeom.prototype.destroy.call(this);
-    for (var i = 0; i < this._geoms.length; ++i) {
-      this._geoms[i].destroy();
-    }
-    this._geoms = [];
-  };
+// a SceneNode which aggregates one or more (unnamed) geometries into one
+// named object. It forwards coloring and configuration calls to all
+// geometries it contains.
+//
+// FIXME: CompositeGeom could possibly be merged directly into the
+// SceneNode by introducing named and unnamed child nodes at the SceneNode
+// level. It only exists to support unnamed child nodes and hide the fact
+// that some render styles require multiple MeshGeoms to be constructed.
+function CompositeGeom(structure) {
+  BaseGeom.prototype.constructor.call(this, null);
+  this._geoms = [];
+  this._structure = structure;
+}
 
-  CompositeGeom.prototype.structure = function() {
-    return this._structure;
-  };
+derive(CompositeGeom, BaseGeom);
 
-  CompositeGeom.prototype.forwardMethod = function(method, args) {
-    for (var i = 0; i < this._geoms.length; ++i) {
-      this._geoms[i][method].apply(this._geoms[i], args);
-    }
-  };
+CompositeGeom.prototype.addGeom = function(geom) {
+  this._geoms.push(geom);
+};
 
-  CompositeGeom.prototype.colorBy = function() {
-    var colorFunc = arguments[0];
-    colorFunc.begin(this._structure);
-    this.forwardMethod('colorBy', arguments);
-    colorFunc.end(this._structure);
-  };
+CompositeGeom.prototype.destroy = function() {
+  BaseGeom.prototype.destroy.call(this);
+  for (var i = 0; i < this._geoms.length; ++i) {
+    this._geoms[i].destroy();
+  }
+  this._geoms = [];
+};
 
-  CompositeGeom.prototype.updateProjectionIntervals =
-      function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
-    for (var i = 0; i < this._geoms.length; ++i) {
-      this._geoms[i].updateProjectionIntervals(xAxis, yAxis, zAxis, xInterval,
-                                               yInterval, zInterval);
-    }
-  };
+CompositeGeom.prototype.structure = function() {
+  return this._structure;
+};
 
-  CompositeGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
-    if (!this._visible) {
-      return;
-    }
-    for (var i = 0; i < this._geoms.length; ++i) {
-      this._geoms[i].draw(cam, shaderCatalog, style, pass);
-    }
-  };
+CompositeGeom.prototype.forwardMethod = function(method, args) {
+  for (var i = 0; i < this._geoms.length; ++i) {
+    this._geoms[i][method].apply(this._geoms[i], args);
+  }
+};
 
-  function ProtoSphere(stacks, arcs) {
-    this._arcs = arcs;
-    this._stacks = stacks;
-    this._indices = new Uint16Array(3 * arcs * stacks * 2);
-    this._verts = new Float32Array(3 * arcs * stacks);
-    var vert_angle = Math.PI / (stacks - 1);
-    var horz_angle = Math.PI * 2.0 / arcs;
-    var i, j;
-    for (i = 0; i < this._stacks; ++i) {
-      var radius = Math.sin(i * vert_angle);
-      var z = Math.cos(i * vert_angle);
-      for (j = 0; j < this._arcs; ++j) {
-        var nx = radius * Math.cos(j * horz_angle);
-        var ny = radius * Math.sin(j * horz_angle);
-        this._verts[3 * (j + i * this._arcs)] = nx;
-        this._verts[3 * (j + i * this._arcs) + 1] = ny;
-        this._verts[3 * (j + i * this._arcs) + 2] = z;
-      }
-    }
-    var index = 0;
-    for (i = 0; i < this._stacks - 1; ++i) {
-      for (j = 0; j < this._arcs; ++j) {
-        this._indices[index] = (i) * this._arcs + j;
-        this._indices[index + 1] = (i) * this._arcs + ((j + 1) % this._arcs);
-        this._indices[index + 2] = (i + 1) * this._arcs + j;
+CompositeGeom.prototype.colorBy = function() {
+  var colorFunc = arguments[0];
+  colorFunc.begin(this._structure);
+  this.forwardMethod('colorBy', arguments);
+  colorFunc.end(this._structure);
+};
 
-        index += 3;
+CompositeGeom.prototype.updateProjectionIntervals =
+    function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
+  for (var i = 0; i < this._geoms.length; ++i) {
+    this._geoms[i].updateProjectionIntervals(xAxis, yAxis, zAxis, xInterval,
+                                              yInterval, zInterval);
+  }
+};
 
-        this._indices[index] = (i) * this._arcs + ((j + 1) % this._arcs);
-        this._indices[index + 1] =
-            (i + 1) * this._arcs + ((j + 1) % this._arcs);
-        this._indices[index + 2] = (i + 1) * this._arcs + j;
-        index += 3;
-      }
+CompositeGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
+  if (!this._visible) {
+    return;
+  }
+  for (var i = 0; i < this._geoms.length; ++i) {
+    this._geoms[i].draw(cam, shaderCatalog, style, pass);
+  }
+};
+
+function ProtoSphere(stacks, arcs) {
+  this._arcs = arcs;
+  this._stacks = stacks;
+  this._indices = new Uint16Array(3 * arcs * stacks * 2);
+  this._verts = new Float32Array(3 * arcs * stacks);
+  var vert_angle = Math.PI / (stacks - 1);
+  var horz_angle = Math.PI * 2.0 / arcs;
+  var i, j;
+  for (i = 0; i < this._stacks; ++i) {
+    var radius = Math.sin(i * vert_angle);
+    var z = Math.cos(i * vert_angle);
+    for (j = 0; j < this._arcs; ++j) {
+      var nx = radius * Math.cos(j * horz_angle);
+      var ny = radius * Math.sin(j * horz_angle);
+      this._verts[3 * (j + i * this._arcs)] = nx;
+      this._verts[3 * (j + i * this._arcs) + 1] = ny;
+      this._verts[3 * (j + i * this._arcs) + 2] = z;
     }
   }
+  var index = 0;
+  for (i = 0; i < this._stacks - 1; ++i) {
+    for (j = 0; j < this._arcs; ++j) {
+      this._indices[index] = (i) * this._arcs + j;
+      this._indices[index + 1] = (i) * this._arcs + ((j + 1) % this._arcs);
+      this._indices[index + 2] = (i + 1) * this._arcs + j;
+
+      index += 3;
+
+      this._indices[index] = (i) * this._arcs + ((j + 1) % this._arcs);
+      this._indices[index + 1] =
+          (i + 1) * this._arcs + ((j + 1) % this._arcs);
+      this._indices[index + 2] = (i + 1) * this._arcs + j;
+      index += 3;
+    }
+  }
+}
 
 ProtoSphere.prototype.addTransformed = (function() {
 
@@ -706,13 +708,6 @@ MeshGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
 };
 
 MeshGeom.prototype.addVertex = function(pos, normal, color, objId) {
-  /*
-  // pushing all values at once seems to be more efficient than pushing
-  // separately. resizing the vertData prior and setting the elements
-  // is substantially slower.
-  this._vertData.push(pos[0], pos[1], pos[2], normal[0], normal[1], normal[2],
-                      color[0], color[1], color[2], objId);
-  */
   var i = this._numVerts * this._FLOATS_PER_VERT;
   this._vertData[i++] = pos[0];
   this._vertData[i++] = pos[1];
@@ -899,7 +894,6 @@ TextLabel.prototype.draw = function(cam, shaderCatalog, style, pass) {
 };
 
 // A continous range of object identifiers.
-//
 function ContinuousIdRange(pool, start, end) {
   this._pool = pool;
   this._start = start;
