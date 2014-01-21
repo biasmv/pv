@@ -8,8 +8,7 @@
 // furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in
-// all
-// copies or substantial portions of the Software.
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -155,16 +154,7 @@ BaseGeom.prototype.destroy = function() {
 // the color and position is stored in an interleaved format.
 function LineGeom(gl, numVerts, float32BufferPool) {
   BaseGeom.prototype.constructor.call(this, gl);
-  this._float32BufferPool = float32BufferPool || null;
-  if (this._float32BufferPool) {
-    this._data =
-        this._float32BufferPool.request(numVerts * this._FLOATS_PER_VERT);
-  } else {
-    this._data = new Float32Array(numVerts * this._FLOATS_PER_VERT);
-  }
-  this._ready = false;
-  this._interleavedBuffer = gl.createBuffer();
-  this._numLines = 0;
+  this._va = new VertexArray(gl, numVerts, float32BufferPool);
   this._vertAssoc = null;
   this._lineWidth = 1.0;
 }
@@ -205,23 +195,14 @@ LineGeom.prototype.shaderForStyleAndPass =
   return shaderCatalog.lines;
 };
 
-LineGeom.prototype._FLOATS_PER_VERT = 7;
-LineGeom.prototype._POS_OFFSET = 0;
-LineGeom.prototype._COLOR_OFFSET = 3;
-LineGeom.prototype._ID_OFFSET = 6;
-
 LineGeom.prototype.destroy = function() {
   BaseGeom.prototype.destroy.call(this);
-  this._gl.deleteBuffer(this._interleavedBuffer);
-  if (this._float32BufferPool) {
-    this._float32BufferPool.release(this._data);
-  } else {
-    delete this._data;
-  }
+  this._va.destroy();
+  this._va = null;
 };
 
 LineGeom.prototype.numVerts = function() {
-  return this._numLines * 2;
+  return this._va.numVerts();
 };
 
 LineGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
@@ -235,69 +216,28 @@ LineGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
     return;
   }
   cam.bind(shader);
-  this.bind();
   this._gl.lineWidth(this._lineWidth);
-  this._gl.enableVertexAttribArray(shader.posAttrib);
-  this._gl.vertexAttribPointer(shader.posAttrib, 3, this._gl.FLOAT, false,
-                                this._FLOATS_PER_VERT * 4,
-                                this._POS_OFFSET * 4);
-  this._gl.vertexAttribPointer(shader.colorAttrib, 3, this._gl.FLOAT, false,
-                                this._FLOATS_PER_VERT * 4,
-                                this._COLOR_OFFSET * 4);
-  this._gl.enableVertexAttribArray(shader.colorAttrib);
-  if (shader.objIdAttrib !== -1) {
-    this._gl.vertexAttribPointer(shader.objIdAttrib, 1, this._gl.FLOAT, false,
-                                  this._FLOATS_PER_VERT * 4,
-                                  this._ID_OFFSET * 4);
-    this._gl.enableVertexAttribArray(shader.objIdAttrib);
-  }
-  this._gl.drawArrays(this._gl.LINES, 0, this._numLines * 2);
-  this._gl.disableVertexAttribArray(shader.posAttrib);
-  this._gl.disableVertexAttribArray(shader.colorAttrib);
-  if (shader.objIdAttrib !== -1) {
-    this._gl.disableVertexAttribArray(shader.objIdAttrib);
-  }
+
+  this._va.draw(shader);
+  this.bind();
 };
+
+LineGeom.prototype.vertArray = function() { return this._va; };
 
 LineGeom.prototype.colorBy = function(colorFunc, view) {
   console.time('LineGeom.colorBy');
   this._ready = false;
   view = view || this.structure();
-  this._vertAssoc.recolor(colorFunc, view, this._data, this._COLOR_OFFSET,
-                          this._FLOATS_PER_VERT);
+  this._vertAssoc.recolor(colorFunc, view);
   console.timeEnd('LineGeom.colorBy');
 };
 
 LineGeom.prototype.bind = function() {
-  this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._interleavedBuffer);
-  if (this._ready) {
-    return;
-  }
-  this._gl.bufferData(this._gl.ARRAY_BUFFER, this._data,
-                      this._gl.STATIC_DRAW);
-  this._ready = true;
 };
 
-LineGeom.prototype.addLine =
-    function(startPos, startColor, endPos, endColor, idOne, idTwo) {
-  var index = this._FLOATS_PER_VERT * this._numLines * 2;
-  this._data[index++] = startPos[0];
-  this._data[index++] = startPos[1];
-  this._data[index++] = startPos[2];
-  this._data[index++] = startColor[0];
-  this._data[index++] = startColor[1];
-  this._data[index++] = startColor[2];
-  this._data[index++] = idOne;
-  this._data[index++] = endPos[0];
-  this._data[index++] = endPos[1];
-  this._data[index++] = endPos[2];
-  this._data[index++] = endColor[0];
-  this._data[index++] = endColor[1];
-  this._data[index++] = endColor[2];
-  this._data[index++] = idTwo;
-
-  this._numLines += 1;
-  this._ready = false;
+LineGeom.prototype.addLine = function(startPos, startColor, 
+                                      endPos, endColor, idOne, idTwo) {
+      this._va.addLine(startPos, startColor, endPos, endColor, idOne, idTwo);
 };
 
 // a SceneNode which aggregates one or more (unnamed) geometries into one
@@ -362,210 +302,9 @@ CompositeGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   }
 };
 
-function ProtoSphere(stacks, arcs) {
-  this._arcs = arcs;
-  this._stacks = stacks;
-  this._indices = new Uint16Array(3 * arcs * stacks * 2);
-  this._verts = new Float32Array(3 * arcs * stacks);
-  var vert_angle = Math.PI / (stacks - 1);
-  var horz_angle = Math.PI * 2.0 / arcs;
-  var i, j;
-  for (i = 0; i < this._stacks; ++i) {
-    var radius = Math.sin(i * vert_angle);
-    var z = Math.cos(i * vert_angle);
-    for (j = 0; j < this._arcs; ++j) {
-      var nx = radius * Math.cos(j * horz_angle);
-      var ny = radius * Math.sin(j * horz_angle);
-      this._verts[3 * (j + i * this._arcs)] = nx;
-      this._verts[3 * (j + i * this._arcs) + 1] = ny;
-      this._verts[3 * (j + i * this._arcs) + 2] = z;
-    }
-  }
-  var index = 0;
-  for (i = 0; i < this._stacks - 1; ++i) {
-    for (j = 0; j < this._arcs; ++j) {
-      this._indices[index] = (i) * this._arcs + j;
-      this._indices[index + 1] = (i) * this._arcs + ((j + 1) % this._arcs);
-      this._indices[index + 2] = (i + 1) * this._arcs + j;
 
-      index += 3;
-
-      this._indices[index] = (i) * this._arcs + ((j + 1) % this._arcs);
-      this._indices[index + 1] =
-          (i + 1) * this._arcs + ((j + 1) % this._arcs);
-      this._indices[index + 2] = (i + 1) * this._arcs + j;
-      index += 3;
-    }
-  }
-}
-
-ProtoSphere.prototype.addTransformed = (function() {
-
-    var pos = vec3.create(), normal = vec3.create();
-
-    return function(geom, center, radius, color, objId) {
-      var baseIndex = geom.numVerts();
-    for (var i = 0; i < this._stacks * this._arcs; ++i) {
-      vec3.set(normal, this._verts[3 * i], this._verts[3 * i + 1],
-               this._verts[3 * i + 2]);
-      vec3.copy(pos, normal);
-      vec3.scale(pos, pos, radius);
-      vec3.add(pos, pos, center);
-      geom.addVertex(pos, normal, color, objId);
-    }
-    for (i = 0; i < this._indices.length / 3; ++i) {
-      geom.addTriangle(baseIndex + this._indices[i * 3],
-                       baseIndex + this._indices[i * 3 + 1],
-                       baseIndex + this._indices[i * 3 + 2]);
-    }
-  };
-})();
-
-ProtoSphere.prototype.numIndices = function() {
-  return this._indices.length;
-};
-
-ProtoSphere.prototype.numVerts = function() {
-  return this._verts.length / 3;
-};
-
-// A tube profile is a cross-section of a tube, e.g. a circle or a 'flat'
-// square.
-// They are used to control the style of helices, strands and coils for the
-// cartoon render mode.
-function TubeProfile(points, num, strength) {
-  var interpolated =
-      geom.catmullRomSpline(points, points.length / 3, num, strength, true);
-
-  this._indices = new Uint16Array(interpolated.length * 2);
-  this._verts = interpolated;
-  this._normals = new Float32Array(interpolated.length);
-  this._arcs = interpolated.length / 3;
-
-  var normal = vec3.create(), pos = vec3.create();
-
-  for (var i = 0; i < this._arcs; ++i) {
-    var i_prev = i === 0 ? this._arcs - 1 : i - 1;
-    var i_next = i === this._arcs - 1 ? 0 : i + 1;
-    normal[0] = this._verts[3 * i_next + 1] - this._verts[3 * i_prev + 1];
-    normal[1] = this._verts[3 * i_prev] - this._verts[3 * i_next];
-    vec3.normalize(normal, normal);
-    this._normals[3 * i] = normal[0];
-    this._normals[3 * i + 1] = normal[1];
-    this._normals[3 * i + 2] = normal[2];
-  }
-
-  for (i = 0; i < this._arcs; ++i) {
-    this._indices[6 * i] = i;
-    this._indices[6 * i + 1] = i + this._arcs;
-    this._indices[6 * i + 2] = ((i + 1) % this._arcs) + this._arcs;
-    this._indices[6 * i + 3] = i;
-    this._indices[6 * i + 4] = ((i + 1) % this._arcs) + this._arcs;
-    this._indices[6 * i + 5] = (i + 1) % this._arcs;
-  }
-}
-
-TubeProfile.prototype.addTransformed = (function() {
-  var pos = vec3.create(), normal = vec3.create();
-  return function(geom, center, radius, rotation, color, first, offset, objId) {
-    var baseIndex = geom.numVerts() - this._arcs;
-  for (var i = 0; i < this._arcs; ++i) {
-    vec3.set(pos, radius * this._verts[3 * i], radius * this._verts[3 * i + 1],
-             0.0);
-    vec3.transformMat3(pos, pos, rotation);
-    vec3.add(pos, pos, center);
-    vec3.set(normal, this._normals[3 * i], this._normals[3 * i + 1], 0.0);
-    vec3.transformMat3(normal, normal, rotation);
-    geom.addVertex(pos, normal, color, objId);
-  }
-  if (first) {
-    return;
-  }
-  if (offset === 0) {
-    // that's what happens most of the time, thus is has been optimized.
-    for (i = 0; i < this._indices.length / 3; ++i) {
-      geom.addTriangle(baseIndex + this._indices[i * 3],
-                       baseIndex + this._indices[i * 3 + 1],
-                       baseIndex + this._indices[i * 3 + 2]);
-    }
-    return;
-  }
-  for (i = 0; i < this._arcs; ++i) {
-    geom.addTriangle(baseIndex + ((i + offset) % this._arcs),
-                     baseIndex + i + this._arcs,
-                     baseIndex + ((i + 1) % this._arcs) + this._arcs);
-    geom.addTriangle(baseIndex + (i + offset) % this._arcs,
-                     baseIndex + ((i + 1) % this._arcs) + this._arcs,
-                     baseIndex + ((i + 1 + offset) % this._arcs));
-  }
-
-  };
-})();
-
-function ProtoCylinder(arcs) {
-  this._arcs = arcs;
-  this._indices = new Uint16Array(arcs * 3 * 2);
-  this._verts = new Float32Array(3 * arcs * 2);
-  this._normals = new Float32Array(3 * arcs * 2);
-  var angle = Math.PI * 2 / this._arcs;
-  for (var i = 0; i < this._arcs; ++i) {
-    var cos_angle = Math.cos(angle * i);
-    var sin_angle = Math.sin(angle * i);
-    this._verts[3 * i] = cos_angle;
-    this._verts[3 * i + 1] = sin_angle;
-    this._verts[3 * i + 2] = -0.5;
-    this._verts[3 * arcs + 3 * i] = cos_angle;
-    this._verts[3 * arcs + 3 * i + 1] = sin_angle;
-    this._verts[3 * arcs + 3 * i + 2] = 0.5;
-    this._normals[3 * i] = cos_angle;
-    this._normals[3 * i + 1] = sin_angle;
-    this._normals[3 * arcs + 3 * i] = cos_angle;
-    this._normals[3 * arcs + 3 * i + 1] = sin_angle;
-  }
-  for (i = 0; i < this._arcs; ++i) {
-    this._indices[6 * i] = (i) % this._arcs;
-    this._indices[6 * i + 1] = arcs + ((i + 1) % this._arcs);
-    this._indices[6 * i + 2] = (i + 1) % this._arcs;
-
-    this._indices[6 * i + 3] = (i) % this._arcs;
-    this._indices[6 * i + 4] = arcs + ((i) % this._arcs);
-    this._indices[6 * i + 5] = arcs + ((i + 1) % this._arcs);
-  }
-}
-
-ProtoCylinder.prototype.numVerts = function() {
-  return this._verts.length / 3;
-};
-
-ProtoCylinder.prototype.numIndices = function() {
-  return this._indices.length;
-};
-
-ProtoCylinder.prototype.addTransformed = (function() {
-  var pos = vec3.create(), normal = vec3.create();
-  return function(geom, center, length, radius, rotation, colorOne, colorTwo,
-                  idOne, idTwo) {
-    var baseIndex = geom.numVerts();
-  for (var i = 0; i < 2 * this._arcs; ++i) {
-    vec3.set(pos, radius * this._verts[3 * i], radius * this._verts[3 * i + 1],
-             length * this._verts[3 * i + 2]);
-    vec3.transformMat3(pos, pos, rotation);
-    vec3.add(pos, pos, center);
-    vec3.set(normal, this._normals[3 * i], this._normals[3 * i + 1],
-             this._normals[3 * i + 2]);
-    vec3.transformMat3(normal, normal, rotation);
-    var objId = i < this._arcs ? idOne : idTwo;
-    geom.addVertex(pos, normal, i < this._arcs ? colorOne : colorTwo, objId);
-  }
-  for (i = 0; i < this._indices.length / 3; ++i) {
-    geom.addTriangle(baseIndex + this._indices[i * 3],
-                     baseIndex + this._indices[i * 3 + 1],
-                     baseIndex + this._indices[i * 3 + 2]);
-  }
-  };
-})();
-
-// an (indexed) mesh geometry container.
+// an (indexed) mesh geometry container
+// ------------------------------------------------------------------------
 //
 // stores the vertex data in interleaved format. not doing so has severe
 // performance penalties in WebGL, and severe means orders of magnitude
@@ -577,64 +316,79 @@ ProtoCylinder.prototype.addTransformed = (function() {
 //
 // , where P is the position, N the normal and C the color information
 // of the vertex.
+// 
+// Uint16 index buffer limit
+// -----------------------------------------------------------------------
+//
+// In WebGL, index arrays are restricted to uint16. The largest possible
+// index value is smaller than the number of vertices required to display 
+// larger molecules. To work around this, MeshGeom class automatically splits
+// the geometry into multiple arrays when the uint6 limit is reached.
+// 
+// Proper splitting requires providing some information, since triangles
+// can only be constructed from vertices in the same buffer.
 function MeshGeom(gl, numVerts, numIndices, float32BufferPool,
                   uint16BufferPool) {
   BaseGeom.prototype.constructor.call(this, gl);
-  this._interleavedBuffer = gl.createBuffer();
-  this._indexBuffer = gl.createBuffer();
-  this._float32BufferPool = float32BufferPool || null;
-  this._uint16BufferPool = uint16BufferPool || null;
-  var numFloats = numVerts * this._FLOATS_PER_VERT;
-  if (this._float32BufferPool) {
-    this._vertData = this._float32BufferPool.request(numFloats);
-  } else {
-    this._vertData = new Float32Array(numFloats);
-  }
-  if (this._uint16BufferPool) {
-    this._indexData = this._uint16BufferPool.request(numIndices);
-  } else {
-    this._indexData = new Uint16Array(numIndices);
-  }
-  this._numVerts = 0;
-  this._numTriangles = 0;
-  this._ready = false;
+  // FIXME: calculation for index size should be improved. In case of splitting,
+  // the buffers are too large.
+  this._indexedVertArrays = [ 
+    new IndexedVertexArray(gl, this._boundedVertArraySize(numVerts), 
+                           numIndices, float32BufferPool, uint16BufferPool)
+  ];
+  this._remainingVerts = numVerts;
+  this._remainingIndices = numIndices;
   this._vertAssoc = null;
 }
 
-MeshGeom.prototype._FLOATS_PER_VERT = 10;
-MeshGeom.prototype._COLOR_OFFSET = 6;
-MeshGeom.prototype._POS_OFFSET = 0;
-MeshGeom.prototype._NORMAL_OFFSET = 3;
+MeshGeom.prototype._boundedVertArraySize = function(size) {
+  return Math.min(65536, size);
+};
+
+MeshGeom.prototype.vertArrayWithSpaceFor = function(numVerts) {
+  var currentVa = this._indexedVertArrays[this._indexedVertArrays.length - 1];
+  var remaining = currentVa.maxVerts() - currentVa.numVerts();
+  if (remaining >= numVerts) {
+    return currentVa;
+  }
+  this._remainingVerts = this._remainingVerts - currentVa.numVerts();
+  this._remainingIndices = this._remainingIndices - currentVa.numIndices();
+  numVerts = this._boundedVertArraySize(this._remainingVerts);
+  var newVa = new IndexedVertexArray(this._gl, numVerts, this._remainingIndices,
+                                     this._float32BufferPool, 
+                                     this._uint16BufferPool);
+  this._indexedVertArrays.push(newVa);
+  return newVa;
+};
+
 
 derive(MeshGeom, BaseGeom);
 
 MeshGeom.prototype.setVertAssoc = function(assoc) {
   this._vertAssoc = assoc;
 };
+
 MeshGeom.prototype.updateProjectionIntervals =
     function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
   updateProjectionIntervalsForBuffer(xAxis, yAxis, zAxis, this._vertData,
                                      this._FLOATS_PER_VERT, this._numVerts,
                                      xInterval, yInterval, zInterval);
 };
+
+MeshGeom.prototype.vertArray = function(index) {
+  return this._indexedVertArrays[index];
+};
+
 MeshGeom.prototype.destroy = function() {
   BaseGeom.prototype.destroy.call(this);
-  this._gl.deleteBuffer(this._interleavedBuffer);
-  this._gl.deleteBuffer(this._indexBuffer);
-  if (this._float32BufferPool) {
-    this._float32BufferPool.release(this._vertData);
-  } else {
-    delete this._vertData;
+  for (var i = 0; i < this._indexedVertArrays.length; ++i) {
+    this._indexedVertArrays[i].destroy();
   }
-  if (this._uint16BufferPool) {
-    this._uint16BufferPool.release(this._indexData);
-  } else {
-    delete this._indexData;
-  }
+  this._indexedVertArrays = [];
 };
 
 MeshGeom.prototype.numVerts = function() {
-  return this._numVerts;
+  return this._indexedVertArrays[0].numVerts();
 };
 
 MeshGeom.prototype.shaderForStyleAndPass =
@@ -653,98 +407,34 @@ MeshGeom.prototype.colorBy = function(colorFunc, view) {
   console.time('MeshGeom.colorBy');
   this._ready = false;
   view = view || this.structure();
-  this._vertAssoc.recolor(colorFunc, view, this._vertData, this._COLOR_OFFSET,
-                          this._FLOATS_PER_VERT);
+  this._vertAssoc.recolor(colorFunc, view);
   console.timeEnd('MeshGeom.colorBy');
 };
 
 MeshGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
-
   if (!this._visible) {
     return;
   }
-
   var shader = this.shaderForStyleAndPass(shaderCatalog, style, pass);
   if (!shader) {
     return;
   }
   cam.bind(shader);
-  this.bind();
-
-  this._gl.enableVertexAttribArray(shader.posAttrib);
-  this._gl.vertexAttribPointer(shader.posAttrib, 3, this._gl.FLOAT, false,
-                               this._FLOATS_PER_VERT * 4, this._POS_OFFSET * 4);
-
-  if (shader.normalAttrib !== -1) {
-    this._gl.enableVertexAttribArray(shader.normalAttrib);
-    this._gl.vertexAttribPointer(shader.normalAttrib, 3, this._gl.FLOAT, false,
-                                 this._FLOATS_PER_VERT * 4,
-                                 this._NORMAL_OFFSET * 4);
-  }
-
-  if (shader.colorAttrib !== -1) {
-    this._gl.vertexAttribPointer(shader.colorAttrib, 3, this._gl.FLOAT, false,
-                                 this._FLOATS_PER_VERT * 4,
-                                 this._COLOR_OFFSET * 4);
-    this._gl.enableVertexAttribArray(shader.colorAttrib);
-  }
-  if (shader.objIdAttrib !== -1) {
-    this._gl.vertexAttribPointer(shader.objIdAttrib, 1, this._gl.FLOAT, false,
-                                 this._FLOATS_PER_VERT * 4, 9 * 4);
-    this._gl.enableVertexAttribArray(shader.objIdAttrib);
-  }
-  this._gl.drawElements(this._gl.TRIANGLES, this._numTriangles * 3,
-                        this._gl.UNSIGNED_SHORT, 0);
-  this._gl.disableVertexAttribArray(shader.posAttrib);
-  if (shader.colorAttrib !== -1) {
-    this._gl.disableVertexAttribArray(shader.colorAttrib);
-  }
-  if (shader.normalAttrib !== -1) {
-    this._gl.disableVertexAttribArray(shader.normalAttrib);
-  }
-  if (shader.objIdAttrib !== -1) {
-    this._gl.disableVertexAttribArray(shader.objIdAttrib);
+  for (var i = 0; i < this._indexedVertArrays.length; ++i) {
+    this._indexedVertArrays[i].draw(shader);
   }
 };
 
 MeshGeom.prototype.addVertex = function(pos, normal, color, objId) {
-  var i = this._numVerts * this._FLOATS_PER_VERT;
-  this._vertData[i++] = pos[0];
-  this._vertData[i++] = pos[1];
-  this._vertData[i++] = pos[2];
-  this._vertData[i++] = normal[0];
-  this._vertData[i++] = normal[1];
-  this._vertData[i++] = normal[2];
-  this._vertData[i++] = color[0];
-  this._vertData[i++] = color[1];
-  this._vertData[i++] = color[2];
-  this._vertData[i++] = objId;
-  this._numVerts += 1;
+  var va = this._indexedVertArrays[0];
+  va.addVertex(pos, normal, color, objId);
 };
 
 MeshGeom.prototype.addTriangle = function(idx1, idx2, idx3) {
-  var index = 3 * this._numTriangles;
-  if (index >= this._indexData.length) {
-    return;
-  }
-  this._indexData[index++] = idx1;
-  this._indexData[index++] = idx2;
-  this._indexData[index++] = idx3;
-  this._numTriangles += 1;
+  var va = this._indexedVertArrays[0];
+  va.addTriangle(idx1, idx2, idx3);
 };
 
-MeshGeom.prototype.bind = function() {
-  this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._interleavedBuffer);
-  this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
-  if (this._ready) {
-    return;
-  }
-  this._gl.bufferData(this._gl.ARRAY_BUFFER, this._vertData,
-                      this._gl.STATIC_DRAW);
-  this._gl.bufferData(this._gl.ELEMENT_ARRAY_BUFFER, this._indexData,
-                      this._gl.STATIC_DRAW);
-  this._ready = true;
-};
 
 function TextLabel(gl, canvas, context, pos, text) {
   SceneNode.prototype.constructor.call(this, gl);
@@ -1023,9 +713,6 @@ exports.TraceVertexAssoc = TraceVertexAssoc;
 exports.MeshGeom = MeshGeom;
 exports.LineGeom = LineGeom;
 exports.CompositeGeom = CompositeGeom;
-exports.TubeProfile = TubeProfile;
-exports.ProtoSphere = ProtoSphere;
-exports.ProtoCylinder = ProtoCylinder;
 exports.TextLabel = TextLabel;
 exports.UniqueObjectIdPool = UniqueObjectIdPool;
 exports.Range = Range;

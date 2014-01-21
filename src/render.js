@@ -8,8 +8,7 @@
 // furnished to do so, subject to the following conditions:
 //
 // The above copyright notice and this permission notice shall be included in
-// all
-// copies or substantial portions of the Software.
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -101,18 +100,20 @@ exports.spheres = function(structure, gl, options) {
   var geom = new MeshGeom(gl, atomCount * protoSphere.numVerts(),
                           atomCount * protoSphere.numIndices(),
                           options.float32BufferPool, options.uint16BufferPool);
-  protoSphere.numVerts();
-  var vertAssoc = new AtomVertexAssoc(structure, true);
   options.color.begin(structure);
   var idRange = options.idPool.getContinuousRange(atomCount);
   geom.addIdRange(idRange);
+  var vertsPerSphere = protoSphere.numVerts();
+  var lastVa = null; 
+  var vertAssoc = new AtomVertexAssoc(structure, true);
   structure.eachAtom(function(atom) {
+    var va = geom.vertArrayWithSpaceFor(vertsPerSphere);
     options.color.colorFor(atom, clr, 0);
-    var vertStart = geom.numVerts();
+    var vertStart = va.numVerts();
     var objId = idRange.nextId(atom);
-    protoSphere.addTransformed(geom, atom.pos(), 1.5, clr, objId);
-    var vertEnd = geom.numVerts();
-    vertAssoc.addAssoc(atom, vertStart, vertEnd);
+    protoSphere.addTransformed(va, atom.pos(), 1.5, clr, objId);
+    var vertEnd = va.numVerts();
+    vertAssoc.addAssoc(atom, va, vertStart, vertEnd);
   });
   geom.setVertAssoc(vertAssoc);
   console.timeEnd('spheres');
@@ -128,49 +129,52 @@ exports.ballsAndSticks = (function() {
 
   return function(structure, gl, options) {
     console.time('ballsAndSticks');
-  var vertAssoc = new AtomVertexAssoc(structure, true);
-  var protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
-  var protoCyl = new ProtoCylinder(options.arcDetail);
-  var atomCount = structure.atomCount();
-  var bondCount = 0;
-  structure.eachAtom(function(a) { bondCount += a.bonds().length; });
-  var numVerts =
-      atomCount * protoSphere.numVerts() + bondCount * protoCyl.numVerts();
-  var numIndices =
-      atomCount * protoSphere.numIndices() + bondCount * protoCyl.numIndices();
-  var meshGeom =
-      new MeshGeom(gl, numVerts, numIndices, options.float32BufferPool,
-                   options.uint16BufferPool);
-  var idRange = options.idPool.getContinuousRange(atomCount);
-  meshGeom.addIdRange(idRange);
-  options.color.begin(structure);
-  structure.eachAtom(function(atom) {
-    var objId = idRange.nextId(atom);
-    var vertStart = meshGeom.numVerts();
-    options.color.colorFor(atom, clr, 0);
-    protoSphere.addTransformed(meshGeom, atom.pos(), options.radius, clr,
-                               objId);
-    atom.eachBond(function(bond) {
-      bond.mid_point(mp);
-      vec3.sub(dir, atom.pos(), mp);
-      var length = vec3.length(dir);
+    var vertAssoc = new AtomVertexAssoc(structure, true);
+    var protoSphere = new ProtoSphere(options.sphereDetail, options.sphereDetail);
+    var protoCyl = new ProtoCylinder(options.arcDetail);
+    var atomCount = structure.atomCount();
+    var bondCount = 0;
+    structure.eachAtom(function(a) { bondCount += a.bonds().length; });
+    var numVerts =
+        atomCount * protoSphere.numVerts() + bondCount * protoCyl.numVerts();
+    var numIndices =
+        atomCount * protoSphere.numIndices() + bondCount * protoCyl.numIndices();
+    var meshGeom =
+        new MeshGeom(gl, numVerts, numIndices, options.float32BufferPool,
+                    options.uint16BufferPool);
+    var idRange = options.idPool.getContinuousRange(atomCount);
+    meshGeom.addIdRange(idRange);
+    options.color.begin(structure);
+    structure.eachAtom(function(atom) {
+      var atomVerts = 
+        protoSphere.numVerts() + atom.bondCount() * protoCyl.numVerts();
+      var va = meshGeom.vertArrayWithSpaceFor(atomVerts);
+      var objId = idRange.nextId(atom);
+      var vertStart = va.numVerts();
+      options.color.colorFor(atom, clr, 0);
+      protoSphere.addTransformed(va, atom.pos(), options.radius, clr,
+                                objId);
+      atom.eachBond(function(bond) {
+        bond.mid_point(mp);
+        vec3.sub(dir, atom.pos(), mp);
+        var length = vec3.length(dir);
 
-      vec3.scale(dir, dir, 1.0 / length);
+        vec3.scale(dir, dir, 1.0 / length);
 
-      buildRotation(rotation, dir, left, up, false);
+        buildRotation(rotation, dir, left, up, false);
 
-      vec3.add(mp, mp, atom.pos());
-      vec3.scale(mp, mp, 0.5);
-      protoCyl.addTransformed(meshGeom, mp, length, options.radius, rotation,
-                              clr, clr, objId);
+        vec3.add(mp, mp, atom.pos());
+        vec3.scale(mp, mp, 0.5);
+        protoCyl.addTransformed(va, mp, length, options.radius, rotation,
+                                clr, clr, objId);
+      });
+      var vertEnd = va.numVerts();
+      vertAssoc.addAssoc(atom, va, vertStart, vertEnd);
     });
-    var vertEnd = meshGeom.numVerts();
-    vertAssoc.addAssoc(atom, vertStart, vertEnd);
-  });
-  meshGeom.setVertAssoc(vertAssoc);
-  options.color.end(structure);
-  console.timeEnd('ballsAndSticks');
-  return meshGeom;
+    meshGeom.setVertAssoc(vertAssoc);
+    options.color.end(structure);
+    console.timeEnd('ballsAndSticks');
+    return meshGeom;
   };
 })();
 
@@ -194,6 +198,7 @@ exports.lines = function(structure, gl, options) {
   lineGeom.setLineWidth(options.lineWidth);
   var idRange = options.idPool.getContinuousRange(atomCount);
   lineGeom.addIdRange(idRange);
+  var va = lineGeom.vertArray();
   structure.eachAtom(function(atom) {
     // for atoms without bonds, we draw a small cross, otherwise these atoms
     // would be invisible on the screen.
@@ -217,7 +222,7 @@ exports.lines = function(structure, gl, options) {
                        [ pos[0], pos[1], pos[2] + cs ], clr, objId, objId);
     }
     var vertEnd = lineGeom.numVerts();
-    vertAssoc.addAssoc(atom, vertStart, vertEnd);
+    vertAssoc.addAssoc(atom, va, vertStart, vertEnd);
   });
   lineGeom.setVertAssoc(vertAssoc);
   options.color.end(structure);
@@ -259,9 +264,11 @@ exports.lineTrace = (function() {
     numVerts += _lineTraceNumVerts(chains[ci].backboneTraces());
   }
   var lineGeom = new LineGeom(gl, numVerts, options.float32BufferPool);
+  var va = lineGeom.vertArray();
+  console.log(va);
   lineGeom.setLineWidth(options.lineWidth);
   function makeLineTrace(trace) {
-    vertAssoc.addAssoc(traceIndex, 0, lineGeom.numVerts(),
+    vertAssoc.addAssoc(traceIndex, va, 0, lineGeom.numVerts(),
                        lineGeom.numVerts() + 1);
 
     var colors = options.float32BufferPool.request(trace.length() * 3);
@@ -282,7 +289,7 @@ exports.lineTrace = (function() {
       idOne = idTwo;
       idTwo = null;
       var vertEnd = lineGeom.numVerts();
-      vertAssoc.addAssoc(traceIndex, i, vertEnd - 1,
+      vertAssoc.addAssoc(traceIndex, va, i, vertEnd - 1,
                          vertEnd + ((i === trace.length() - 1) ? 0 : 1));
     }
     colors[trace.length() * 3 - 3] = colorTwo[0];
@@ -326,6 +333,7 @@ exports.sline = function(structure, gl, options) {
         _slineNumVerts(chains[ci].backboneTraces(), options.splineDetail);
   }
   var lineGeom = new LineGeom(gl, numVerts, options.float32BufferPool);
+  var va = lineGeom.vertArray();
   lineGeom.setLineWidth(options.lineWidth);
   function makeTrace(trace) {
     var firstSlice = trace.fullTraceIndex(0);
@@ -351,7 +359,7 @@ exports.sline = function(structure, gl, options) {
                                      false, options.float32BufferPool);
     var interpColors = interpolateColor(colors, options.splineDetail);
     var vertStart = lineGeom.numVerts();
-    vertAssoc.addAssoc(traceIndex, firstSlice, vertStart, vertStart + 1);
+    vertAssoc.addAssoc(traceIndex, va, firstSlice, vertStart, vertStart + 1);
     var halfSplineDetail = Math.floor(options.splineDetail / 2);
     var steps = geom.catmullRomSplineNumPoints(trace.length(),
                                                options.splineDetail, false);
@@ -374,7 +382,7 @@ exports.sline = function(structure, gl, options) {
       lineGeom.addLine(posOne, colorOne, posTwo, colorTwo, idStart, idEnd);
       idStart = idEnd;
       var vertEnd = lineGeom.numVerts();
-      vertAssoc.addAssoc(traceIndex, firstSlice + i, vertEnd - 1,
+      vertAssoc.addAssoc(traceIndex, va, firstSlice + i, vertEnd - 1,
                          vertEnd + ((i === trace.length - 1) ? 0 : 1));
     }
     options.float32BufferPool.release(colors);
@@ -557,6 +565,8 @@ var _cartoonForChain = (function() {
     _colorPosNormalsFromTrace(trace, colors, positions, normals, objIds,
                               idRange, options);
     meshGeom.addIdRange(idRange);
+    // FIXME: hack!!!
+    var vertArray = meshGeom.vertArray(0);
     var sdiv = geom.catmullRomSpline(positions, trace.length(),
                                      options.splineDetail, options.strength,
                                      false, options.float32BufferPool);
@@ -585,7 +595,7 @@ var _cartoonForChain = (function() {
                     true, options, 0, objIds[0]);
     var vertEnd = meshGeom.numVerts();
     var slice = 0;
-    vertAssoc.addAssoc(ti, slice, vertStart, vertEnd);
+    vertAssoc.addAssoc(ti, vertArray, slice, vertStart, vertEnd);
     slice += 1;
     var halfSplineDetail = Math.floor(options.splineDetail / 2);
 
@@ -651,7 +661,7 @@ var _cartoonForChain = (function() {
       _cartoonAddTube(meshGeom, pos, normal, trace.residueAt(traceIndex),
                       tangent, color, false, options, offset, objId);
       vertEnd = meshGeom.numVerts();
-      vertAssoc.addAssoc(ti, slice, vertStart, vertEnd);
+      vertAssoc.addAssoc(ti, vertArray, slice, vertStart, vertEnd);
       slice += 1;
     }
     options.float32BufferPool.release(normals);
@@ -704,18 +714,19 @@ var _traceForChain = (function() {
                    options.uint16BufferPool);
   var vertAssoc = new TraceVertexAssoc(chain.asView(), 1, false);
   var traceIndex = 0;
+  var va = meshGeom.vertArray(0);
   for (var ti = 0; ti < traces.length; ++ti) {
     var trace = traces[ti];
     var idRange = options.idPool.getContinuousRange(trace.length());
     meshGeom.addIdRange(idRange);
     options.color.colorFor(trace.centralAtomAt(0), colorOne, 0);
-    var vertStart = meshGeom.numVerts();
+    var vertStart = va.numVerts();
     trace.posAt(caPrevPos, 0);
     var idStart = idRange.nextId(trace.residueAt(0)), idEnd = 0;
-    options.protoSphere.addTransformed(meshGeom, caPrevPos, options.radius,
+    options.protoSphere.addTransformed(va, caPrevPos, options.radius,
                                        colorOne, idStart);
     var vertEnd = null;
-    vertAssoc.addAssoc(traceIndex, 0, vertStart, vertEnd);
+    vertAssoc.addAssoc(traceIndex, va, 0, vertStart, vertEnd);
     var colors = options.float32BufferPool.request(trace.length() * 3);
     colors[0] = colorOne[0];
     colors[1] = colorOne[1];
@@ -739,23 +750,23 @@ var _traceForChain = (function() {
       vec3.copy(midPoint, caPrevPos);
       vec3.add(midPoint, midPoint, caThisPos);
       vec3.scale(midPoint, midPoint, 0.5);
-      var endSphere = meshGeom.numVerts();
-      options.protoCyl.addTransformed(meshGeom, midPoint, length,
+      var endSphere = va.numVerts();
+      options.protoCyl.addTransformed(va, midPoint, length,
                                       options.radius, rotation, colorOne,
                                       colorTwo, idStart, idEnd);
-      vertEnd = meshGeom.numVerts();
+      vertEnd = va.numVerts();
       vertEnd = vertEnd - (vertEnd - endSphere) / 2;
 
-      options.protoSphere.addTransformed(meshGeom, caThisPos, options.radius,
+      options.protoSphere.addTransformed(va, caThisPos, options.radius,
                                          colorTwo, idEnd);
       idStart = idEnd;
-      vertAssoc.addAssoc(traceIndex, i, vertStart, vertEnd);
+      vertAssoc.addAssoc(traceIndex, va, i, vertStart, vertEnd);
       vertStart = vertEnd;
       vec3.copy(colorOne, colorTwo);
     }
     vertAssoc.setPerResidueColors(traceIndex, colors);
-    vertAssoc.addAssoc(traceIndex, trace.length() - 1, vertStart,
-                       meshGeom.numVerts());
+    vertAssoc.addAssoc(traceIndex, va, trace.length() - 1, vertStart,
+                       va.numVerts());
     traceIndex += 1;
     options.float32BufferPool.release(colors);
   }

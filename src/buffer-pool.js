@@ -53,7 +53,9 @@ BufferPool.prototype.release = function(buffer) {
   this._freeArrays.push(buffer);
 };
 
+
 exports.BufferPool = BufferPool;
+
 
 return true;
 })(this);

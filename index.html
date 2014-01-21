@@ -12,6 +12,9 @@
     <script src='src/mol.js'></script>
     <script src='src/vert-assoc.js'></script>
     <script src='src/buffer-pool.js'></script>
+    <script src='src/indexed-vertex-array.js'></script>
+    <script src='src/vertex-array.js'></script>
+    <script src='src/geom-builders.js'></script>
     <script src='src/scene.js'></script>
     <script src='src/render.js'></script>
     <script src='src/shade.js'></script>
@@ -212,7 +215,7 @@
     var activeTab = 'styleTab';
     $('#colorTab').hide();
     var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'medium', width: 'auto', height : 'auto',
+                       { quality : 'medium', width: 500, height : 500,
                          antialias : true, outline : false});
     var structure;
     function lines() {
@@ -231,12 +234,13 @@
     function spheres() {
       pv.clear();
       pv.spheres('structure', structure);
+      pv.lines('lines', structure);
     }
 
     function sline() {
       pv.clear();
       pv.sline('structure', structure, 
-              { color : color.uniform('black')});
+              { color : color.uniform('red')});
     }
 
     function tube() {
@@ -253,7 +257,8 @@
     function ballsAndSticks() {
       pv.clear();
       var ligand = structure.select('ligand');
-      pv.ballsAndSticks('structure.ligand', ligand);
+      pv.ballsAndSticks('structure', structure);
+      //pv.ballsAndSticks('structure.ligand', ligand);
     }
 
     function preset() {
@@ -407,8 +412,10 @@
     });
 
     document.addEventListener('DOMContentLoaded', transferase);
+    /*
     window.addEventListener('resize', function() {
       pv.fitParent();
     });
+    */
   </script>
 </html>

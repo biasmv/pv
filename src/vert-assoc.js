@@ -38,12 +38,13 @@ function AtomVertexAssoc(structure, callColoringBeginEnd) {
 
 }
 
-AtomVertexAssoc.prototype.addAssoc = function(atom, vertStart, vertEnd)  {
-  this._assocs.push({ atom: atom, vertStart : vertStart, vertEnd : vertEnd });
+AtomVertexAssoc.prototype.addAssoc = function(atom, va, vertStart, vertEnd)  {
+  this._assocs.push({ 
+    atom: atom, vertexArray : va, vertStart : vertStart, vertEnd : vertEnd 
+  });
 };
 
-AtomVertexAssoc.prototype.recolor = function(colorOp, view, buffer, offset, 
-                                             stride) {
+AtomVertexAssoc.prototype.recolor = function(colorOp, view) {
   // allocate buffer to hold all colors of the view.
   var colorData = new Float32Array(view.atomCount()*3); 
   if (this._callBeginEnd) {
@@ -68,10 +69,9 @@ AtomVertexAssoc.prototype.recolor = function(colorOp, view, buffer, offset,
       continue;
     }
     var r = colorData[ai*3], g = colorData[ai*3+1], b = colorData[ai*3+2];
+    var va = assoc.vertexArray;
     for (var j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
-       buffer[offset+j*stride+0] = r;  
-       buffer[offset+j*stride+1] = g;  
-       buffer[offset+j*stride+2] = b;  
+      va.setColor(j, r, g, b);
     }
   }
 };
@@ -90,17 +90,14 @@ TraceVertexAssoc.prototype.setPerResidueColors = function(traceIndex, colors) {
   this._perResidueColors[traceIndex] = colors;
 };
 
-TraceVertexAssoc.prototype.addAssoc = function(traceIndex, slice, vertStart, 
-                                               vertEnd) {
-  this._assocs.push({ traceIndex: traceIndex, slice : slice, 
-                      vertStart : vertStart, vertEnd : vertEnd});
+TraceVertexAssoc.prototype.addAssoc = 
+  function(traceIndex, vertexArray, slice, vertStart, vertEnd) {
+    this._assocs.push({ traceIndex: traceIndex, slice : slice, 
+                        vertStart : vertStart, vertEnd : vertEnd,
+                        vertexArray : vertexArray});
 };
 
-
-
-
-TraceVertexAssoc.prototype.recolor = function(colorOp, view, buffer, offset, 
-                                              stride) {
+TraceVertexAssoc.prototype.recolor = function(colorOp, view) {
   // FIXME: this function might create quite a few temporary buffers. Implement
   // a buffer pool to avoid hitting the GC and having to go through the slow
   // creation of typed arrays.
@@ -141,10 +138,9 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, view, buffer, offset,
     var ai = assoc.slice;
     var newColors = colorData[assoc.traceIndex];
     var r = newColors[ai*3], g = newColors[ai*3+1], b = newColors[ai*3+2];
+    var va = assoc.vertexArray;
     for (j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
-      buffer[offset+j*stride+0] = r;  
-      buffer[offset+j*stride+1] = g;  
-      buffer[offset+j*stride+2] = b;  
+      va.setColor(j, r, g, b);
     }
   }
   if (this._callBeginEnd) {

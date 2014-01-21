@@ -489,6 +489,7 @@ AtomBase.prototype.prop = function(propName) {
   return this[propName]();
 };
 
+AtomBase.prototype.bondCount = function() { return this.bonds().length; };
 AtomBase.prototype.eachBond = function(callback) {
   var bonds = this.bonds();
   for (var i = 0, e = bonds.length; i < e; ++i) {
