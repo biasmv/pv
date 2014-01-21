@@ -33,7 +33,7 @@ I would love you to! Most features you would expect from a protein viewer are al
 
  * WebGL is only supported in a subset of browsers. If you can afford to lose users of IE and older versions of browsers, `pv` is a good solution for protein visualisation.
 
- * DNA/RNA visualisation is not implemented yet, for protein-centrict workflows that's fine though. In case you are interested in DNA/RNA rendering, just open a feature request and I'll try to get around to it.
+ * DNA/RNA visualisation is not implemented yet, for protein-centric workflows that's fine though. In case you are interested in DNA/RNA rendering, just open a feature request and I'll try to get around to it.
 
 Documentation
 ---------------------------------------
