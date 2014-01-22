@@ -1,5 +1,6 @@
 .DS_Store
 /js/pv.min.js
-/js/pv.js
+/js/pv.dbg.js
+/js/pv.rel.js
 /node_modules
 /doc/_build

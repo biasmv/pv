@@ -151,7 +151,6 @@ PV.prototype.options = function(optName, value) {
 
 PV.prototype.quality = function(qual) {
   this._options.quality = qual;
-  console.info('setting quality to', qual);
   if (qual === 'high') {
     this._options.arcDetail = 4;
     this._options.sphereDetail = 16;
@@ -227,8 +226,6 @@ PV.prototype._initGL = function() {
   }
 
   if (!this._gl.getContextAttributes().antialias && this._options.antialias) {
-    console.info('hardware antialising not supported.',
-                 'will use manual antialiasing instead.');
     samples = 2;
   }
   this._options.realWidth = this._options.width * samples;

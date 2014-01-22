@@ -31,7 +31,7 @@ module.exports = function(grunt) {
         report : 'min'
       },
       build: {
-        src: 'js/<%= pkg.name %>.js',
+        src: 'js/<%= pkg.name %>.rel.js',
         dest: 'js/<%= pkg.name %>.min.js'
       }
     },
@@ -47,7 +47,13 @@ module.exports = function(grunt) {
     concat: {
       dist: {
         src: ALL_FILES,
-        dest: 'js/pv.js'
+        dest: 'js/pv.dbg.js'
+      }
+    },
+    removelogging : {
+      dist :  {
+        src : 'js/pv.dbg.js',
+        dest : 'js/pv.rel.js',
       }
     }
   });
@@ -56,8 +62,11 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-uglify');
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-concat');
+  grunt.loadNpmTasks('grunt-remove-logging');
 
   // Default task(s).
-  grunt.registerTask('default', ['concat', 'uglify', 'jshint']);
+  grunt.registerTask('default', [
+    'concat', 'jshint', 'removelogging', 'uglify', 
+  ]);
 
 };

@@ -21,15 +21,6 @@
 (function(exports) {
 "use strict";
 
-if (window.console === 'undefined') {
-  window.console = {};
-  window.console.log = function() {};
-  window.console.error = function() {};
-  window.console.time = function() {};
-  window.console.timeEnd = function() {};
-  window.console.info = function() {};
-}
-
 exports.derive = function(subclass, baseclass) {
   for (var prop in baseclass.prototype) {
     subclass.prototype[prop] = baseclass.prototype[prop];

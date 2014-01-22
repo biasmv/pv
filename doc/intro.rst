@@ -16,7 +16,7 @@ Alternatively, you can clone the github repository of PV.
   git clone https://github.com/biasmv/pv
   cd pv
 
-When you do this, you will need to compile the pv.js and pv.min.js files using `Grunt <http://gruntjs.com>`_. Assuming you already have `NPM <https://npmjs.org/>`_ on your system, you can build the development and minified files by using the following commands:
+When you do this, you will need to compile the pv.dbg.js, pv.rel.js and pv.min.js files using `Grunt <http://gruntjs.com>`_. These are files containing all the code, with console statements (dbg), without console statements (rel) and minitified (min). Assuming you already have `NPM <https://npmjs.org/>`_ on your system, you can build the development and minified files by using the following commands:
 
 .. code-block:: bash
  
@@ -25,7 +25,7 @@ When you do this, you will need to compile the pv.js and pv.min.js files using `
   # run grunt with the default tasks
   grunt
 
-Upon success, the pv.js and pv.min.js files are placed in the js folder. You can just grab them from there and place them in your own project.
+Upon success, the pv.dbg.js, pv.rel.js, and pv.min.js files are placed in the js folder. You can just grab them from there and place them in your own project.
 
 
 Setting up a small website
