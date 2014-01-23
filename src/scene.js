@@ -495,8 +495,7 @@ TextLabel.prototype._setupTextParameters = function(ctx) {
   ctx.fillStyle = 'black';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'bottom';
-  ctx.font = '24px "Helvetica Neue"';
-  ctx.fontWeight = 'lighter';
+  ctx.font = '24px Verdana';
 };
 
 function smallestPowerOfTwo(size) {
@@ -514,7 +513,7 @@ TextLabel.prototype._prepareText = function(canvas, ctx, text) {
   canvas.width = smallestPowerOfTwo(estimatedWidth);
   canvas.height = smallestPowerOfTwo(estimatedHeight);
   this._setupTextParameters(ctx);
-  ctx.strokeStyle = 'white';
+  ctx.strokeStyle = 'black';
   ctx.lineWidth = 0.5;
   ctx.fillText(text, 0, canvas.height);
   ctx.strokeText(text, 0, canvas.height);
