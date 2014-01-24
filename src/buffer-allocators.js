@@ -61,10 +61,10 @@ function NativeAllocator(bufferType) {
 
 NativeAllocator.prototype.request = function(length) {
   return new this._bufferType(length);
-}
+};
 
 NativeAllocator.prototype.release = function(buffer) {
-}
+};
 
 exports.PoolAllocator = PoolAllocator;
 exports.NativeAllocator = NativeAllocator;
