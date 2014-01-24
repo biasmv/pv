@@ -316,8 +316,8 @@ PV.prototype._initPV = function() {
     return false;
   }
   this._ok = true;
-  this._float32BufferPool = new BufferPool(Float32Array);
-  this._uint16BufferPool = new BufferPool(Uint16Array);
+  this._float32Allocator = new PoolAllocator(Float32Array);
+  this._uint16Allocator = new PoolAllocator(Uint16Array);
   this._cam = new Cam(this._gl);
   this._shaderCatalog = {
     hemilight : this._initShader(shaders.HEMILIGHT_VS, shaders.HEMILIGHT_FS),
@@ -487,8 +487,8 @@ PV.prototype.lineTrace = function(name, structure, opts) {
     color : opts.color || color.uniform([ 1, 0, 1 ]),
     lineWidth : opts.lineWidth || 4.0,
     idPool : this._objectIdManager,
-    float32BufferPool : this._float32BufferPool,
-    uint16BufferPool : this._uint16BufferPool,
+    float32Allocator : this._float32Allocator,
+    uint16Allocator : this._uint16Allocator,
   };
   var obj = render.lineTrace(structure, this._gl, options);
   return this.add(name, obj);
@@ -500,8 +500,8 @@ PV.prototype.spheres = function(name, structure, opts) {
     color : opts.color || color.byElement(),
     sphereDetail : this.options('sphereDetail'),
     idPool : this._objectIdManager,
-    float32BufferPool : this._float32BufferPool,
-    uint16BufferPool : this._uint16BufferPool,
+    float32Allocator : this._float32Allocator,
+    uint16Allocator : this._uint16Allocator,
   };
   var obj = render.spheres(structure, this._gl, options);
   return this.add(name, obj);
@@ -515,8 +515,8 @@ PV.prototype.sline = function(name, structure, opts) {
     strength : opts.strength || 1.0,
     lineWidth : opts.lineWidth || 4.0,
     idPool : this._objectIdManager,
-    float32BufferPool : this._float32BufferPool,
-    uint16BufferPool : this._uint16BufferPool,
+    float32Allocator : this._float32Allocator,
+    uint16Allocator : this._uint16Allocator,
   };
   var obj = render.sline(structure, this._gl, options);
   return this.add(name, obj);
@@ -532,8 +532,8 @@ PV.prototype.cartoon = function(name, structure, opts) {
     radius : opts.radius || 0.3,
     forceTube : opts.forceTube || false,
     idPool : this._objectIdManager,
-    float32BufferPool : this._float32BufferPool,
-    uint16BufferPool : this._uint16BufferPool,
+    float32Allocator : this._float32Allocator,
+    uint16Allocator : this._uint16Allocator,
   };
   var obj = render.cartoon(structure, this._gl, options);
   return this.add(name, obj);
@@ -556,8 +556,8 @@ PV.prototype.ballsAndSticks = function(name, structure, opts) {
     arcDetail : (opts.arcDetail || this.options('arcDetail')) * 2,
     sphereDetail : opts.sphereDetail || this.options('sphereDetail'),
     idPool : this._objectIdManager,
-    float32BufferPool : this._float32BufferPool,
-    uint16BufferPool : this._uint16BufferPool,
+    float32Allocator : this._float32Allocator,
+    uint16Allocator : this._uint16Allocator,
   };
   var obj = render.ballsAndSticks(structure, this._gl, options);
   return this.add(name, obj);
@@ -569,8 +569,8 @@ PV.prototype.lines = function(name, structure, opts) {
     color : opts.color || color.byElement(),
     lineWidth : opts.lineWidth || 4.0,
     idPool : this._objectIdManager,
-    float32BufferPool : this._float32BufferPool,
-    uint16BufferPool : this._uint16BufferPool,
+    float32Allocator : this._float32Allocator,
+    uint16Allocator : this._uint16Allocator,
   };
   var obj = render.lines(structure, this._gl, options);
   return this.add(name, obj);
@@ -584,8 +584,8 @@ PV.prototype.trace = function(name, structure, opts) {
     arcDetail : (opts.arcDetail || this.options('arcDetail')) * 2,
     sphereDetail : opts.sphereDetail || this.options('sphereDetail'),
     idPool : this._objectIdManager,
-    float32BufferPool : this._float32BufferPool,
-    uint16BufferPool : this._uint16BufferPool,
+    float32Allocator : this._float32Allocator,
+    uint16Allocator : this._uint16Allocator,
   };
   var obj = render.trace(structure, this._gl, options);
   return this.add(name, obj);

@@ -99,7 +99,7 @@ exports.spheres = function(structure, gl, options) {
   var atomCount = structure.atomCount();
   var geom = new MeshGeom(gl, atomCount * protoSphere.numVerts(),
                           atomCount * protoSphere.numIndices(),
-                          options.float32BufferPool, options.uint16BufferPool);
+                          options.float32Allocator, options.uint16Allocator);
   options.color.begin(structure);
   var idRange = options.idPool.getContinuousRange(atomCount);
   geom.addIdRange(idRange);
@@ -140,8 +140,8 @@ exports.ballsAndSticks = (function() {
     var numIndices =
         atomCount * protoSphere.numIndices() + bondCount * protoCyl.numIndices();
     var meshGeom =
-        new MeshGeom(gl, numVerts, numIndices, options.float32BufferPool,
-                    options.uint16BufferPool);
+        new MeshGeom(gl, numVerts, numIndices, options.float32Allocator,
+                    options.uint16Allocator);
     var idRange = options.idPool.getContinuousRange(atomCount);
     meshGeom.addIdRange(idRange);
     options.color.begin(structure);
@@ -194,7 +194,7 @@ exports.lines = function(structure, gl, options) {
       lineCount += 3;
     }
   });
-  var lineGeom = new LineGeom(gl, lineCount * 2, options.float32BufferPool);
+  var lineGeom = new LineGeom(gl, lineCount * 2, options.float32Allocator);
   lineGeom.setLineWidth(options.lineWidth);
   var idRange = options.idPool.getContinuousRange(atomCount);
   lineGeom.addIdRange(idRange);
@@ -263,7 +263,7 @@ exports.lineTrace = (function() {
   for (var ci = 0; ci < chains.length; ++ci) {
     numVerts += _lineTraceNumVerts(chains[ci].backboneTraces());
   }
-  var lineGeom = new LineGeom(gl, numVerts, options.float32BufferPool);
+  var lineGeom = new LineGeom(gl, numVerts, options.float32Allocator);
   var va = lineGeom.vertArray();
   console.log(va);
   lineGeom.setLineWidth(options.lineWidth);
@@ -271,7 +271,7 @@ exports.lineTrace = (function() {
     vertAssoc.addAssoc(traceIndex, va, 0, lineGeom.numVerts(),
                        lineGeom.numVerts() + 1);
 
-    var colors = options.float32BufferPool.request(trace.length() * 3);
+    var colors = options.float32Allocator.request(trace.length() * 3);
     var idRange = options.idPool.getContinuousRange(trace.length());
     var idOne = idRange.nextId(trace.residueAt(0)), idTwo;
     lineGeom.addIdRange(idRange);
@@ -297,7 +297,7 @@ exports.lineTrace = (function() {
     colors[trace.length() * 3 - 1] = colorTwo[2];
     vertAssoc.setPerResidueColors(traceIndex, colors);
     traceIndex += 1;
-    options.float32BufferPool.release(colors);
+    options.float32Allocator.release(colors);
   }
   for (ci = 0; ci < chains.length; ++ci) {
     var chain = chains[ci];
@@ -332,13 +332,13 @@ exports.sline = function(structure, gl, options) {
     numVerts +=
         _slineNumVerts(chains[ci].backboneTraces(), options.splineDetail);
   }
-  var lineGeom = new LineGeom(gl, numVerts, options.float32BufferPool);
+  var lineGeom = new LineGeom(gl, numVerts, options.float32Allocator);
   var va = lineGeom.vertArray();
   lineGeom.setLineWidth(options.lineWidth);
   function makeTrace(trace) {
     var firstSlice = trace.fullTraceIndex(0);
-    var positions = options.float32BufferPool.request(trace.length() * 3);
-    var colors = options.float32BufferPool.request(trace.length() * 3);
+    var positions = options.float32Allocator.request(trace.length() * 3);
+    var colors = options.float32Allocator.request(trace.length() * 3);
     var objIds = [];
     var idRange = options.idPool.getContinuousRange(trace.length());
     lineGeom.addIdRange(idRange);
@@ -356,7 +356,7 @@ exports.sline = function(structure, gl, options) {
     vertAssoc.setPerResidueColors(traceIndex, colors);
     var sdiv = geom.catmullRomSpline(positions, trace.length(),
                                      options.splineDetail, options.strength,
-                                     false, options.float32BufferPool);
+                                     false, options.float32Allocator);
     var interpColors = interpolateColor(colors, options.splineDetail);
     var vertStart = lineGeom.numVerts();
     vertAssoc.addAssoc(traceIndex, va, firstSlice, vertStart, vertStart + 1);
@@ -385,9 +385,9 @@ exports.sline = function(structure, gl, options) {
       vertAssoc.addAssoc(traceIndex, va, firstSlice + i, vertEnd - 1,
                          vertEnd + ((i === trace.length - 1) ? 0 : 1));
     }
-    options.float32BufferPool.release(colors);
-    options.float32BufferPool.release(positions);
-    options.float32BufferPool.release(sdiv);
+    options.float32Allocator.release(colors);
+    options.float32Allocator.release(positions);
+    options.float32Allocator.release(sdiv);
     traceIndex += 1;
   }
   for (ci = 0; ci < chains.length; ++ci) {
@@ -549,16 +549,16 @@ var _cartoonForChain = (function() {
   var numIndices =
       _cartoonNumIndices(traces, options.arcDetail * 4, options.splineDetail);
   var meshGeom =
-      new MeshGeom(gl, numVerts, numIndices, options.float32BufferPool,
-                   options.uint16BufferPool);
+      new MeshGeom(gl, numVerts, numIndices, options.float32Allocator,
+                   options.uint16Allocator);
   var vertAssoc =
       new TraceVertexAssoc(chain.asView(), options.splineDetail, false);
   for (var ti = 0; ti < traces.length; ++ti) {
     var trace = traces[ti];
 
-    var positions = options.float32BufferPool.request(trace.length() * 3);
-    var colors = options.float32BufferPool.request(trace.length() * 3);
-    var normals = options.float32BufferPool.request(trace.length() * 3);
+    var positions = options.float32Allocator.request(trace.length() * 3);
+    var colors = options.float32Allocator.request(trace.length() * 3);
+    var normals = options.float32Allocator.request(trace.length() * 3);
 
     var objIds = [];
     var idRange = options.idPool.getContinuousRange(trace.length());
@@ -569,10 +569,10 @@ var _cartoonForChain = (function() {
     var vertArray = meshGeom.vertArray(0);
     var sdiv = geom.catmullRomSpline(positions, trace.length(),
                                      options.splineDetail, options.strength,
-                                     false, options.float32BufferPool);
+                                     false, options.float32Allocator);
     var normalSdiv = geom.catmullRomSpline(
         normals, trace.length(), options.splineDetail, options.strength, false,
-        options.float32BufferPool);
+        options.float32Allocator);
     vertAssoc.setPerResidueColors(ti, colors);
     var interpColors = interpolateColor(colors, options.splineDetail);
     // handle start of trace. this could be moved inside the for-loop, but
@@ -664,9 +664,9 @@ var _cartoonForChain = (function() {
       vertAssoc.addAssoc(ti, vertArray, slice, vertStart, vertEnd);
       slice += 1;
     }
-    options.float32BufferPool.release(normals);
-    options.float32BufferPool.release(positions);
-    options.float32BufferPool.release(colors);
+    options.float32Allocator.release(normals);
+    options.float32Allocator.release(positions);
+    options.float32Allocator.release(colors);
   }
   meshGeom.setVertAssoc(vertAssoc);
   return meshGeom;
@@ -710,8 +710,8 @@ var _traceForChain = (function() {
   var numIndices = _traceNumIndices(traces, options.protoSphere.numIndices(),
                                     options.protoCyl.numIndices());
   var meshGeom =
-      new MeshGeom(gl, numVerts, numIndices, options.float32BufferPool,
-                   options.uint16BufferPool);
+      new MeshGeom(gl, numVerts, numIndices, options.float32Allocator,
+                   options.uint16Allocator);
   var vertAssoc = new TraceVertexAssoc(chain.asView(), 1, false);
   var traceIndex = 0;
   var va = meshGeom.vertArray(0);
@@ -727,7 +727,7 @@ var _traceForChain = (function() {
                                        colorOne, idStart);
     var vertEnd = null;
     vertAssoc.addAssoc(traceIndex, va, 0, vertStart, vertEnd);
-    var colors = options.float32BufferPool.request(trace.length() * 3);
+    var colors = options.float32Allocator.request(trace.length() * 3);
     colors[0] = colorOne[0];
     colors[1] = colorOne[1];
     colors[2] = colorOne[2];
@@ -768,7 +768,7 @@ var _traceForChain = (function() {
     vertAssoc.addAssoc(traceIndex, va, trace.length() - 1, vertStart,
                        va.numVerts());
     traceIndex += 1;
-    options.float32BufferPool.release(colors);
+    options.float32Allocator.release(colors);
   }
   meshGeom.setVertAssoc(vertAssoc);
   return meshGeom;

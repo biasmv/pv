@@ -22,42 +22,26 @@
 "use strict";
 
 function IndexedVertexArray(gl, numVerts, numIndices, 
-                            float32BufferPool, uint16BufferPool) {
+                            float32Allocator, uint16Allocator) {
   this._gl = gl;
   this._vertBuffer = gl.createBuffer();
   this._indexBuffer = gl.createBuffer();
-  this._float32BufferPool = float32BufferPool || null;
-  this._uint16BufferPool = uint16BufferPool || null;
+  this._float32Allocator = float32Allocator || null;
+  this._uint16Allocator = uint16Allocator || null;
   this._ready = false;
   this._numVerts = 0;
   this._maxVerts = numVerts;
   this._numTriangles = 0;
   var numFloats = this._FLOATS_PER_VERT * numVerts;
-  if (this._float32BufferPool) {
-    this._vertData = float32BufferPool.request(numFloats);
-  } else {
-    this._vertData = new Float32Array(numFloats);
-  }
-  if (this._uint16BufferPool) {
-    this._indexData = uint16BufferPool.request(numIndices);
-  } else {
-    this._indexData = new Uint16Array(numIndices);
-  }
+  this._vertData = float32Allocator.request(numFloats);
+  this._indexData = uint16Allocator.request(numIndices);
 }
 
 IndexedVertexArray.prototype.destroy = function() {
   this._gl.deleteBuffer(this._vertBuffer);
   this._gl.deleteBuffer(this._indexBuffer);
-  if (this._float32BufferPool) {
-    this._float32BufferPool.release(this._vertData);
-  } else {
-    delete this._vertData;
-  }
-  if (this._uint16BufferPool) {
-    this._uint16BufferPool.release(this._indexData);
-  } else {
-    delete this._indexData;
-  }
+  this._float32Allocator.release(this._vertData);
+  this._uint16Allocator.release(this._indexData);
 };
 
 IndexedVertexArray.prototype.numVerts = function() { return this._numVerts; };

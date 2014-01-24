@@ -21,14 +21,16 @@
 (function(exports) {
 "use strict";
 
-function BufferPool(bufferType) {
+// contains two types of buffer allocators: buffer allocators and standard
+// allocators
+function PoolAllocator(bufferType) {
   this._freeArrays = [];
 
   this._bufferType = bufferType;
 
 }
 
-BufferPool.prototype.request = function(requestedLength) {
+PoolAllocator.prototype.request = function(requestedLength) {
   var bestIndex = -1;
   var bestLength = null;
   for (var i = 0; i < this._freeArrays.length; ++i) {
@@ -49,13 +51,23 @@ BufferPool.prototype.request = function(requestedLength) {
 
 };
 
-BufferPool.prototype.release = function(buffer) {
+PoolAllocator.prototype.release = function(buffer) {
   this._freeArrays.push(buffer);
 };
 
+function NativeAllocator(bufferType) {
+  this._bufferType = bufferType;
+}
 
-exports.BufferPool = BufferPool;
+NativeAllocator.prototype.request = function(length) {
+  return new this._bufferType(length);
+}
 
+NativeAllocator.prototype.release = function(buffer) {
+}
+
+exports.PoolAllocator = PoolAllocator;
+exports.NativeAllocator = NativeAllocator;
 
 return true;
 })(this);

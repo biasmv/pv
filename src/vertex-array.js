@@ -22,18 +22,14 @@
 "use strict";
 
 // (unindexed) vertex array for line-based geometries
-function VertexArray(gl, numVerts, float32BufferPool)  {
+function VertexArray(gl, numVerts, float32Allocator)  {
   this._gl = gl;
   this._vertBuffer = gl.createBuffer();
-  this._float32BufferPool = float32BufferPool || null;
+  this._float32Allocator = float32Allocator || null;
   this._ready = false;
   this._numLines = 0;
   var numFloats = this._FLOATS_PER_VERT * numVerts;
-  if (this._float32BufferPool) {
-    this._vertData = float32BufferPool.request(numFloats);
-  } else {
-    this._vertData = new Float32Array(numFloats);
-  }
+    this._vertData = float32Allocator.request(numFloats);
 }
 
 VertexArray.prototype._FLOATS_PER_VERT = 7;
@@ -43,11 +39,7 @@ VertexArray.prototype._ID_OFFSET = 6;
 
 VertexArray.prototype.destroy = function() {
   this._gl.deleteBuffer(this._vertBuffer);
-  if (this._float32BufferPool) {
-    this._float32BufferPool.release(this._vertData);
-  } else {
-    delete this._vertData;
-  }
+    this._float32Allocator.release(this._vertData);
 };
 
 VertexArray.prototype.numVerts = function() { return this._numLines * 2; };

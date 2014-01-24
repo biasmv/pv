@@ -152,9 +152,9 @@ BaseGeom.prototype.destroy = function() {
 
 // Holds geometrical data for objects rendered as lines. For each vertex,
 // the color and position is stored in an interleaved format.
-function LineGeom(gl, numVerts, float32BufferPool) {
+function LineGeom(gl, numVerts, float32Allocator) {
   BaseGeom.prototype.constructor.call(this, gl);
-  this._va = new VertexArray(gl, numVerts, float32BufferPool);
+  this._va = new VertexArray(gl, numVerts, float32Allocator);
   this._vertAssoc = null;
   this._lineWidth = 1.0;
 }
@@ -327,15 +327,17 @@ CompositeGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
 // 
 // Proper splitting requires providing some information, since triangles
 // can only be constructed from vertices in the same buffer.
-function MeshGeom(gl, numVerts, numIndices, float32BufferPool,
-                  uint16BufferPool) {
+function MeshGeom(gl, numVerts, numIndices, float32Allocator,
+                  uint16Allocator) {
   BaseGeom.prototype.constructor.call(this, gl);
   // FIXME: calculation for index size should be improved. In case of splitting,
   // the buffers are too large.
   this._indexedVertArrays = [ 
     new IndexedVertexArray(gl, this._boundedVertArraySize(numVerts), 
-                           numIndices, float32BufferPool, uint16BufferPool)
+                           numIndices, float32Allocator, uint16Allocator)
   ];
+  this._float32Allocator = float32Allocator;
+  this._uint16Allocator = uint16Allocator;
   this._remainingVerts = numVerts;
   this._remainingIndices = numIndices;
   this._vertAssoc = null;
@@ -355,8 +357,8 @@ MeshGeom.prototype.vertArrayWithSpaceFor = function(numVerts) {
   this._remainingIndices = this._remainingIndices - currentVa.numIndices();
   numVerts = this._boundedVertArraySize(this._remainingVerts);
   var newVa = new IndexedVertexArray(this._gl, numVerts, this._remainingIndices,
-                                     this._float32BufferPool, 
-                                     this._uint16BufferPool);
+                                     this._float32Allocator, 
+                                     this._uint16Allocator);
   this._indexedVertArrays.push(newVa);
   return newVa;
 };
