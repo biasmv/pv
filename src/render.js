@@ -400,118 +400,52 @@ exports.sline = function(structure, gl, options) {
   return lineGeom;
 };
 
+var _traceNumVerts = function(traces, sphereNumVerts, cylNumVerts) {
+  var numVerts = 0;
+  for (var i = 0; i < traces.length; ++i) {
+    numVerts += traces[i].length() * sphereNumVerts;
+    numVerts += (traces[i].length() - 1) * cylNumVerts;
+  }
+  return numVerts;
+};
+
+var _traceNumIndices = function(traces, sphereNumIndices, cylNumIndices) {
+  var numIndices = 0;
+  for (var i = 0; i < traces.length; ++i) {
+    numIndices += traces[i].length() * sphereNumIndices;
+    numIndices += (traces[i].length() - 1) * cylNumIndices;
+  }
+  return numIndices;
+};
+
 exports.trace = function(structure, gl, options) {
   console.time('trace');
-  var compositeGeom = new CompositeGeom(structure);
+
   options.protoCyl = new ProtoCylinder(options.arcDetail);
   options.protoSphere =
       new ProtoSphere(options.sphereDetail, options.sphereDetail);
+
+  // determine number of verts required to render the traces
+  var traces = structure.backboneTraces();
+  var numVerts = _traceNumVerts(traces, options.protoSphere.numVerts(),
+                                options.protoCyl.numVerts());
+  var numIndices = _traceNumIndices(traces, options.protoSphere.numIndices(),
+                                    options.protoCyl.numIndices());
+  var meshGeom =
+      new MeshGeom(gl, numVerts, numIndices, options.float32Allocator,
+                   options.uint16Allocator);
+  var vertAssoc = new TraceVertexAssoc(structure, 1, true);
+  var traceIndex = 0;
   options.color.begin(structure);
   var chains = structure.chains();
-  for (var ci = 0; ci < chains.length; ++ci) {
-    var chain = chains[ci];
-    var meshGeom = _traceForChain(chain, gl, options);
-    if (meshGeom) {
-      compositeGeom.addGeom(meshGeom);
-    }
+  for (var ti = 0; ti < traces.length; ++ti) {
+    _renderSingleTrace(meshGeom, vertAssoc, traces[ti], ti, gl, options);
   }
+  meshGeom.setVertAssoc(vertAssoc);
   options.color.end(structure);
   console.timeEnd('trace');
-  return compositeGeom;
+  return meshGeom;
 };
-
-exports.cartoon = function(structure, gl, options) {
-  console.time('cartoon');
-  options.coilProfile = new TubeProfile(COIL_POINTS, options.arcDetail, 1.0);
-  options.helixProfile = new TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
-  options.strandProfile = new TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
-
-  var compositeGeom = new CompositeGeom(structure);
-  var chains = structure.chains();
-  options.color.begin(structure);
-  for (var i = 0, e = chains.length; i < e; ++i) {
-    var meshGeom = _cartoonForChain(chains[i], gl, options);
-    if (meshGeom) {
-      compositeGeom.addGeom(meshGeom);
-    }
-  }
-  console.timeEnd('cartoon');
-  options.color.end(structure);
-  return compositeGeom;
-};
-
-
-var _cartoonAddTube = (function() {
-  var rotation = mat3.create();
-  var up = vec3.create();
-
-  return function(mgeom, pos, left, res, tangent, color, first, options, offset,
-                  objId) {
-    var ss = res.ss();
-  var prof = options.coilProfile;
-  if (ss === 'H' && !options.forceTube) {
-    prof = options.helixProfile;
-  } else if (ss === 'E' && !options.forceTube) {
-    prof = options.strandProfile;
-  } else {
-    if (first) {
-      geom.ortho(left, tangent);
-    } else {
-      vec3.cross(left, up, tangent);
-    }
-  }
-
-  buildRotation(rotation, tangent, left, up, true);
-  prof.addTransformed(mgeom, pos, options.radius, rotation, color, first,
-                      offset, objId);
-  };
-})();
-
-// INTERNAL: fills positions, normals and colors from the information found in
-// trace. The 3 arrays must already have the correct size (3*trace.length).
-var _colorPosNormalsFromTrace = (function() {
-  var pos = vec3.create();
-  var normal = vec3.create(), lastNormal = vec3.create();
-
-  return function(trace, colors, positions, normals, objIds, pool, options) {
-    var strand_start = null, strand_end = null;
-  vec3.set(lastNormal, 0.0, 0.0, 0.0);
-  for (var i = 0; i < trace.length(); ++i) {
-    objIds.push(pool.nextId(trace.residueAt(i)));
-    trace.smoothPosAt(pos, i, options.strength);
-    positions[i * 3] = pos[0];
-    positions[i * 3 + 1] = pos[1];
-    positions[i * 3 + 2] = pos[2];
-
-    trace.smoothNormalAt(normal, i, options.strength);
-
-    var atom = trace.centralAtomAt(i);
-    options.color.colorFor(atom, colors, i * 3);
-
-    if (vec3.dot(normal, lastNormal) < 0) {
-      vec3.scale(normal, normal, -1);
-    }
-    if (trace.residueAt(i).ss() === 'E' && !options.force_tube) {
-      if (strand_start === null) {
-        strand_start = i;
-      }
-      strand_end = i;
-    }
-    /*
-    if (trace.residueAt(i).ss() === 'C' && strand_start !== null) {
-      //inplaceSmooth(positions, strand_start, strand_end+1);
-      //inplaceSmooth(normals, strand_start-1, strand_end+1);
-      strand_start = null;
-      strand_start = null;
-    }
-    */
-    normals[i * 3] = positions[3 * i] + normal[0] + lastNormal[0];
-    normals[i * 3 + 1] = positions[3 * i + 1] + normal[1] + lastNormal[1];
-    normals[i * 3 + 2] = positions[3 * i + 2] + normal[2] + lastNormal[2];
-    vec3.copy(lastNormal, normal);
-  }
-  };
-})();
 
 // calculates the number of vertices required for the cartoon and
 // tube render styles
@@ -531,30 +465,116 @@ var _cartoonNumIndices = function(traces, vertsPerSlice, splineDetail) {
   return numIndices;
 };
 
-// constructs a cartoon representation for all consecutive backbone traces found
-// in the given chain. 
-var _cartoonForChain = (function() {
+exports.cartoon = function(structure, gl, options) {
+  console.time('cartoon');
+  options.coilProfile = new TubeProfile(COIL_POINTS, options.arcDetail, 1.0);
+  options.helixProfile = new TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
+  options.strandProfile = new TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
+
+  var traces = structure.backboneTraces();
+  var numVerts = _cartoonNumVerts(traces, options.arcDetail * 4,
+                                  options.splineDetail);
+  var numIndices = _cartoonNumIndices(traces, options.arcDetail * 4,
+                                      options.splineDetail);
+  var meshGeom = new MeshGeom(gl, numVerts, numIndices, options.float32Allocator, 
+                              options.uint16Allocator);
+  var vertAssoc =
+      new TraceVertexAssoc(structure, options.splineDetail, true);
+  options.color.begin(structure);
+  for (var ti = 0, te = traces.length; ti < te; ++ti) {
+    _cartoonForSingleTrace(meshGeom, vertAssoc, traces[ti], ti, gl, options);
+  }
+  meshGeom.setVertAssoc(vertAssoc);
+  console.timeEnd('cartoon');
+  options.color.end(structure);
+  return meshGeom;
+};
+
+
+var _cartoonAddTube = (function() {
+  var rotation = mat3.create();
+  var up = vec3.create();
+
+  return function(vertArray, pos, left, res, tangent, color, first, options, offset,
+                  objId) {
+    var ss = res.ss();
+  var prof = options.coilProfile;
+  if (ss === 'H' && !options.forceTube) {
+    prof = options.helixProfile;
+  } else if (ss === 'E' && !options.forceTube) {
+    prof = options.strandProfile;
+  } else {
+    if (first) {
+      geom.ortho(left, tangent);
+    } else {
+      vec3.cross(left, up, tangent);
+    }
+  }
+
+  buildRotation(rotation, tangent, left, up, true);
+  prof.addTransformed(vertArray, pos, options.radius, rotation, color, first,
+                      offset, objId);
+  };
+})();
+
+// INTERNAL: fills positions, normals and colors from the information found in
+// trace. The 3 arrays must already have the correct size (3*trace.length).
+var _colorPosNormalsFromTrace = (function() {
+  var pos = vec3.create();
+  var normal = vec3.create(), lastNormal = vec3.create();
+
+  return function(trace, colors, positions, normals, objIds, pool, options) {
+    var strand_start = null, strand_end = null;
+    vec3.set(lastNormal, 0.0, 0.0, 0.0);
+    for (var i = 0; i < trace.length(); ++i) {
+      objIds.push(pool.nextId(trace.residueAt(i)));
+      trace.smoothPosAt(pos, i, options.strength);
+      positions[i * 3] = pos[0];
+      positions[i * 3 + 1] = pos[1];
+      positions[i * 3 + 2] = pos[2];
+
+      trace.smoothNormalAt(normal, i, options.strength);
+
+      var atom = trace.centralAtomAt(i);
+      options.color.colorFor(atom, colors, i * 3);
+
+      if (vec3.dot(normal, lastNormal) < 0) {
+        vec3.scale(normal, normal, -1);
+      }
+      if (trace.residueAt(i).ss() === 'E' && !options.force_tube) {
+        if (strand_start === null) {
+          strand_start = i;
+        }
+        strand_end = i;
+      }
+      /*
+      if (trace.residueAt(i).ss() === 'C' && strand_start !== null) {
+        //inplaceSmooth(positions, strand_start, strand_end+1);
+        //inplaceSmooth(normals, strand_start-1, strand_end+1);
+        strand_start = null;
+        strand_start = null;
+      }
+      */
+      normals[i * 3] = positions[3 * i] + normal[0] + lastNormal[0];
+      normals[i * 3 + 1] = positions[3 * i + 1] + normal[1] + lastNormal[1];
+      normals[i * 3 + 2] = positions[3 * i + 2] + normal[2] + lastNormal[2];
+      vec3.copy(lastNormal, normal);
+    }
+  };
+})();
+
+
+// constructs a cartoon representation for a single consecutive backbone
+// trace.
+var _cartoonForSingleTrace = (function() {
 
   var tangent = vec3.create(), pos = vec3.create(), left = vec3.create(),
       color = vec3.create(), normal = vec3.create(), normal2 = vec3.create(),
       rot = mat3.create();
 
-  return function(chain, gl, options) {
-    var traces = chain.backboneTraces();
-  if (traces.length === 0) {
-    return null;
-  }
-  var numVerts =
-      _cartoonNumVerts(traces, options.arcDetail * 4, options.splineDetail);
-  var numIndices =
-      _cartoonNumIndices(traces, options.arcDetail * 4, options.splineDetail);
-  var meshGeom =
-      new MeshGeom(gl, numVerts, numIndices, options.float32Allocator,
-                   options.uint16Allocator);
-  var vertAssoc =
-      new TraceVertexAssoc(chain.asView(), options.splineDetail, false);
-  for (var ti = 0; ti < traces.length; ++ti) {
-    var trace = traces[ti];
+  return function(meshGeom, vertAssoc, trace, traceIndex, gl, options) {
+    var numVerts =
+        _cartoonNumVerts([trace], options.arcDetail * 4, options.splineDetail);
 
     var positions = options.float32Allocator.request(trace.length() * 3);
     var colors = options.float32Allocator.request(trace.length() * 3);
@@ -565,15 +585,14 @@ var _cartoonForChain = (function() {
     _colorPosNormalsFromTrace(trace, colors, positions, normals, objIds,
                               idRange, options);
     meshGeom.addIdRange(idRange);
-    // FIXME: hack!!!
-    var vertArray = meshGeom.vertArray(0);
+    var vertArray = meshGeom.vertArrayWithSpaceFor(numVerts);
     var sdiv = geom.catmullRomSpline(positions, trace.length(),
-                                     options.splineDetail, options.strength,
-                                     false, options.float32Allocator);
+                                      options.splineDetail, options.strength,
+                                      false, options.float32Allocator);
     var normalSdiv = geom.catmullRomSpline(
         normals, trace.length(), options.splineDetail, options.strength, false,
         options.float32Allocator);
-    vertAssoc.setPerResidueColors(ti, colors);
+    vertAssoc.setPerResidueColors(traceIndex, colors);
     var interpColors = interpolateColor(colors, options.splineDetail);
     // handle start of trace. this could be moved inside the for-loop, but
     // at the expense of a conditional inside the loop. unrolling is
@@ -585,23 +604,23 @@ var _cartoonForChain = (function() {
     vec3.set(tangent, sdiv[3] - sdiv[0], sdiv[4] - sdiv[1], sdiv[5] - sdiv[2]);
     vec3.set(pos, sdiv[0], sdiv[1], sdiv[2]);
     vec3.set(normal, normalSdiv[0] - sdiv[0], normalSdiv[1] - sdiv[0],
-             normalSdiv[2] - sdiv[2]);
+              normalSdiv[2] - sdiv[2]);
     vec3.normalize(tangent, tangent);
     vec3.normalize(normal, normal);
     vec3.set(color, interpColors[0], interpColors[1], interpColors[2]);
 
-    var vertStart = meshGeom.numVerts();
-    _cartoonAddTube(meshGeom, pos, normal, trace.residueAt(0), tangent, color,
+    var vertStart = vertArray.numVerts();
+    _cartoonAddTube(vertArray, pos, normal, trace.residueAt(0), tangent, color,
                     true, options, 0, objIds[0]);
-    var vertEnd = meshGeom.numVerts();
+    var vertEnd = vertArray.numVerts();
     var slice = 0;
-    vertAssoc.addAssoc(ti, vertArray, slice, vertStart, vertEnd);
+    vertAssoc.addAssoc(traceIndex, vertArray, slice, vertStart, vertEnd);
     slice += 1;
     var halfSplineDetail = Math.floor(options.splineDetail / 2);
 
     // handle the bulk of the trace
     var steps = geom.catmullRomSplineNumPoints(trace.length(),
-                                               options.splineDetail, false);
+                                                options.splineDetail, false);
 
     for (var i = 1, e = steps; i < e; ++i) {
       // compute 3*i, 3*(i-1), 3*(i+1) once and reuse
@@ -610,17 +629,17 @@ var _cartoonForChain = (function() {
       vec3.set(pos, sdiv[ix3], sdiv[ix3 + 1], sdiv[ix3 + 2]);
 
       vec3.set(tangent, sdiv[ipox3] - sdiv[imox3],
-               sdiv[ipox3 + 1] - sdiv[imox3 + 1],
-               sdiv[ipox3 + 2] - sdiv[imox3 + 2]);
+                sdiv[ipox3 + 1] - sdiv[imox3 + 1],
+                sdiv[ipox3 + 2] - sdiv[imox3 + 2]);
       vec3.normalize(tangent, tangent);
       vec3.set(color, interpColors[ix3], interpColors[ix3 + 1],
-               interpColors[ix3 + 2]);
+                interpColors[ix3 + 2]);
 
       var offset = 0; // <- set special handling of coil to helix,strand
                       //    transitions.
-      var traceIndex = Math.floor(i / options.splineDetail);
-      var prevTraceIndex = Math.floor((i - 1) / options.splineDetail);
-      if (traceIndex !== prevTraceIndex && !options.forceTube) {
+      var residueIndex = Math.floor(i / options.splineDetail);
+      var prevResidueIndex = Math.floor((i - 1) / options.splineDetail);
+      if (residueIndex !== prevResidueIndex && !options.forceTube) {
         // for helix and strand regions, we can't base the left vector
         // of the current residue on the previous one, since it determines
         // the orientation of the strand and helix profiles.
@@ -633,15 +652,15 @@ var _cartoonForChain = (function() {
         // to avoid these visual artifacts, we calculate the best fit between
         // the current normal and the normal "after" which gives us an offset
         // for stitching the two parts together.
-        if (trace.residueAt(prevTraceIndex).ss() === 'C' &&
-            (trace.residueAt(traceIndex).ss() === 'H' ||
-             trace.residueAt(traceIndex).ss() === 'E')) {
+        if (trace.residueAt(prevResidueIndex).ss() === 'C' &&
+            (trace.residueAt(residueIndex).ss() === 'H' ||
+              trace.residueAt(residueIndex).ss() === 'E')) {
           // we don't want to generate holes, so we have to make sure
           // the vertices of the rotated profile align with the previous
           // profile.
           vec3.set(normal2, normalSdiv[imox3] - sdiv[imox3],
-                   normalSdiv[imox3 + 1] - sdiv[imox3 + 1],
-                   normalSdiv[imox3 + 2] - sdiv[imox3 + 2]);
+                    normalSdiv[imox3 + 1] - sdiv[imox3 + 1],
+                    normalSdiv[imox3 + 2] - sdiv[imox3 + 2]);
           vec3.normalize(normal2, normal2);
           var argAngle = 2 * Math.PI / (options.arcDetail * 4);
           var signedAngle = geom.signedAngle(normal, normal2, tangent);
@@ -652,74 +671,42 @@ var _cartoonForChain = (function() {
       // only set normal *after* handling the coil -> helix,strand
       // transition, since we depend on the normal of the previous step.
       vec3.set(normal, normalSdiv[3 * i] - sdiv[ix3],
-               normalSdiv[ix3 + 1] - sdiv[ix3 + 1],
-               normalSdiv[ix3 + 2] - sdiv[ix3 + 2]);
+                normalSdiv[ix3 + 1] - sdiv[ix3 + 1],
+                normalSdiv[ix3 + 2] - sdiv[ix3 + 2]);
       vec3.normalize(normal, normal);
-      vertStart = meshGeom.numVerts();
+      vertStart = vertArray.numVerts();
       var objIndex = Math.floor((i + halfSplineDetail) / options.splineDetail);
       var objId = objIds[Math.min(objIds.length - 1, objIndex)];
-      _cartoonAddTube(meshGeom, pos, normal, trace.residueAt(traceIndex),
+      _cartoonAddTube(vertArray, pos, normal, trace.residueAt(residueIndex),
                       tangent, color, false, options, offset, objId);
-      vertEnd = meshGeom.numVerts();
-      vertAssoc.addAssoc(ti, vertArray, slice, vertStart, vertEnd);
+      vertEnd = vertArray.numVerts();
+      vertAssoc.addAssoc(traceIndex, vertArray, slice, vertStart, vertEnd);
       slice += 1;
     }
     options.float32Allocator.release(normals);
     options.float32Allocator.release(positions);
     options.float32Allocator.release(colors);
-  }
-  meshGeom.setVertAssoc(vertAssoc);
-  return meshGeom;
   };
 })();
 
-var _traceNumVerts = function(traces, sphereNumVerts, cylNumVerts) {
-  var numVerts = 0;
-  for (var i = 0; i < traces.length; ++i) {
-    numVerts += traces[i].length() * sphereNumVerts;
-    numVerts += (traces[i].length() - 1) * cylNumVerts;
-  }
-  return numVerts;
-};
 
-var _traceNumIndices = function(traces, sphereNumIndices, cylNumIndices) {
-  var numIndices = 0;
-  for (var i = 0; i < traces.length; ++i) {
-    numIndices += traces[i].length() * sphereNumIndices;
-    numIndices += (traces[i].length() - 1) * cylNumIndices;
-  }
-  return numIndices;
-};
-
-var _traceForChain = (function() {
-
+var _renderSingleTrace = (function() {
   var rotation = mat3.create();
-
   var dir = vec3.create(), left = vec3.create(), up = vec3.create(),
       midPoint = vec3.create(), caPrevPos = vec3.create(),
       caThisPos = vec3.create();
   var colorOne = vec3.create(), colorTwo = vec3.create();
 
-  return function(chain, gl, options) {
-    var traces = chain.backboneTraces();
-  if (traces.length === 0) {
-    return null;
-  }
-  var numVerts = _traceNumVerts(traces, options.protoSphere.numVerts(),
-                                options.protoCyl.numVerts());
-  var numIndices = _traceNumIndices(traces, options.protoSphere.numIndices(),
-                                    options.protoCyl.numIndices());
-  var meshGeom =
-      new MeshGeom(gl, numVerts, numIndices, options.float32Allocator,
-                   options.uint16Allocator);
-  var vertAssoc = new TraceVertexAssoc(chain.asView(), 1, false);
-  var traceIndex = 0;
-  var va = meshGeom.vertArray(0);
-  for (var ti = 0; ti < traces.length; ++ti) {
-    var trace = traces[ti];
+  return function(meshGeom, vertAssoc, trace, traceIndex, gl, options) {
+    if (trace.length() === 0) {
+      return;
+    }
     var idRange = options.idPool.getContinuousRange(trace.length());
     meshGeom.addIdRange(idRange);
     options.color.colorFor(trace.centralAtomAt(0), colorOne, 0);
+    var numVerts = _traceNumVerts([trace], options.protoSphere.numVerts(), 
+                                  options.protoCyl.numVerts());
+    var va = meshGeom.vertArrayWithSpaceFor(numVerts);
     var vertStart = va.numVerts();
     trace.posAt(caPrevPos, 0);
     var idStart = idRange.nextId(trace.residueAt(0)), idEnd = 0;
@@ -766,13 +753,9 @@ var _traceForChain = (function() {
     }
     vertAssoc.setPerResidueColors(traceIndex, colors);
     vertAssoc.addAssoc(traceIndex, va, trace.length() - 1, vertStart,
-                       va.numVerts());
-    traceIndex += 1;
+                        va.numVerts());
     options.float32Allocator.release(colors);
   }
-  meshGeom.setVertAssoc(vertAssoc);
-  return meshGeom;
-  };
 })();
 
 return exports;

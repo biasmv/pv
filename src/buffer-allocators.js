@@ -21,13 +21,13 @@
 (function(exports) {
 "use strict";
 
-// contains two types of buffer allocators: buffer allocators and standard
-// allocators
+// contains classes for two kinds of typed array allocation schemes. 
+// PoolAllocator stores every typed array allocation in a list and tries
+// to reuse unused buffers whenever possible. The NativeAllocator just
+// news the typed arrays every time they are used.
 function PoolAllocator(bufferType) {
   this._freeArrays = [];
-
   this._bufferType = bufferType;
-
 }
 
 PoolAllocator.prototype.request = function(requestedLength) {

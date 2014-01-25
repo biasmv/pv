@@ -240,69 +240,6 @@ LineGeom.prototype.addLine = function(startPos, startColor,
       this._va.addLine(startPos, startColor, endPos, endColor, idOne, idTwo);
 };
 
-// a SceneNode which aggregates one or more (unnamed) geometries into one
-// named object. It forwards coloring and configuration calls to all
-// geometries it contains.
-//
-// FIXME: CompositeGeom could possibly be merged directly into the
-// SceneNode by introducing named and unnamed child nodes at the SceneNode
-// level. It only exists to support unnamed child nodes and hide the fact
-// that some render styles require multiple MeshGeoms to be constructed.
-function CompositeGeom(structure) {
-  BaseGeom.prototype.constructor.call(this, null);
-  this._geoms = [];
-  this._structure = structure;
-}
-
-derive(CompositeGeom, BaseGeom);
-
-CompositeGeom.prototype.addGeom = function(geom) {
-  this._geoms.push(geom);
-};
-
-CompositeGeom.prototype.destroy = function() {
-  BaseGeom.prototype.destroy.call(this);
-  for (var i = 0; i < this._geoms.length; ++i) {
-    this._geoms[i].destroy();
-  }
-  this._geoms = [];
-};
-
-CompositeGeom.prototype.structure = function() {
-  return this._structure;
-};
-
-CompositeGeom.prototype.forwardMethod = function(method, args) {
-  for (var i = 0; i < this._geoms.length; ++i) {
-    this._geoms[i][method].apply(this._geoms[i], args);
-  }
-};
-
-CompositeGeom.prototype.colorBy = function() {
-  var colorFunc = arguments[0];
-  colorFunc.begin(this._structure);
-  this.forwardMethod('colorBy', arguments);
-  colorFunc.end(this._structure);
-};
-
-CompositeGeom.prototype.updateProjectionIntervals =
-    function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
-  for (var i = 0; i < this._geoms.length; ++i) {
-    this._geoms[i].updateProjectionIntervals(xAxis, yAxis, zAxis, xInterval,
-                                              yInterval, zInterval);
-  }
-};
-
-CompositeGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
-  if (!this._visible) {
-    return;
-  }
-  for (var i = 0; i < this._geoms.length; ++i) {
-    this._geoms[i].draw(cam, shaderCatalog, style, pass);
-  }
-};
-
-
 // an (indexed) mesh geometry container
 // ------------------------------------------------------------------------
 //
@@ -322,11 +259,8 @@ CompositeGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
 //
 // In WebGL, index arrays are restricted to uint16. The largest possible
 // index value is smaller than the number of vertices required to display 
-// larger molecules. To work around this, MeshGeom class automatically splits
-// the geometry into multiple arrays when the uint6 limit is reached.
-// 
-// Proper splitting requires providing some information, since triangles
-// can only be constructed from vertices in the same buffer.
+// larger molecules. To work around this, MeshGeom allows to split the
+// render geometry across multiple indexed vertex arrays. 
 function MeshGeom(gl, numVerts, numIndices, float32Allocator,
                   uint16Allocator) {
   BaseGeom.prototype.constructor.call(this, gl);
@@ -713,7 +647,6 @@ exports.AtomVertexAssoc = AtomVertexAssoc;
 exports.TraceVertexAssoc = TraceVertexAssoc;
 exports.MeshGeom = MeshGeom;
 exports.LineGeom = LineGeom;
-exports.CompositeGeom = CompositeGeom;
 exports.TextLabel = TextLabel;
 exports.UniqueObjectIdPool = UniqueObjectIdPool;
 exports.Range = Range;

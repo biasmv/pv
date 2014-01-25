@@ -107,28 +107,24 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, view) {
   }
   var colorData = [];
   var i, j;
-  var chains = this._structure.chains();
-  for (var ci = 0; ci < chains.length; ++ci) {
-    var chain = chains[ci];
-    var traces = chain.backboneTraces();
-    for (i = 0; i < traces.length; ++i) {
-      // get current residue colors
-      var data = this._perResidueColors[i];
-      var index = 0;
-      var trace = traces[i];
-      for (j = 0; j < trace.length(); ++j) {
-        if (!view.containsResidue(trace.residueAt(j))) {
-          index+=3;
-          continue;
-        }
-        colorOp.colorFor(trace.centralAtomAt(j), data, index);
+  var traces = this._structure.backboneTraces();
+  for (i = 0; i < traces.length; ++i) {
+    // get current residue colors
+    var data = this._perResidueColors[i];
+    var index = 0;
+    var trace = traces[i];
+    for (j = 0; j < trace.length(); ++j) {
+      if (!view.containsResidue(trace.residueAt(j))) {
         index+=3;
+        continue;
       }
-      if (this._interpolation > 1) {
-        colorData.push(interpolateColor(data, this._interpolation));
-      } else {
-        colorData.push(data);
-      }
+      colorOp.colorFor(trace.centralAtomAt(j), data, index);
+      index+=3;
+    }
+    if (this._interpolation > 1) {
+      colorData.push(interpolateColor(data, this._interpolation));
+    } else {
+      colorData.push(data);
     }
   }
 

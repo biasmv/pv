@@ -128,6 +128,17 @@ MolBase.prototype.center = function() {
   return sum;
 };
 
+// returns all backbone traces of all chains of this tructure
+MolBase.prototype.backboneTraces = function() {
+  var chains = this.chains();
+  var traces = [];
+  for (var i = 0; i < chains.length; ++i) {
+    Array.prototype.push.apply(traces, chains[i].backboneTraces());
+  }
+  return traces;
+};
+
+
 MolBase.prototype.select = function(what) {
 
   if (what === 'protein') {
