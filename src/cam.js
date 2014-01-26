@@ -30,7 +30,7 @@
     this._modelview = mat4.create();
     this._rotation = mat4.create();
     this._translation = mat4.create();
-    this._near = 0.1;
+    this._near = 0.10;
     this._far = 400.0;
     this._fogNear = -5;
     this._fogFar = 10;
@@ -45,7 +45,6 @@
     this._gl = gl;
     this._currentShader = null;
     this.setViewportSize(gl.viewportWidth, gl.viewportHeight);
-    mat4.translate(this._modelview, this._modelview, [ 0, 0, -20 ]);
   }
 
   Cam.prototype.fieldOfViewY = function() {
@@ -147,6 +146,9 @@ Cam.prototype.panXY = (function () {
   this.setCenter(newCenter);
   };
 })();
+
+Cam.prototype.nearOffset = function() { return this._near; };
+Cam.prototype.farOffset = function() { return this._far; };
 
 Cam.prototype.setZoom = function(zoom) {
   this._updateMat = true;

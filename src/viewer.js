@@ -614,7 +614,7 @@ PV.prototype.fitTo = function(what) {
       }
     });
     for (var i = 0; i < 3; ++i) {
-      intervals[i].extend(3.0);
+      intervals[i].extend(1.5);
     }
   }
   this._fitToIntervals(axes, intervals, true);
@@ -636,19 +636,15 @@ PV.prototype._fitToIntervals = function(axes, intervals, setCenter) {
     ];
     this._cam.setCenter(center);
   }
-  var camPosXProj = vec3.dot(this._cam.center(), axes[0]);
-  var camPosYProj = vec3.dot(this._cam.center(), axes[1]);
-  var camPosZProj = vec3.dot(this._cam.center(), axes[2]);
+
   var fovY = this._cam.fieldOfViewY();
-
   var aspect = this._cam.aspectRatio();
-  var maxExtend = Math.max(intervals[1].max() - camPosYProj,
-                           camPosYProj - intervals[1].min(),
-                           (intervals[0].max() - camPosXProj) / aspect,
-                           (camPosXProj - intervals[0].min()) / aspect);
-
+  var inPlaneX = intervals[0].length() / aspect;
+  var inPlaneY = intervals[1].length();
+  var inPlane = Math.max(inPlaneX, inPlaneY) * 0.5;
   var newZoom =
-      2.0 * (maxExtend / Math.tan(fovY) + (intervals[2].max() - camPosZProj));
+      (inPlane / Math.tan(0.5*fovY) + 0.5*intervals[2].length()) + 
+      this._cam.nearOffset();
   this._cam.setZoom(newZoom);
   this.requestRedraw();
 };
@@ -664,7 +660,7 @@ PV.prototype.autoZoom = function() {
     obj.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                   intervals[1], intervals[2]);
   });
-  this._fitToIntervals(axes, intervals, false);
+  this._fitToIntervals(axes, intervals, true);
 };
 
 PV.prototype.label = function(name, text, pos) {

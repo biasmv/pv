@@ -152,6 +152,13 @@ IndexedVertexArray.prototype.draw = function(shader) {
   this.releaseAttribs(shader);
 };
 
+IndexedVertexArray.prototype.updateProjectionIntervals = 
+    function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
+  updateProjectionIntervalsForBuffer(
+      xAxis, yAxis, zAxis, this._vertData, this._FLOATS_PER_VERT,
+      this._numVerts, xInterval, yInterval, zInterval);
+};
+
 exports.IndexedVertexArray = IndexedVertexArray;
 
 return true;

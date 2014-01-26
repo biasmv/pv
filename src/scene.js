@@ -165,23 +165,11 @@ LineGeom.prototype.setLineWidth = function(width) {
   this._lineWidth = width;
 };
 
-function updateProjectionIntervalsForBuffer(xAxis, yAxis, zAxis, data, stride,
-                                            numVerts, xInterval, yInterval,
-                                            zInterval) {
-  var end = stride * numVerts;
-  for (var i = 0; i < end; i += stride) {
-    var x = data[i], y = data[i + 1], z = data[i + 2];
-    xInterval.update(xAxis[0] * x + xAxis[1] * y + xAxis[2] * z);
-    yInterval.update(yAxis[0] * x + yAxis[1] * y + yAxis[2] * z);
-    zInterval.update(zAxis[0] * x + zAxis[1] * y + zAxis[2] * z);
-  }
-}
 
 LineGeom.prototype.updateProjectionIntervals =
     function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
-  updateProjectionIntervalsForBuffer(
-      xAxis, yAxis, zAxis, this._data, this._FLOATS_PER_VERT,
-      this._numLines * 2, xInterval, yInterval, zInterval);
+  this._va.updateProjectionIntervals(xAxis, yAxis, zAxis, 
+                                     xInterval, yInterval, zInterval);
 };
 
 LineGeom.prototype.shaderForStyleAndPass =
@@ -306,9 +294,11 @@ MeshGeom.prototype.setVertAssoc = function(assoc) {
 
 MeshGeom.prototype.updateProjectionIntervals =
     function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
-  updateProjectionIntervalsForBuffer(xAxis, yAxis, zAxis, this._vertData,
-                                     this._FLOATS_PER_VERT, this._numVerts,
-                                     xInterval, yInterval, zInterval);
+  for (var i = 0; i < this._indexedVertArrays.length; ++i) {
+    this._indexedVertArrays[i]
+       .updateProjectionIntervals(xAxis, yAxis, zAxis, xInterval, 
+                                  yInterval, zInterval);
+  }
 };
 
 MeshGeom.prototype.vertArray = function(index) {
@@ -581,9 +571,13 @@ UniqueObjectIdPool.prototype.objectForId = function(id) {
   return this._objects[id];
 };
 
-function OrientedBoundingBox(gl, center, halfExtents) {
-  LineGeom.prototype.constructor.call(this, gl, 24);
-  var color = rgb.create();
+function OrientedBoundingBox(gl, center, halfExtents, 
+                             float32Allocator, uint16Allocator) {
+  LineGeom.prototype.constructor.call(this, gl, 24, float32Allocator, 
+                                      uint16Allocator);
+  var red = rgb.fromValues(1.0, 0.0, 0.0);
+  var green = rgb.fromValues(0.0, 1.0, 0.0);
+  var blue = rgb.fromValues(0.0, 0.0, 1.0);
   var tf = mat3.create();
   tf[0] = halfExtents[0][0];
   tf[1] = halfExtents[0][1];
@@ -598,48 +592,51 @@ function OrientedBoundingBox(gl, center, halfExtents) {
   tf[8] = halfExtents[2][2];
   var a = vec3.create(), b = vec3.create();
   this.addLine(
-      vec3.add(a, center, vec3.transformMat3(a, [ -1, -1, -1 ], tf)), color,
-      vec3.add(b, center, vec3.transformMat3(b, [ 1, -1, -1 ], tf)), color, -1);
+      vec3.add(a, center, vec3.transformMat3(a, [ -1, -1, -1 ], tf)), red,
+      vec3.add(b, center, vec3.transformMat3(b, [ 1, -1, -1 ], tf)), red, -1);
 
   this.addLine(
-      vec3.add(a, center, vec3.transformMat3(a, [ 1, -1, -1 ], tf)), color,
-      vec3.add(b, center, vec3.transformMat3(b, [ 1, 1, -1 ], tf)), color, -1);
+      vec3.add(a, center, vec3.transformMat3(a, [ 1, -1, -1 ], tf)), green,
+      vec3.add(b, center, vec3.transformMat3(b, [ 1, 1, -1 ], tf)), green, -1);
   this.addLine(
-      vec3.add(a, center, vec3.transformMat3(a, [ 1, 1, -1 ], tf)), color,
-      vec3.add(b, center, vec3.transformMat3(b, [ -1, 1, -1 ], tf)), color, -1);
+      vec3.add(a, center, vec3.transformMat3(a, [ 1, 1, -1 ], tf)), red,
+      vec3.add(b, center, vec3.transformMat3(b, [ -1, 1, -1 ], tf)), red, -1);
   this.addLine(vec3.add(a, center, vec3.transformMat3(a, [ -1, 1, -1 ], tf)),
-               color,
+               green,
                vec3.add(b, center, vec3.transformMat3(b, [ -1, -1, -1 ], tf)),
-               color, -1);
+               green, -1);
 
   this.addLine(
-      vec3.add(a, center, vec3.transformMat3(a, [ -1, -1, 1 ], tf)), color,
-      vec3.add(b, center, vec3.transformMat3(b, [ 1, -1, 1 ], tf)), color, -1);
+      vec3.add(a, center, vec3.transformMat3(a, [ -1, -1, 1 ], tf)), red,
+      vec3.add(b, center, vec3.transformMat3(b, [ 1, -1, 1 ], tf)), red, -1);
   this.addLine(
-      vec3.add(a, center, vec3.transformMat3(a, [ 1, -1, 1 ], tf)), color,
-      vec3.add(b, center, vec3.transformMat3(b, [ 1, 1, 1 ], tf)), color, -1);
+      vec3.add(a, center, vec3.transformMat3(a, [ 1, -1, 1 ], tf)), green,
+      vec3.add(b, center, vec3.transformMat3(b, [ 1, 1, 1 ], tf)), green, -1);
   this.addLine(
-      vec3.add(a, center, vec3.transformMat3(a, [ 1, 1, 1 ], tf)), color,
-      vec3.add(b, center, vec3.transformMat3(b, [ -1, 1, 1 ], tf)), color, -1);
+      vec3.add(a, center, vec3.transformMat3(a, [ 1, 1, 1 ], tf)), red,
+      vec3.add(b, center, vec3.transformMat3(b, [ -1, 1, 1 ], tf)), red, -1);
   this.addLine(
-      vec3.add(a, center, vec3.transformMat3(a, [ -1, 1, 1 ], tf)), color,
-      vec3.add(b, center, vec3.transformMat3(b, [ -1, -1, 1 ], tf)), color, -1);
+      vec3.add(a, center, vec3.transformMat3(a, [ -1, 1, 1 ], tf)), green,
+      vec3.add(b, center, vec3.transformMat3(b, [ -1, -1, 1 ], tf)), green, -1);
 
   this.addLine(
-      vec3.add(a, center, vec3.transformMat3(a, [ -1, -1, -1 ], tf)), color,
-      vec3.add(b, center, vec3.transformMat3(b, [ -1, -1, 1 ], tf)), color, -1);
+      vec3.add(a, center, vec3.transformMat3(a, [ -1, -1, -1 ], tf)), blue,
+      vec3.add(b, center, vec3.transformMat3(b, [ -1, -1, 1 ], tf)), blue, -1);
   this.addLine(
-      vec3.add(a, center, vec3.transformMat3(a, [ 1, -1, -1 ], tf)), color,
-      vec3.add(b, center, vec3.transformMat3(b, [ 1, -1, 1 ], tf)), color, -1);
+      vec3.add(a, center, vec3.transformMat3(a, [ 1, -1, -1 ], tf)), blue,
+      vec3.add(b, center, vec3.transformMat3(b, [ 1, -1, 1 ], tf)), blue, -1);
   this.addLine(
-      vec3.add(a, center, vec3.transformMat3(a, [ 1, 1, -1 ], tf)), color,
-      vec3.add(b, center, vec3.transformMat3(b, [ 1, 1, 1 ], tf)), color, -1);
+      vec3.add(a, center, vec3.transformMat3(a, [ 1, 1, -1 ], tf)), blue,
+      vec3.add(b, center, vec3.transformMat3(b, [ 1, 1, 1 ], tf)), blue, -1);
   this.addLine(
-      vec3.add(a, center, vec3.transformMat3(a, [ -1, 1, -1 ], tf)), color,
-      vec3.add(b, center, vec3.transformMat3(b, [ -1, 1, 1 ], tf)), color, -1);
+      vec3.add(a, center, vec3.transformMat3(a, [ -1, 1, -1 ], tf)), blue,
+      vec3.add(b, center, vec3.transformMat3(b, [ -1, 1, 1 ], tf)), blue, -1);
 }
 
 derive(OrientedBoundingBox, LineGeom);
+
+// don't do anything
+OrientedBoundingBox.prototype.updateProjectionIntervals = function() {};
 
 exports.SceneNode = SceneNode;
 exports.OrientedBoundingBox = OrientedBoundingBox;
