@@ -755,7 +755,7 @@ var _renderSingleTrace = (function() {
     vertAssoc.addAssoc(traceIndex, va, trace.length() - 1, vertStart,
                         va.numVerts());
     options.float32Allocator.release(colors);
-  }
+  };
 })();
 
 return exports;
