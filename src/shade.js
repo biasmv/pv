@@ -68,8 +68,27 @@ var COLORS = {
 // converts color strings to RGB. for now only supports color names. 
 // hex triples will need to be added.
 exports.forceRGB = function(color) {
-  if (COLORS[color] !== undefined) {
-    return COLORS[color];
+  if (typeof color === 'string') {
+    var lookup = COLORS[color];
+    if (lookup !== undefined) {
+      return lookup;
+    }
+    if (color.length > 0 && color[0] == '#') {
+      if (color.length == 4) {
+        var r = parseInt(color[1], 16);
+        var g = parseInt(color[2], 16);
+        var b = parseInt(color[3], 16);
+        var oneOver15 = 1/15.0;
+        return rgb.fromValues(oneOver15 * r, oneOver15 * g, oneOver15 * b);
+      }
+      if (color.length === 7) {
+        var r = parseInt(color.substr(1, 2), 16);
+        var g = parseInt(color.substr(3, 2), 16);
+        var b = parseInt(color.substr(5, 2), 16);
+        var oneOver255 = 1/255.0;
+        return rgb.fromValues(oneOver255 * r, oneOver255 * g, oneOver255 * b);
+      }
+    }
   }
   return color;
 };
