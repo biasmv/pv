@@ -122,7 +122,7 @@ VertexArray.prototype.draw = function(shader) {
 VertexArray.prototype.updateProjectionIntervals = 
     function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
   updateProjectionIntervalsForBuffer(
-      xAxis, yAxis, zAxis, this._vertdata, this._FLOATS_PER_VERT,
+      xAxis, yAxis, zAxis, this._vertData, this._FLOATS_PER_VERT,
       this._numLines * 2, xInterval, yInterval, zInterval);
 };
 exports.VertexArray = VertexArray;
