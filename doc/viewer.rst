@@ -153,13 +153,17 @@ Camera Positioning/Orientation
   :param obj: Must be an object implementing a *center* method returning the center of the object, e.g. an instance of :class:`mol.MolView`, :class:`mol.Mol`
 
   
-.. function:: pv.Viewer.autoZoom()
+.. function:: pv.Viewer.autoZoom(slabMode)
 
   Adjusts the zoom level such that all objects are visible on screen and occupy as much space as possible. The center and orientation of the camera are not modified.  
+  :param slabMode: Specifies how the near and far clipping planes should be adjusted. Defaults to the default slabMode of the viewer.
 
-.. function:: pv.Viewer.fitTo(obj)
+
+.. function:: pv.Viewer.fitTo(obj, slabMode)
 
   Adjust the zoom level and center of the camera to fit the viewport to a given object. The method supports fitting to selections, or arbitrary SceneNodes. To fit to a subset of atoms, pass the selection as the *obj* argument:
+
+  :param slabMode: Specifies how the near and far clipping planes should be adjusted. Defaults to the default slabMode of the viewer.
 
   .. code-block:: javascript
 
@@ -173,6 +177,7 @@ Camera Positioning/Orientation
     viewer.fitTo(obj);
 
   :param what: must be an object which implements updateProjectionInterval, e.g. a SceneNode, a :class:`mol.MolView`, or :class:`mol.Mol`.
+
 
 .. _pv.viewer.management:
 

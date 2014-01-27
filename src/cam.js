@@ -150,6 +150,19 @@ Cam.prototype.panXY = (function () {
 Cam.prototype.nearOffset = function() { return this._near; };
 Cam.prototype.farOffset = function() { return this._far; };
 
+
+Cam.prototype.setNearFar = function(near, far) {
+  this._near = near;
+  this._far = far;
+  this._updateMat = true;
+};
+
+Cam.prototype.setFogNearFar = function(near, far) {
+  this._fogNear = near;
+  this._fogFar = far;
+  this._updateMat = true;
+};
+
 Cam.prototype.setZoom = function(zoom) {
   this._updateMat = true;
   this._zoom = zoom;

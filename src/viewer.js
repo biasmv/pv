@@ -60,7 +60,8 @@ function PV(domElement, opts) {
     height : (opts.height || 500),
     antialias : opts.antialias,
     quality : opts.quality || 'low',
-    style : opts.style || 'hemilight'
+    style : opts.style || 'hemilight',
+    slabMode : opts.slabMode || 'fixed',
   };
   this._objects = [];
   this._domElement = domElement;
@@ -600,8 +601,9 @@ PV.prototype._axesFromCamRotation = function() {
   ];
 };
 
-PV.prototype.fitTo = function(what) {
+PV.prototype.fitTo = function(what, slabMode) {
   var axes = this._axesFromCamRotation();
+  slabMode = slabMode || this._options.slabMode;
   var intervals = [ new Range(), new Range(), new Range() ];
   if (what instanceof SceneNode) {
     what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
@@ -617,40 +619,44 @@ PV.prototype.fitTo = function(what) {
       intervals[i].extend(1.5);
     }
   }
-  this._fitToIntervals(axes, intervals, true);
+  this._fitToIntervals(axes, intervals, slabMode);
 };
 
-PV.prototype._fitToIntervals = function(axes, intervals, setCenter) {
+PV.prototype._fitToIntervals = function(axes, intervals) {
   if (intervals[0].empty() || intervals[1].empty() || intervals[2].empty()) {
     console.error('could not determine interval. No objects shown?');
     return;
   }
-  if (setCenter === true) {
-    var cx = intervals[0].center();
-    var cy = intervals[1].center();
-    var cz = intervals[2].center();
-    var center = [
-      cx * axes[0][0] + cy * axes[1][0] + cz * axes[2][0],
-      cx * axes[0][1] + cy * axes[1][1] + cz * axes[2][1],
-      cx * axes[0][2] + cy * axes[1][2] + cz * axes[2][2]
-    ];
-    this._cam.setCenter(center);
-  }
+  var cx = intervals[0].center();
+  var cy = intervals[1].center();
+  var cz = intervals[2].center();
+  var center = [
+    cx * axes[0][0] + cy * axes[1][0] + cz * axes[2][0],
+    cx * axes[0][1] + cy * axes[1][1] + cz * axes[2][1],
+    cx * axes[0][2] + cy * axes[1][2] + cz * axes[2][2]
+  ];
+  this._cam.setCenter(center);
 
   var fovY = this._cam.fieldOfViewY();
   var aspect = this._cam.aspectRatio();
   var inPlaneX = intervals[0].length() / aspect;
   var inPlaneY = intervals[1].length();
   var inPlane = Math.max(inPlaneX, inPlaneY) * 0.5;
+  var distanceToFront =  inPlane / Math.tan(0.5 * fovY);
   var newZoom =
-      (inPlane / Math.tan(0.5*fovY) + 0.5*intervals[2].length()) + 
-      this._cam.nearOffset();
+      (distanceToFront + 0.5*intervals[2].length());
   this._cam.setZoom(newZoom);
+  var grace = 0.5;
+  var near = Math.max(distanceToFront - grace, 0.1);
+  this._cam.setNearFar(near, 2 * grace + distanceToFront + intervals[2].length());
+  this._cam.setFogNearFar(-2.0, intervals[2].length() * 0.5);
+  console.log(this._cam.nearOffset(), this._cam.farOffset());
   this.requestRedraw();
 };
 
 // adapt the zoom level to fit the viewport to all visible objects.
-PV.prototype.autoZoom = function() {
+PV.prototype.autoZoom = function(slabMode) {
+  slabMode = slabMode || this._options.slabMode;
   var axes = this._axesFromCamRotation();
   var intervals = [ new Range(), new Range(), new Range() ];
   this.forEach(function(obj) {
@@ -660,7 +666,7 @@ PV.prototype.autoZoom = function() {
     obj.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                   intervals[1], intervals[2]);
   });
-  this._fitToIntervals(axes, intervals, true);
+  this._fitToIntervals(axes, intervals);
 };
 
 PV.prototype.label = function(name, text, pos) {

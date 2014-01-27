@@ -272,7 +272,7 @@
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = mol.pdb(data);
         //mol.assignHelixSheet(structure);
-        tube();
+        preset();
         pv.centerOn(structure);
       }});
     }
@@ -349,10 +349,7 @@
     }
 
     function test() {
-      var rvp = structure.select({rname : 'RVP'});
-      var phosphate = structure.atom('A.300.P');
-      pv.fitTo(rvp);
-      pv.label('rvp', phosphate.qualifiedName(), phosphate.pos());
+      pv.autoZoom()
     }
 
     $('#cartoon').click(cartoon);
