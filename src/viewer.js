@@ -669,6 +669,30 @@ PV.prototype.autoZoom = function(slabMode) {
   this._fitToIntervals(axes, intervals);
 };
 
+
+PV.prototype.autoSlab = function() {
+  var axes = this._axesFromCamRotation();
+  var intervals = [ new Range(), new Range(), new Range() ];
+  this.forEach(function(obj) {
+    if (!obj.visible()) {
+      return;
+    }
+    obj.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
+                                  intervals[1], intervals[2]);
+  });
+  if (intervals[0].empty() || intervals[1].empty() || intervals[2].empty()) {
+    console.error('could not determine interval. No objects shown?');
+    return;
+  }
+  var projectedCamCenter = vec3.dot(axes[2], this._cam.center());
+  var projectedCamPos = projectedCamCenter - this._cam.zoom();
+  var newNear = Math.max(0.1, intervals[2].min() - projectedCamPos);
+  var newFar = Math.max(10, intervals[2].max() - projectedCamPos);
+  this._cam.setNearFar(newNear, newFar);
+  this._cam.setFogNearFar(-2.0, intervals[2].length() * 0.5);
+  this.requestRedraw();
+}
+
 PV.prototype.label = function(name, text, pos) {
   var label =
       new TextLabel(this._gl, this._textureCanvas, this._2dcontext, pos, text);
