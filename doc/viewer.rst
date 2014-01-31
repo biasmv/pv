@@ -156,6 +156,7 @@ Camera Positioning/Orientation
 .. function:: pv.Viewer.autoZoom(slabMode)
 
   Adjusts the zoom level such that all objects are visible on screen and occupy as much space as possible. The center and orientation of the camera are not modified.  
+
   :param slabMode: Specifies how the near and far clipping planes should be adjusted. Defaults to the default slabMode of the viewer.
 
 
@@ -177,6 +178,19 @@ Camera Positioning/Orientation
     viewer.fitTo(obj);
 
   :param what: must be an object which implements updateProjectionInterval, e.g. a SceneNode, a :class:`mol.MolView`, or :class:`mol.Mol`.
+
+Fog and Slab Modes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Proteins come in all sizes and shapes. For optimal viewing, some camera parameters must thus be adjusted for each molecule. Two of these parameters are fog density and the near and far clipping plane. Typically, the near and far clipping planes must be set such that contain all visible geometry in front of the camera. However, sometimes it is desired to only show a certain 'slab' of the molecule. To support both of these scenarios, PV has multiple modes, called slab modes:
+
+ * When slab mode is set to 'auto', the near and far clipping planes as well as fog are adjusted based on the visible geometry. This causes the clipping planes to be updated on every rotation of the camera, change of camera's viewing center and when objects are added/removed.
+
+ * When slab mode is set to a molecule, e.g. an instance of :class:`mol.Mol` or :class:`mol.MolView`, the near and far clipping planes are adjusted to contain the visible geometry of that molecule. The clipping planes are updated on every rotation, change of camera's viewing center. This mode is useful when focusing ones attention on a ligand part of a larger structure.
+
+ * When the slab mode is set to 'fixed', automatic adjustment of the near and far clipping planes as well as fog is turned off. The values are kept constant and can be set by the user.
+
+.. function:: pv.Viewer.slab(mode[,options)
 
 
 .. _pv.viewer.management:
