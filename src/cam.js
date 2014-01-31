@@ -70,6 +70,9 @@
     mat4.identity(this._translation);
     mat4.translate(this._translation, this._translation, [ 0, 0, -this._zoom ]);
     mat4.mul(this._modelview, this._translation, this._modelview);
+    mat4.identity(this._projection);
+    mat4.perspective(this._projection, this._fovY, this._width / this._height, 
+                     this._near, this._far);
     this._updateMat = false;
     return true;
   };
@@ -78,9 +81,6 @@
     this._updateMat = true;
     this._width = width;
     this._height = height;
-    mat4.identity(this._projection);
-    mat4.perspective(this._projection, this._fovY, width / height, this._near,
-                     this._far);
   };
 
   Cam.prototype.setCenter = function(point) {
@@ -152,6 +152,9 @@ Cam.prototype.farOffset = function() { return this._far; };
 
 
 Cam.prototype.setNearFar = function(near, far) {
+  if (near === this._near && far === this._far) {
+    return;
+  }
   this._near = near;
   this._far = far;
   this._updateMat = true;

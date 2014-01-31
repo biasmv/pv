@@ -21,6 +21,7 @@
     <script src='src/cam.js'></script>
     <script src='src/shaders.js'></script>
     <script src='src/framebuffer.js'></script>
+    <script src='src/slab.js'></script>
     <script src='src/viewer.js'></script>
     <style>
     body {
@@ -216,7 +217,8 @@
     $('#colorTab').hide();
     var pv = pv.Viewer(document.getElementById('gl'), 
                        { quality : 'medium', width: 500, height : 500,
-                         antialias : true, outline : false});
+                         antialias : true, outline : false,
+                        slabMode : 'auto'});
     var structure;
     function lines() {
       pv.clear();

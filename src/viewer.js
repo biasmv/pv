@@ -53,6 +53,17 @@ var requestAnimFrame = (function(){
           };
 })();
 
+function slabModeToStrategy(mode, options) {
+  mode = mode || 'fixed';
+  if (mode === 'fixed') {
+    return new FixedSlab(options);
+  }
+  if (mode === 'auto') {
+    return new AutoSlab(options);
+  }
+  return null;
+}
+
 function PV(domElement, opts) {
   opts = opts || {};
   this._options = {
@@ -61,7 +72,7 @@ function PV(domElement, opts) {
     antialias : opts.antialias,
     quality : opts.quality || 'low',
     style : opts.style || 'hemilight',
-    slabMode : opts.slabMode || 'fixed',
+    slabMode : slabModeToStrategy(opts.slabMode)
   };
   this._objects = [];
   this._domElement = domElement;
@@ -365,6 +376,8 @@ PV.prototype._drawWithPass = function(pass) {
 
 PV.prototype._draw = function() {
   this._ensureSize();
+  var newSlab = this._options.slabMode.update(this);
+  this._cam.setNearFar(newSlab.near, newSlab.far);
   this._redrawRequested = false;
 
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
@@ -668,9 +681,7 @@ PV.prototype.autoZoom = function(slabMode) {
   });
   this._fitToIntervals(axes, intervals);
 };
-
-
-PV.prototype.autoSlab = function() {
+PV.prototype.slabInterval = function() {
   var axes = this._axesFromCamRotation();
   var intervals = [ new Range(), new Range(), new Range() ];
   this.forEach(function(obj) {
@@ -688,7 +699,12 @@ PV.prototype.autoSlab = function() {
   var projectedCamPos = projectedCamCenter - this._cam.zoom();
   var newNear = Math.max(0.1, intervals[2].min() - projectedCamPos);
   var newFar = Math.max(10, intervals[2].max() - projectedCamPos);
-  this._cam.setNearFar(newNear, newFar);
+  return Slab(newNear, newFar);
+}
+
+PV.prototype.autoSlab = function() {
+  var slab = this.slabInterval();
+  this._cam.setNearFar(slab.near, slab.far);
   this._cam.setFogNearFar(-2.0, intervals[2].length() * 0.5);
   this.requestRedraw();
 }
