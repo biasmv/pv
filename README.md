@@ -9,7 +9,7 @@ Because there is nothing worse than a unresponsive website, pv has been implemen
 Trying it out
 -----------------------------------------
 
-You can try the [online demo](http://biasmv.github.io/pv/) or run it locally on your computer.
+You can try the [online demo](http://biasmv.github.io/pv/demo.html) or run it locally on your computer.
 
 Clone this repository
 
