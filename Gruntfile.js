@@ -8,6 +8,7 @@ SOURCE_FILES = [
   'src/geom-builders.js',
   'src/scene.js',
   'src/mol.js', 
+  'src/io.js', 
   'src/trace.js',
   'src/render.js', 
   'src/cam.js',

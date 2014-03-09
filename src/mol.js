@@ -56,7 +56,6 @@ function MolBase() {
 
 }
 
-
 MolBase.prototype.eachResidue = function(callback) {
   for (var i = 0; i < this._chains.length; i+=1) {
     if (this._chains[i].eachResidue(callback) === false) {
@@ -969,125 +968,6 @@ AtomView.prototype.qualifiedName = function() {
 };
 
 
-function parseHelixRecord(line) {
-  // FIXME: handle insertion codes
-  var frst_num = parseInt(line.substr(21, 4), 10);
-  var last_num = parseInt(line.substr(33, 4), 10);
-  var chainName = line[19];
-  return { first : frst_num, last : last_num, chainName : chainName };
-}
-
-function parseSheetRecord(line) {
-  // FIXME: handle insertion codes
-  var frst_num = parseInt(line.substr(22, 4), 10);
-  var last_num = parseInt(line.substr(33, 4), 10);
-  var chainName = line[21];
-  return { first : frst_num, last : last_num, chainName : chainName };
-}
-
-// a truly minimalistic PDB parser. It will die as soon as the input is 
-// not well-formed. it only reads ATOM, HETATM, HELIX and SHEET records, 
-// everything else is ignored. in case of multi-model files, only the 
-// first model is read.
-//
-// FIXME: load PDB currently spends a substantial amount of time creating
-// the vec3 instances for the atom positions. it's possible that it's
-// cheaper to initialize a bulk buffer once and create buffer views to
-// that data for each atom position. since the atom's lifetime is bound to
-// the parent structure, the buffer could be managed on that level and
-// released once the structure is deleted.
-function pdb(text) {
-  console.time('pdb'); 
-  var structure = new Mol();
-  var currChain = null;
-  var currRes = null;
-  var currAtom = null;
-  
-  var helices = [];
-  var sheets = [];
-  
-  function parseAndAddAtom(line, hetatm) {
-    var alt_loc = line[16];
-    if (alt_loc !== ' ' && alt_loc !== 'A') {
-      return;
-    }
-    var chainName = line[21];
-    var resName = line.substr(17, 3).trim();
-    var atomName = line.substr(12, 4).trim();
-    var rnumNum = parseInt(line.substr(22, 4), 10);
-    var insCode = line[26];
-    var updateResidue = false;
-    var updateChain = false;
-    if (!currChain || currChain.name() !== chainName) {
-      updateChain = true;
-      updateResidue = true;
-    }
-    if (!currRes || currRes.num() !== rnumNum) {
-      updateResidue = true;
-    }
-    if (updateChain) {
-      // residues of one chain might appear interspersed with residues from
-      // other chains.
-      currChain = structure.chain(chainName) || structure.addChain(chainName);
-    }
-    if (updateResidue) {
-      currRes = currChain.addResidue(resName, rnumNum,
-                                       currChain.residues().length);
-    }
-    var pos = vec3.create();
-    for (var i=0;i<3;++i) {
-      pos[i] = (parseFloat(line.substr(30+i*8, 8)));
-    }
-    currRes.addAtom(atomName, pos, line.substr(76, 2).trim());
-  }
-  var lines = text.split(/\r\n|\r|\n/g);
-  var i = 0;
-  for (i = 0; i < lines.length; i++) {
-    var line = lines[i];
-    var recordName = line.substr(0, 6);
-
-    if (recordName === 'ATOM  ') {
-      parseAndAddAtom(line, false);
-      continue;
-    }
-    if (recordName === 'HETATM') {
-      parseAndAddAtom(line, true);
-      continue;
-    }
-    if (recordName === 'HELIX ') {
-      helices.push(parseHelixRecord(line));
-      continue;
-    }
-    if (recordName === 'SHEET ') {
-      sheets.push(parseSheetRecord(line));
-      continue;
-    }
-    if (recordName === 'END') {
-      break;
-    }
-  }
-  var chain = null;
-  for (i = 0; i < sheets.length; ++i) {
-    var sheet = sheets[i];
-    chain = structure.chain(sheet.chainName);
-    if (chain) {
-      chain.assignSS(sheet.first, sheet.last, 'E');
-    }
-  }
-  for (i = 0; i < helices.length; ++i) {
-    var helix = helices[i];
-    chain = structure.chain(helix.chainName);
-    if (chain) {
-      chain.assignSS(helix.first, helix.last, 'H');
-    }
-  }
-  structure.deriveConnectivity();
-  console.log('imported', structure.chains().length, 'chain(s),',
-              structure.residueCount(), 'residue(s)');
-  console.timeEnd('pdb');
-
-  return structure;
-}
 
 var zhangSkolnickSS = (function() {
   var posOne = vec3.create();
@@ -1163,7 +1043,6 @@ exports.mol.MolView = MolView;
 exports.mol.ChainView = ChainView;
 exports.mol.ResidueView = ResidueView;
 exports.mol.AtomView = AtomView;
-exports.mol.pdb = pdb;
 exports.mol.assignHelixSheet = assignHelixSheet;
 
 return true;

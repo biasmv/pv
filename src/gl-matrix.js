@@ -2709,6 +2709,17 @@ mat4.create = function() {
     return out;
 };
 
+mat4.fromValues = function(m00, m10, m20, m30, 
+                           m01, m11, m21, m31, 
+                           m02, m12, m22, m32, 
+                           m03, m13, m23, m33) {
+    var out = new GLMAT_ARRAY_TYPE(16);
+    out[ 0] = m00; out[ 1] = m10; out[ 2] = m20, out[ 3] = m30;
+    out[ 4] = m01; out[ 5] = m11; out[ 6] = m21; out[ 7] = m31;
+    out[ 8] = m02; out[ 9] = m12; out[10] = m22; out[11] = m32;
+    out[12] = m03; out[13] = m13; out[14] = m23; out[15] = m33;
+    return out;
+};
 /**
  * Creates a new mat4 initialized with values from an existing matrix
  *

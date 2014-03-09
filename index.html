@@ -10,6 +10,7 @@
     <script src='src/geom.js'></script>
     <script src='src/trace.js'></script>
     <script src='src/mol.js'></script>
+    <script src='src/io.js'></script>
     <script src='src/vert-assoc.js'></script>
     <script src='src/buffer-allocators.js'></script>
     <script src='src/indexed-vertex-array.js'></script>
@@ -205,7 +206,7 @@
        <li id=2por>Porin</li>
        <li id=2f8v>Telethonin</li>
        <li id=4c46>Long Helices</li>
-       <li id=1vu4>Part of HIV Virus Capsid</li>
+       <li id=1rb8>Capsid</li>
     </ul>
   </div>
   <div id=gl>
@@ -271,7 +272,7 @@
 
     function load(pdb_id) {
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
-        structure = mol.pdb(data);
+        structure = io.pdb(data);
         //mol.assignHelixSheet(structure);
         tube();
         pv.centerOn(structure);
@@ -290,7 +291,7 @@
     }
 
     function transferase() {
-      load('1r6a');
+      load('1rb8');
     }
 
     function telethonin() { load('2f8v'); }
@@ -370,7 +371,7 @@
     $('#1r6a').click(transferase);
     $('#1crn').click(crambin);
     $('#2por').click(porin);
-    $('#1vu4').click(function() { load('1vu4'); });
+    $('#1rb8').click(function() { load('1rb8'); });
     $('#2f8v').click(telethonin);
     $('#4c46').click(longHelices);
     $('#rainbow').click(rainbow);
