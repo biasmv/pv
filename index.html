@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Dengue virus methyl transferase</title>
+    <title>PV - JavaScript Protein Viewer</title>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <style>
     body {
       font-family: Helvetica;
@@ -13,136 +12,108 @@
       width:100%;
       height:100%x;
     }
-    a {
-      color:#393;
-    }
-    #gl {
-      position:fixed;
-      bottom:0px;
-      top:0px;
-      left:0px;
-      right:0px;
-    }
-    #inspector {
+    #centered-content {
+      width:800px;
+      line-height:1.5em;
+      margin-left:auto;
+      margin-right:auto;
       top:10px;
       left:10px;
-      box-shadow: 2px 2px 5px #888888;
-      border-radius:8px;
-      position:absolute;
-      background-color:#fafafa;
       padding:10px;
-      border-style:solid;
       border-width:1px;
       border-color:#ccc;
     }
-
-    #inspector ul {
-      padding:0px;
-    }
-
-    #inspector ul li {
-      margin-left:5px;
-      margin-right:5px;
-      margin-bottom:5px;
-      list-style:none;
-      cursor: pointer;
-      color:#660000
-    }
-
-    #inspector ul li:hover {
-      color:#994444;
-    }
-    #inspector h1 {
+    h1, h2, h3 {
       font-weight:normal;
-      font-size:12pt;
+      color:#393;
+    }
+    .left {
+      float:left;
+      width:330px;
+    }
+    .right {
+      width:500px;
+      float:right
+      background-color:#ccc;
+    }
+    a {
+      color:#393;
+      text-decoration:none;
+    }
+    a:hover {
+      text-decoration:underline;
+    }
+    table td {
+      width:50%;
+      vertical-align:top;
+    }
+    #footer {
+      font-size:10pt;
+      margin-top:50px;
+      text-align:center;
+      color:#999;
+    }
+    h1 {
+      text-align:center;
+      font-size:30pt;
     }
     </style>
     </head>
 <body>
-  <div id=gl>
-  </div>
-  <div id=inspector>
-    <h1>Choose Style</h1>
-    <ul>
-      <li id=preset>Preset</li>
-      <li id=cartoon>Cartoon</li>
-      <li id=tube>Tube</li>
-      <li id=lines>Lines</li>
-      <li id=line-trace>Line Trace</li>
-      <li id=sline>Smooth Line Trace</li>
-      <li id=trace>Trace</li>
-    </ul>
+<div id=centered-content>
+<h1>PV - JavaScript Protein Viewer</h1>
+<br/>
+<div class=left><a href='/demo.html'><img src="1r6a.png"></a></div> 
+<h2>About</h2>
+<p>
+  PV is a JavaScript viewer to visualize protein structures directly in the browsers. It's super-fast and and easy to integrate into your website and does not require any plug-ins to be installed.
+  </p>
+<p>
+PV is the default protein-viewer available in <a href="http://swissmodel.expasy.org">SWISS-MODEL</a>.
+</p>
+<h2>See it in Action</h2>
+<p>
+Interested to see what PV can do for you? Then have a look at this simple demo page available <a href=/demo.html>here</a>.
+</p>
 
-    <span><a href='about.html'>About</a> | Code on <a href="http://github.com/biasmv/pv">github.com</a></span>
-  </div>
-  <div id=status>initialising...</div>
+<h2>It's Open Source</h2>
+<p>
+The development of PV happens in the open. The complete source code is available on <a href="https://github.com/biasmv/pv">github</a>.
+<p>
+<h2>Features</h2>
+<p>
+PV uses WebGL for rendering. It has been implemented with hight performance in mind and is able to render very large molecules at interactive frame rates. Notable features include:
+<table>
+  <tr>
+    <td>
+      <ul>
+        <li>support for different render styles: for example, balls-and-sticks, spheres, C-alpha trace, tube, ribbon (helix-sheet-coil cartoon).</li>
+        <li>powerful coloring operations, including support for custom-made coloring</li>
+        <li>easy-to-use API</li>
+        <li>no external dependencies</li>
+      </ul>
+    </td>
+    <td>
+      <ul>
+        <li>pixel-accurate object picking tells you which atom (or residue) was clicked</li>
+        <li>labels in 3D</li>
+        <li>import structures from PDB</li>
+        <li>built-in secondary structure assignment</li>
+        <li>it's lightweight. The complete minified source is a little larger than 100 kb.</li>
+        </ul>
+    </td>
+  </tr>
+</table>
+</p>
+
+<h2>Motivation</h2>
+
+<p>PV was developed out of frustration with the current situation of protein viewers in the web. The Java-based nature of these viewers made it increasingly difficult to integrate them in websites. For example, with the recent Java security updates, users are prompted a multitude of pop-up boxes and check-boxes that need checking before being able to use the applet. In addition, starting the applet would freeze the browser for multiple seconds, which is really not acceptable. PV circumvents these issues by being implemented in JavaScript.
+</p>
+<p>
+<div id=footer>
+Copyright 2013-2014 Marco Biasini
+<div>
+</div>
 </body>
-  <script src='js/pv.min.js'></script>
-  <script>
-    var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'high', width: 'auto', height : 'auto',
-                         antialias : true, outline : true});
-    var structure;
-    function lines() {
-      pv.clear();
-      pv.lines('structure', structure);
-    }
-    function cartoon() {
-      pv.clear();
-      pv.cartoon('structure', structure, { color: color.ssSuccession() });
-    }
-    function lineTrace() {
-      pv.clear();
-      pv.lineTrace('structure', structure);
-    }
-    function sline() {
-      pv.clear();
-      pv.sline('structure', structure);
-    }
-
-    function tube() {
-      pv.clear();
-      pv.tube('structure', structure);
-    }
-
-    function trace() {
-      pv.clear();
-      pv.trace('structure', structure);
-    }
-    function preset() {
-      pv.clear();
-      var ligand = structure.select({rnames : ['RVP', 'SAH']});
-      pv.ballsAndSticks('ligand', ligand);
-      pv.cartoon('protein', structure);
-    }
-    function load(pdb_id) {
-      document.getElementById('status').innerHTML ='loading '+pdb_id;
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', 'pdbs/'+pdb_id+'.pdb');
-      xhr.setRequestHeader('Content-type', 'application/x-pdb');
-      xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4) {
-          structure = mol.pdb(xhr.responseText);
-          preset();
-          pv.centerOn(structure);
-        }
-        document.getElementById('status').innerHTML = '';
-      }
-      xhr.send();
-    }
-    function transferase() {
-      load('1r6a');
-    }
-    document.getElementById('cartoon').onclick = cartoon;
-    document.getElementById('line-trace').onclick = lineTrace;
-    document.getElementById('preset').onclick = preset;
-    document.getElementById('lines').onclick = lines;
-    document.getElementById('trace').onclick = trace;
-    document.getElementById('sline').onclick = sline;
-    document.getElementById('tube').onclick = tube;
-    window.onresize = function(event) {
-      pv.fitParent();
-    }
-    document.addEventListener('DOMContentLoaded', transferase);
-  </script>
 </html>
