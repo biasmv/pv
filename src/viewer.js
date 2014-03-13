@@ -66,10 +66,14 @@ function PV(domElement, opts) {
   this._domElement = domElement;
   this._redrawRequested = false;
   this._resize = false;
+  // NOTE: make sure to only request features supported by all browsers,
+  // not only browsers that support WebGL in this constructor. WebGL
+  // detection only happens in PV._initGL. Once this happened, we are
+  // save to use whatever feature pleases us, e.g. typed arrays, 2D 
+  // contexts etc.
   this._canvas = document.createElement('canvas');
   this._textureCanvas = document.createElement('canvas');
   this._textureCanvas.style.display = 'none';
-  this._2dcontext = this._textureCanvas.getContext('2d');
   this._objectIdManager = new UniqueObjectIdPool();
   var parentRect = domElement.getBoundingClientRect();
   if (this._options.width === 'auto') {
@@ -316,6 +320,7 @@ PV.prototype._initPV = function() {
     return false;
   }
   this._ok = true;
+  this._2dcontext = this._textureCanvas.getContext('2d');
   this._float32Allocator = new PoolAllocator(Float32Array);
   this._uint16Allocator = new PoolAllocator(Uint16Array);
   this._cam = new Cam(this._gl);
