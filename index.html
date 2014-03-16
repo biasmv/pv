@@ -227,7 +227,9 @@
     }
     function cartoon() {
       pv.clear();
-      pv.cartoon('structure', structure, { color : color.rainbow() });
+      pv.cartoon('structure', structure, { 
+                  color : color.rainbow(), showRelated : 'asym' 
+      });
     }
     function lineTrace() {
       pv.clear();
@@ -275,7 +277,7 @@
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = io.pdb(data);
         //mol.assignHelixSheet(structure);
-        tube();
+        cartoon();
         pv.centerOn(structure);
       }});
     }

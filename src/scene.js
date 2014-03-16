@@ -123,9 +123,18 @@ function BaseGeom(gl) {
   SceneNode.prototype.constructor.call(this, gl);
   this._gl = gl;
   this._idRanges = [];
+  this._showRelated = null;
 }
 
 derive(BaseGeom, SceneNode);
+
+BaseGeom.prototype.setShowRelated = function(rel) {
+  this._showRelated = rel;
+};
+
+BaseGeom.prototype.showRelated = function() {
+  return this._showRelated;
+};
 
 BaseGeom.prototype.select = function(what) {
   return this.structure().select(what);
@@ -337,6 +346,14 @@ MeshGeom.prototype.colorBy = function(colorFunc, view) {
   console.timeEnd('MeshGeom.colorBy');
 };
 
+MeshGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays, 
+                                              additionalTransform) {
+  cam.bind(shader, additionalTransform);
+  for (var i = 0; i < indexedVertArrays.length; ++i) {
+    indexedVertArrays[i].draw(shader);
+  }
+};
+
 MeshGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   if (!this._visible) {
     return;
@@ -345,9 +362,38 @@ MeshGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   if (!shader) {
     return;
   }
-  cam.bind(shader);
-  for (var i = 0; i < this._indexedVertArrays.length; ++i) {
-    this._indexedVertArrays[i].draw(shader);
+
+  var showRelated = this.showRelated();
+  if (showRelated === 'asym') {
+    return this._drawVertArrays(cam, shader, this._indexedVertArrays, null);
+  } 
+  var assembly = this.structure().assembly(showRelated);
+  // in case there is no assembly, fallback to asymmetric unit and bail out.
+  if (!assembly) {
+    console.error('no assembly', showRelated, 
+                  'found. Falling back to asymmetric unit');
+    return this._drawVertArrays(cam, shader, this._indexedVertArrays, null);
+  }
+  return this._drawSymmetryRelated(cam, shader, assembly);
+};
+
+// returns all vertex arrays that contain geometry for one of the specified
+// chain names.
+MeshGeom.prototype._vertArraysInvolving = function(chains) {
+  // FIXME: properly implement this function
+  return this._indexedVertArrays;
+};
+
+// draws vertex arrays by using the symmetry generators contained in assembly
+MeshGeom.prototype._drawSymmetryRelated = function(cam, shader, assembly) {
+  var gens = assembly.generators();
+  for (var i = 0; i < gens.length; ++i) {
+    var gen = gens[i];
+    console.log(gen);
+    var affectedVertArrays = this._vertArraysInvolving(gen.chains());
+    for (var k = 0; k < gen.matrices().length; ++k) {
+      this._drawVertArrays(cam, shader, affectedVertArrays, gen.matrix(k));
+    }
   }
 };
 

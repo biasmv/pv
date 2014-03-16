@@ -487,9 +487,9 @@ exports.cartoon = function(structure, gl, options) {
   meshGeom.setVertAssoc(vertAssoc);
   console.timeEnd('cartoon');
   options.color.end(structure);
+  meshGeom.setShowRelated(options.showRelated);
   return meshGeom;
 };
-
 
 var _cartoonAddTube = (function() {
   var rotation = mat3.create();

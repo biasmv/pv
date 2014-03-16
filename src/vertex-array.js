@@ -111,7 +111,7 @@ VertexArray.prototype.releaseAttribs = function(shader) {
 
 // draws all triangles contained in the indexed vertex array using the provided
 // shader.
-VertexArray.prototype.draw = function(shader) {
+VertexArray.prototype.draw = function(shader, matrix) {
   this.bindBuffers();
   this.bindAttribs(shader);
   this._gl.drawArrays(this._gl.LINES, 0, this._numLines * 2);

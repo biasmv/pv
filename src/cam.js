@@ -27,7 +27,8 @@
   // shader and fog.
   function Cam(gl) {
     this._projection = mat4.create();
-    this._modelview = mat4.create();
+    this._camModelView = mat4.create();
+    this._modelView = mat4.create();
     this._rotation = mat4.create();
     this._translation = mat4.create();
     this._near = 0.10;
@@ -63,13 +64,13 @@
     if (!this._updateMat) {
       return false;
     }
-    mat4.identity(this._modelview);
-    mat4.translate(this._modelview, this._modelview,
+    mat4.identity(this._camModelView);
+    mat4.translate(this._camModelView, this._camModelView,
                    [ -this._center[0], -this._center[1], -this._center[2] ]);
-    mat4.mul(this._modelview, this._rotation, this._modelview);
+    mat4.mul(this._camModelView, this._rotation, this._camModelView);
     mat4.identity(this._translation);
     mat4.translate(this._translation, this._translation, [ 0, 0, -this._zoom ]);
-    mat4.mul(this._modelview, this._translation, this._modelview);
+    mat4.mul(this._camModelView, this._translation, this._camModelView);
     this._updateMat = false;
     return true;
   };
@@ -185,19 +186,31 @@ Cam.prototype.currentShader = function() {
 // - fogNear,fogFar  - near and far offset of fog
 // - fogColor        - the color of fog
 // - outlineColor    - color to be used for the outline shader
-Cam.prototype.bind = function(shader) {
+Cam.prototype.bind = function(shader, additionalTransform) {
   var shaderChanged = false;
   if (this._currentShader !== shader) {
     this._currentShader = shader;
     this._gl.useProgram(shader);
     shaderChanged = true;
   }
-  if (!this._updateIfRequired() && !shaderChanged && !this._paramsChanged) {
+  shaderChanged = this._updateIfRequired() || shaderChanged;
+
+  // in case additionalTransform is given, multiply camera model view
+  // with the matrix and use the product as the model view matrix. 
+  if (additionalTransform) {
+    mat4.mul(this._modelView, this._camModelView, additionalTransform);
+    this._gl.uniformMatrix4fv(shader.modelview, false, this._modelView);
+  } else {
+    this._gl.uniformMatrix4fv(shader.modelview, false, this._camModelView);
+  }
+
+  // in case nothing changed, there is no need for us to set any other
+  // parameters.
+  if (!shaderChanged && !this._paramsChanged) {
     return;
   }
   this._paramsChanged = false;
   this._gl.uniformMatrix4fv(shader.projection, false, this._projection);
-  this._gl.uniformMatrix4fv(shader.modelview, false, this._modelview);
   if (shader.rotation) {
     this._gl.uniformMatrix4fv(shader.rotation, false, this._rotation);
   }
