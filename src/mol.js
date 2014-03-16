@@ -524,7 +524,7 @@ derive(Mol, MolBase);
 
 Mol.prototype.addAssembly = function(assembly) { 
   this._assemblies.push(assembly); 
-}
+};
 
 Mol.prototype.assemblies = function() { return this._assemblies; };
 

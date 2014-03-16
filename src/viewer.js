@@ -486,60 +486,54 @@ PV.prototype.renderAs = function(name, structure, mode, opts) {
   return this[mode](name, structure, opts);
 };
 
+
+PV.prototype._handleStandardOptions = function(opts) {
+  opts = copy(opts);
+  opts.float32Allocator = this._float32Allocator;
+  opts.uint16Allocator = this._uint16Allocator;
+  opts.idPool = this._objectIdManager;
+  opts.showRelated = opts.showRelated || 'asym';
+  return opts;
+};
+
+
 PV.prototype.lineTrace = function(name, structure, opts) {
-  opts = opts || {};
-  var options = {
-    color : opts.color || color.uniform([ 1, 0, 1 ]),
-    lineWidth : opts.lineWidth || 4.0,
-    idPool : this._objectIdManager,
-    float32Allocator : this._float32Allocator,
-    uint16Allocator : this._uint16Allocator,
-  };
+  var options = this._handleStandardOptions(opts);
+  options.color = options.color || color.uniform([ 1, 0, 1 ]);
+  options.lineWidth = options.lineWidth || 4.0;
+
   var obj = render.lineTrace(structure, this._gl, options);
   return this.add(name, obj);
 };
 
 PV.prototype.spheres = function(name, structure, opts) {
-  opts = opts || {};
-  var options = {
-    color : opts.color || color.byElement(),
-    sphereDetail : this.options('sphereDetail'),
-    idPool : this._objectIdManager,
-    float32Allocator : this._float32Allocator,
-    uint16Allocator : this._uint16Allocator,
-  };
+  var options = this._handleStandardOptions(opts);
+  options.color = options.color || color.byElement();
+  options.sphereDetail = this.options('sphereDetail');
+
   var obj = render.spheres(structure, this._gl, options);
   return this.add(name, obj);
 };
 
 PV.prototype.sline = function(name, structure, opts) {
-  opts = opts || {};
-  var options = {
-    color : opts.color || color.uniform([ 1, 0, 1 ]),
-    splineDetail : opts.splineDetail || this.options('splineDetail'),
-    strength : opts.strength || 1.0,
-    lineWidth : opts.lineWidth || 4.0,
-    idPool : this._objectIdManager,
-    float32Allocator : this._float32Allocator,
-    uint16Allocator : this._uint16Allocator,
-  };
+  var options = this._handleStandardOptions(opts);
+  options.color = options.color || color.uniform([ 1, 0, 1 ]);
+  options.splineDetail = options.splineDetail || this.options('splineDetail');
+  options.strength = options.strength || 1.0;
+  options.lineWidth = options.lineWidth || 4.0;
+
   var obj = render.sline(structure, this._gl, options);
   return this.add(name, obj);
 };
 
 PV.prototype.cartoon = function(name, structure, opts) {
-  opts = opts || {};
-  var options = {
-    color : opts.color || color.bySS(),
-    strength : opts.strength || 1.0,
-    splineDetail : opts.splineDetail || this.options('splineDetail'),
-    arcDetail : opts.arcDetail || this.options('arcDetail'),
-    radius : opts.radius || 0.3,
-    forceTube : opts.forceTube || false,
-    idPool : this._objectIdManager,
-    float32Allocator : this._float32Allocator,
-    uint16Allocator : this._uint16Allocator,
-  };
+  var options = this._handleStandardOptions(opts);
+  options.color = options.color || color.bySS();
+  options.strength = options.strength || 1.0;
+  options.splineDetail = options.splineDetail || this.options('splineDetail');
+  options.arcDetail = options.arcDetail || this.options('arcDetail');
+  options.radius = options.radius || 0.3;
+  options.forceTube = options.forceTube || false;
   var obj = render.cartoon(structure, this._gl, options);
   return this.add(name, obj);
 };
@@ -554,44 +548,32 @@ PV.prototype.tube = function(name, structure, opts) {
 };
 
 PV.prototype.ballsAndSticks = function(name, structure, opts) {
-  opts = opts || {};
-  var options = {
-    color : opts.color || color.byElement(),
-    radius : opts.radius || 0.3,
-    arcDetail : (opts.arcDetail || this.options('arcDetail')) * 2,
-    sphereDetail : opts.sphereDetail || this.options('sphereDetail'),
-    idPool : this._objectIdManager,
-    float32Allocator : this._float32Allocator,
-    uint16Allocator : this._uint16Allocator,
-  };
+  var options = this._handleStandardOptions(opts);
+
+  options.color = options.color || color.byElement();
+  options.radius = options.radius || 0.3;
+  options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
+  options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
+
   var obj = render.ballsAndSticks(structure, this._gl, options);
   return this.add(name, obj);
 };
 
 PV.prototype.lines = function(name, structure, opts) {
-  opts = opts || {};
-  var options = {
-    color : opts.color || color.byElement(),
-    lineWidth : opts.lineWidth || 4.0,
-    idPool : this._objectIdManager,
-    float32Allocator : this._float32Allocator,
-    uint16Allocator : this._uint16Allocator,
-  };
+  var options = this._handleStandardOptions(opts);
+  options.color = options.color || color.byElement();
+  options.lineWidth = options.lineWidth || 4.0;
   var obj = render.lines(structure, this._gl, options);
   return this.add(name, obj);
 };
 
 PV.prototype.trace = function(name, structure, opts) {
-  opts = opts || {};
-  var options = {
-    color : opts.color || color.uniform([ 1, 0, 0 ]),
-    radius : opts.radius || 0.3,
-    arcDetail : (opts.arcDetail || this.options('arcDetail')) * 2,
-    sphereDetail : opts.sphereDetail || this.options('sphereDetail'),
-    idPool : this._objectIdManager,
-    float32Allocator : this._float32Allocator,
-    uint16Allocator : this._uint16Allocator,
-  };
+  var options = this._handleStandardOptions(opts);
+  options.color = options.color || color.uniform([ 1, 0, 0 ]);
+  options.radius = options.radius || 0.3;
+  options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
+  options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
+
   var obj = render.trace(structure, this._gl, options);
   return this.add(name, obj);
 };
@@ -788,6 +770,7 @@ PV.prototype.rm = function(glob) {
 PV.prototype.all = function() {
   return this._objects;
 };
+
 
 return { Viewer : function(elem, options) { return new PV(elem, options);
 }

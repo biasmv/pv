@@ -27,6 +27,17 @@ exports.derive = function(subclass, baseclass) {
   }
 };
 
+exports.copy = function(src) {
+  src = src || {};
+  var cloned = {};
+  for (var prop in src) {
+    if (src.hasOwnProperty(prop)) {
+      cloned[prop] = src[prop];
+    }
+  }
+  return cloned;
+};
+
 function defaultComp(lhs, rhs) {
   return lhs < rhs;
 }
