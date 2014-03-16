@@ -11,7 +11,9 @@ test("parses remark 350 with multi-line chain definitions", function() {
   }
   strictEqual(reader.assemblies().length, 1);
   var assembly = reader.assembly('1');
-  deepEqual(assembly.chains, ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 
+  strictEqual(assembly.generators().length, 1);
+  var gen = assembly.generators()[0];
+  deepEqual(gen.chains(), ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 
             'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R']);
 });
 
@@ -35,20 +37,22 @@ test("parses remark 350 with multiple matrices", function(assert) {
   }
   strictEqual(reader.assemblies().length, 1);
   var assembly = reader.assembly('1');
-  strictEqual(assembly.matrices.length, 2);
+  strictEqual(assembly.generators().length, 1);
+  var gen = assembly.generator(0);
+  strictEqual(gen.matrices().length, 2);
 
   var m1 = mat4.fromValues( 1.000000,  0.000000,  0.000000,  0.000000,
                             0.000000,  1.000000,  0.000000,  0.000000,
                             0.000000,  0.000000,  1.000000,  0.000000,
                             0.000000,  0.000000,  0.000000,  1.000000);
 
-  assert.mat4Equal(assembly.matrices[0], m1);
+  assert.mat4Equal(gen.matrix(0), m1);
 
   var m2 = mat4.fromValues( 0.500000, -0.809017,  0.309017,  0.000000,
                             0.809017,  0.309017, -0.500000,  0.000000,
                             0.309017,  0.500000,  0.809017,  0.00000,
                             0.000000,  0.000000,  0.000000,  1.00000);
-  assert.mat4Equal(assembly.matrices[1], m2);
+  assert.mat4Equal(gen.matrix(1), m2);
 
 });
 

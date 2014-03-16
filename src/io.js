@@ -40,20 +40,20 @@ function parseSheetRecord(line) {
 }
 
 function Remark350Reader() {
-  this._units = {};
+  this._assemblies = {};
   this._current = null;
 }
 
 Remark350Reader.prototype.assemblies = function() { 
   var assemblies = [];
-  for (var c in this._units) {
-    assemblies.push(this._units[c]);
+  for (var c in this._assemblies) {
+    assemblies.push(this._assemblies[c]);
   }
   return assemblies;
 };
 
 Remark350Reader.prototype.assembly = function(id) {
-  return this._units[id];
+  return this._assemblies[id];
 };
 
 
@@ -61,38 +61,41 @@ Remark350Reader.prototype.nextLine = function(line) {
   line = line.substr(11);
   if (line[0] === 'B' && line.substr(0, 12) === 'BIOMOLECULE:') {
     var name =  line.substr(13).trim();
-    this._current = {
-      name: name, chains : [], matrices : []
-    };
-    this._units[name] =  this._current;
+    this._currentAssembly = new Assembly(name); 
+    this._assemblies[name] =  this._currentAssembly;
     return;
   }
   if (line.substr(0, 30) === 'APPLY THE FOLLOWING TO CHAINS:' ||
       line.substr(0, 30) === '                   AND CHAINS:') {
     var chains = line.substr(30).split(',');
+    if (line[0] === 'A') {
+      this._currentSymGen = new SymGenerator();
+      this._currentAssembly.addGenerator(this._currentSymGen);
+    }
+    this._currentMatrix = mat4.create();
     for (var i = 0; i < chains.length; ++i) {
       var trimmedChainName = chains[i].trim();
       if (trimmedChainName.length) {
-        this._current.chains.push(trimmedChainName);
+        this._currentSymGen.addChain(trimmedChainName);
       }
     }
     return;
   }
   if (line.substr(0, 7) === '  BIOMT') {
     var row = parseInt(line[7], 10) - 1;
-    if (row === 0) {
-      this._current.matrices.push(mat4.create());
-    }
     // FIXME: don't base matrix number of BIOMT1
     var x = parseFloat(line.substr(13, 9));
     var y = parseFloat(line.substr(23, 9));
     var z = parseFloat(line.substr(33, 9));
     var w = parseFloat(line.substr(46, 12).trim());
-    var matrix =  this._current.matrices[this._current.matrices.length-1];
-    matrix[4*row+0] = x;
-    matrix[4*row+1] = y;
-    matrix[4*row+2] = z;
-    matrix[4*row+3] = w;
+    this._currentMatrix[4*row+0] = x;
+    this._currentMatrix[4*row+1] = y;
+    this._currentMatrix[4*row+2] = z;
+    this._currentMatrix[4*row+3] = w;
+    if (row === 2) {
+      this._currentSymGen.addMatrix(this._currentMatrix);
+      this._currentMatrix = mat4.create();
+    }
     return;
   }
 };
@@ -152,7 +155,7 @@ function pdb(text) {
     }
     currRes.addAtom(atomName, pos, line.substr(76, 2).trim());
   }
-  var biounitReader = new Remark350Reader();
+  var remark350Reader = new Remark350Reader();
   var lines = text.split(/\r\n|\r|\n/g);
   var i = 0;
   for (i = 0; i < lines.length; i++) {
@@ -172,7 +175,7 @@ function pdb(text) {
       // contained in remark 350.
       var remarkNumber = line.substr(7, 3);
       if (remarkNumber === '350') {
-        biounitReader.nextLine(line);
+        remark350Reader.nextLine(line);
       }
     }
     if (recordName === 'HELIX ') {
@@ -202,6 +205,7 @@ function pdb(text) {
       chain.assignSS(helix.first, helix.last, 'H');
     }
   }
+  structure.setAssemblies(remark350Reader.assemblies());
   structure.deriveConnectivity();
   console.log('imported', structure.chains().length, 'chain(s),',
               structure.residueCount(), 'residue(s)');

@@ -515,11 +515,22 @@ function Mol(pv) {
   MolBase.prototype.constructor.call(this);
   this._chains = [];
   this._pv = pv;
+  this._assemblies = [];
   this._nextAtomIndex = 0;
 }
 
 derive(Mol, MolBase);
 
+
+Mol.prototype.addAssembly = function(assembly) { 
+  this._assemblies.push(assembly); 
+}
+
+Mol.prototype.assemblies = function() { return this._assemblies; };
+
+Mol.prototype.setAssemblies = function(assemblies) { 
+  this._assemblies = assemblies; 
+};
 
 Mol.prototype.chains = function() { return this._chains; };
 
