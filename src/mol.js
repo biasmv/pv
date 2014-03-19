@@ -530,7 +530,7 @@ Mol.prototype.assemblies = function() { return this._assemblies; };
 
 Mol.prototype.assembly = function(id) {
   for (var i = 0; i < this._assemblies.length; ++i) {
-    if (this._assemblies[i].name() == id) {
+    if (this._assemblies[i].name() === id) {
       return this._assemblies[i];
     }
   }
