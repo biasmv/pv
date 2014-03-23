@@ -116,6 +116,7 @@ exports.spheres = function(structure, gl, options) {
     vertAssoc.addAssoc(atom, va, vertStart, vertEnd);
   });
   geom.setVertAssoc(vertAssoc);
+  geom.setShowRelated(options.showRelated);
   console.timeEnd('spheres');
   options.color.end(structure);
   return geom;
@@ -172,6 +173,7 @@ exports.ballsAndSticks = (function() {
       vertAssoc.addAssoc(atom, va, vertStart, vertEnd);
     });
     meshGeom.setVertAssoc(vertAssoc);
+    meshGeom.setShowRelated(options.showRelated);
     options.color.end(structure);
     console.timeEnd('ballsAndSticks');
     return meshGeom;
@@ -225,6 +227,7 @@ exports.lines = function(structure, gl, options) {
     vertAssoc.addAssoc(atom, va, vertStart, vertEnd);
   });
   lineGeom.setVertAssoc(vertAssoc);
+  lineGeom.setShowRelated(options.showRelated);
   options.color.end(structure);
   console.timeEnd('lines');
   return lineGeom;
@@ -265,7 +268,6 @@ exports.lineTrace = (function() {
   }
   var lineGeom = new LineGeom(gl, numVerts, options.float32Allocator);
   var va = lineGeom.vertArray();
-  console.log(va);
   lineGeom.setLineWidth(options.lineWidth);
   function makeLineTrace(trace) {
     vertAssoc.addAssoc(traceIndex, va, 0, lineGeom.numVerts(),
@@ -304,6 +306,7 @@ exports.lineTrace = (function() {
     chain.eachBackboneTrace(makeLineTrace);
   }
   lineGeom.setVertAssoc(vertAssoc);
+  lineGeom.setShowRelated(options.showRelated);
   options.color.end(structure);
   console.timeEnd('lineTrace');
   return lineGeom;
@@ -395,6 +398,7 @@ exports.sline = function(structure, gl, options) {
     chain.eachBackboneTrace(makeTrace);
   }
   lineGeom.setVertAssoc(vertAssoc);
+  lineGeom.setShowRelated(options.showRelated);
   options.color.end(structure);
   console.timeEnd('sline');
   return lineGeom;
@@ -442,6 +446,7 @@ exports.trace = function(structure, gl, options) {
     _renderSingleTrace(meshGeom, vertAssoc, traces[ti], ti, gl, options);
   }
   meshGeom.setVertAssoc(vertAssoc);
+  meshGeom.setShowRelated(options.showRelated);
   options.color.end(structure);
   console.timeEnd('trace');
   return meshGeom;

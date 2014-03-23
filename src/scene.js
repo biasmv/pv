@@ -159,6 +159,59 @@ BaseGeom.prototype.destroy = function() {
   }
 };
 
+// returns all vertex arrays that contain geometry for one of the specified
+// chain names.
+BaseGeom.prototype._vertArraysInvolving = function(chains) {
+  // FIXME: properly implement this function
+  return this._indexedVertArrays;
+};
+
+// draws vertex arrays by using the symmetry generators contained in assembly
+BaseGeom.prototype._drawSymmetryRelated = function(cam, shader, assembly) {
+  var gens = assembly.generators();
+  for (var i = 0; i < gens.length; ++i) {
+    var gen = gens[i];
+    var affectedVertArrays = this._vertArraysInvolving(gen.chains());
+    for (var k = 0; k < gen.matrices().length; ++k) {
+      this._drawVertArrays(cam, shader, affectedVertArrays, gen.matrix(k));
+    }
+  }
+};
+
+BaseGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
+
+  if (!this._visible) {
+    return;
+  }
+
+  var shader = this.shaderForStyleAndPass(shaderCatalog, style, pass);
+
+  if (!shader) {
+    return;
+  }
+
+  var showRelated = this.showRelated();
+  if (showRelated === 'asym') {
+    return this._drawVertArrays(cam, shader, this._indexedVertArrays, null);
+  } 
+
+  var assembly = this.structure().assembly(showRelated);
+  // in case there is no assembly, fallback to asymmetric unit and bail out.
+  if (!assembly) {
+    console.error('no assembly', showRelated, 
+                  'found. Falling back to asymmetric unit');
+    return this._drawVertArrays(cam, shader, this._indexedVertArrays, null);
+  }
+  return this._drawSymmetryRelated(cam, shader, assembly);
+  /*
+  cam.bind(shader);
+  this._gl.lineWidth(this._lineWidth);
+
+  this._va.draw(shader);
+  this.bind();
+  */
+}
+
 // Holds geometrical data for objects rendered as lines. For each vertex,
 // the color and position is stored in an interleaved format.
 function LineGeom(gl, numVerts, float32Allocator) {
@@ -202,21 +255,11 @@ LineGeom.prototype.numVerts = function() {
   return this._va.numVerts();
 };
 
-LineGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
-
-  if (!this._visible) {
-    return;
-  }
-
-  var shader = this.shaderForStyleAndPass(shaderCatalog, style, pass);
-  if (!shader) {
-    return;
-  }
-  cam.bind(shader);
+LineGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays, 
+                                              additionalTransform) {
+  cam.bind(shader, additionalTransform);
   this._gl.lineWidth(this._lineWidth);
-
   this._va.draw(shader);
-  this.bind();
 };
 
 LineGeom.prototype.vertArray = function() { return this._va; };
@@ -389,7 +432,6 @@ MeshGeom.prototype._drawSymmetryRelated = function(cam, shader, assembly) {
   var gens = assembly.generators();
   for (var i = 0; i < gens.length; ++i) {
     var gen = gens[i];
-    console.log(gen);
     var affectedVertArrays = this._vertArraysInvolving(gen.chains());
     for (var k = 0; k < gen.matrices().length; ++k) {
       this._drawVertArrays(cam, shader, affectedVertArrays, gen.matrix(k));
