@@ -503,22 +503,22 @@ var _cartoonAddTube = (function() {
   return function(vertArray, pos, left, res, tangent, color, first, options, offset,
                   objId) {
     var ss = res.ss();
-  var prof = options.coilProfile;
-  if (ss === 'H' && !options.forceTube) {
-    prof = options.helixProfile;
-  } else if (ss === 'E' && !options.forceTube) {
-    prof = options.strandProfile;
-  } else {
-    if (first) {
-      geom.ortho(left, tangent);
+    var prof = options.coilProfile;
+    if (ss === 'H' && !options.forceTube) {
+      prof = options.helixProfile;
+    } else if (ss === 'E' && !options.forceTube) {
+      prof = options.strandProfile;
     } else {
-      vec3.cross(left, up, tangent);
+      if (first) {
+        geom.ortho(left, tangent);
+      } else {
+        vec3.cross(left, up, tangent);
+      }
     }
-  }
 
-  buildRotation(rotation, tangent, left, up, true);
-  prof.addTransformed(vertArray, pos, options.radius, rotation, color, first,
-                      offset, objId);
+    buildRotation(rotation, tangent, left, up, true);
+    prof.addTransformed(vertArray, pos, options.radius, rotation, color, first,
+                        offset, objId);
   };
 })();
 
@@ -633,9 +633,15 @@ var _cartoonForSingleTrace = (function() {
 
       vec3.set(pos, sdiv[ix3], sdiv[ix3 + 1], sdiv[ix3 + 2]);
 
-      vec3.set(tangent, sdiv[ipox3] - sdiv[imox3],
-                sdiv[ipox3 + 1] - sdiv[imox3 + 1],
-                sdiv[ipox3 + 2] - sdiv[imox3 + 2]);
+      if (i === e -1) {
+        vec3.set(tangent, sdiv[ix3] - sdiv[imox3],
+                  sdiv[ix3 + 1] - sdiv[imox3 + 1],
+                  sdiv[ix3 + 2] - sdiv[imox3 + 2]);
+      } else {
+        vec3.set(tangent, sdiv[ipox3] - sdiv[imox3],
+                  sdiv[ipox3 + 1] - sdiv[imox3 + 1],
+                  sdiv[ipox3 + 2] - sdiv[imox3 + 2]);
+      }
       vec3.normalize(tangent, tangent);
       vec3.set(color, interpColors[ix3], interpColors[ix3 + 1],
                 interpColors[ix3 + 2]);

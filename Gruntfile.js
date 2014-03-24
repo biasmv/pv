@@ -3,6 +3,7 @@ SOURCE_FILES = [
   'src/geom.js', 
   'src/shade.js', 
   'src/vert-assoc.js',
+  'src/vertex-array-base.js',
   'src/indexed-vertex-array.js',
   'src/vertex-array.js',
   'src/geom-builders.js',

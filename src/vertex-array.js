@@ -23,34 +23,19 @@
 
 // (unindexed) vertex array for line-based geometries
 function VertexArray(gl, numVerts, float32Allocator)  {
-  this._gl = gl;
-  this._vertBuffer = gl.createBuffer();
-  this._float32Allocator = float32Allocator || null;
-  this._ready = false;
+  VertexArrayBase.prototype.constructor.call(this, gl, numVerts, 
+                                             float32Allocator);
   this._numLines = 0;
-  var numFloats = this._FLOATS_PER_VERT * numVerts;
-    this._vertData = float32Allocator.request(numFloats);
 }
+
+derive(VertexArray, VertexArrayBase);
 
 VertexArray.prototype._FLOATS_PER_VERT = 7;
 VertexArray.prototype._POS_OFFSET = 0;
 VertexArray.prototype._COLOR_OFFSET = 3;
 VertexArray.prototype._ID_OFFSET = 6;
 
-VertexArray.prototype.destroy = function() {
-  this._gl.deleteBuffer(this._vertBuffer);
-    this._float32Allocator.release(this._vertData);
-};
-
 VertexArray.prototype.numVerts = function() { return this._numLines * 2; };
-
-VertexArray.prototype.setColor = function(index, r, g, b) {
-  var colorStart = index * this._FLOATS_PER_VERT + this._COLOR_OFFSET;
-  this._vertData[colorStart + 0] = r;
-  this._vertData[colorStart + 1] = g;
-  this._vertData[colorStart + 2] = b;
-  this._ready = false;
-};
 
 VertexArray.prototype.addLine = function(startPos, startColor, endPos, 
                                          endColor, idOne, idTwo) {
@@ -72,17 +57,9 @@ VertexArray.prototype.addLine = function(startPos, startColor, endPos,
 
   this._numLines += 1;
   this._ready = false;
+  this._boundingSpehre = null;
 };
 
-VertexArray.prototype.bindBuffers = function() {
-  this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._vertBuffer);
-  if (this._ready) {
-    return;
-  }
-  this._gl.bufferData(this._gl.ARRAY_BUFFER, this._vertData,
-                      this._gl.STATIC_DRAW);
-  this._ready = true;
-};
 
 VertexArray.prototype.bindAttribs = function(shader) {
   this._gl.vertexAttribPointer(shader.posAttrib, 3, this._gl.FLOAT, false,
@@ -119,12 +96,7 @@ VertexArray.prototype.draw = function(shader, matrix) {
 };
 
 
-VertexArray.prototype.updateProjectionIntervals = 
-    function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
-  updateProjectionIntervalsForBuffer(
-      xAxis, yAxis, zAxis, this._vertData, this._FLOATS_PER_VERT,
-      this._numLines * 2, xInterval, yInterval, zInterval);
-};
+
 exports.VertexArray = VertexArray;
 
 return true;

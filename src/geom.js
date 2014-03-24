@@ -177,12 +177,22 @@ function catmullRomSpline(points, numPoints, num, strength, circular,
   return out;
 }
 
+function Sphere(center, radius) {
+  this._center = center || vec3.create();
+  this._radius = radius || 1.0;
+}
+
+Sphere.prototype.center = function() { return this._center; };
+Sphere.prototype.radius = function() { return this._radius; };
+
 return {
   signedAngle : signedAngle,
   axisRotation : axisRotation,
   ortho : ortho,
   catmullRomSpline : catmullRomSpline,
   cubicHermiteInterpolate : cubicHermiteInterpolate,
-  catmullRomSplineNumPoints : catmullRomSplineNumPoints
+  catmullRomSplineNumPoints : catmullRomSplineNumPoints,
+  Sphere : Sphere
 };
+
 })();

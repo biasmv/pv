@@ -14,6 +14,7 @@
     <script src='src/io.js'></script>
     <script src='src/vert-assoc.js'></script>
     <script src='src/buffer-allocators.js'></script>
+    <script src='src/vertex-array-base.js'></script>
     <script src='src/indexed-vertex-array.js'></script>
     <script src='src/vertex-array.js'></script>
     <script src='src/geom-builders.js'></script>
@@ -227,9 +228,10 @@
     }
     function cartoon() {
       pv.clear();
-      pv.lineTrace('structure', structure, { 
-                   color : color.rainbow(), showRelated : '1' 
+      pv.cartoon('structure', structure, { 
+                 color : color.rainbow(), showRelated : 'asym' 
       });
+      pv.autoZoom();
     }
     function lineTrace() {
       pv.clear();

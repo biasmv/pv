@@ -127,7 +127,18 @@ MolBase.prototype.center = function() {
   return sum;
 };
 
-// returns all backbone traces of all chains of this tructure
+// returns a sphere containing all atoms part of this structure. This will not 
+// calculate the minimal bounding sphere, just a good-enough approximation.
+MolBase.prototype.boundingSphere = function() {
+  var center = this.center();
+  var radiusSquare = 0.0;
+  this.eachAtom(function(atom) {
+    radiusSquare = Math.max(radiusSquare, vec3.sqrDist(center, atom.pos()));
+  });
+  return new Sphere(center, radiusSquare);
+};
+
+// returns all backbone traces of all chains of this structure
 MolBase.prototype.backboneTraces = function() {
   var chains = this.chains();
   var traces = [];

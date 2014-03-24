@@ -23,39 +23,27 @@
 
 function IndexedVertexArray(gl, numVerts, numIndices, 
                             float32Allocator, uint16Allocator) {
-  this._gl = gl;
-  this._vertBuffer = gl.createBuffer();
+  VertexArrayBase.prototype.constructor.call(this, gl, numVerts, 
+                                             float32Allocator);
   this._indexBuffer = gl.createBuffer();
-  this._float32Allocator = float32Allocator || null;
-  this._uint16Allocator = uint16Allocator || null;
-  this._ready = false;
+  this._uint16Allocator = uint16Allocator;
   this._numVerts = 0;
   this._maxVerts = numVerts;
   this._numTriangles = 0;
-  var numFloats = this._FLOATS_PER_VERT * numVerts;
-  this._vertData = float32Allocator.request(numFloats);
   this._indexData = uint16Allocator.request(numIndices);
 }
 
+derive(IndexedVertexArray, VertexArrayBase);
+
 IndexedVertexArray.prototype.destroy = function() {
-  this._gl.deleteBuffer(this._vertBuffer);
+  VertexArrayBase.prototype.destroy.call(this);
   this._gl.deleteBuffer(this._indexBuffer);
-  this._float32Allocator.release(this._vertData);
   this._uint16Allocator.release(this._indexData);
 };
 
 IndexedVertexArray.prototype.numVerts = function() { return this._numVerts; };
 IndexedVertexArray.prototype.maxVerts = function() { return this._maxVerts; };
 IndexedVertexArray.prototype.numIndices = function() { return this._numTriangles * 3; };
-
-
-IndexedVertexArray.prototype.setColor = function(index, r, g, b) {
-  var colorStart = index * this._FLOATS_PER_VERT + this._COLOR_OFFSET;
-  this._vertData[colorStart + 0] = r;
-  this._vertData[colorStart + 1] = g;
-  this._vertData[colorStart + 2] = b;
-  this._ready = false;
-};
 
 IndexedVertexArray.prototype.addVertex = function(pos, normal, color, objId) {
   var i = this._numVerts * this._FLOATS_PER_VERT;
@@ -91,16 +79,14 @@ IndexedVertexArray.prototype.addTriangle = function(idx1, idx2, idx3) {
 };
 
 IndexedVertexArray.prototype.bindBuffers = function() {
-  this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._vertBuffer);
+  var ready = this._ready;
+  VertexArrayBase.prototype.bindBuffers.call(this);
   this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
-  if (this._ready) {
+  if (ready) {
     return;
   }
-  this._gl.bufferData(this._gl.ARRAY_BUFFER, this._vertData,
-                      this._gl.STATIC_DRAW);
   this._gl.bufferData(this._gl.ELEMENT_ARRAY_BUFFER, this._indexData,
                       this._gl.STATIC_DRAW);
-  this._ready = true;
 };
 
 IndexedVertexArray.prototype.bindAttribs = function(shader) {
@@ -150,13 +136,6 @@ IndexedVertexArray.prototype.draw = function(shader) {
   this._gl.drawElements(this._gl.TRIANGLES, this._numTriangles * 3,
                         this._gl.UNSIGNED_SHORT, 0);
   this.releaseAttribs(shader);
-};
-
-IndexedVertexArray.prototype.updateProjectionIntervals = 
-    function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
-  updateProjectionIntervalsForBuffer(
-      xAxis, yAxis, zAxis, this._vertData, this._FLOATS_PER_VERT,
-      this._numVerts, xInterval, yInterval, zInterval);
 };
 
 exports.IndexedVertexArray = IndexedVertexArray;
