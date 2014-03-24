@@ -53,16 +53,17 @@ VertexArrayBase.prototype._calculateBoundingSphere = function() {
     return null;
   }
   var center = vec3.create();
-  for (var i = 0; i < numVerts; ++i) {
-    var index = i * this._FLOATS_PER_VERT;
+  var index, i;
+  for (i = 0; i < numVerts; ++i) {
+    index = i * this._FLOATS_PER_VERT;
     center[0] += this._vertData[index + 0];
     center[1] += this._vertData[index + 1];
     center[2] += this._vertData[index + 2];
   }
   vec3.scale(center, center, 1.0/numVerts);
   var radiusSquare = 0.0;
-  for (var i = 0; i < numVerts; ++i) {
-    var index = i * this._FLOATS_PER_VERT;
+  for (i = 0; i < numVerts; ++i) {
+    index = i * this._FLOATS_PER_VERT;
     var dx  = center[0] - this._vertData[index + 0];
     var dy  = center[1] - this._vertData[index + 1];
     var dz  = center[2] - this._vertData[index + 2];

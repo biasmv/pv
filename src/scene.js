@@ -179,26 +179,25 @@ BaseGeom.prototype._drawSymmetryRelated = function(cam, shader, assembly) {
   }
 };
 
-BaseGeom.prototype.updateProjectionIntervals =
-    function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
-  if (!this._visible) {
+BaseGeom.prototype._updateProjectionIntervalsAsym = 
+     function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
     var vertArrays = this.vertArrays();
     for (var i = 0; i < vertArrays.length; ++i) {
       vertArrays[i].updateProjectionIntervals(xAxis, yAxis, zAxis, xInterval, 
                                               yInterval, zInterval);
     }
-    return;
+};
+BaseGeom.prototype.updateProjectionIntervals =
+    function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
+  if (!this._visible) {
+    return this._updateProjectionIntervalsAsym(xAxis, yAxis, zAxis, xInterval, 
+                                               yInterval, zInterval);
   }
   var showRelated = this.showRelated();
   if (showRelated === 'asym') {
-    var vertArrays = this.vertArrays();
-    for (var i = 0; i < vertArrays.length; ++i) {
-      vertArrays[i].updateProjectionIntervals(xAxis, yAxis, zAxis, xInterval, 
-                                              yInterval, zInterval, null);
-    }
-    return;
+    return this._updateProjectionIntervalsAsym(xAxis, yAxis, zAxis, xInterval, 
+                                               yInterval, zInterval);
   } 
-
   var assembly = this.structure().assembly(showRelated);
   // in case there is no assembly, fallback to asymmetric unit and bail out.
   if (!assembly) {
@@ -219,7 +218,8 @@ BaseGeom.prototype.updateProjectionIntervals =
       }
     }
   }
-}
+};
+
 BaseGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
 
   if (!this._visible) {
@@ -244,7 +244,7 @@ BaseGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
     return this._drawVertArrays(cam, shader, this._indexedVertArrays, null);
   }
   return this._drawSymmetryRelated(cam, shader, assembly);
-}
+};
 
 // Holds geometrical data for objects rendered as lines. For each vertex,
 // the color and position is stored in an interleaved format.
