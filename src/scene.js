@@ -420,10 +420,7 @@ MeshGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays,
   }
 };
 
-// returns all vertex arrays that contain geometry for one of the specified
-// chain names.
-MeshGeom.prototype._vertArraysInvolving = function(chains) {
-  // FIXME: properly implement this function
+MeshGeom.prototype.vertArrays = function() {
   return this._indexedVertArrays;
 };
 

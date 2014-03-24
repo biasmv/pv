@@ -226,29 +226,29 @@
       pv.clear();
       pv.lines('structure', structure, { 
                  color: color.byResidueProp('num'),
-                 showRelated : '1' });
+                 showRelated : 'asym' });
     }
     function cartoon() {
       pv.clear();
       pv.cartoon('structure', structure, { 
-                 color : color.rainbow(), showRelated : '1' 
+                 color : color.rainbow(), showRelated : 'asym' 
       });
     }
     function lineTrace() {
       pv.clear();
-      pv.lineTrace('structure', structure, { showRelated : '1' });
+      pv.lineTrace('structure', structure, { showRelated : 'asym' });
     }
 
     function spheres() {
       pv.clear();
       pv.spheres('structure', structure);
-      pv.lines('lines', structure, { showRelated : '1' });
+      pv.lines('lines', structure, { showRelated : 'asym' });
     }
 
     function sline() {
       pv.clear();
       pv.sline('structure', structure, 
-              { color : color.uniform('red'), showRelated : '1'});
+              { color : color.uniform('red'), showRelated : 'asym'});
     }
 
     function tube() {
@@ -256,26 +256,26 @@
       pv.tube('structure', structure);
       pv.lines('structure.ca', structure.select({aname :'CA'}), 
                { color: color.uniform('blue'), lineWidth : 1,
-                 showRelated : '1' });
+                 showRelated : 'asym' });
     }
 
     function trace() {
       pv.clear();
-      pv.trace('structure', structure, { showRelated : '1' });
+      pv.trace('structure', structure, { showRelated : 'asym' });
     }
     function ballsAndSticks() {
       pv.clear();
       var ligand = structure.select('ligand');
-      pv.ballsAndSticks('structure', structure, { showRelated : '1' });
+      pv.ballsAndSticks('structure', structure, { showRelated : 'asym' });
     }
 
     function preset() {
       pv.clear();
       var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
       pv.ballsAndSticks('structure.ligand', ligand, { 
-        showRelated: '1' 
+        showRelated: 'asym' 
       });
-      pv.cartoon('structure.protein', structure, { showRelated : '1' });
+      pv.cartoon('structure.protein', structure, { showRelated : 'asym' });
     }
 
     function load(pdb_id) {
