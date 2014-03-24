@@ -163,8 +163,9 @@ BaseGeom.prototype.destroy = function() {
 // chain names.
 BaseGeom.prototype._vertArraysInvolving = function(chains) {
   // FIXME: properly implement this function
-  return this._indexedVertArrays;
+  return this.vertArrays();
 };
+
 
 // draws vertex arrays by using the symmetry generators contained in assembly
 BaseGeom.prototype._drawSymmetryRelated = function(cam, shader, assembly) {
@@ -178,6 +179,47 @@ BaseGeom.prototype._drawSymmetryRelated = function(cam, shader, assembly) {
   }
 };
 
+BaseGeom.prototype.updateProjectionIntervals =
+    function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
+  if (!this._visible) {
+    var vertArrays = this.vertArrays();
+    for (var i = 0; i < vertArrays.length; ++i) {
+      vertArrays[i].updateProjectionIntervals(xAxis, yAxis, zAxis, xInterval, 
+                                              yInterval, zInterval);
+    }
+    return;
+  }
+  var showRelated = this.showRelated();
+  if (showRelated === 'asym') {
+    var vertArrays = this.vertArrays();
+    for (var i = 0; i < vertArrays.length; ++i) {
+      vertArrays[i].updateProjectionIntervals(xAxis, yAxis, zAxis, xInterval, 
+                                              yInterval, zInterval, null);
+    }
+    return;
+  } 
+
+  var assembly = this.structure().assembly(showRelated);
+  // in case there is no assembly, fallback to asymmetric unit and bail out.
+  if (!assembly) {
+    console.error('no assembly', showRelated, 
+                  'found. Falling back to asymmetric unit');
+    return;
+  }
+  var gens = assembly.generators();
+  for (var i = 0; i < gens.length; ++i) {
+    var gen = gens[i];
+    var affectedVertArrays = this._vertArraysInvolving(gen.chains());
+    for (var j = 0; j < gen.matrices().length; ++j) {
+      for (var k = 0; k < affectedVertArrays.length; ++k) {
+        var transform = gen.matrix(j);
+        affectedVertArrays[k].updateProjectionIntervals(xAxis, yAxis, zAxis, 
+                                                        xInterval, yInterval, 
+                                                        zInterval, transform);
+      }
+    }
+  }
+}
 BaseGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
 
   if (!this._visible) {
@@ -189,7 +231,6 @@ BaseGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   if (!shader) {
     return;
   }
-
   var showRelated = this.showRelated();
   if (showRelated === 'asym') {
     return this._drawVertArrays(cam, shader, this._indexedVertArrays, null);
@@ -203,13 +244,6 @@ BaseGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
     return this._drawVertArrays(cam, shader, this._indexedVertArrays, null);
   }
   return this._drawSymmetryRelated(cam, shader, assembly);
-  /*
-  cam.bind(shader);
-  this._gl.lineWidth(this._lineWidth);
-
-  this._va.draw(shader);
-  this.bind();
-  */
 }
 
 // Holds geometrical data for objects rendered as lines. For each vertex,
@@ -227,11 +261,8 @@ LineGeom.prototype.setLineWidth = function(width) {
   this._lineWidth = width;
 };
 
-
-LineGeom.prototype.updateProjectionIntervals =
-    function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
-  this._va.updateProjectionIntervals(xAxis, yAxis, zAxis, 
-                                     xInterval, yInterval, zInterval);
+LineGeom.prototype.vertArrays = function() {
+  return [this._va];
 };
 
 LineGeom.prototype.shaderForStyleAndPass =
@@ -344,14 +375,6 @@ MeshGeom.prototype.setVertAssoc = function(assoc) {
   this._vertAssoc = assoc;
 };
 
-MeshGeom.prototype.updateProjectionIntervals =
-    function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
-  for (var i = 0; i < this._indexedVertArrays.length; ++i) {
-    this._indexedVertArrays[i]
-       .updateProjectionIntervals(xAxis, yAxis, zAxis, xInterval, 
-                                  yInterval, zInterval);
-  }
-};
 
 MeshGeom.prototype.vertArray = function(index) {
   return this._indexedVertArrays[index];
@@ -395,29 +418,6 @@ MeshGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays,
   for (var i = 0; i < indexedVertArrays.length; ++i) {
     indexedVertArrays[i].draw(shader);
   }
-};
-
-MeshGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
-  if (!this._visible) {
-    return;
-  }
-  var shader = this.shaderForStyleAndPass(shaderCatalog, style, pass);
-  if (!shader) {
-    return;
-  }
-
-  var showRelated = this.showRelated();
-  if (showRelated === 'asym') {
-    return this._drawVertArrays(cam, shader, this._indexedVertArrays, null);
-  } 
-  var assembly = this.structure().assembly(showRelated);
-  // in case there is no assembly, fallback to asymmetric unit and bail out.
-  if (!assembly) {
-    console.error('no assembly', showRelated, 
-                  'found. Falling back to asymmetric unit');
-    return this._drawVertArrays(cam, shader, this._indexedVertArrays, null);
-  }
-  return this._drawSymmetryRelated(cam, shader, assembly);
 };
 
 // returns all vertex arrays that contain geometry for one of the specified

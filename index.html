@@ -213,7 +213,7 @@
   </div>
   <div id=gl>
   </div>
-  <div id=copyright>Copyright (2013) Marco Biasini</div>
+  <div id=copyright>Copyright (2014) Marco Biasini</div>
  </body>
   <script>
     var activeTab = 'styleTab';
@@ -224,63 +224,65 @@
     var structure;
     function lines() {
       pv.clear();
-      pv.lines('structure', structure, { color: color.byResidueProp('num')});
+      pv.lines('structure', structure, { 
+                 color: color.byResidueProp('num'),
+                 showRelated : '1' });
     }
     function cartoon() {
       pv.clear();
       pv.cartoon('structure', structure, { 
-                 color : color.rainbow(), showRelated : 'asym' 
+                 color : color.rainbow(), showRelated : '1' 
       });
-      pv.autoZoom();
     }
     function lineTrace() {
       pv.clear();
-      pv.lineTrace('structure', structure);
+      pv.lineTrace('structure', structure, { showRelated : '1' });
     }
 
     function spheres() {
       pv.clear();
       pv.spheres('structure', structure);
-      pv.lines('lines', structure);
+      pv.lines('lines', structure, { showRelated : '1' });
     }
 
     function sline() {
       pv.clear();
       pv.sline('structure', structure, 
-              { color : color.uniform('red')});
+              { color : color.uniform('red'), showRelated : '1'});
     }
 
     function tube() {
       pv.clear();
       pv.tube('structure', structure);
       pv.lines('structure.ca', structure.select({aname :'CA'}), 
-               { color: color.uniform('blue'), lineWidth : 1});
+               { color: color.uniform('blue'), lineWidth : 1,
+                 showRelated : '1' });
     }
 
     function trace() {
       pv.clear();
-      pv.trace('structure', structure);
+      pv.trace('structure', structure, { showRelated : '1' });
     }
     function ballsAndSticks() {
       pv.clear();
       var ligand = structure.select('ligand');
-      pv.ballsAndSticks('structure', structure);
-      //pv.ballsAndSticks('structure.ligand', ligand);
+      pv.ballsAndSticks('structure', structure, { showRelated : '1' });
     }
 
     function preset() {
       pv.clear();
       var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
-      pv.ballsAndSticks('structure.ligand', ligand);
-      pv.cartoon('structure.protein', structure);
+      pv.ballsAndSticks('structure.ligand', ligand, { 
+        showRelated: '1' 
+      });
+      pv.cartoon('structure.protein', structure, { showRelated : '1' });
     }
 
     function load(pdb_id) {
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = io.pdb(data);
-        //mol.assignHelixSheet(structure);
         cartoon();
-        pv.centerOn(structure);
+        pv.autoZoom();
       }});
     }
     function kinase() {

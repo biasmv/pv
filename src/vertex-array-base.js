@@ -88,14 +88,20 @@ VertexArrayBase.prototype.bindBuffers = function() {
 VertexArrayBase.prototype.updateProjectionIntervals =  (function() {
 
   var transformedCenter = vec3.create();
-  return function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
+  return function(xAxis, yAxis, zAxis, xInterval, yInterval, 
+                  zInterval, transform) {
     var bounds = this.boundingSphere();
     if (!bounds) {
       return;
     }
-    var xProjected = vec3.dot(xAxis, bounds.center());
-    var yProjected = vec3.dot(yAxis, bounds.center());
-    var zProjected = vec3.dot(zAxis, bounds.center());
+    if (transform) {
+      vec3.transformMat4(transformedCenter, bounds.center(), transform);
+    } else {
+      vec3.copy(transformedCenter, bounds.center());
+    }
+    var xProjected = vec3.dot(xAxis, transformedCenter);
+    var yProjected = vec3.dot(yAxis, transformedCenter);
+    var zProjected = vec3.dot(zAxis, transformedCenter);
     xInterval.update(xProjected - bounds.radius());
     xInterval.update(xProjected + bounds.radius());
     yInterval.update(yProjected - bounds.radius());

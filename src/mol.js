@@ -53,7 +53,6 @@ function covalentRadius(ele) {
 //-----------------------------------------------------------------------------
 
 function MolBase() {
-
 }
 
 MolBase.prototype.eachResidue = function(callback) {
@@ -383,6 +382,19 @@ function numify(val) {
   return { num : function() { return val; }};
 }
 
+
+
+MolBase.prototype.assembly = function(id) {
+  var assemblies = this.assemblies();
+  for (var i = 0; i < assemblies.length; ++i) {
+    if (assemblies[i].name() === id) {
+      return assemblies[i];
+    }
+  }
+  return null;
+};
+
+
 function ChainBase() {
 
 }
@@ -525,32 +537,24 @@ AtomBase.prototype.eachBond = function(callback) {
 function Mol(pv) {
   MolBase.prototype.constructor.call(this);
   this._chains = [];
-  this._pv = pv;
   this._assemblies = [];
+  this._pv = pv;
   this._nextAtomIndex = 0;
 }
 
 derive(Mol, MolBase);
 
 
+
 Mol.prototype.addAssembly = function(assembly) { 
   this._assemblies.push(assembly); 
-};
-
-Mol.prototype.assemblies = function() { return this._assemblies; };
-
-Mol.prototype.assembly = function(id) {
-  for (var i = 0; i < this._assemblies.length; ++i) {
-    if (this._assemblies[i].name() === id) {
-      return this._assemblies[i];
-    }
-  }
-  return null;
 };
 
 Mol.prototype.setAssemblies = function(assemblies) { 
   this._assemblies = assemblies; 
 };
+
+Mol.prototype.assemblies = function() { return this._assemblies; };
 
 Mol.prototype.chains = function() { return this._chains; };
 
@@ -841,6 +845,8 @@ function MolView(mol) {
 derive(MolView, MolBase);
 
 MolView.prototype.full = function() { return this._mol; };
+
+MolView.prototype.assemblies = function() { return this._mol.assemblies(); };
 
 // add chain to view
 MolView.prototype.addChain = function(chain, recurse) {

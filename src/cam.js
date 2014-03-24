@@ -32,9 +32,9 @@
     this._rotation = mat4.create();
     this._translation = mat4.create();
     this._near = 0.10;
-    this._far = 400.0;
+    this._far = 4000.0;
     this._fogNear = -5;
-    this._fogFar = 10;
+    this._fogFar = 100;
     this._fog = true;
     this._fovY = Math.PI * 45.0 / 180.0;
     this._paramsChanged = false;
