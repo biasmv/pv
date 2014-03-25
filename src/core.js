@@ -146,19 +146,5 @@ exports.indexLastSmallerEqualThan = function(values, value, comp) {
   }
 };
 
-
-exports.updateProjectionIntervalsForBuffer =
-    function (xAxis, yAxis, zAxis, data, stride, numVerts, 
-              xInterval, yInterval, zInterval) {
-  var end = stride * numVerts;
-  for (var i = 0; i < end; i += stride) {
-    var x = data[i], y = data[i + 1], z = data[i + 2];
-    xInterval.update(xAxis[0] * x + xAxis[1] * y + xAxis[2] * z);
-    yInterval.update(yAxis[0] * x + yAxis[1] * y + yAxis[2] * z);
-    zInterval.update(zAxis[0] * x + zAxis[1] * y + zAxis[2] * z);
-  }
-};
-
 return true;
-
 })(this);
