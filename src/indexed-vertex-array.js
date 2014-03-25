@@ -128,14 +128,16 @@ IndexedVertexArray.prototype.releaseAttribs = function(shader) {
   }
 };
 
-// draws all triangles contained in the indexed vertex array using the provided
-// shader.
-IndexedVertexArray.prototype.draw = function(shader) {
+IndexedVertexArray.prototype.bind = function(shader) {
   this.bindBuffers();
   this.bindAttribs(shader);
+};
+
+// draws all triangles contained in the indexed vertex array using the provided
+// shader. requires a call to bind() first.
+IndexedVertexArray.prototype.draw = function() {
   this._gl.drawElements(this._gl.TRIANGLES, this._numTriangles * 3,
                         this._gl.UNSIGNED_SHORT, 0);
-  this.releaseAttribs(shader);
 };
 
 exports.IndexedVertexArray = IndexedVertexArray;

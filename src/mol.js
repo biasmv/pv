@@ -82,14 +82,20 @@ MolBase.prototype.residueCount = function () {
   return count;
 };
 
+MolBase.prototype.eachChain = function(callback) {
+  var chains = this.chains();
+  for (var i = 0; i < chains.length; ++i) {
+    if (callback(chains[i]) === false) {
+      return;
+    }
+  }
+};
+
 MolBase.prototype.atomCount = function() {
   var chains = this.chains();
   var count = 0;
   for (var ci = 0; ci < chains.length; ++ci) {
-    var residues = chains[ci].residues();
-    for (var ri = 0; ri < residues.length; ++ri) {
-      count+= residues[ri].atoms().length;
-    }
+    count += chains[ci].atomCount();
   }
   return count;
 };
@@ -408,6 +414,15 @@ ChainBase.prototype.eachAtom = function(callback, index) {
     }
   }
   return index;
+};
+
+ChainBase.prototype.atomCount = function() {
+  var count = 0;
+  var residues = this.residues();
+  for (var ri = 0; ri < residues.length; ++ri) {
+    count+= residues[ri].atoms().length;
+  }
+  return count;
 };
 
 ChainBase.prototype.eachResidue = function(callback) {

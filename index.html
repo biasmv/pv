@@ -17,6 +17,7 @@
     <script src='src/vertex-array-base.js'></script>
     <script src='src/indexed-vertex-array.js'></script>
     <script src='src/vertex-array.js'></script>
+    <script src='src/chain-data.js'></script>
     <script src='src/geom-builders.js'></script>
     <script src='src/scene.js'></script>
     <script src='src/render.js'></script>
@@ -219,7 +220,7 @@
     var activeTab = 'styleTab';
     $('#colorTab').hide();
     var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'medium', width: 800, height : 600,
+                       { quality : 'medium', width: 400, height : 400,
                          antialias : true, outline : false});
     var structure;
     function lines() {
@@ -241,8 +242,7 @@
 
     function spheres() {
       pv.clear();
-      pv.spheres('structure', structure);
-      pv.lines('lines', structure, { showRelated : '1' });
+      pv.spheres('structure', structure, { showRelated : '1' });
     }
 
     function sline() {
@@ -265,7 +265,6 @@
     }
     function ballsAndSticks() {
       pv.clear();
-      var ligand = structure.select('ligand');
       pv.ballsAndSticks('structure', structure, { showRelated : '1' });
     }
 
@@ -281,7 +280,7 @@
     function load(pdb_id) {
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = io.pdb(data);
-        cartoon();
+        lineTrace();
         pv.autoZoom();
       }});
     }
@@ -421,7 +420,7 @@
       pv.requestRedraw();
     });
 
-    document.addEventListener('DOMContentLoaded', transferase);
+    document.addEventListener('DOMContentLoaded', crambin);
     /*
     window.addEventListener('resize', function() {
       pv.fitParent();

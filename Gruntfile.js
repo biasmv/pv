@@ -6,6 +6,7 @@ SOURCE_FILES = [
   'src/vertex-array-base.js',
   'src/indexed-vertex-array.js',
   'src/vertex-array.js',
+  'src/chain-data.js',
   'src/geom-builders.js',
   'src/scene.js',
   'src/symmetry.js', 

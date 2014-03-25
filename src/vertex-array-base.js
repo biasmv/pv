@@ -86,6 +86,7 @@ VertexArrayBase.prototype.bindBuffers = function() {
                       this._gl.STATIC_DRAW);
   this._ready = true;
 };
+
 VertexArrayBase.prototype.updateProjectionIntervals =  (function() {
 
   var transformedCenter = vec3.create();

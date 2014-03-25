@@ -160,10 +160,22 @@ BaseGeom.prototype.destroy = function() {
 };
 
 // returns all vertex arrays that contain geometry for one of the specified
-// chain names.
+// chain names. Typically, there will only be one array for a given chain,
+// but for larger chains with mesh geometries a single chain may be split
+// across multiple vertex arrays.
 BaseGeom.prototype._vertArraysInvolving = function(chains) {
-  // FIXME: properly implement this function
-  return this.vertArrays();
+  var vertArrays = this.vertArrays();
+  var selectedArrays = [];
+  var set = {};
+  for (var ci = 0; ci < chains.length; ++ci) {
+    set[chains[ci]] = true;
+  }
+  for (var i = 0; i < vertArrays.length; ++i) {
+    if (set[vertArrays[i].chain()] === true) {
+      selectedArrays.push(vertArrays[i]);
+    }
+  }
+  return selectedArrays;
 };
 
 
@@ -173,9 +185,7 @@ BaseGeom.prototype._drawSymmetryRelated = function(cam, shader, assembly) {
   for (var i = 0; i < gens.length; ++i) {
     var gen = gens[i];
     var affectedVertArrays = this._vertArraysInvolving(gen.chains());
-    for (var k = 0; k < gen.matrices().length; ++k) {
-      this._drawVertArrays(cam, shader, affectedVertArrays, gen.matrix(k));
-    }
+    this._drawVertArrays(cam, shader, affectedVertArrays, gen.matrices());
   }
 };
 
@@ -190,8 +200,7 @@ BaseGeom.prototype._updateProjectionIntervalsAsym =
 BaseGeom.prototype.updateProjectionIntervals =
     function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
   if (!this._visible) {
-    return this._updateProjectionIntervalsAsym(xAxis, yAxis, zAxis, xInterval, 
-                                               yInterval, zInterval);
+    return;
   }
   var showRelated = this.showRelated();
   if (showRelated === 'asym') {
@@ -203,7 +212,8 @@ BaseGeom.prototype.updateProjectionIntervals =
   if (!assembly) {
     console.error('no assembly', showRelated, 
                   'found. Falling back to asymmetric unit');
-    return;
+    return this._updateProjectionIntervalsAsym(xAxis, yAxis, zAxis, xInterval, 
+                                               yInterval, zInterval);
   }
   var gens = assembly.generators();
   for (var i = 0; i < gens.length; ++i) {
@@ -233,7 +243,7 @@ BaseGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   }
   var showRelated = this.showRelated();
   if (showRelated === 'asym') {
-    return this._drawVertArrays(cam, shader, this._indexedVertArrays, null);
+    return this._drawVertArrays(cam, shader, this.vertArrays(), null);
   } 
 
   var assembly = this.structure().assembly(showRelated);
@@ -241,28 +251,38 @@ BaseGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   if (!assembly) {
     console.error('no assembly', showRelated, 
                   'found. Falling back to asymmetric unit');
-    return this._drawVertArrays(cam, shader, this._indexedVertArrays, null);
+    return this._drawVertArrays(cam, shader, this.vertArrays(), null);
   }
   return this._drawSymmetryRelated(cam, shader, assembly);
 };
 
 // Holds geometrical data for objects rendered as lines. For each vertex,
 // the color and position is stored in an interleaved format.
-function LineGeom(gl, numVerts, float32Allocator) {
+function LineGeom(gl, float32Allocator) {
   BaseGeom.prototype.constructor.call(this, gl);
-  this._va = new VertexArray(gl, numVerts, float32Allocator);
+  this._vertArrays = [];
+  this._float32Allocator = float32Allocator;
   this._vertAssoc = null;
   this._lineWidth = 1.0;
 }
 
 derive(LineGeom, BaseGeom);
 
+
+LineGeom.prototype.addChainVertArray = function(chain, numVerts) {
+  var va = new LineChainData(chain.name(), this._gl, numVerts, 
+                             this._float32Allocator);
+  this._vertArrays.push(va);
+  return va;
+};
+
+
 LineGeom.prototype.setLineWidth = function(width) {
   this._lineWidth = width;
 };
 
 LineGeom.prototype.vertArrays = function() {
-  return [this._va];
+  return this._vertArrays;
 };
 
 LineGeom.prototype.shaderForStyleAndPass =
@@ -278,19 +298,27 @@ LineGeom.prototype.shaderForStyleAndPass =
 
 LineGeom.prototype.destroy = function() {
   BaseGeom.prototype.destroy.call(this);
-  this._va.destroy();
-  this._va = null;
+  for (var i = 0; i < this._vertArrays.length; ++i) {
+    this._vertArrays[i].destroy();
+  }
+  this._vertArrays = [];
 };
 
-LineGeom.prototype.numVerts = function() {
-  return this._va.numVerts();
-};
-
-LineGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays, 
-                                              additionalTransform) {
-  cam.bind(shader, additionalTransform);
+LineGeom.prototype._drawVertArrays = function(cam, shader, vertArrays, 
+                                              additionalTransforms) {
   this._gl.lineWidth(this._lineWidth);
-  this._va.draw(shader);
+  if (additionalTransforms) {
+    for (var i = 0; i < vertArrays.length; ++i) {
+      vertArrays[i].drawSymmetryRelated(cam, shader, additionalTransforms);
+    }
+  } else {
+    cam.bind(shader);
+    for (var i = 0; i < vertArrays.length; ++i) {
+      vertArrays[i].bind(shader);
+      vertArrays[i].draw();
+      vertArray[i].releaseAttribs(shader);
+    }
+  }
 };
 
 LineGeom.prototype.vertArray = function() { return this._va; };
@@ -304,11 +332,6 @@ LineGeom.prototype.colorBy = function(colorFunc, view) {
 };
 
 LineGeom.prototype.bind = function() {
-};
-
-LineGeom.prototype.addLine = function(startPos, startColor, 
-                                      endPos, endColor, idOne, idTwo) {
-      this._va.addLine(startPos, startColor, endPos, endColor, idOne, idTwo);
 };
 
 // an (indexed) mesh geometry container
@@ -332,24 +355,30 @@ LineGeom.prototype.addLine = function(startPos, startColor,
 // index value is smaller than the number of vertices required to display 
 // larger molecules. To work around this, MeshGeom allows to split the
 // render geometry across multiple indexed vertex arrays. 
-function MeshGeom(gl, numVerts, numIndices, float32Allocator,
-                  uint16Allocator) {
+function MeshGeom(gl, float32Allocator, uint16Allocator) {
   BaseGeom.prototype.constructor.call(this, gl);
-  // FIXME: calculation for index size should be improved. In case of splitting,
-  // the buffers are too large.
-  this._indexedVertArrays = [ 
-    new IndexedVertexArray(gl, this._boundedVertArraySize(numVerts), 
-                           numIndices, float32Allocator, uint16Allocator)
-  ];
+  this._indexedVertArrays = [ ];
   this._float32Allocator = float32Allocator;
   this._uint16Allocator = uint16Allocator;
-  this._remainingVerts = numVerts;
-  this._remainingIndices = numIndices;
+  this._remainingVerts = null;
+  this._remainingIndices = null;
   this._vertAssoc = null;
 }
 
 MeshGeom.prototype._boundedVertArraySize = function(size) {
   return Math.min(65536, size);
+};
+
+MeshGeom.prototype.addChainVertArray = function(chain, numVerts, numIndices) {
+  this._remainingVerts = numVerts;
+  this._remainingIndices = numIndices;
+  var newVa = new MeshChainData(chain.name(), this._gl, 
+                                this._boundedVertArraySize(numVerts), 
+                                numIndices,
+                                this._float32Allocator, 
+                                this._uint16Allocator);
+  this._indexedVertArrays.push(newVa);
+  return newVa;
 };
 
 MeshGeom.prototype.vertArrayWithSpaceFor = function(numVerts) {
@@ -361,9 +390,10 @@ MeshGeom.prototype.vertArrayWithSpaceFor = function(numVerts) {
   this._remainingVerts = this._remainingVerts - currentVa.numVerts();
   this._remainingIndices = this._remainingIndices - currentVa.numIndices();
   numVerts = this._boundedVertArraySize(this._remainingVerts);
-  var newVa = new IndexedVertexArray(this._gl, numVerts, this._remainingIndices,
-                                     this._float32Allocator, 
-                                     this._uint16Allocator);
+  var newVa = new MeshChainData(currentVa.chain(), this._gl, numVerts, 
+                                this._remainingIndices,
+                                this._float32Allocator, 
+                                this._uint16Allocator);
   this._indexedVertArrays.push(newVa);
   return newVa;
 };
@@ -413,27 +443,23 @@ MeshGeom.prototype.colorBy = function(colorFunc, view) {
 };
 
 MeshGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays, 
-                                              additionalTransform) {
-  cam.bind(shader, additionalTransform);
-  for (var i = 0; i < indexedVertArrays.length; ++i) {
-    indexedVertArrays[i].draw(shader);
+                                              additionalTransforms) {
+  if (additionalTransforms) {
+    for (var i = 0; i < indexedVertArrays.length; ++i) {
+      indexedVertArrays[i].drawSymmetryRelated(cam, shader, additionalTransforms);
+    }
+  } else {
+    cam.bind(shader);
+    for (var i = 0; i < indexedVertArrays.length; ++i) {
+      indexedVertArrays[i].bind(shader);
+      indexedVertArrays[i].draw();
+      indexedVertArrays[i].releaseAttribs(shader);
+    }
   }
 };
 
 MeshGeom.prototype.vertArrays = function() {
   return this._indexedVertArrays;
-};
-
-// draws vertex arrays by using the symmetry generators contained in assembly
-MeshGeom.prototype._drawSymmetryRelated = function(cam, shader, assembly) {
-  var gens = assembly.generators();
-  for (var i = 0; i < gens.length; ++i) {
-    var gen = gens[i];
-    var affectedVertArrays = this._vertArraysInvolving(gen.chains());
-    for (var k = 0; k < gen.matrices().length; ++k) {
-      this._drawVertArrays(cam, shader, affectedVertArrays, gen.matrix(k));
-    }
-  }
 };
 
 MeshGeom.prototype.addVertex = function(pos, normal, color, objId) {
