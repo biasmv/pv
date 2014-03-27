@@ -307,13 +307,14 @@ LineGeom.prototype.destroy = function() {
 LineGeom.prototype._drawVertArrays = function(cam, shader, vertArrays, 
                                               additionalTransforms) {
   this._gl.lineWidth(this._lineWidth);
+  var i;
   if (additionalTransforms) {
-    for (var i = 0; i < vertArrays.length; ++i) {
+    for (i = 0; i < vertArrays.length; ++i) {
       vertArrays[i].drawSymmetryRelated(cam, shader, additionalTransforms);
     }
   } else {
     cam.bind(shader);
-    for (var i = 0; i < vertArrays.length; ++i) {
+    for (i = 0; i < vertArrays.length; ++i) {
       vertArrays[i].bind(shader);
       vertArrays[i].draw();
       vertArray[i].releaseAttribs(shader);
@@ -329,9 +330,6 @@ LineGeom.prototype.colorBy = function(colorFunc, view) {
   view = view || this.structure();
   this._vertAssoc.recolor(colorFunc, view);
   console.timeEnd('LineGeom.colorBy');
-};
-
-LineGeom.prototype.bind = function() {
 };
 
 // an (indexed) mesh geometry container
@@ -444,13 +442,14 @@ MeshGeom.prototype.colorBy = function(colorFunc, view) {
 
 MeshGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays, 
                                               additionalTransforms) {
+  var i;
   if (additionalTransforms) {
-    for (var i = 0; i < indexedVertArrays.length; ++i) {
+    for (i = 0; i < indexedVertArrays.length; ++i) {
       indexedVertArrays[i].drawSymmetryRelated(cam, shader, additionalTransforms);
     }
   } else {
     cam.bind(shader);
-    for (var i = 0; i < indexedVertArrays.length; ++i) {
+    for (i = 0; i < indexedVertArrays.length; ++i) {
       indexedVertArrays[i].bind(shader);
       indexedVertArrays[i].draw();
       indexedVertArrays[i].releaseAttribs(shader);

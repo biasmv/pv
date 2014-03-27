@@ -349,7 +349,6 @@ exports.lineTrace = function(structure, gl, options) {
   var vertAssoc = new TraceVertexAssoc(structure, 1, true);
   options.color.begin(structure);
   var chains = structure.chains();
-  var traceIndex = 0;
   var lineGeom = new LineGeom(gl, options.float32Allocator);
   lineGeom.setLineWidth(options.lineWidth);
   var traceIndex = 0;
