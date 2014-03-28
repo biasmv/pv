@@ -133,7 +133,7 @@ BaseGeom.prototype.setShowRelated = function(rel) {
 };
 
 BaseGeom.prototype.symWithIndex = function(index) {
-  if (this.showRelated() == 'asym') {
+  if (this.showRelated() === 'asym') {
     return null;
   }
   var assembly = this.structure().assembly(this.showRelated());
@@ -149,7 +149,7 @@ BaseGeom.prototype.symWithIndex = function(index) {
     index -= gen[i].matrices().length;
   }
   return null;
-}
+};
 
 BaseGeom.prototype.showRelated = function() {
   return this._showRelated;

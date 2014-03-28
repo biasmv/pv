@@ -417,7 +417,7 @@ PV.prototype._mouseDoubleClick = (function() {
     if (!picked) {
       return;
     }
-    var pos = pos = picked.object().atom.pos();
+    var pos = picked.object().atom.pos();
     if (picked.transform()) {
       vec3.transformMat4(transformedPos, pos, picked.transform());
       this._cam.setCenter(transformedPos);
@@ -716,7 +716,7 @@ PV.prototype.pick = function(pos) {
   }
   this._pickBuffer.release();
   var transform = null;
-  if (symIndex != 255) {
+  if (symIndex !== 255) {
     transform = obj.geom.symWithIndex(symIndex);
   }
   return new PickingResult(obj, symIndex < 255 ? symIndex : null,
