@@ -170,18 +170,20 @@ exports.shaders.SELECT_FS = '\n\
 precision mediump float;\n\
 \n\
 varying float objId;\n\
+uniform int symId;\n\
 \n\
 int intMod(int x, int y) { \n\
   int z = x/y;\n\
   return x-y*z;\n\
 }\n\
 void main(void) {\n\
+  // ints are only required to be 7bit...\n\
   int integralObjId = int(objId+0.5);\n\
   int red = intMod(integralObjId, 256);\n\
   integralObjId/=256;\n\
   int green = intMod(integralObjId, 256);\n\
   integralObjId/=256;\n\
-  int blue = intMod(integralObjId, 256);\n\
+  int blue = symId;\n\
   gl_FragColor = vec4(float(red), float(green), float(blue), 255.0)/255.0;\n\
 }';
 })(this);

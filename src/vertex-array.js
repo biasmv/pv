@@ -93,7 +93,7 @@ VertexArray.prototype.bind = function(shader) {
 
 // draws all triangles contained in the indexed vertex array using the provided
 // shader.
-VertexArray.prototype.draw = function(shader) {
+VertexArray.prototype.draw = function(symId) {
   this._gl.drawArrays(this._gl.LINES, 0, this._numLines * 2);
 };
 

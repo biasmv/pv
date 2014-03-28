@@ -132,6 +132,25 @@ BaseGeom.prototype.setShowRelated = function(rel) {
   this._showRelated = rel;
 };
 
+BaseGeom.prototype.symWithIndex = function(index) {
+  if (this.showRelated() == 'asym') {
+    return null;
+  }
+  var assembly = this.structure().assembly(this.showRelated());
+  if (!assembly) {
+    return null;
+  }
+  var gen = assembly.generators();
+  for (var i = 0 ; i < gen.length; ++i) {
+    if (gen[i].matrices().length > index) {
+      console.log(gen[i].matrix(index));
+      return gen[i].matrix(index);
+    }
+    index -= gen[i].matrices().length;
+  }
+  return null;
+}
+
 BaseGeom.prototype.showRelated = function() {
   return this._showRelated;
 };
@@ -313,6 +332,7 @@ LineGeom.prototype._drawVertArrays = function(cam, shader, vertArrays,
       vertArrays[i].drawSymmetryRelated(cam, shader, additionalTransforms);
     }
   } else {
+    this._gl.uniform1d(shader.symId, 255);
     cam.bind(shader);
     for (i = 0; i < vertArrays.length; ++i) {
       vertArrays[i].bind(shader);
@@ -449,6 +469,7 @@ MeshGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays,
     }
   } else {
     cam.bind(shader);
+    this._gl.uniform1i(shader.symId, 255);
     for (i = 0; i < indexedVertArrays.length; ++i) {
       indexedVertArrays[i].bind(shader);
       indexedVertArrays[i].draw();
@@ -665,6 +686,10 @@ UniqueObjectIdPool.prototype.getContinuousRange = function(num) {
   }
   var start = this._unusedRangeStart;
   var end = start + num;
+  if (end > 65536) {
+    console.log('not enough free object ids.');
+    return null;
+  }
   this._unusedRangeStart = end;
   return new ContinuousIdRange(this, start, end);
 };

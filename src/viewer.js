@@ -289,6 +289,7 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
   shaderProgram.colorAttrib = getAttribLoc(shaderProgram, 'attrColor');
   shaderProgram.normalAttrib = getAttribLoc(shaderProgram, 'attrNormal');
   shaderProgram.objIdAttrib = getAttribLoc(shaderProgram, 'attrObjId');
+  shaderProgram.symId = getUniformLoc(shaderProgram, 'symId');
   shaderProgram.projection = getUniformLoc(shaderProgram, 'projectionMat');
   shaderProgram.modelview = getUniformLoc(shaderProgram, 'modelviewMat');
   shaderProgram.rotation = getUniformLoc(shaderProgram, 'rotationMat');
@@ -407,19 +408,25 @@ PV.prototype._mouseWheelFF = function(event) {
   this.requestRedraw();
 };
 
-PV.prototype._mouseDoubleClick = function(event) {
-  var rect = this._canvas.getBoundingClientRect();
-  var objects = this.pick(
-      { x : event.clientX - rect.left, y : event.clientY - rect.top });
-  if (objects.length > 0) {
-    if (objects[0].pos) {
-      this._cam.setCenter(objects[0].pos());
-    } else {
-      this._cam.setCenter(objects[0].atom('CA').pos());
+PV.prototype._mouseDoubleClick = (function() {
+  var transformedPos = vec3.create();
+  return function(event) {
+    var rect = this._canvas.getBoundingClientRect();
+    var picked = this.pick(
+        { x : event.clientX - rect.left, y : event.clientY - rect.top });
+    if (!picked) {
+      return;
     }
+    var pos = pos = picked.object().atom.pos();
+    if (picked.transform()) {
+      vec3.transformMat4(transformedPos, pos, picked.transform());
+      this._cam.setCenter(transformedPos);
+    } else {
+      this._cam.setCenter(pos);
+      }
     this.requestRedraw();
-  }
-};
+  };
+})();
 
 PV.prototype._mouseDown = function(event) {
   if (event.button !== 0) {
@@ -669,36 +676,51 @@ PV.prototype._drawPickingScene = function() {
   this._drawWithPass('select');
 };
 
+function PickingResult(obj, symIndex, transform) {
+  this._obj = obj;
+  this._symIndex = symIndex;
+  this._transform = transform;
+}
+
+PickingResult.prototype.object = function() { 
+  return this._obj; 
+};
+
+PickingResult.prototype.symIndex = function() { 
+  return this._symIndex; 
+};
+
+PickingResult.prototype.transform = function() { 
+  return this._transform; 
+};
+
 PV.prototype.pick = function(pos) {
   this._pickBuffer.bind();
   this._drawPickingScene();
-  var pixels = new Uint8Array(4 * 4 * 4);
-  this._gl.readPixels(pos.x - 2, this._options.height - (pos.y - 2), 4, 4,
+  var pixels = new Uint8Array(4);
+  this._gl.readPixels(pos.x, this._options.height - pos.y, 1, 1,
                       this._gl.RGBA, this._gl.UNSIGNED_BYTE, pixels);
   if (pixels.data) {
     pixels = pixels.data;
   }
   var pickedIds = {};
-  var pickedObjects = [];
-  for (var y = 0; y < 4; ++y) {
-    for (var x = 0; x < 4; ++x) {
-      var baseIndex = (y * 4 + x) * 4;
-      if (pixels[baseIndex + 3] === 0) {
-        continue;
-      }
-      var objId = pixels[baseIndex + 0] | pixels[baseIndex + 1] << 8 |
-                  pixels[baseIndex + 2] << 16;
-      if (pickedIds[objId] === undefined) {
-        var obj = this._objectIdManager.objectForId(objId);
-        if (obj !== undefined) {
-          pickedObjects.push(obj);
-          pickedIds[objId] = true;
-        }
-      }
-    }
+  if (pixels[3] === 0) {
+    return null;
+  }
+  var objId = pixels[0] | pixels[1] << 8;
+  var symIndex = pixels[2];
+
+  var obj = this._objectIdManager.objectForId(objId);
+  if (obj === undefined) {
+    return null;
   }
   this._pickBuffer.release();
-  return pickedObjects;
+  var transform = null;
+  if (symIndex != 255) {
+    transform = obj.geom.symWithIndex(symIndex);
+  }
+  return new PickingResult(obj, symIndex < 255 ? symIndex : null,
+                           transform);
 };
 
 PV.prototype.add = function(name, obj) {

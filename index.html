@@ -220,7 +220,7 @@
     var activeTab = 'styleTab';
     $('#colorTab').hide();
     var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'medium', width: 400, height : 400,
+                       { quality : 'medium', width: 800, height : 800,
                          antialias : true, outline : false});
     var structure;
     function lines() {
@@ -397,7 +397,7 @@
       $.ajax('http://pdb.org/pdb/files/'+pdbId+'.pdb')
         .done(function(data) {
           st.text('loaded');
-          structure = mol.pdb(data);
+          structure = io.pdb(data);
           cartoon();
           pv.centerOn(structure);
           st.fadeOut(2000);
