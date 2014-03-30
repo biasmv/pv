@@ -34,7 +34,7 @@
     this._near = 0.10;
     this._far = 4000.0;
     this._fogNear = -5;
-    this._fogFar = 100;
+    this._fogFar = 10;
     this._fog = true;
     this._fovY = Math.PI * 45.0 / 180.0;
     this._paramsChanged = false;
@@ -71,6 +71,9 @@
     mat4.identity(this._translation);
     mat4.translate(this._translation, this._translation, [ 0, 0, -this._zoom ]);
     mat4.mul(this._camModelView, this._translation, this._camModelView);
+    mat4.identity(this._projection);
+    mat4.perspective(this._projection, this._fovY, this._width / this._height,
+                     this._near, this._far);
     this._updateMat = false;
     return true;
   };
@@ -79,9 +82,6 @@
     this._updateMat = true;
     this._width = width;
     this._height = height;
-    mat4.identity(this._projection);
-    mat4.perspective(this._projection, this._fovY, width / height, this._near,
-                     this._far);
   };
 
   Cam.prototype.setCenter = function(point) {
@@ -151,6 +151,22 @@ Cam.prototype.panXY = (function () {
 Cam.prototype.nearOffset = function() { return this._near; };
 Cam.prototype.farOffset = function() { return this._far; };
 
+
+Cam.prototype.setNearFar = function(near, far) {
+  if (near === this._near && far === this._far) {
+    return;
+  }
+  this._near = near;
+  this._far = far;
+  this._updateMat = true;
+};
+
+Cam.prototype.setFogNearFar = function(near, far) {
+  this._fogNear = near;
+  this._fogFar = far;
+  this._updateMat = true;
+};
+
 Cam.prototype.setZoom = function(zoom) {
   this._updateMat = true;
   this._zoom = zoom;
@@ -215,8 +231,9 @@ Cam.prototype.bind = function(shader, additionalTransform) {
     this._gl.uniformMatrix4fv(shader.rotation, false, this._rotation);
   }
   this._gl.uniform1i(shader.fog, this._fog);
-  this._gl.uniform1f(shader.fogFar, this._fogFar + this._zoom);
-  this._gl.uniform1f(shader.fogNear, this._fogNear + this._zoom);
+  var nearOffset =   this._zoom ;
+  this._gl.uniform1f(shader.fogFar, this._fogFar + nearOffset);
+  this._gl.uniform1f(shader.fogNear, this._fogNear + nearOffset);
   this._gl.uniform3fv(shader.fogColor, this._fogColor);
   this._gl.uniform3fv(shader.outlineColor, this._outlineColor);
 };

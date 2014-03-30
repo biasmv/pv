@@ -25,6 +25,7 @@
     <script src='src/cam.js'></script>
     <script src='src/shaders.js'></script>
     <script src='src/framebuffer.js'></script>
+    <script src='src/slab.js'></script>
     <script src='src/viewer.js'></script>
     <style>
     body {
@@ -221,7 +222,8 @@
     $('#colorTab').hide();
     var pv = pv.Viewer(document.getElementById('gl'), 
                        { quality : 'medium', width: 800, height : 800,
-                         antialias : true, outline : false});
+                         antialias : true, outline : false,
+                        slabMode : 'auto'});
     var structure;
     function lines() {
       pv.clear();
@@ -280,7 +282,8 @@
     function load(pdb_id) {
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = io.pdb(data);
-        lineTrace();
+        //mol.assignHelixSheet(structure);
+        preset();
         pv.autoZoom();
       }});
     }
@@ -356,11 +359,14 @@
       pv.requestRedraw();
     }
 
+    var auto = true;
     function test() {
-      var rvp = structure.select({rname : 'RVP'});
-      var phosphate = structure.atom('A.300.P');
-      pv.fitTo(rvp);
-      pv.label('rvp', phosphate.qualifiedName(), phosphate.pos());
+      if (auto) {
+        pv.slabMode('fixed', { near: 0.1, far : 400.0});
+      } else {
+        pv.slabMode('auto');
+      }
+      auto = !auto;
     }
 
     $('#cartoon').click(cartoon);
@@ -420,7 +426,7 @@
       pv.requestRedraw();
     });
 
-    document.addEventListener('DOMContentLoaded', crambin);
+    document.addEventListener('DOMContentLoaded', telethonin);
     /*
     window.addEventListener('resize', function() {
       pv.fitParent();
