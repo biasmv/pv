@@ -153,18 +153,12 @@ Camera Positioning/Orientation
   :param obj: Must be an object implementing a *center* method returning the center of the object, e.g. an instance of :class:`mol.MolView`, :class:`mol.Mol`
 
   
-.. function:: pv.Viewer.autoZoom(slabMode)
+.. function:: pv.Viewer.autoZoom()
 
   Adjusts the zoom level such that all objects are visible on screen and occupy as much space as possible. The center and orientation of the camera are not modified.  
-
-  :param slabMode: Specifies how the near and far clipping planes should be adjusted. Defaults to the default slabMode of the viewer.
-
-
-.. function:: pv.Viewer.fitTo(obj, slabMode)
+.. function:: pv.Viewer.fitTo(obj)
 
   Adjust the zoom level and center of the camera to fit the viewport to a given object. The method supports fitting to selections, or arbitrary SceneNodes. To fit to a subset of atoms, pass the selection as the *obj* argument:
-
-  :param slabMode: Specifies how the near and far clipping planes should be adjusted. Defaults to the default slabMode of the viewer.
 
   .. code-block:: javascript
 
@@ -182,15 +176,23 @@ Camera Positioning/Orientation
 Fog and Slab Modes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Proteins come in all sizes and shapes. For optimal viewing, some camera parameters must thus be adjusted for each molecule. Two of these parameters are fog density and the near and far clipping plane. Typically, the near and far clipping planes must be set such that contain all visible geometry in front of the camera. However, sometimes it is desired to only show a certain 'slab' of the molecule. To support both of these scenarios, PV has multiple modes, called slab modes:
+Proteins come in all sizes and shapes. For optimal viewing, some camera parameters must thus be adjusted for each molecule. Two of these parameters are the near and far clipping planes of the camera. Only geometry between the near and far clipping plane are visible on the screen. Geometry in front of the near and at the back of the far clipping planes are clipped away. Typically, the near and far clipping planes must be set such that contain all visible geometry in front of the camera. However, sometimes it is desired to only show a certain 'slab' of the molecule. To support both of these scenarios, PV has multiple modes, called slab modes.
 
- * When slab mode is set to 'auto', the near and far clipping planes as well as fog are adjusted based on the visible geometry. This causes the clipping planes to be updated on every rotation of the camera, change of camera's viewing center and when objects are added/removed.
 
- * When slab mode is set to a molecule, e.g. an instance of :class:`mol.Mol` or :class:`mol.MolView`, the near and far clipping planes are adjusted to contain the visible geometry of that molecule. The clipping planes are updated on every rotation, change of camera's viewing center. This mode is useful when focusing ones attention on a ligand part of a larger structure.
+.. function:: pv.Viewer.slabMode(mode[,options)
 
- * When the slab mode is set to 'fixed', automatic adjustment of the near and far clipping planes as well as fog is turned off. The values are kept constant and can be set by the user.
+  Sets the current active slab mode of the viewer. *mode* must be one of 'fixed' or 'auto'.
 
-.. function:: pv.Viewer.slab(mode[,options)
+  * When slab mode is set to 'auto', the near and far clipping planes as well as fog are adjusted based on the visible geometry. This causes the clipping planes to be updated on every rotation of the camera, change of camera's viewing center and when objects are added/removed.
+
+  * When the slab mode is set to 'fixed', automatic adjustment of the near and far clipping planes as well as fog is turned off. The values are kept constant and can be set by the user. To set specific near and far clipping planes provide them in a dictionary as the option argument when calling slabMode:
+
+    .. code-block:: javascript
+
+      viewer.slabMode('fixed', { near: 1, far : 100 });
+
+
+
 
 
 .. _pv.viewer.management:
