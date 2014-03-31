@@ -54,7 +54,7 @@ var requestAnimFrame = (function(){
 })();
 
 function slabModeToStrategy(mode, options) {
-  mode = mode || 'fixed';
+  mode = mode || 'auto';
   if (mode === 'fixed') {
     return new FixedSlab(options);
   }
