@@ -107,14 +107,14 @@ function PV(domElement, opts) {
   this._domElement.appendChild(this._canvas);
   this._domElement.appendChild(this._textureCanvas);
 
-  if (document.readyState == "complete" 
-    || document.readyState == "loaded" 
-      || document.readyState == "interactive") {
-  	this._initPV();
-	} else {
-  	document.addEventListener('DOMContentLoaded', bind(this, this._initPV));
-	}
-};
+  if (document.readyState === "complete" ||  
+    document.readyState === "loaded" ||  
+      document.readyState === "interactive") {
+    this._initPV();
+  } else {
+    document.addEventListener('DOMContentLoaded', bind(this, this._initPV));
+  }
+}
   
 
 // resizes the canvas, separated out from PV.resize because we want
