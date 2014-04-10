@@ -72,6 +72,7 @@ function PV(domElement, opts) {
     antialias : opts.antialias,
     quality : opts.quality || 'low',
     style : opts.style || 'hemilight',
+    background : opts.background ? vec3.clone(opts.background) : vec3.fromValues(1,1,1),
     slabMode : slabModeToStrategy(opts.slabMode)
   };
   this._objects = [];
@@ -106,8 +107,15 @@ function PV(domElement, opts) {
   this._domElement.appendChild(this._canvas);
   this._domElement.appendChild(this._textureCanvas);
 
-  document.addEventListener('DOMContentLoaded', bind(this, this._initPV));
-}
+  if (document.readyState == "complete" 
+    || document.readyState == "loaded" 
+      || document.readyState == "interactive") {
+  	this._initPV();
+	} else {
+  	document.addEventListener('DOMContentLoaded', bind(this, this._initPV));
+	}
+};
+  
 
 // resizes the canvas, separated out from PV.resize because we want
 // to call this function directly in a requestAnimationFrame together
@@ -253,7 +261,7 @@ PV.prototype._initGL = function() {
   this._gl.viewportWidth = this._options.realWidth;
   this._gl.viewportHeight = this._options.realHeight;
 
-  this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
+  this._gl.clearColor(this._options.background[0], this._options.background[1], this._options.background[2], 1.0);
   this._gl.lineWidth(2.0);
   this._gl.cullFace(this._gl.FRONT);
   this._gl.enable(this._gl.CULL_FACE);
@@ -723,7 +731,7 @@ PV.prototype._drawPickingScene = function() {
   this._gl.clearColor(0.0, 0.0, 0.0, 0.0);
   this._gl.disable(this._gl.BLEND);
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
-  this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
+  this._gl.clearColor(this._options.background[0], this._options.background[1], this._options.background[2], 1.0);
   this._gl.cullFace(this._gl.FRONT);
   this._gl.enable(this._gl.CULL_FACE);
   this._drawWithPass('select');
@@ -753,6 +761,7 @@ PV.prototype.pick = function(pos) {
   var pixels = new Uint8Array(4);
   this._gl.readPixels(pos.x, this._options.height - pos.y, 1, 1,
                       this._gl.RGBA, this._gl.UNSIGNED_BYTE, pixels);
+  this._pickBuffer.release();
   if (pixels.data) {
     pixels = pixels.data;
   }
@@ -767,7 +776,6 @@ PV.prototype.pick = function(pos) {
   if (obj === undefined) {
     return null;
   }
-  this._pickBuffer.release();
   var transform = null;
   if (symIndex !== 255) {
     transform = obj.geom.symWithIndex(symIndex);
