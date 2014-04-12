@@ -393,6 +393,13 @@ PV.prototype._drawWithPass = function(pass) {
   }
 };
 
+PV.prototype.setCamera = function(rotation, center, zoom) {
+  this._cam.setCenter(center);
+  this._cam.setRotation(rotation);
+  this._cam.setZoom(zoom);
+  this.requestRedraw();
+};
+
 // performs interpolation of current camera position
 PV.prototype._animateCam = function() {
   if (this._camAnim.center) {
