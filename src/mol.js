@@ -283,6 +283,16 @@ MolBase.prototype._residuePredicates = function(dict) {
       return false;
     });
   }
+  if (dict.rnums !== undefined) {
+    var num_set = {};
+    for (var i = 0; i < dict.rnums.length; ++i) {
+      num_set[dict.rnums[i]] = true;
+    }
+    predicates.push(function(r) {
+      var n = r.num();
+      return num_set[n] === true;
+    });
+  }
   return predicates;
 };
 
