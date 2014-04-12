@@ -402,11 +402,22 @@ PV.prototype.setCamera = function(rotation, center, zoom) {
 
 // performs interpolation of current camera position
 PV.prototype._animateCam = function() {
+  var anotherRedraw = false;
   if (this._camAnim.center) {
     this._cam.setCenter(this._camAnim.center.step());
     if (this._camAnim.center.finished()) {
       this._camAnim.center = null;
     }
+    anotherRedraw = true;
+  }
+  if (this._camAnim.rotation) {
+    this._cam.setRotation(this._camAnim.rotation.step());
+    if (this._camAnim.rotation.finished()) {
+      this._camAnim.rotation = null;
+    }
+    anotherRedraw = true;
+  }
+  if (anotherRedraw) {
     this.requestRedraw();
   }
 };
@@ -439,7 +450,6 @@ PV.prototype.setCenter = function(center, ms) {
   }
   this._camAnim.center = new Move(this._cam.center(), 
                                   vec3.clone(center), ms);
-  console.log(this._camAnim);
   this.requestRedraw();
 };
 
@@ -744,6 +754,19 @@ PV.prototype.autoSlab = function() {
   var slab = this.slabInterval();
   this._cam.setNearFar(slab.near, slab.far);
   this.requestRedraw();
+};
+
+// enable disable rock and rolling of camera
+PV.prototype.rockAndRoll = function(enable) {
+  if (enable === true) {
+    this._camAnim.rotation = new RockAndRoll(this._cam.rotation(), 
+                                             [0, 1, 0], 2000);
+    this.requestRedraw();
+  } else if (enable === false) {
+    this._camAnim.rotation = null;
+    this.requestRedraw();
+  }
+  return this._camAnim.rotation !== null;
 };
 
 PV.prototype.slabMode = function(mode, options) {

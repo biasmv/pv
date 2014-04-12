@@ -28,23 +28,42 @@ function Animation(from, to, duration) {
   this._duration = duration;
   this._left = duration;
   this._start = Date.now();
+  this._looping = false;
+  this._finished = false;
 }
 
+Animation.prototype.setLooping = function(looping) {
+  this._looping = looping;
+};
+
 Animation.prototype.step = function() {
-  this._left = Math.max(0, this._duration - (Date.now() - this._start));
-  console.log(this._left, this._duration);
-  var t = this._duration > 0.0 ? (1.0 - this._left/this._duration) : 1.0;
+  var now = Date.now();
+  var elapsed = now - this._start;
+  var t;
+  if (this._duration === 0) {
+    t = 1.0;
+  } else {
+    if (this._looping) {
+      var times = Math.floor(elapsed/this._duration);
+      t = (elapsed - times * this._duration)/this._duration;
+    } else {
+      elapsed = Math.min(this._duration, elapsed);
+      t = elapsed/this._duration;
+      this._finished = t === 1.0;
+    }
+  }
   return this._setTo(t);
 };
 
 Animation.prototype.finished = function() {
-  return this._left === 0;
+  return this._finished;
 };
 
 
 
 function Move(from, to, duration) {
-  Animation.prototype.constructor.call(this, from, to, duration);
+  Animation.prototype.constructor.call(this, vec3.clone(from), 
+                                       vec3.clone(to), duration);
   this._current = vec3.clone(from);
 }
 
@@ -55,7 +74,30 @@ Move.prototype._setTo = function(t) {
   return this._current;
 };
 
+function RockAndRoll(rotation, axis, duration) {
+  var initial = mat3.create();
+  mat3.fromMat4(initial, rotation);
+  Animation.prototype.constructor.call(this, initial, null, duration);
+  this._axis = vec3.clone(axis);
+  this.setLooping(true);
+  this._current = mat3.create();
+  this._angle = 0.0;
+}
+
+derive(RockAndRoll, Animation);
+
+RockAndRoll.prototype._setTo = (function() {
+  var axisRot = mat3.create();
+  return function(t) {
+    var angle = 0.2 * Math.sin(2 * t * Math.PI);
+    geom.axisRotation(axisRot, this._axis, angle);
+    mat3.mul(this._current, this._from, axisRot);
+    return this._current;
+  };
+})();
+
 exports.Move = Move;
+exports.RockAndRoll = RockAndRoll;
 
 return true;
 })(this);
