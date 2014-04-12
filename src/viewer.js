@@ -79,6 +79,7 @@ function PV(domElement, opts) {
   this._domElement = domElement;
   this._redrawRequested = false;
   this._resize = false;
+  this._lastTimestamp = null;
   // NOTE: make sure to only request features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
   // detection only happens in PV._initGL. Once this happened, we are
@@ -101,6 +102,10 @@ function PV(domElement, opts) {
     this._options.outline = true;
   }
   this._ok = false;
+  this._camAnim = { 
+      center : null, zoom : null, 
+      rotation : null 
+  };
   this.quality(this._options.quality);
   this._canvas.width = this._options.width;
   this._canvas.height = this._options.height;
@@ -388,11 +393,23 @@ PV.prototype._drawWithPass = function(pass) {
   }
 };
 
+// performs interpolation of current camera position
+PV.prototype._animateCam = function() {
+  if (this._camAnim.center) {
+    this._cam.setCenter(this._camAnim.center.step());
+    if (this._camAnim.center.finished()) {
+      this._camAnim.center = null;
+    }
+    this.requestRedraw();
+  }
+};
+
 PV.prototype._draw = function() {
+  this._redrawRequested = false;
   this._ensureSize();
+  this._animateCam();
   var newSlab = this._options.slabMode.update(this);
   this._cam.setNearFar(newSlab.near, newSlab.far);
-  this._redrawRequested = false;
 
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
   this._gl.viewport(0, 0, this._options.realWidth, this._options.realHeight);
@@ -407,9 +424,22 @@ PV.prototype._draw = function() {
   this._drawWithPass('outline');
 };
 
-PV.prototype.centerOn = function(what) {
-  this._cam.setCenter(what.center());
+PV.prototype.setCenter = function(center, ms) {
+  ms |= 0;
+  if (ms === 0) {
+    this._cam.setCenter(center);
+    return;
+  }
+  this._camAnim.center = new Move(this._cam.center(), 
+                                  vec3.clone(center), ms);
+  console.log(this._camAnim);
+  this.requestRedraw();
 };
+
+PV.prototype.centerOn = function(what, ms) {
+  this.setCenter(what.center(), ms);
+};
+
 
 PV.prototype.clear = function() {
   for (var i = 0; i < this._objects.length; ++i) {
@@ -442,9 +472,9 @@ PV.prototype._mouseDoubleClick = (function() {
     var pos = picked.object().atom.pos();
     if (picked.transform()) {
       vec3.transformMat4(transformedPos, pos, picked.transform());
-      this._cam.setCenter(transformedPos);
+      this.setCenter(transformedPos, 100);
     } else {
-      this._cam.setCenter(pos);
+      this.setCenter(pos, 100);
       }
     this.requestRedraw();
   };
@@ -650,7 +680,7 @@ PV.prototype._fitToIntervals = function(axes, intervals) {
     cx * axes[0][1] + cy * axes[1][1] + cz * axes[2][1],
     cx * axes[0][2] + cy * axes[1][2] + cz * axes[2][2]
   ];
-  this._cam.setCenter(center);
+  this.setCenter(center);
 
   var fovY = this._cam.fieldOfViewY();
   var aspect = this._cam.aspectRatio();

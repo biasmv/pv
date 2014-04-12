@@ -143,7 +143,6 @@ BaseGeom.prototype.symWithIndex = function(index) {
   var gen = assembly.generators();
   for (var i = 0 ; i < gen.length; ++i) {
     if (gen[i].matrices().length > index) {
-      console.log(gen[i].matrix(index));
       return gen[i].matrix(index);
     }
     index -= gen[i].matrices().length;
