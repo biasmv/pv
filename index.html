@@ -406,7 +406,7 @@
           st.text('loaded');
           structure = io.pdb(data);
           cartoon();
-          pv.centerOn(structure);
+          pv.autoZoom();
           st.fadeOut(2000);
         })
         .fail(function() {
