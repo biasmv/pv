@@ -577,6 +577,44 @@ exports.cartoon = function(structure, gl, options) {
   return meshGeom;
 };
 
+exports.surface = (function() {
+  var pos = vec3.create(), normal = vec3.create(), 
+      color = vec3.fromValues(0.8, 0.8, 0.8);
+  return function(data, gl, options) {
+    var offset = 0;
+    var version = data.getUint32(0);
+    offset += 4;
+    var numVerts = data.getUint32(offset);
+    offset += 4;
+    var vertexStride = 4 * 6;
+    var facesDataStart = vertexStride * numVerts + offset;
+    var numFaces = data.getUint32(facesDataStart);
+    var meshGeom = new MeshGeom(gl, options.float32Allocator,
+                                options.uint16Allocator);
+    meshGeom.setShowRelated('asym');
+    var va = meshGeom.addVertArray(numVerts, numFaces * 3);
+    var i;
+    for (i = 0 ; i < numVerts; ++i) {
+      vec3.set(pos, data.getFloat32(offset + 0), data.getFloat32(offset + 4),
+               data.getFloat32(offset + 8));
+      offset += 12;
+      vec3.set(normal, data.getFloat32(offset + 0), data.getFloat32(offset + 4),
+               data.getFloat32(offset + 8));
+      offset += 12;
+      va.addVertex(pos, normal, color, 0);
+    }
+    offset = facesDataStart + 4;
+    for (i = 0 ; i < numFaces; ++i) {
+      var idx0 = data.getUint32(offset + 0),
+          idx1 = data.getUint32(offset + 4),
+          idx2 = data.getUint32(offset + 8);
+      offset += 12;
+      va.addTriangle(idx0 - 1, idx2 -1, idx1 - 1);
+    }
+    return meshGeom;
+  };
+})();
+
 var _cartoonAddTube = (function() {
   var rotation = mat3.create();
   var up = vec3.create();
@@ -853,6 +891,7 @@ var _renderSingleTrace = (function() {
     options.float32Allocator.release(colors);
   };
 })();
+
 
 return exports;
 })();

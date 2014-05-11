@@ -615,6 +615,13 @@ PV.prototype.cartoon = function(name, structure, opts) {
   return this.add(name, obj);
 };
 
+
+PV.prototype.surface = function(name, data, opts) {
+  var options = this._handleStandardOptions(opts);
+  var obj = render.surface(data, this._gl, options);
+  return this.add(name, obj);
+};
+
 // renders the protein using a smoothly interpolated tube, essentially
 // identical to the cartoon render mode, but without special treatment for
 // helices and strands.

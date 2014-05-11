@@ -331,7 +331,7 @@ LineGeom.prototype._drawVertArrays = function(cam, shader, vertArrays,
       vertArrays[i].drawSymmetryRelated(cam, shader, additionalTransforms);
     }
   } else {
-    this._gl.uniform1d(shader.symId, 255);
+    this._gl.uniform1i(shader.symId, 255);
     cam.bind(shader);
     for (i = 0; i < vertArrays.length; ++i) {
       vertArrays[i].bind(shader);
@@ -398,6 +398,17 @@ MeshGeom.prototype.addChainVertArray = function(chain, numVerts, numIndices) {
   return newVa;
 };
 
+MeshGeom.prototype.addVertArray = function(numVerts, numIndices) {
+  this._remainingVerts = numVerts;
+  this._remainingIndices = numIndices;
+  var newVa = new IndexedVertexArray(
+    this._gl, this._boundedVertArraySize(numVerts), numIndices,
+    this._float32Allocator, this._uint16Allocator);
+
+  this._indexedVertArrays.push(newVa);
+  return newVa;
+};
+
 MeshGeom.prototype.vertArrayWithSpaceFor = function(numVerts) {
   var currentVa = this._indexedVertArrays[this._indexedVertArrays.length - 1];
   var remaining = currentVa.maxVerts() - currentVa.numVerts();
@@ -407,10 +418,16 @@ MeshGeom.prototype.vertArrayWithSpaceFor = function(numVerts) {
   this._remainingVerts = this._remainingVerts - currentVa.numVerts();
   this._remainingIndices = this._remainingIndices - currentVa.numIndices();
   numVerts = this._boundedVertArraySize(this._remainingVerts);
-  var newVa = new MeshChainData(currentVa.chain(), this._gl, numVerts, 
-                                this._remainingIndices,
-                                this._float32Allocator, 
-                                this._uint16Allocator);
+  var newVa = null;
+  if (currentVa instanceof MeshCainData) {
+    newVa = new MeshChainData(currentVa.chain(), this._gl, numVerts, 
+                              this._remainingIndices,
+                              this._float32Allocator, 
+                              this._uint16Allocator);
+  } else {
+    newVa = new IndexedVertexArray(this._gl, numVerts, this._remainingIndices,
+      this._float32Allocator, this._uint16Allocator);
+  } 
   this._indexedVertArrays.push(newVa);
   return newVa;
 };
