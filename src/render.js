@@ -100,6 +100,7 @@ var spheresForChain = (function() {
     var idRange = options.idPool.getContinuousRange(atomCount);
     var vertsPerSphere = options.protoSphere.numVerts();
     var indicesPerSphere = options.protoSphere.numIndices();
+    var radius = 1.5 * options.radiusMultiplier;
     meshGeom.addIdRange(idRange);
     meshGeom.addChainVertArray(chain, vertsPerSphere*atomCount, 
                               indicesPerSphere*atomCount);
@@ -108,7 +109,7 @@ var spheresForChain = (function() {
       options.color.colorFor(atom, color, 0);
       var vertStart = va.numVerts();
       var objId = idRange.nextId({ geom: meshGeom, atom : atom });
-      options.protoSphere.addTransformed(va, atom.pos(), 1.5, color, objId);
+      options.protoSphere.addTransformed(va, atom.pos(), radius, color, objId);
       var vertEnd = va.numVerts();
       vertAssoc.addAssoc(atom, va, vertStart, vertEnd);
     });

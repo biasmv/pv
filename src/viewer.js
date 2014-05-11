@@ -586,6 +586,7 @@ PV.prototype.spheres = function(name, structure, opts) {
   var options = this._handleStandardOptions(opts);
   options.color = options.color || color.byElement();
   options.sphereDetail = this.options('sphereDetail');
+  options.radiusMultiplier = options.radiusMultiplier || 1.0;
 
   var obj = render.spheres(structure, this._gl, options);
   return this.add(name, obj);
