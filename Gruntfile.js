@@ -19,6 +19,7 @@ SOURCE_FILES = [
   'src/framebuffer.js',
   'src/shaders.js',
   'src/animation.js',
+  'src/slab.js',
   'src/viewer.js'
 ];
 
