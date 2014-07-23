@@ -20,7 +20,6 @@ SOURCE_FILES = [
   'src/shaders.js',
   'src/animation.js',
   'src/slab.js',
-  'src/animator.js', 
   'src/viewer.js'
 ];
 
