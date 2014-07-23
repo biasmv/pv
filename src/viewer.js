@@ -502,28 +502,6 @@ PV.prototype._mouseDown = function(event) {
   if (event.button !== 0) {
     return;
   }
-  var currentTime = (new Date()).getTime();
-  if (typeof this.lastClickTime === 'undefined' || (currentTime - this.lastClickTime > 300)) {
-    this.lastClickTime = currentTime;
-    var rect = this._canvas.getBoundingClientRect();
-    var picked = this.pick(
-        { x : event.clientX - rect.left, y : event.clientY - rect.top });
-    if (picked) {
-      var atomPickedEvent = new CustomEvent(
-          "atompicked", 
-          {
-            detail: {
-              atom: picked.object().atom,
-              originalEvent: event,
-              geom: picked.object().geom
-            },
-            bubbles: true,
-            cancelable: true
-          }
-        );
-      this._domElement.dispatchEvent(atomPickedEvent);
-    }
-  }
   event.preventDefault();
   if (event.shiftKey === true) {
     this._canvas.addEventListener('mousemove', this._mousePanListener, false);
