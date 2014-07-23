@@ -82,17 +82,17 @@ Remark350Reader.prototype.nextLine = function(line) {
     return;
   }
   if (line.substr(0, 7) === '  BIOMT') {
-    var row = parseInt(line[7], 10) - 1;
+    var col = parseInt(line[7], 10) - 1;
     // FIXME: don't base matrix number of BIOMT1
     var x = parseFloat(line.substr(13, 9));
     var y = parseFloat(line.substr(23, 9));
     var z = parseFloat(line.substr(33, 9));
     var w = parseFloat(line.substr(46, 12).trim());
-    this._currentMatrix[4*row+0] = x;
-    this._currentMatrix[4*row+1] = y;
-    this._currentMatrix[4*row+2] = z;
-    this._currentMatrix[4*row+3] = w;
-    if (row === 2) {
+    this._currentMatrix[4*0+col] = x;
+    this._currentMatrix[4*1+col] = y;
+    this._currentMatrix[4*2+col] = z;
+    this._currentMatrix[4*3+col] = w;
+    if (col === 2) {
       this._currentSymGen.addMatrix(this._currentMatrix);
       this._currentMatrix = mat4.create();
     }

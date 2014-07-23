@@ -56,13 +56,17 @@ FrameBuffer.prototype.bind = function() {
 
 FrameBuffer.prototype._initColorBuffer = function() {
   this.bind();
-  this._gl.bindTexture(this._gl.TEXTURE_2D, this._colorTexture);
-  this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._width,
-                      this._height, 0, this._gl.RGBA, this._gl.UNSIGNED_BYTE, 
-                      null);
-  this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0,
-                                this._gl.TEXTURE_2D, this._colorTexture, 0);
-  this._gl.bindTexture(this._gl.TEXTURE_2D, null);
+  var gl = this._gl;
+  gl.bindTexture(gl.TEXTURE_2D, this._colorTexture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._width, this._height, 0, 
+                gl.RGBA, gl.UNSIGNED_BYTE, null);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+                                gl.TEXTURE_2D, this._colorTexture, 0);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.bindTexture(gl.TEXTURE_2D, null);
 
   this.release();
 };

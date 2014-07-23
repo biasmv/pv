@@ -18,6 +18,7 @@ SOURCE_FILES = [
   'src/buffer-allocators.js',
   'src/framebuffer.js',
   'src/shaders.js',
+  'src/animation.js',
   'src/slab.js',
   'src/animator.js', 
   'src/viewer.js'

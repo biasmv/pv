@@ -20,82 +20,107 @@
 
 (function(exports) {
 
-  "use strict";
+"use strict";
 
-  // A camera, providing us with a view into the 3D worlds. Handles projection,
-  // and modelview matrices and controls the global render parameters such as
+// A camera, providing us with a view into the 3D worlds. Handles projection,
+// and modelview matrices and controls the global render parameters such as
   // shader and fog.
-  function Cam(gl) {
-    this._projection = mat4.create();
-    this._camModelView = mat4.create();
+function Cam(gl) {
+  this._projection = mat4.create();
+  this._camModelView = mat4.create();
     this._modelView = mat4.create();
-    this._rotation = mat4.create();
-    this._translation = mat4.create();
-    this._near = 0.10;
-    this._far = 4000.0;
-    this._fogNear = -5;
-    this._fogFar = 10;
-    this._fog = true;
-    this._fovY = Math.PI * 45.0 / 180.0;
-    this._paramsChanged = false;
-    this._fogColor = vec3.fromValues(1, 1, 1);
-    this._outlineColor = vec3.fromValues(0.1, 0.1, 0.1);
-    this._center = vec3.create();
-    this._zoom = 50;
-    this._updateMat = true;
-    this._gl = gl;
-    this._currentShader = null;
-    this.setViewportSize(gl.viewportWidth, gl.viewportHeight);
+  this._rotation = mat4.create();
+  this._translation = mat4.create();
+  this._near = 0.10;
+  this._far = 4000.0;
+  this._fogNear = -5;
+  this._fogFar = 10;
+  this._fog = true;
+  this._fovY = Math.PI * 45.0 / 180.0;
+  this._paramsChanged = false;
+  this._fogColor = vec3.fromValues(1, 1, 1);
+  this._outlineColor = vec3.fromValues(0.1, 0.1, 0.1);
+  this._center = vec3.create();
+  this._zoom = 50;
+  this._updateMat = true;
+  this._gl = gl;
+  this._currentShader = null;
+  this.setViewportSize(gl.viewportWidth, gl.viewportHeight);
+}
+
+
+Cam.prototype.setRotation = function(rot) {
+  if (rot.length === 16) {
+    mat4.copy(this._rotation, rot);
+  } else {
+    this._rotation[0] = rot[0];
+    this._rotation[1] = rot[1];
+    this._rotation[2] = rot[2];
+    this._rotation[3] = 0.0;
+    this._rotation[4] = rot[3];
+    this._rotation[5] = rot[4];
+    this._rotation[6] = rot[5];
+    this._rotation[7] = 0.0;
+    this._rotation[8] = rot[6];
+    this._rotation[9] = rot[7];
+    this._rotation[10] = rot[8];
+    this._rotation[11] = 0.0;
+    this._rotation[12] = 0.0;
+    this._rotation[13] = 0.0;
+    this._rotation[14] = 0.0;
+    this._rotation[15] = 1.0;
   }
+  this._updateMat = true;
+};
 
-  Cam.prototype.fieldOfViewY = function() {
-    return this._fovY;
-  };
+Cam.prototype.fieldOfViewY = function() {
+  return this._fovY;
+};
 
-  Cam.prototype.aspectRatio = function() {
-    return this._width / this._height;
-  };
+Cam.prototype.aspectRatio = function() {
+  return this._width / this._height;
+};
 
-  Cam.prototype.rotation = function() {
-    return this._rotation;
-  };
+Cam.prototype.rotation = function() {
+  return this._rotation;
+};
 
-  Cam.prototype._updateIfRequired = function() {
-    if (!this._updateMat) {
-      return false;
-    }
-    mat4.identity(this._camModelView);
-    mat4.translate(this._camModelView, this._camModelView,
-                   [ -this._center[0], -this._center[1], -this._center[2] ]);
-    mat4.mul(this._camModelView, this._rotation, this._camModelView);
-    mat4.identity(this._translation);
-    mat4.translate(this._translation, this._translation, [ 0, 0, -this._zoom ]);
-    mat4.mul(this._camModelView, this._translation, this._camModelView);
-    mat4.identity(this._projection);
-    mat4.perspective(this._projection, this._fovY, this._width / this._height,
-                     this._near, this._far);
-    this._updateMat = false;
-    return true;
-  };
+Cam.prototype._updateIfRequired = function() {
+  if (!this._updateMat) {
+    return false;
+  }
+  mat4.identity(this._camModelView);
+  mat4.translate(this._camModelView, this._camModelView,
+                  [ -this._center[0], -this._center[1], -this._center[2] ]);
+  mat4.mul(this._camModelView, this._rotation, this._camModelView);
+  mat4.identity(this._translation);
+  mat4.translate(this._translation, this._translation, [ 0, 0, -this._zoom ]);
+  mat4.mul(this._camModelView, this._translation, this._camModelView);
+  mat4.identity(this._projection);
+  mat4.perspective(this._projection, this._fovY, this._width / this._height,
+                    this._near, this._far);
+  this._updateMat = false;
+  return true;
+};
 
-  Cam.prototype.setViewportSize = function(width, height) {
-    this._updateMat = true;
-    this._width = width;
-    this._height = height;
-  };
+Cam.prototype.setViewportSize = function(width, height) {
+  this._updateMat = true;
+  this._width = width;
+  this._height = height;
+};
 
-  Cam.prototype.setCenter = function(point) {
-    this._updateMat = true;
-    vec3.copy(this._center, point);
-  };
+Cam.prototype.setCenter = function(point) {
+  this._updateMat = true;
+  vec3.copy(this._center, point);
+};
 
-  Cam.prototype.fog = function(value) {
-    if (value !== undefined) {
-      this._fog = value;
-      this._paramsChanged = true;
-    }
-    return this._fog;
-  };
+Cam.prototype.fog = function(value) {
+  if (value !== undefined) {
+    this._fog = value;
+    this._paramsChanged = true;
+  }
+  return this._fog;
+};
 
 Cam.prototype.rotateZ = (function() {
     var tm = mat4.create();
