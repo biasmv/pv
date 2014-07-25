@@ -336,7 +336,7 @@ LineGeom.prototype._drawVertArrays = function(cam, shader, vertArrays,
     for (i = 0; i < vertArrays.length; ++i) {
       vertArrays[i].bind(shader);
       vertArrays[i].draw();
-      vertArray[i].releaseAttribs(shader);
+      vertArrays[i].releaseAttribs(shader);
     }
   }
 };
