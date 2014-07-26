@@ -70,7 +70,8 @@ function Move(from, to, duration) {
 derive(Move, Animation);
 
 Move.prototype._setTo = function(t) {
-  vec3.lerp(this._current, this._from, this._to, t);
+  var smoothInterval = (1 - Math.cos(t * Math.PI ) ) / 2;
+  vec3.lerp(this._current, this._from, this._to, smoothInterval);
   return this._current;
 };
 

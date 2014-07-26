@@ -69,6 +69,7 @@ function PV(domElement, opts) {
   this._options = {
     width : (opts.width || 500),
     height : (opts.height || 500),
+    animateTime : (opts.animateTime || 100),
     antialias : opts.antialias,
     quality : opts.quality || 'low',
     style : opts.style || 'hemilight',
@@ -489,9 +490,9 @@ PV.prototype._mouseDoubleClick = (function() {
     var pos = picked.object().atom.pos();
     if (picked.transform()) {
       vec3.transformMat4(transformedPos, pos, picked.transform());
-      this.setCenter(transformedPos, 100);
+      this.setCenter(transformedPos, this._options.animateTime);
     } else {
-      this.setCenter(pos, 100);
+      this.setCenter(pos, this._options.animateTime);
       }
     this.requestRedraw();
   };
