@@ -157,27 +157,6 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, view) {
 
 
 TraceVertexAssoc.prototype.setTransparency = function( val, view) {
-  // FIXME: this function might create quite a few temporary buffers. Implement
-  // a buffer pool to avoid hitting the GC and having to go through the slow
-  // creation of typed arrays.
-
-  var colorData = [];
-  var i, j;
-  var traces = this._structure.backboneTraces();
-  for (i = 0; i < traces.length; ++i) {
-    // get current residue colors
-    var data = this._perResidueColors[i];
-    var index = 0;
-    var trace = traces[i];
-    for (j = 0; j < trace.length(); ++j) {
-      if (!view.containsResidue(trace.residueAt(j))) {
-        index+=4;
-        continue;
-      }
-      index+=4;
-    }
-  }
-
   // store the color in the actual interleaved vertex array.
   for (i = 0; i < this._assocs.length; ++i) {
     var assoc = this._assocs[i];
