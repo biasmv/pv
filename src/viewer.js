@@ -81,6 +81,7 @@ function PV(domElement, opts) {
   this._redrawRequested = false;
   this._resize = false;
   this._lastTimestamp = null;
+  this._isTouchSupported = 'ontouchstart' in window;
   // NOTE: make sure to only request features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
   // detection only happens in PV._initGL. Once this happened, we are
@@ -107,6 +108,7 @@ function PV(domElement, opts) {
       center : null, zoom : null, 
       rotation : null 
   };
+  this._blend = true;
   this.quality(this._options.quality);
   this._canvas.width = this._options.width;
   this._canvas.height = this._options.height;
@@ -307,6 +309,22 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
     console.error(this._gl.getShaderInfoLog(shaderProgram));
     return null;
   }
+
+  this._gl.clearColor(1., 1., 1., 1);
+//  this._gl.clearColor(0., 0., 0., 1);
+
+  if(this._blend) {
+    this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
+    this._gl.depthFunc(this._gl.LESS);
+    this._gl.enable(this._gl.BLEND);
+    this._gl.blendFunc(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA);
+  }
+  else {
+    this._gl.enable(this._gl.CULL_FACE);
+    this._gl.enable(this._gl.DEPTH_TEST);
+  }
+
+
   // get vertex attribute location for the shader once to
   // avoid repeated calls to getAttribLocation/getUniformLocation
   var getAttribLoc = bind(this._gl, this._gl.getAttribLocation);
@@ -329,13 +347,14 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
 };
 
 PV.prototype._mouseUp = function(event) {
-  this._canvas.removeEventListener('mousemove', this._mouseRotateListener,
-                                   false);
+  this._canvas.removeEventListener('mousemove', this._mouseRotateListener, false);
   this._canvas.removeEventListener('mousemove', this._mousePanListener, false);
+  this._canvas.removeEventListener('mousemove', this._mouseSpinListener, false);
   this._canvas.removeEventListener('mouseup', this._mouseUpListener, false);
   document.removeEventListener('mouseup', this._mouseUpListener, false);
   document.removeEventListener('mousemove', this._mouseRotateListener);
   document.removeEventListener('mousemove', this._mousePanListener);
+  document.removeEventListener('mousemove', this._mouseSpinListener);
 };
 
 PV.prototype._initPV = function() {
@@ -358,24 +377,35 @@ PV.prototype._initPV = function() {
     text : this._initShader(shaders.TEXT_VS, shaders.TEXT_FS),
     select : this._initShader(shaders.SELECT_VS, shaders.SELECT_FS)
   };
-  this._mousePanListener = bind(this, this._mousePan);
-  this._mouseRotateListener = bind(this, this._mouseRotate);
-  this._mouseUpListener = bind(this, this._mouseUp);
+
   this._boundDraw = bind(this, this._draw);
-  // Firefox responds to the wheel event, whereas other browsers listen to
-  // the mousewheel event. Register different event handlers, depending on
-  // what properties are available.
-  if ('onwheel' in this._canvas) {
-    this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF),
+
+  if(  this._isTouchSupported ) {
+    this._touchRotateListener = bind(this, this._touchRotate);
+    this._canvas.addEventListener('touchstart', bind(this, this._touchStart), false);
+    this._touchEndListener = bind(this, this._touchEnd);
+  }
+  else {
+    this._mousePanListener = bind(this, this._mousePan);
+    this._mouseRotateListener = bind(this, this._mouseRotate);
+    this._mouseSpinListener = bind(this, this._mouseSpin);
+    this._mouseUpListener = bind(this, this._mouseUp);
+
+    // Firefox responds to the wheel event, whereas other browsers listen to
+    // the mousewheel event. Register different event handlers, depending on
+    // what properties are available.
+    if ('onwheel' in this._canvas) {
+      this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF),
+                                    false);
+    } else {
+      this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel),
+                                    false);
+    }
+    this._canvas.addEventListener('dblclick', bind(this, this._mouseDoubleClick),
                                   false);
-  } else {
-    this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel),
+    this._canvas.addEventListener('mousedown', bind(this, this._mouseDown),
                                   false);
   }
-  this._canvas.addEventListener('dblclick', bind(this, this._mouseDoubleClick),
-                                false);
-  this._canvas.addEventListener('mousedown', bind(this, this._mouseDown),
-                                false);
   return true;
 };
 
@@ -466,6 +496,94 @@ PV.prototype.clear = function() {
   this._objects = [];
 };
 
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// TOUCH EVENT FUNCTIONS
+//
+
+PV.prototype._touchStart = function(event) {
+  event.preventDefault();
+  this._canvas.addEventListener('touchmove', this._touchRotateListener, false);
+  document.addEventListener('touchmove', this._touchRotateListener, false);
+  this._canvas.addEventListener('touchend', this._touchEndListener, false);
+  document.addEventListener('touchend', this._touchEndListener, false);
+  this._firstTouchPos = event.touches;
+  this._lastTouchPos = event.touches;
+  return;
+};
+
+
+PV.prototype._touchRotate = function(event) {
+  var newTouchPos = event.changedTouches;
+  if( event.touches.length==1 ) {
+    var delta = {
+      x : newTouchPos[0].pageX - this._lastTouchPos[0].pageX,
+      y : newTouchPos[0].pageY - this._lastTouchPos[0].pageY
+    };
+
+    var speed = 0.005;
+    this._cam.rotateX(speed * delta.y);
+    this._cam.rotateY(speed * delta.x);
+    this._lastTouchPos = newTouchPos;
+
+    /*
+    // double click
+    var transformedPos = vec3.create();
+    var rect = this._canvas.getBoundingClientRect();
+    var picked = this.pick(
+        { x : event.clientX - rect.left, y : event.clientY - rect.top });
+    if (!picked) {
+      return;
+    }
+    var pos = picked.object().atom.pos();
+    if (picked.transform()) {
+      vec3.transformMat4(transformedPos, pos, picked.transform());
+      this.setCenter(transformedPos, this._options.animateTime);
+    } else {
+      this.setCenter(pos, this._options.animateTime);
+      }
+    this.requestRedraw();
+    */
+  }
+  else if( event.touches.length==2 ) {
+    //translate
+    var delta = {
+      x : newTouchPos[0].pageX - this._lastTouchPos[0].pageX,
+      y : newTouchPos[0].pageY - this._lastTouchPos[0].pageY
+    };
+    var speed = 0.05;
+    this._cam.panXY(speed * delta.x, speed * delta.y);
+
+    // spin
+    var beg_slope = (this._firstTouchPos[0].pageY-this._firstTouchPos[1].pageY)/(this._firstTouchPos[0].pageX-this._firstTouchPos[1].pageX);
+    var curr_slope = ((newTouchPos[0].pageY-newTouchPos[1].pageY)/(newTouchPos[0].pageX-newTouchPos[1].pageX));
+    var delta_slope = beg_slope - curr_slope;
+    var speed = 0.005;
+    this._cam.rotateZ(speed * delta_slope);
+/*
+    // zoom
+    var delta = (this._firstTouchPos[0].pageX-this._firstTouchPos[1].pageX) - (newTouchPos[0].pageX-newTouchPos[1].pageX);
+    delta    += (this._firstTouchPos[0].pageY-this._firstTouchPos[1].pageY) - (newTouchPos[0].pageY-newTouchPos[1].pageY);
+    this._cam.zoom( delta < 0 ? 1 : -1);
+*/
+  }
+
+  this._lastTouchPos = event.touches;
+  this.requestRedraw();
+};
+
+PV.prototype._touchEnd = function(event) {
+  this._canvas.removeEventListener('touchmove', this._touchRotateListener, false);
+  document.removeEventListener('touchmove', this._touchRotateListener, false);
+  this._canvas.removeEventListener('touchmove', this._touchEndListener, false);
+  document.removeEventListener('touchmove', this._touchEndListener, false);
+}
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// MOUSE EVENT FUNCTIONS
+//
+
 PV.prototype._mouseWheel = function(event) {
   this._cam.zoom(event.wheelDelta < 0 ? -1 : 1);
   event.preventDefault();
@@ -499,21 +617,37 @@ PV.prototype._mouseDoubleClick = (function() {
 })();
 
 PV.prototype._mouseDown = function(event) {
-  if (event.button !== 0) {
-    return;
+  switch( event.button ) {
+    case 0:
+      event.preventDefault();
+      if (event.shiftKey === true) {
+        this._canvas.addEventListener('mousemove', this._mousePanListener, false);
+        document.addEventListener('mousemove', this._mousePanListener, false);
+      } else if (event.ctrlKey === true) {
+        this._canvas.addEventListener('mousemove', this._mouseSpinListener, false);
+        document.addEventListener('mousemove', this._mouseSpinListener, false);
+      } else {
+        this._canvas.addEventListener('mousemove', this._mouseRotateListener, false);
+        document.addEventListener('mousemove', this._mouseRotateListener, false);
+      }
+      this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
+      document.addEventListener('mouseup', this._mouseUpListener, false);
+      this._lastMousePos = { x : event.pageX, y : event.pageY };
+      break;
+
+    case 1:
+      event.preventDefault();
+      this._canvas.addEventListener('mousemove', this._mousePanListener, false);
+      document.addEventListener('mousemove', this._mousePanListener, false);
+      this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
+      document.addEventListener('mouseup', this._mouseUpListener, false);
+      this._lastMousePos = { x : event.pageX, y : event.pageY };
+      break;
+
+    default:
+      break;
   }
-  event.preventDefault();
-  if (event.shiftKey === true) {
-    this._canvas.addEventListener('mousemove', this._mousePanListener, false);
-    document.addEventListener('mousemove', this._mousePanListener, false);
-  } else {
-    this._canvas.addEventListener('mousemove', this._mouseRotateListener,
-                                  false);
-    document.addEventListener('mousemove', this._mouseRotateListener, false);
-  }
-  this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
-  document.addEventListener('mouseup', this._mouseUpListener, false);
-  this._lastMousePos = { x : event.pageX, y : event.pageY };
+  return;
 };
 
 PV.prototype._mouseRotate = function(event) {
@@ -526,6 +660,20 @@ PV.prototype._mouseRotate = function(event) {
   var speed = 0.005;
   this._cam.rotateX(speed * delta.y);
   this._cam.rotateY(speed * delta.x);
+  this._lastMousePos = newMousePos;
+  this.requestRedraw();
+};
+
+PV.prototype._mouseSpin = function(event) {
+  var newMousePos = { x : event.pageX, y : event.pageY };
+  var delta = {
+    x : newMousePos.x - this._lastMousePos.x,
+    y : newMousePos.y - this._lastMousePos.y
+  };
+
+  var speed = 0.005;
+  this._cam.rotateZ(speed * delta.y);
+  //this._cam.rotateY(speed * delta.x);
   this._lastMousePos = newMousePos;
   this.requestRedraw();
 };
@@ -576,7 +724,7 @@ PV.prototype._handleStandardOptions = function(opts) {
 
 PV.prototype.lineTrace = function(name, structure, opts) {
   var options = this._handleStandardOptions(opts);
-  options.color = options.color || color.uniform([ 1, 0, 1 ]);
+  options.color = options.color || color.uniform([ 1, 0, 1, 1 ]);
   options.lineWidth = options.lineWidth || 4.0;
 
   var obj = render.lineTrace(structure, this._gl, options);
@@ -595,7 +743,7 @@ PV.prototype.spheres = function(name, structure, opts) {
 
 PV.prototype.sline = function(name, structure, opts) {
   var options = this._handleStandardOptions(opts);
-  options.color = options.color || color.uniform([ 1, 0, 1 ]);
+  options.color = options.color || color.uniform([ 1, 0, 1, 1 ]);
   options.splineDetail = options.splineDetail || this.options('splineDetail');
   options.strength = options.strength || 1.0;
   options.lineWidth = options.lineWidth || 4.0;
@@ -654,13 +802,19 @@ PV.prototype.lines = function(name, structure, opts) {
 
 PV.prototype.trace = function(name, structure, opts) {
   var options = this._handleStandardOptions(opts);
-  options.color = options.color || color.uniform([ 1, 0, 0 ]);
+  options.color = options.color || color.uniform([ 1, 0, 0, 1 ]);
   options.radius = options.radius || 0.3;
   options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
   options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
 
   var obj = render.trace(structure, this._gl, options);
   return this.add(name, obj);
+};
+
+PV.prototype.polygon = function(name, structure, opts) {
+  var options = this._handleStandardOptions(opts);
+  var obj = render.polygon(structure, this._gl, options);
+  return this.add(name, obj);	
 };
 
 PV.prototype._axesFromCamRotation = function() {
@@ -856,9 +1010,7 @@ PV.prototype.pick = function(pos) {
 PV.prototype.add = function(name, obj) {
   obj.name(name);
   this._objects.push(obj);
-  // keep items sorted according to order. that's quick hack to fix
-  // issues with transparent object.
-  this._objects.sort(function(lhs, rhs) { return lhs.order() - rhs.order(); });
+  //this._objects.sort(function(lhs, rhs) { return lhs.order() - rhs.order(); });
   this.requestRedraw();
   return obj;
 };

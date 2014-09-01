@@ -28,6 +28,12 @@
     <script src='src/slab.js'></script>
     <script src='src/animation.js'></script>
     <script src='src/viewer.js'></script>
+    <script src='src/gunzip.js'></script>
+
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css">
+  <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+  <script src="//code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
+
     <style>
     body {
       font-family: Helvetica;
@@ -162,6 +168,7 @@
       border-style:solid;
       border-width:1px;
     }
+    .sl { display: block; }
     </style>
     </head>
 <body>
@@ -170,6 +177,7 @@
     placeholder='Enter PDB identifier to load' />&nbsp;&nbsp;<span id=status></span>
   </div>
   <div id=inspector>
+
     <span class=btn onclick='showTab("styleTab")'>Style</span>
     <span class=btn onclick='showTab("colorTab")'>Color</span>
     <ul id=styleTab>
@@ -197,6 +205,7 @@
     </ul>
      <ul>
       <h1></h1>
+      <li><div id="slider" class="sl"></div></li>
       <li><input type="checkbox" name="outline" 
                  value="yes" id=showOutline autocomplete=off>Show Outline</li>
       <li><input type="checkbox" name="fog" 
@@ -214,6 +223,7 @@
        <li id=1rb8>Capsid</li>
     </ul>
   </div>
+
   <div id=gl>
   </div>
   <div id=copyright>Copyright (2014) Marco Biasini</div>
@@ -222,7 +232,7 @@
     var activeTab = 'styleTab';
     $('#colorTab').hide();
     var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'medium', width: 500, height : 500,
+                       { quality : 'medium', width: 800, height : 800,
                          antialias : true, outline : false,
                         slabMode : 'auto'});
     var structure;
@@ -277,11 +287,18 @@
       pv.ballsAndSticks('structure.ligand', ligand, { 
         showRelated: '1' 
       });
-      pv.cartoon('structure.protein', structure, { showRelated : '1' });
+      pv.cartoon('structure.protein', structure, { showRelated : '1' , color : color.rainbow()});
+      //pv.polygon('structure.plane', structure, { showRelated : '1' });
     }
 
     function load(pdb_id) {
-      $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
+      $.ajax({ url : 'pdbs/1ake.pdb' /*+pdb_id+'.pdb'*/, success : function(data) {
+/*
+alert( data );
+var inflate = new Zlib.Gunzip.Inflate(data);
+var plain = inflate.decompress(); 
+data = plain;
+*/
         structure = io.pdb(data);
         //mol.assignHelixSheet(structure);
         preset();
@@ -291,6 +308,18 @@
     function kinase() {
       load('1ake');
     }
+
+    $(function() {
+      $( "#slider" ).slider({
+        slide: function(event, ui) {
+          pv.forEach(function(go) {
+            go.setTransparency( ui.value/100. , structure );
+          });
+          pv.requestRedraw();
+        }
+      })
+    });
+
     function showTab(tabName) {
       $('#'+activeTab).hide();
       $('#'+tabName).show();
@@ -322,7 +351,7 @@
 
     function uniform() {
       pv.forEach(function(go) {
-        go.colorBy(color.uniform([0,1,0]));
+        go.colorBy(color.uniform([1,1,0,1]));
       });
       pv.requestRedraw();
     }
@@ -369,6 +398,27 @@
       }
       auto = !auto;
     }
+
+
+      var st = $('#status')
+      st.show();
+/*      var pdbId = '2bl2';
+      this.value = '';
+      this.blur();
+      st.text('retrieving file from pdb.org. This may take a while');
+      $.ajax('http://pdb.org/pdb/files/'+pdbId+'.pdb')
+        .done(function(data) {
+          st.text('loaded');
+          structure = io.pdb(data);
+          cartoon();
+          pv.autoZoom();
+          st.fadeOut(2000);
+        })
+        .fail(function() {
+          st.text('could not load '+pdbId+' from PDB.org');
+          st.fadeOut(2000);
+        });
+*/
 
     $('#cartoon').click(cartoon);
     $('#line-trace').click(lineTrace);
