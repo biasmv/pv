@@ -176,11 +176,6 @@ TraceVertexAssoc.prototype.setTransparency = function( val, view) {
       }
       index+=4;
     }
-    if (this._interpolation > 1) {
-      colorData.push(interpolateColor(data, this._interpolation));
-    } else {
-      colorData.push(data);
-    }
   }
 
   // store the color in the actual interleaved vertex array.
