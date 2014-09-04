@@ -582,32 +582,6 @@ exports.cartoon = function(structure, gl, options) {
   return meshGeom;
 };
 
-exports.polygon = function(structure, gl, options) {
-  console.time('polygon');
-  var pos = vec3.create();
-  var normal = vec3.create();
-  var color = vec4.fromValues(0.0, 0.0, 0.0, 0.4); // polygon
-  var meshGeom = new MeshGeom(gl, options.float32Allocator, options.uint16Allocator);
-  var vertAssoc = new TraceVertexAssoc(structure, options.splineDetail, true);
-
-  meshGeom.setShowRelated('asym');
-  var numVerts = 4;
-  var numFaces = 2;
-  var va = meshGeom.addVertArray(numVerts, numFaces * 3);
-  var i;
-  for (i = 0 ; i < numVerts; ++i) {
-    vec3.set(pos, i*10*Math.pow(-1, i), i*10, 0 );
-    vec3.set(normal, 0.0, 0.0, 1.0);
-    va.addVertex(pos, normal, color, 0);
-  }
-  for (i = 0 ; i < numFaces; ++i) {
-    va.addTriangle(i, i+1, i+2);
-    va.addTriangle(i+2, i+1, i);
-  }
-  console.timeEnd('polygon');
-  return meshGeom;
-};
-
 exports.surface = (function() {
   var pos = vec3.create(), normal = vec3.create(), 
       color = vec4.fromValues(0.8, 0.8, 0.8, 1.0);
