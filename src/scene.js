@@ -482,7 +482,6 @@ MeshGeom.prototype.colorBy = function(colorFunc, view) {
   this._ready = false;
   view = view || this.structure();
   this._vertAssoc.recolor(colorFunc, view);
-  this._vertAssoc.setTransparency( .2 , view);
   console.timeEnd('MeshGeom.colorBy');
 };
 

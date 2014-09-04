@@ -81,7 +81,6 @@ function PV(domElement, opts) {
   this._redrawRequested = false;
   this._resize = false;
   this._lastTimestamp = null;
-  this._isTouchSupported = 'ontouchstart' in window;
   // NOTE: make sure to only request features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
   // detection only happens in PV._initGL. Once this happened, we are
@@ -349,12 +348,10 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
 PV.prototype._mouseUp = function(event) {
   this._canvas.removeEventListener('mousemove', this._mouseRotateListener, false);
   this._canvas.removeEventListener('mousemove', this._mousePanListener, false);
-  this._canvas.removeEventListener('mousemove', this._mouseSpinListener, false);
   this._canvas.removeEventListener('mouseup', this._mouseUpListener, false);
   document.removeEventListener('mouseup', this._mouseUpListener, false);
   document.removeEventListener('mousemove', this._mouseRotateListener);
   document.removeEventListener('mousemove', this._mousePanListener);
-  document.removeEventListener('mousemove', this._mouseSpinListener);
 };
 
 PV.prototype._initPV = function() {
@@ -380,32 +377,25 @@ PV.prototype._initPV = function() {
 
   this._boundDraw = bind(this, this._draw);
 
-  if(  this._isTouchSupported ) {
-    this._touchRotateListener = bind(this, this._touchRotate);
-    this._canvas.addEventListener('touchstart', bind(this, this._touchStart), false);
-    this._touchEndListener = bind(this, this._touchEnd);
-  }
-  else {
-    this._mousePanListener = bind(this, this._mousePan);
-    this._mouseRotateListener = bind(this, this._mouseRotate);
-    this._mouseSpinListener = bind(this, this._mouseSpin);
-    this._mouseUpListener = bind(this, this._mouseUp);
+  this._mousePanListener = bind(this, this._mousePan);
+  this._mouseRotateListener = bind(this, this._mouseRotate);
+  this._mouseUpListener = bind(this, this._mouseUp);
 
-    // Firefox responds to the wheel event, whereas other browsers listen to
-    // the mousewheel event. Register different event handlers, depending on
-    // what properties are available.
-    if ('onwheel' in this._canvas) {
-      this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF),
-                                    false);
-    } else {
-      this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel),
-                                    false);
-    }
-    this._canvas.addEventListener('dblclick', bind(this, this._mouseDoubleClick),
-                                  false);
-    this._canvas.addEventListener('mousedown', bind(this, this._mouseDown),
-                                  false);
+  // Firefox responds to the wheel event, whereas other browsers listen to
+  // the mousewheel event. Register different event handlers, depending on
+  // what properties are available.
+  if ('onwheel' in this._canvas) {
+  this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF),
+                              false);
+  } else {
+  this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel),
+                              false);
   }
+  this._canvas.addEventListener('dblclick', bind(this, this._mouseDoubleClick),
+                            false);
+  this._canvas.addEventListener('mousedown', bind(this, this._mouseDown),
+                            false);
+
   return true;
 };
 
@@ -496,94 +486,6 @@ PV.prototype.clear = function() {
   this._objects = [];
 };
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// TOUCH EVENT FUNCTIONS
-//
-
-PV.prototype._touchStart = function(event) {
-  event.preventDefault();
-  this._canvas.addEventListener('touchmove', this._touchRotateListener, false);
-  document.addEventListener('touchmove', this._touchRotateListener, false);
-  this._canvas.addEventListener('touchend', this._touchEndListener, false);
-  document.addEventListener('touchend', this._touchEndListener, false);
-  this._firstTouchPos = event.touches;
-  this._lastTouchPos = event.touches;
-  return;
-};
-
-
-PV.prototype._touchRotate = function(event) {
-  var newTouchPos = event.changedTouches;
-  if( event.touches.length==1 ) {
-    var delta = {
-      x : newTouchPos[0].pageX - this._lastTouchPos[0].pageX,
-      y : newTouchPos[0].pageY - this._lastTouchPos[0].pageY
-    };
-
-    var speed = 0.005;
-    this._cam.rotateX(speed * delta.y);
-    this._cam.rotateY(speed * delta.x);
-    this._lastTouchPos = newTouchPos;
-
-    /*
-    // double click
-    var transformedPos = vec3.create();
-    var rect = this._canvas.getBoundingClientRect();
-    var picked = this.pick(
-        { x : event.clientX - rect.left, y : event.clientY - rect.top });
-    if (!picked) {
-      return;
-    }
-    var pos = picked.object().atom.pos();
-    if (picked.transform()) {
-      vec3.transformMat4(transformedPos, pos, picked.transform());
-      this.setCenter(transformedPos, this._options.animateTime);
-    } else {
-      this.setCenter(pos, this._options.animateTime);
-      }
-    this.requestRedraw();
-    */
-  }
-  else if( event.touches.length==2 ) {
-    //translate
-    var delta = {
-      x : newTouchPos[0].pageX - this._lastTouchPos[0].pageX,
-      y : newTouchPos[0].pageY - this._lastTouchPos[0].pageY
-    };
-    var speed = 0.05;
-    this._cam.panXY(speed * delta.x, speed * delta.y);
-
-    // spin
-    var beg_slope = (this._firstTouchPos[0].pageY-this._firstTouchPos[1].pageY)/(this._firstTouchPos[0].pageX-this._firstTouchPos[1].pageX);
-    var curr_slope = ((newTouchPos[0].pageY-newTouchPos[1].pageY)/(newTouchPos[0].pageX-newTouchPos[1].pageX));
-    var delta_slope = beg_slope - curr_slope;
-    var speed = 0.005;
-    this._cam.rotateZ(speed * delta_slope);
-/*
-    // zoom
-    var delta = (this._firstTouchPos[0].pageX-this._firstTouchPos[1].pageX) - (newTouchPos[0].pageX-newTouchPos[1].pageX);
-    delta    += (this._firstTouchPos[0].pageY-this._firstTouchPos[1].pageY) - (newTouchPos[0].pageY-newTouchPos[1].pageY);
-    this._cam.zoom( delta < 0 ? 1 : -1);
-*/
-  }
-
-  this._lastTouchPos = event.touches;
-  this.requestRedraw();
-};
-
-PV.prototype._touchEnd = function(event) {
-  this._canvas.removeEventListener('touchmove', this._touchRotateListener, false);
-  document.removeEventListener('touchmove', this._touchRotateListener, false);
-  this._canvas.removeEventListener('touchmove', this._touchEndListener, false);
-  document.removeEventListener('touchmove', this._touchEndListener, false);
-}
-
-
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-// MOUSE EVENT FUNCTIONS
-//
-
 PV.prototype._mouseWheel = function(event) {
   this._cam.zoom(event.wheelDelta < 0 ? -1 : 1);
   event.preventDefault();
@@ -617,37 +519,21 @@ PV.prototype._mouseDoubleClick = (function() {
 })();
 
 PV.prototype._mouseDown = function(event) {
-  switch( event.button ) {
-    case 0:
-      event.preventDefault();
-      if (event.shiftKey === true) {
-        this._canvas.addEventListener('mousemove', this._mousePanListener, false);
-        document.addEventListener('mousemove', this._mousePanListener, false);
-      } else if (event.ctrlKey === true) {
-        this._canvas.addEventListener('mousemove', this._mouseSpinListener, false);
-        document.addEventListener('mousemove', this._mouseSpinListener, false);
-      } else {
-        this._canvas.addEventListener('mousemove', this._mouseRotateListener, false);
-        document.addEventListener('mousemove', this._mouseRotateListener, false);
-      }
-      this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
-      document.addEventListener('mouseup', this._mouseUpListener, false);
-      this._lastMousePos = { x : event.pageX, y : event.pageY };
-      break;
-
-    case 1:
-      event.preventDefault();
-      this._canvas.addEventListener('mousemove', this._mousePanListener, false);
-      document.addEventListener('mousemove', this._mousePanListener, false);
-      this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
-      document.addEventListener('mouseup', this._mouseUpListener, false);
-      this._lastMousePos = { x : event.pageX, y : event.pageY };
-      break;
-
-    default:
-      break;
+  if (event.button !== 0) {
+    return;
   }
-  return;
+  event.preventDefault();
+  if (event.shiftKey === true) {
+    this._canvas.addEventListener('mousemove', this._mousePanListener, false);
+    document.addEventListener('mousemove', this._mousePanListener, false);
+  } else {
+    this._canvas.addEventListener('mousemove', this._mouseRotateListener,
+                                  false);
+    document.addEventListener('mousemove', this._mouseRotateListener, false);
+  }
+  this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
+  document.addEventListener('mouseup', this._mouseUpListener, false);
+  this._lastMousePos = { x : event.pageX, y : event.pageY };
 };
 
 PV.prototype._mouseRotate = function(event) {
@@ -660,20 +546,6 @@ PV.prototype._mouseRotate = function(event) {
   var speed = 0.005;
   this._cam.rotateX(speed * delta.y);
   this._cam.rotateY(speed * delta.x);
-  this._lastMousePos = newMousePos;
-  this.requestRedraw();
-};
-
-PV.prototype._mouseSpin = function(event) {
-  var newMousePos = { x : event.pageX, y : event.pageY };
-  var delta = {
-    x : newMousePos.x - this._lastMousePos.x,
-    y : newMousePos.y - this._lastMousePos.y
-  };
-
-  var speed = 0.005;
-  this._cam.rotateZ(speed * delta.y);
-  //this._cam.rotateY(speed * delta.x);
   this._lastMousePos = newMousePos;
   this.requestRedraw();
 };
@@ -809,12 +681,6 @@ PV.prototype.trace = function(name, structure, opts) {
 
   var obj = render.trace(structure, this._gl, options);
   return this.add(name, obj);
-};
-
-PV.prototype.polygon = function(name, structure, opts) {
-  var options = this._handleStandardOptions(opts);
-  var obj = render.polygon(structure, this._gl, options);
-  return this.add(name, obj);	
 };
 
 PV.prototype._axesFromCamRotation = function() {

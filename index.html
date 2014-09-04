@@ -28,11 +28,12 @@
     <script src='src/slab.js'></script>
     <script src='src/animation.js'></script>
     <script src='src/viewer.js'></script>
-    <script src='src/gunzip.js'></script>
 
-  <link rel="stylesheet" href="//code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css">
-  <script src="//code.jquery.com/jquery-1.10.2.js"></script>
-  <script src="//code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
+    <script src='lib/gunzip.min.js'></script>
+
+    <link rel="stylesheet" href="//code.jquery.com/ui/1.11.1/themes/smoothness/jquery-ui.css">
+    <script src="//code.jquery.com/jquery-1.10.2.js"></script>
+    <script src="//code.jquery.com/ui/1.11.1/jquery-ui.js"></script>
 
     <style>
     body {
@@ -291,20 +292,62 @@
       //pv.polygon('structure.plane', structure, { showRelated : '1' });
     }
 
-    function load(pdb_id) {
-      $.ajax({ url : 'pdbs/1ake.pdb' /*+pdb_id+'.pdb'*/, success : function(data) {
-/*
-alert( data );
-var inflate = new Zlib.Gunzip.Inflate(data);
-var plain = inflate.decompress(); 
-data = plain;
-*/
-        structure = io.pdb(data);
-        //mol.assignHelixSheet(structure);
-        preset();
-        pv.autoZoom();
-      }});
+    function load(URI) {  
+
+      var data = "";
+
+      if( /\.gz$/.test( URI ) ) {
+        // jquery ajax may have some issue on request binary data
+        var oReq = new XMLHttpRequest();
+        if(!oReq) oReq=new ActiveXObject("Microsoft.XMLHTTP"); // for <IE7
+
+        oReq.responseType = "arraybuffer";
+
+        oReq.onload = function (oEvent) {
+          var st = $('#status')
+          st.show();
+          st.text('unpacking ...');
+
+          var arrayBuffer = oReq.response; // Note: not oReq.responseText
+          if (arrayBuffer) {
+            var byteArray = new Uint8Array(arrayBuffer);
+            var compressed = byteArray;
+            var gunzip = new Zlib.Gunzip(compressed);
+            var plain = gunzip.decompress();
+            for (var i = 0; i < plain.length; i++) {
+             data += String.fromCharCode(plain[i]);
+            }
+          }
+          st.fadeOut(2000);
+          load_data( data );
+          delete arrayBuffer;
+        };
+        oReq.open("GET", URI, true);
+        oReq.send(null);
+      }
+      else {
+        $.ajax({
+          url: "http://pdb.org/pdb/files/"+URI+".pdb"
+        })
+          .done(function(data) {
+            load_data( data );
+          })
+          .fail(function() {
+            alert('could not load '+URI+' from pdbtm.enzim.hu');
+          });
+      }
     }
+
+
+    function load_data( data ) {
+      var structure = io.pdb(data);
+      //tpv.clear();
+      pv.options('fog', 'false');
+      pv.cartoon('structure', structure, { color : color.rainbow(), showRelated : '1' });
+      pv.autoZoom();
+
+    }
+
     function kinase() {
       load('1ake');
     }
@@ -312,8 +355,9 @@ data = plain;
     $(function() {
       $( "#slider" ).slider({
         slide: function(event, ui) {
+
           pv.forEach(function(go) {
-            go.setTransparency( ui.value/100. , structure );
+            go.setTransparency( ui.value/100. , go );
           });
           pv.requestRedraw();
         }
@@ -451,18 +495,7 @@ data = plain;
       this.value = '';
       this.blur();
       st.text('retrieving file from pdb.org. This may take a while');
-      $.ajax('http://pdb.org/pdb/files/'+pdbId+'.pdb')
-        .done(function(data) {
-          st.text('loaded');
-          structure = io.pdb(data);
-          cartoon();
-          pv.autoZoom();
-          st.fadeOut(2000);
-        })
-        .fail(function() {
-          st.text('could not load '+pdbId+' from PDB.org');
-          st.fadeOut(2000);
-        });
+      load( pdbId);
     });
     $('#save').click(function() {
       var imgDataURL = pv.imageData();

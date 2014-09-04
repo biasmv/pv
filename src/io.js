@@ -214,8 +214,35 @@ function pdb(text) {
   return structure;
 }
 
+
+function Polygon() {
+}
+
+function ply(text) {
+  console.time('pdb'); 
+  var structure = new mol.Mol();
+  var currChain = null;
+  var currRes = null;
+  var currAtom = null;
+  
+  var helices = [];
+  var sheets = [];
+  
+  console.log('imported', structure.chains().length, 'chain(s),',
+              structure.residueCount(), 'residue(s)');
+  console.timeEnd('pdb');
+
+  return structure;
+}
+
+
 exports.io = {};
 exports.io.pdb = pdb;
 exports.io.Remark350Reader = Remark350Reader;
+exports.io.pyl = ply;
+
 }(this));
+
+
+
 

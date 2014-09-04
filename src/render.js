@@ -588,6 +588,7 @@ exports.polygon = function(structure, gl, options) {
   var normal = vec3.create();
   var color = vec4.fromValues(0.0, 0.0, 0.0, 0.4); // polygon
   var meshGeom = new MeshGeom(gl, options.float32Allocator, options.uint16Allocator);
+  var vertAssoc = new TraceVertexAssoc(structure, options.splineDetail, true);
 
   meshGeom.setShowRelated('asym');
   var numVerts = 4;
@@ -601,6 +602,7 @@ exports.polygon = function(structure, gl, options) {
   }
   for (i = 0 ; i < numFaces; ++i) {
     va.addTriangle(i, i+1, i+2);
+    va.addTriangle(i+2, i+1, i);
   }
   console.timeEnd('polygon');
   return meshGeom;
