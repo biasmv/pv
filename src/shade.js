@@ -75,20 +75,25 @@ exports.forceRGB = function(color) {
       return lookup;
     }
     if (color.length > 0 && color[0] === '#') {
-      var r, g, b;
-      if (color.length === 4) {
+      var r, g, b, a;
+      if (color.length === 4 || color.length === 5 ) {
         r = parseInt(color[1], 16);
         g = parseInt(color[2], 16);
         b = parseInt(color[3], 16);
+        a = 1.0;
+        if(color.length===5)
+          a = parseInt(color[4], 16);
         var oneOver15 = 1/15.0;
-        return rgb.fromValues(oneOver15 * r, oneOver15 * g, oneOver15 * b, 1);
+        return rgb.fromValues(oneOver15 * r, oneOver15 * g, oneOver15 * b, oneOver15 * a);
       }
-      if (color.length === 7) {
+      if (color.length === 7 || color.length === 9) {
         r = parseInt(color.substr(1, 2), 16);
         g = parseInt(color.substr(3, 2), 16);
         b = parseInt(color.substr(5, 2), 16);
+        if(color.length===9)
+          a = parseInt(color.substr(7, 2), 16);
         var oneOver255 = 1/255.0;
-        return rgb.fromValues(oneOver255 * r, oneOver255 * g, oneOver255 * b, 1);
+        return rgb.fromValues(oneOver255 * r, oneOver255 * g, oneOver255 * b, oneOver255 * a);
       }
     }
   }
@@ -185,7 +190,8 @@ exports.color.uniform = function(color) {
     out[index+0] = color[0];
     out[index+1] = color[1];
     out[index+2] = color[2];
-    out[index+3] = color[3];
+    if(color.length==4)
+      out[index+3] = color[3];
   }, null, null);
 };
 
@@ -347,7 +353,7 @@ exports.color.byChain = function(grad) {
     var t =  chainIndex*this.scale;
     var x = [0,0,0,0];
     grad.colorAt(x, t);
-    out[index] = x[0];
+    out[index+0] = x[0];
     out[index+1] = x[1];
     out[index+2] = x[2];
     out[index+3] = x[3];

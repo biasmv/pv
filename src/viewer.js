@@ -596,7 +596,7 @@ PV.prototype._handleStandardOptions = function(opts) {
 
 PV.prototype.lineTrace = function(name, structure, opts) {
   var options = this._handleStandardOptions(opts);
-  options.color = options.color || color.uniform([ 1, 0, 1, 1 ]);
+  options.color = options.color || color.uniform([ 1, 0, 1 ]);
   options.lineWidth = options.lineWidth || 4.0;
 
   var obj = render.lineTrace(structure, this._gl, options);
@@ -615,7 +615,7 @@ PV.prototype.spheres = function(name, structure, opts) {
 
 PV.prototype.sline = function(name, structure, opts) {
   var options = this._handleStandardOptions(opts);
-  options.color = options.color || color.uniform([ 1, 0, 1, 1 ]);
+  options.color = options.color || color.uniform([ 1, 0, 1 ]);
   options.splineDetail = options.splineDetail || this.options('splineDetail');
   options.strength = options.strength || 1.0;
   options.lineWidth = options.lineWidth || 4.0;
@@ -674,7 +674,7 @@ PV.prototype.lines = function(name, structure, opts) {
 
 PV.prototype.trace = function(name, structure, opts) {
   var options = this._handleStandardOptions(opts);
-  options.color = options.color || color.uniform([ 1, 0, 0, 1 ]);
+  options.color = options.color || color.uniform([ 1, 0, 0 ]);
   options.radius = options.radius || 0.3;
   options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
   options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
