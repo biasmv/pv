@@ -384,7 +384,6 @@ var slineMakeTrace = (function(trace) {
     var i, e;
     var idRange = options.idPool.getContinuousRange(trace.length());
     lineGeom.addIdRange(idRange);
-
     for (i = 0; i < trace.length(); ++i) {
       var atom = trace.centralAtomAt(i);
       trace.smoothPosAt(posOne, i, options.strength);
@@ -395,7 +394,6 @@ var slineMakeTrace = (function(trace) {
       objIds.push(idRange.nextId({ geom : lineGeom, atom : atom }));
     }
     var idStart = objIds[0], idEnd = 0;
-    vertAssoc.setPerResidueColors(traceIndex, colors);
     var sdiv = geom.catmullRomSpline(positions, trace.length(),
                                      options.splineDetail, options.strength,
                                      false, options.float32Allocator);
@@ -427,20 +425,22 @@ var slineMakeTrace = (function(trace) {
       vertAssoc.addAssoc(traceIndex, va, firstSlice + i, vertEnd - 1,
                          vertEnd + ((i === trace.length - 1) ? 0 : 1));
     }
-    options.float32Allocator.release(colors);
+    vertAssoc.setPerResidueColors(traceIndex, colors);
     options.float32Allocator.release(positions);
     options.float32Allocator.release(sdiv);
-    traceIndex += 1;
+    return traceIndex + 1;
   };
 })();
 
-var slineForChain = function(lineGeom, vertAssoc, options, chain) {
+var slineForChain = function(lineGeom, vertAssoc, options, chain, traceIndex) {
   var backboneTraces = chain.backboneTraces();
   var numVerts = _slineNumVerts(backboneTraces, options.splineDetail);
   var va = lineGeom.addChainVertArray(chain, numVerts);
   for (var i = 0; i < backboneTraces.length; ++i) {
-    slineMakeTrace(lineGeom, vertAssoc, va, options, i, backboneTraces[i]);
+    traceIndex = slineMakeTrace(lineGeom, vertAssoc, va, options, 
+                                traceIndex, backboneTraces[i]);
   }
+  return traceIndex;
 };
 
 exports.sline = function(structure, gl, options) {
@@ -451,8 +451,9 @@ exports.sline = function(structure, gl, options) {
   var lineGeom = new LineGeom(gl, options.float32Allocator);
   lineGeom.setLineWidth(options.lineWidth);
   lineGeom.setShowRelated(options.showRelated);
+  var traceIndex = 0;
   structure.eachChain(function(chain) {
-    slineForChain(lineGeom, vertAssoc, options, chain);
+    traceIndex = slineForChain(lineGeom, vertAssoc, options, chain, traceIndex);
   });
   lineGeom.setVertAssoc(vertAssoc);
   options.color.end(structure);

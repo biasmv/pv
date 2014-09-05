@@ -108,10 +108,12 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, view) {
   var colorData = [];
   var i, j;
   var traces = this._structure.backboneTraces();
+  console.assert(this._perResidueColors, 
+                 "per-residue colors must be set for recoloring to work");
   for (i = 0; i < traces.length; ++i) {
     // get current residue colors
     var data = this._perResidueColors[i];
-    console.assert(data, "out of range access");
+    console.assert(data, "no per-residue colors. Seriously, man?");
     var index = 0;
     var trace = traces[i];
     for (j = 0; j < trace.length(); ++j) {
