@@ -419,7 +419,7 @@ MeshGeom.prototype.vertArrayWithSpaceFor = function(numVerts) {
   this._remainingIndices = this._remainingIndices - currentVa.numIndices();
   numVerts = this._boundedVertArraySize(this._remainingVerts);
   var newVa = null;
-  if (currentVa instanceof MeshCainData) {
+  if (currentVa instanceof MeshChainData) {
     newVa = new MeshChainData(currentVa.chain(), this._gl, numVerts, 
                               this._remainingIndices,
                               this._float32Allocator, 
