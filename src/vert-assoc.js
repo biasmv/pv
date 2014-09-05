@@ -111,6 +111,7 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, view) {
   for (i = 0; i < traces.length; ++i) {
     // get current residue colors
     var data = this._perResidueColors[i];
+    console.assert(data, "out of range access");
     var index = 0;
     var trace = traces[i];
     for (j = 0; j < trace.length(); ++j) {

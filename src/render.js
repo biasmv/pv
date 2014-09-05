@@ -316,7 +316,7 @@ var makeLineTrace = (function() {
     colors[trace.length() * 3 - 1] = colorTwo[2];
     vertAssoc.setPerResidueColors(traceIndex, colors);
     options.float32Allocator.release(colors);
-    return traceIndex;
+    return traceIndex + 1;
   };
 })();
 
