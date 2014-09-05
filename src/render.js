@@ -276,9 +276,7 @@ var _lineTraceNumVerts = function(traces) {
   return numVerts;
 };
 
-
 var makeLineTrace = (function() {
-
   var colorOne = vec3.create(), colorTwo = vec3.create();
   var posOne = vec3.create(), posTwo = vec3.create();
 
@@ -302,8 +300,8 @@ var makeLineTrace = (function() {
       options.color.colorFor(trace.centralAtomAt(i), colorTwo, 0);
       trace.posAt(posOne, i - 1);
       trace.posAt(posTwo, i);
-      idTwo = idRange.nextId({ geom: lineGeom, atom : trace.centralAtomAt(i)});
-
+      idTwo = idRange.nextId({ 
+        geom: lineGeom, atom : trace.centralAtomAt(i)});
       va.addLine(posOne, colorOne, posTwo, colorTwo, idOne, idTwo);
       idOne = idTwo;
       idTwo = null;
@@ -315,7 +313,6 @@ var makeLineTrace = (function() {
     colors[trace.length() * 3 - 2] = colorTwo[1];
     colors[trace.length() * 3 - 1] = colorTwo[2];
     vertAssoc.setPerResidueColors(traceIndex, colors);
-    options.float32Allocator.release(colors);
     return traceIndex + 1;
   };
 })();
@@ -818,7 +815,6 @@ var _cartoonForSingleTrace = (function() {
     }
     options.float32Allocator.release(normals);
     options.float32Allocator.release(positions);
-    options.float32Allocator.release(colors);
   };
 })();
 
@@ -889,7 +885,6 @@ var _renderSingleTrace = (function() {
     vertAssoc.setPerResidueColors(traceIndex, colors);
     vertAssoc.addAssoc(traceIndex, va, trace.length() - 1, vertStart,
                         va.numVerts());
-    options.float32Allocator.release(colors);
   };
 })();
 
