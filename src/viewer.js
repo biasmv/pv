@@ -876,7 +876,7 @@ PV.prototype.pick = function(pos) {
 PV.prototype.add = function(name, obj) {
   obj.name(name);
   this._objects.push(obj);
-  //this._objects.sort(function(lhs, rhs) { return lhs.order() - rhs.order(); });
+  this._objects.sort(function(lhs, rhs) { return lhs.order() - rhs.order(); });
   this.requestRedraw();
   return obj;
 };
