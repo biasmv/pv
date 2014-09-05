@@ -28,7 +28,7 @@ exports.shaders = {};
 exports.shaders.LINES_FS = '\n\
 precision mediump float;\n\
 \n\
-varying vec3 vertColor;\n\
+varying vec4 vertColor;\n\
 varying vec3 vertNormal;\n\
 uniform float fogNear;\n\
 uniform float fogFar;\n\
@@ -36,7 +36,7 @@ uniform vec3 fogColor;\n\
 uniform bool fog;\n\
 \n\
 void main(void) {\n\
-  gl_FragColor = vec4(vertColor, 1.0);\n\
+  gl_FragColor = vec4(vertColor);\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
   if (fog) {\n\
     float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
@@ -49,7 +49,7 @@ void main(void) {\n\
 exports.shaders.HEMILIGHT_FS = '\n\
 precision mediump float;\n\
 \n\
-varying vec3 vertColor;\n\
+varying vec4 vertColor;\n\
 varying vec3 vertNormal;\n\
 uniform float fogNear;\n\
 uniform float fogFar;\n\
@@ -59,7 +59,8 @@ uniform bool fog;\n\
 void main(void) {\n\
   float dp = dot(vertNormal, vec3(0.0, 0.0, 1.0));\n\
   float hemi = max(0.0, dp)*0.5+0.5;\n\
-  gl_FragColor = vec4(vertColor*hemi, 1.0);\n\
+  hemi *= vertColor.a;\n\
+  gl_FragColor = vec4(vertColor.rgb*hemi, vertColor.a);\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
   if (fog) {\n\
     float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
@@ -71,12 +72,12 @@ void main(void) {\n\
 // hemilight vertex shader
 exports.shaders.HEMILIGHT_VS = '\n\
 attribute vec3 attrPos;\n\
-attribute vec3 attrColor;\n\
+attribute vec4 attrColor;\n\
 attribute vec3 attrNormal;\n\
 \n\
 uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
-varying vec3 vertColor;\n\
+varying vec4 vertColor;\n\
 varying vec3 vertNormal;\n\
 void main(void) {\n\
   gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\

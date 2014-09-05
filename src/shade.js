@@ -23,46 +23,47 @@
 
 exports.rgb = {};
 
-exports.rgb.create = vec3.create;
+exports.rgb.create = vec4.create;
 exports.rgb.scale = vec3.scale;
 exports.rgb.copy = vec3.copy;
-exports.rgb.fromValues = vec3.fromValues;
+exports.rgb.fromValues = vec4.fromValues;
 
 exports.rgb.mix = function(out, colorOne, colorTwo, t) {
   var oneMinusT = 1.0 - t;
   out[0] = colorOne[0]*t+colorTwo[0]*oneMinusT;
   out[1] = colorOne[1]*t+colorTwo[1]*oneMinusT;
   out[2] = colorOne[2]*t+colorTwo[2]*oneMinusT;
+  out[3] = colorOne[3]*t+colorTwo[3]*oneMinusT;
   return out;
 };
 
 var COLORS = {
-  white : rgb.fromValues(1.0,1.0,1.0),
-  black : rgb.fromValues(0.0,0.0,0.0),
-  grey : rgb.fromValues(0.5,0.5,0.5),
-  lightgrey : rgb.fromValues(0.8,0.8,0.8),
-  darkgrey : rgb.fromValues(0.3,0.3,0.3),
-  red : rgb.fromValues(1.0,0.0,0.0),
-  darkred : rgb.fromValues(0.5,0.0,0.0),
-  lightred : rgb.fromValues(1.0,0.5,0.5),
-  green : rgb.fromValues(0.0,1.0,0.0),
-  darkgreen : rgb.fromValues(0.0,0.5,0.0),
-  lightgreen : rgb.fromValues(0.5,1.0,0.5),
-  blue : rgb.fromValues(0.0,0.0,1.0),
-  darkblue : rgb.fromValues(0.0,0.0,0.5),
-  lightblue : rgb.fromValues(0.5,0.5,1.0),
-  yellow : rgb.fromValues(1.0,1.0,0.0),
-  darkyellow : rgb.fromValues(0.5,0.5,0.0),
-  lightyellow : rgb.fromValues(1.0,1.0,0.5),
-  cyan : rgb.fromValues(0.0,1.0,1.0),
-  darkcyan : rgb.fromValues(0.0,0.5,0.5),
-  lightcyan : rgb.fromValues(0.5,1.0,1.0),
-  magenta : rgb.fromValues(1.0,0.0,1.0),
-  darkmagenta : rgb.fromValues(0.5,0.0,0.5),
-  lightmagenta : rgb.fromValues(1.0,0.5,1.0),
-  orange : rgb.fromValues(1.0,0.5,0.0),
-  darkorange : rgb.fromValues(0.5,0.25,0.0),
-  lightorange : rgb.fromValues(1.0,0.75,0.5)
+  white :        rgb.fromValues(1.0,1.0 ,1.0,1.0),
+  black :        rgb.fromValues(0.0,0.0 ,0.0,1.0),
+  grey :         rgb.fromValues(0.5,0.5 ,0.5,1.0),
+  lightgrey :    rgb.fromValues(0.8,0.8 ,0.8,1.0),
+  darkgrey :     rgb.fromValues(0.3,0.3 ,0.3,1.0),
+  red :          rgb.fromValues(1.0,0.0 ,0.0,1.0),
+  darkred :      rgb.fromValues(0.5,0.0 ,0.0,1.0),
+  lightred :     rgb.fromValues(1.0,0.5 ,0.5,1.0),
+  green :        rgb.fromValues(0.0,1.0 ,0.0,1.0),
+  darkgreen :    rgb.fromValues(0.0,0.5 ,0.0,1.0),
+  lightgreen :   rgb.fromValues(0.5,1.0 ,0.5,1.0),
+  blue :         rgb.fromValues(0.0,0.0 ,1.0,1.0),
+  darkblue :     rgb.fromValues(0.0,0.0 ,0.5,1.0),
+  lightblue :    rgb.fromValues(0.5,0.5 ,1.0,1.0),
+  yellow :       rgb.fromValues(1.0,1.0 ,0.0,1.0),
+  darkyellow :   rgb.fromValues(0.5,0.5 ,0.0,1.0),
+  lightyellow :  rgb.fromValues(1.0,1.0 ,0.5,1.0),
+  cyan :         rgb.fromValues(0.0,1.0 ,1.0,1.0),
+  darkcyan :     rgb.fromValues(0.0,0.5 ,0.5,1.0),
+  lightcyan :    rgb.fromValues(0.5,1.0 ,1.0,1.0),
+  magenta :      rgb.fromValues(1.0,0.0 ,1.0,1.0),
+  darkmagenta :  rgb.fromValues(0.5,0.0 ,0.5,1.0),
+  lightmagenta : rgb.fromValues(1.0,0.5 ,1.0,1.0),
+  orange :       rgb.fromValues(1.0,0.5 ,0.0,1.0),
+  darkorange :   rgb.fromValues(0.5,0.25,0.0,1.0),
+  lightorange :  rgb.fromValues(1.0,0.75,0.5,1.0)
 };
 
 // converts color strings to RGB. for now only supports color names. 
@@ -80,14 +81,14 @@ exports.forceRGB = function(color) {
         g = parseInt(color[2], 16);
         b = parseInt(color[3], 16);
         var oneOver15 = 1/15.0;
-        return rgb.fromValues(oneOver15 * r, oneOver15 * g, oneOver15 * b);
+        return rgb.fromValues(oneOver15 * r, oneOver15 * g, oneOver15 * b, 1);
       }
       if (color.length === 7) {
         r = parseInt(color.substr(1, 2), 16);
         g = parseInt(color.substr(3, 2), 16);
         b = parseInt(color.substr(5, 2), 16);
         var oneOver255 = 1/255.0;
-        return rgb.fromValues(oneOver255 * r, oneOver255 * g, oneOver255 * b);
+        return rgb.fromValues(oneOver255 * r, oneOver255 * g, oneOver255 * b, 1);
       }
     }
   }
@@ -104,10 +105,10 @@ function Gradient(colors, stops) {
 
 Gradient.prototype.colorAt = function(out, value) {
   if (value <= this._stops[0]) {
-    return vec3.copy(out, this._colors[0]);
+    return vec4.copy(out, this._colors[0]);
   }
   if (value >= this._stops[this._stops.length-1]) {
-    return vec3.copy(out, this._colors[this._stops.length-1]);
+    return vec4.copy(out, this._colors[this._stops.length-1]);
   }
   // could use a binary search here, but since most gradients
   // have a really small number of stops, that's not going to
@@ -181,9 +182,10 @@ exports.ColorOp = ColorOp;
 exports.color.uniform = function(color) {
   color = exports.forceRGB(color);
   return new ColorOp(function(atom, out, index) {
-    out[index] = color[0];
+    out[index+0] = color[0];
     out[index+1] = color[1];
     out[index+2] = color[2];
+    out[index+3] = color[3];
   }, null, null);
 };
 
@@ -243,11 +245,12 @@ exports.color.rainbow = function(grad) {
     if (limits !== undefined) {
       t =  (idx - limits[0])/(limits[1]-limits[0]);
     } 
-    var x = [0,0,0];
+    var x = [1,1,1,1];
     grad.colorAt(x, t);
     out[index] = x[0];
     out[index+1] = x[1];
     out[index+2] = x[2];
+    out[index+3] = x[3];
   }, function(obj) {
     var chains = obj.chains();
     this.chainLimits = {};
@@ -286,6 +289,7 @@ exports.color.ssSuccession = function(grad, coilColor) {
       out[index] = coilColor[0];
       out[index+1] = coilColor[1];
       out[index+2] = coilColor[2];
+      out[index+3] = coilColor[3];
       return;
     }
     var t = 0.0;
@@ -294,11 +298,12 @@ exports.color.ssSuccession = function(grad, coilColor) {
     if (limits.max !== null) {
       t =  ssIndex/(limits.max > 0 ? limits.max : 1);
     } 
-    var x = [0,0,0];
+    var x = [0,0,0,0];
     grad.colorAt(x, t);
     out[index] = x[0];
     out[index+1] = x[1];
     out[index+2] = x[2];
+    out[index+3] = x[3];
   }, function(obj) {
     var chains = obj.chains();
     this.chainLimits = {};
@@ -340,11 +345,12 @@ exports.color.byChain = function(grad) {
     var idx = a.residue().index();
     var chainIndex = this.chainIndices[a.residue().chain().name()];
     var t =  chainIndex*this.scale;
-    var x = [0,0,0];
+    var x = [0,0,0,0];
     grad.colorAt(x, t);
     out[index] = x[0];
     out[index+1] = x[1];
     out[index+2] = x[2];
+    out[index+3] = x[3];
   }, function(obj) {
     var chains = obj.chains();
     this.chainIndices = {};
@@ -374,12 +380,13 @@ function getMinMaxRange(obj, iter, propName) {
 }
 
 var gradColor = (function() {
-  var color = vec3.create();
+  var color = vec4.create();
   return function(out, index, grad, t) {
     grad.colorAt(color, t);
     out[index+0] = color[0];
     out[index+1] = color[1];
     out[index+2] = color[2];
+    out[index+3] = color[3];
   };
 })();
 
@@ -421,24 +428,26 @@ exports.color.byResidueProp = function(propName, grad, range) {
 // linearly interpolates the array of colors and returns it as a Float32Array
 // color must be an array containing a sequence of R,G,B triples.
 exports.interpolateColor = function(colors, num) {
-  var out = new Float32Array((num*(colors.length/3-1) + 1)*3);
+  var out = new Float32Array((num*(colors.length/4-1) + 1)*4);
   var index = 0;
-  var bf = vec3.create(), af = vec3.create();
+  var bf = vec4.create(), af = vec4.create();
   var delta = 1/num;
-  for (var i = 0; i < colors.length/3-1; ++i) {
-    vec3.set(bf, colors[3*i], colors[3*i+1], colors[3*i+2]);
-    vec3.set(af, colors[3*i+3], colors[3*i+4], colors[3*i+5]);
+  for (var i = 0; i < colors.length/4-1; ++i) {
+    vec4.set(bf, colors[4*i+0], colors[4*i+1], colors[4*i+2], colors[4*i+3]);
+    vec4.set(af, colors[4*i+4], colors[4*i+5], colors[4*i+6], colors[4*i+7]);
     for (var j = 0; j < num; ++j) {
       var t = delta * j;
-      out[index] = bf[0]*(1-t)+af[0]*t;
+      out[index+0] = bf[0]*(1-t)+af[0]*t;
       out[index+1] = bf[1]*(1-t)+af[1]*t;
       out[index+2] = bf[2]*(1-t)+af[2]*t;
-      index+=3;
+      out[index+3] = bf[3]*(1-t)+af[3]*t;
+      index+=4;
     }
   }
-  out[index] = af[0];
+  out[index+0] = af[0];
   out[index+1] = af[1];
   out[index+2] = af[2];
+  out[index+3] = af[3];
   return out;
 };
 

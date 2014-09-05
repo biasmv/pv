@@ -107,6 +107,7 @@ function PV(domElement, opts) {
       center : null, zoom : null, 
       rotation : null 
   };
+  this._blend = true;
   this.quality(this._options.quality);
   this._canvas.width = this._options.width;
   this._canvas.height = this._options.height;
@@ -307,6 +308,22 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
     console.error(this._gl.getShaderInfoLog(shaderProgram));
     return null;
   }
+
+  this._gl.clearColor(1., 1., 1., 1);
+//  this._gl.clearColor(0., 0., 0., 1);
+
+  if(this._blend) {
+    this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
+    this._gl.depthFunc(this._gl.LESS);
+    this._gl.enable(this._gl.BLEND);
+    this._gl.blendFunc(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA);
+  }
+  else {
+    this._gl.enable(this._gl.CULL_FACE);
+    this._gl.enable(this._gl.DEPTH_TEST);
+  }
+
+
   // get vertex attribute location for the shader once to
   // avoid repeated calls to getAttribLocation/getUniformLocation
   var getAttribLoc = bind(this._gl, this._gl.getAttribLocation);
@@ -329,8 +346,7 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
 };
 
 PV.prototype._mouseUp = function(event) {
-  this._canvas.removeEventListener('mousemove', this._mouseRotateListener,
-                                   false);
+  this._canvas.removeEventListener('mousemove', this._mouseRotateListener, false);
   this._canvas.removeEventListener('mousemove', this._mousePanListener, false);
   this._canvas.removeEventListener('mouseup', this._mouseUpListener, false);
   document.removeEventListener('mouseup', this._mouseUpListener, false);
@@ -358,24 +374,28 @@ PV.prototype._initPV = function() {
     text : this._initShader(shaders.TEXT_VS, shaders.TEXT_FS),
     select : this._initShader(shaders.SELECT_VS, shaders.SELECT_FS)
   };
+
+  this._boundDraw = bind(this, this._draw);
+
   this._mousePanListener = bind(this, this._mousePan);
   this._mouseRotateListener = bind(this, this._mouseRotate);
   this._mouseUpListener = bind(this, this._mouseUp);
-  this._boundDraw = bind(this, this._draw);
+
   // Firefox responds to the wheel event, whereas other browsers listen to
   // the mousewheel event. Register different event handlers, depending on
   // what properties are available.
   if ('onwheel' in this._canvas) {
-    this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF),
-                                  false);
+  this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF),
+                              false);
   } else {
-    this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel),
-                                  false);
+  this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel),
+                              false);
   }
   this._canvas.addEventListener('dblclick', bind(this, this._mouseDoubleClick),
-                                false);
+                            false);
   this._canvas.addEventListener('mousedown', bind(this, this._mouseDown),
-                                false);
+                            false);
+
   return true;
 };
 
@@ -576,7 +596,7 @@ PV.prototype._handleStandardOptions = function(opts) {
 
 PV.prototype.lineTrace = function(name, structure, opts) {
   var options = this._handleStandardOptions(opts);
-  options.color = options.color || color.uniform([ 1, 0, 1 ]);
+  options.color = options.color || color.uniform([ 1, 0, 1, 1 ]);
   options.lineWidth = options.lineWidth || 4.0;
 
   var obj = render.lineTrace(structure, this._gl, options);
@@ -595,7 +615,7 @@ PV.prototype.spheres = function(name, structure, opts) {
 
 PV.prototype.sline = function(name, structure, opts) {
   var options = this._handleStandardOptions(opts);
-  options.color = options.color || color.uniform([ 1, 0, 1 ]);
+  options.color = options.color || color.uniform([ 1, 0, 1, 1 ]);
   options.splineDetail = options.splineDetail || this.options('splineDetail');
   options.strength = options.strength || 1.0;
   options.lineWidth = options.lineWidth || 4.0;
@@ -654,7 +674,7 @@ PV.prototype.lines = function(name, structure, opts) {
 
 PV.prototype.trace = function(name, structure, opts) {
   var options = this._handleStandardOptions(opts);
-  options.color = options.color || color.uniform([ 1, 0, 0 ]);
+  options.color = options.color || color.uniform([ 1, 0, 0, 1 ]);
   options.radius = options.radius || 0.3;
   options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
   options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
@@ -856,9 +876,7 @@ PV.prototype.pick = function(pos) {
 PV.prototype.add = function(name, obj) {
   obj.name(name);
   this._objects.push(obj);
-  // keep items sorted according to order. that's quick hack to fix
-  // issues with transparent object.
-  this._objects.sort(function(lhs, rhs) { return lhs.order() - rhs.order(); });
+  //this._objects.sort(function(lhs, rhs) { return lhs.order() - rhs.order(); });
   this.requestRedraw();
   return obj;
 };

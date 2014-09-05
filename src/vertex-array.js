@@ -30,10 +30,10 @@ function VertexArray(gl, numVerts, float32Allocator)  {
 
 derive(VertexArray, VertexArrayBase);
 
-VertexArray.prototype._FLOATS_PER_VERT = 7;
+VertexArray.prototype._FLOATS_PER_VERT = 8;
 VertexArray.prototype._POS_OFFSET = 0;
 VertexArray.prototype._COLOR_OFFSET = 3;
-VertexArray.prototype._ID_OFFSET = 6;
+VertexArray.prototype._ID_OFFSET = 7;
 
 VertexArray.prototype.numVerts = function() { return this._numLines * 2; };
 
@@ -46,6 +46,7 @@ VertexArray.prototype.addLine = function(startPos, startColor, endPos,
   this._vertData[index++] = startColor[0];
   this._vertData[index++] = startColor[1];
   this._vertData[index++] = startColor[2];
+  this._vertData[index++] = startColor[3];
   this._vertData[index++] = idOne;
   this._vertData[index++] = endPos[0];
   this._vertData[index++] = endPos[1];
@@ -53,6 +54,7 @@ VertexArray.prototype.addLine = function(startPos, startColor, endPos,
   this._vertData[index++] = endColor[0];
   this._vertData[index++] = endColor[1];
   this._vertData[index++] = endColor[2];
+  this._vertData[index++] = endColor[3];
   this._vertData[index++] = idTwo;
 
   this._numLines += 1;
@@ -65,7 +67,7 @@ VertexArray.prototype.bindAttribs = function(shader) {
   this._gl.vertexAttribPointer(shader.posAttrib, 3, this._gl.FLOAT, false,
                                 this._FLOATS_PER_VERT * 4,
                                 this._POS_OFFSET * 4);
-  this._gl.vertexAttribPointer(shader.colorAttrib, 3, this._gl.FLOAT, false,
+  this._gl.vertexAttribPointer(shader.colorAttrib, 4, this._gl.FLOAT, false,
                                 this._FLOATS_PER_VERT * 4,
                                 this._COLOR_OFFSET * 4);
   this._gl.enableVertexAttribArray(shader.colorAttrib);

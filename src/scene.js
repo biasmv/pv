@@ -351,6 +351,15 @@ LineGeom.prototype.colorBy = function(colorFunc, view) {
   console.timeEnd('LineGeom.colorBy');
 };
 
+LineGeom.prototype.setTransparency = function(val, view) {
+  console.time('LineGeom.setTransparency');
+  this._ready = false;
+  view = view || this.structure();
+  this._vertAssoc.setTransparency(val, view);
+  console.timeEnd('LineGeom.setTransparency');
+};
+
+
 // an (indexed) mesh geometry container
 // ------------------------------------------------------------------------
 //
@@ -474,6 +483,14 @@ MeshGeom.prototype.colorBy = function(colorFunc, view) {
   view = view || this.structure();
   this._vertAssoc.recolor(colorFunc, view);
   console.timeEnd('MeshGeom.colorBy');
+};
+
+MeshGeom.prototype.setTransparency = function(val, view) {
+  console.time('MeshGeom.setTransparency');
+  this._ready = false;
+  view = view || this.structure();
+  this._vertAssoc.setTransparency(val , view);
+  console.timeEnd('MeshGeom.setTransparency');
 };
 
 MeshGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays, 
