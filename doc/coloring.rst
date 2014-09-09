@@ -73,7 +73,7 @@ The following color operations are available:
 Opacity
 --------------------------------------------------------------------------
 
-In addition to RGB color, an opacity of structures can be controlled as well. Opacity (alpha) is handled like the other RGB components. To render a structure semi-transparently, simply pass a color with an alpha smaller than one to the color operations. 
+In addition to RGB color, the opacity of structures can be controlled as well. Opacity (alpha) is handled like the other RGB components. To render a structure semi-transparently, simply pass a color with an alpha smaller than one to the color operations. 
 
 Additionally, the opacity of a rendered structure can directly be changed by calling :func:`BaseGeom.setOpacity`, for example, to change the opacity of all structures to 0.5,
 
