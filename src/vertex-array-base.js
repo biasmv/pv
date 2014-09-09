@@ -31,13 +31,21 @@ function VertexArrayBase(gl, numVerts, float32Allocator) {
   this._vertData = float32Allocator.request(numFloats);
 }
 
-VertexArrayBase.prototype.setColor = function(index, r, g, b) {
+VertexArrayBase.prototype.setColor = function(index, r, g, b, a) {
   var colorStart = index * this._FLOATS_PER_VERT + this._COLOR_OFFSET;
   this._vertData[colorStart + 0] = r;
   this._vertData[colorStart + 1] = g;
   this._vertData[colorStart + 2] = b;
+  this._vertData[colorStart + 3] = a;
   this._ready = false;
 };
+
+VertexArrayBase.prototype.setTransparency = function(index, a) {
+  var colorStart = index * this._FLOATS_PER_VERT + this._COLOR_OFFSET;
+  this._vertData[colorStart + 3] = a;
+  this._ready = false;
+};
+
 
 VertexArrayBase.prototype.boundingSphere = function() {
   if (!this._boundingSphere) {

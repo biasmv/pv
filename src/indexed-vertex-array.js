@@ -56,15 +56,18 @@ IndexedVertexArray.prototype.addVertex = function(pos, normal, color, objId) {
   this._vertData[i++] = color[0];
   this._vertData[i++] = color[1];
   this._vertData[i++] = color[2];
+  this._vertData[i++] = color[3];
   this._vertData[i++] = objId;
   this._numVerts += 1;
   this._ready = false;
 };
 
-IndexedVertexArray.prototype._FLOATS_PER_VERT = 10;
+IndexedVertexArray.prototype._FLOATS_PER_VERT = 11;
+IndexedVertexArray.prototype._OBJID_OFFSET = 10;
 IndexedVertexArray.prototype._COLOR_OFFSET = 6;
-IndexedVertexArray.prototype._POS_OFFSET = 0;
 IndexedVertexArray.prototype._NORMAL_OFFSET = 3;
+IndexedVertexArray.prototype._POS_OFFSET = 0;
+
 
 IndexedVertexArray.prototype.addTriangle = function(idx1, idx2, idx3) {
   var index = 3 * this._numTriangles;
@@ -102,14 +105,14 @@ IndexedVertexArray.prototype.bindAttribs = function(shader) {
   }
 
   if (shader.colorAttrib !== -1) {
-    this._gl.vertexAttribPointer(shader.colorAttrib, 3, this._gl.FLOAT, false,
+    this._gl.vertexAttribPointer(shader.colorAttrib, 4, this._gl.FLOAT, false,
                                  this._FLOATS_PER_VERT * 4,
                                  this._COLOR_OFFSET * 4);
     this._gl.enableVertexAttribArray(shader.colorAttrib);
   }
   if (shader.objIdAttrib !== -1) {
     this._gl.vertexAttribPointer(shader.objIdAttrib, 1, this._gl.FLOAT, false,
-                                 this._FLOATS_PER_VERT * 4, 9 * 4);
+                                 this._FLOATS_PER_VERT * 4, this._OBJID_OFFSET * 4);
     this._gl.enableVertexAttribArray(shader.objIdAttrib);
   }
 };
