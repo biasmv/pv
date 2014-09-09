@@ -130,6 +130,7 @@ derive(BaseGeom, SceneNode);
 
 BaseGeom.prototype.setShowRelated = function(rel) {
   this._showRelated = rel;
+  return rel;
 };
 
 BaseGeom.prototype.symWithIndex = function(index) {
