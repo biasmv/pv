@@ -76,13 +76,13 @@ AtomVertexAssoc.prototype.recolor = function(colorOp, view) {
   }
 };
 
-AtomVertexAssoc.prototype.setTransparency = function( val, view) {
+AtomVertexAssoc.prototype.setOpacity = function( val, view) {
   // apply the color to the actual interleaved vertex array.
   for (var i = 0; i < this._assocs.length; ++i) {
     var assoc = this._assocs[i];
     var va = assoc.vertexArray;
     for (var j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
-      va.setTransparency(j, val);
+      va.setOpacity(j, val);
     }
   }
 };
@@ -159,13 +159,13 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, view) {
 };
 
 
-TraceVertexAssoc.prototype.setTransparency = function( val, view) {
+TraceVertexAssoc.prototype.setOpacity = function( val, view) {
   // store the color in the actual interleaved vertex array.
   for (i = 0; i < this._assocs.length; ++i) {
     var assoc = this._assocs[i];
     var va = assoc.vertexArray;
     for (j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
-      va.setTransparency(j, val);
+      va.setOpacity(j, val);
     }
   }
 

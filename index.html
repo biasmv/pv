@@ -304,7 +304,7 @@
         slide: function(event, ui) {
 
           pv.forEach(function(go) {
-            go.setTransparency(1.0 - ui.value/100. , go);
+            go.setOpacity(1.0 - ui.value/100. , go);
           });
           pv.requestRedraw();
         }

@@ -351,12 +351,12 @@ LineGeom.prototype.colorBy = function(colorFunc, view) {
   console.timeEnd('LineGeom.colorBy');
 };
 
-LineGeom.prototype.setTransparency = function(val, view) {
-  console.time('LineGeom.setTransparency');
+LineGeom.prototype.setOpacity = function(val, view) {
+  console.time('LineGeom.setOpacity');
   this._ready = false;
   view = view || this.structure();
-  this._vertAssoc.setTransparency(val, view);
-  console.timeEnd('LineGeom.setTransparency');
+  this._vertAssoc.setOpacity(val, view);
+  console.timeEnd('LineGeom.setOpacity');
 };
 
 
@@ -369,7 +369,7 @@ LineGeom.prototype.setTransparency = function(val, view) {
 //
 // the vertex data is stored in the following format;
 //
-// Px Py Pz Nx Ny Nz Cr Cg Cb Id
+// Px Py Pz Nx Ny Nz Cr Cg Cb Ca Id
 //
 // , where P is the position, N the normal and C the color information
 // of the vertex.
@@ -485,12 +485,12 @@ MeshGeom.prototype.colorBy = function(colorFunc, view) {
   console.timeEnd('MeshGeom.colorBy');
 };
 
-MeshGeom.prototype.setTransparency = function(val, view) {
-  console.time('MeshGeom.setTransparency');
+MeshGeom.prototype.setOpacity = function(val, view) {
+  console.time('MeshGeom.setOpacity');
   this._ready = false;
   view = view || this.structure();
-  this._vertAssoc.setTransparency(val , view);
-  console.timeEnd('MeshGeom.setTransparency');
+  this._vertAssoc.setOpacity(val , view);
+  console.timeEnd('MeshGeom.setOpacity');
 };
 
 MeshGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays, 

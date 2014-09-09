@@ -40,7 +40,7 @@ VertexArrayBase.prototype.setColor = function(index, r, g, b, a) {
   this._ready = false;
 };
 
-VertexArrayBase.prototype.setTransparency = function(index, a) {
+VertexArrayBase.prototype.setOpacity = function(index, a) {
   var colorStart = index * this._FLOATS_PER_VERT + this._COLOR_OFFSET;
   this._vertData[colorStart + 3] = a;
   this._ready = false;
