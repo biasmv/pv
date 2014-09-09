@@ -763,14 +763,14 @@ PV.prototype.slabInterval = function() {
   var intervals = [ new Range(), new Range(), new Range() ];
   this.forEach(function(obj) {
     if (!obj.visible()) {
-      return;
+      return null;
     }
     obj.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                   intervals[1], intervals[2]);
   });
   if (intervals[0].empty() || intervals[1].empty() || intervals[2].empty()) {
     console.error('could not determine interval. No objects shown?');
-    return;
+    return null;
   }
   var projectedCamCenter = vec3.dot(axes[2], this._cam.center());
   var projectedCamPos = projectedCamCenter + this._cam.zoom();
@@ -781,7 +781,9 @@ PV.prototype.slabInterval = function() {
 
 PV.prototype.autoSlab = function() {
   var slab = this.slabInterval();
-  this._cam.setNearFar(slab.near, slab.far);
+  if (slab !== null) {
+    this._cam.setNearFar(slab.near, slab.far);
+  }
   this.requestRedraw();
 };
 
