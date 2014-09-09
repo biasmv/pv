@@ -68,6 +68,8 @@ The following color operations are available:
   :param range: an array of length two specifying the minimum and maximum value of the float properties. When not specified, the value range is determined from observed values.
 
 
+.. _pv.color.opacity:
+
 Opacity
 --------------------------------------------------------------------------
 

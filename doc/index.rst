@@ -13,6 +13,7 @@ Contents:
 
    intro
    viewer
+   scene
    coloring
    mol
 
