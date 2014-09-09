@@ -359,7 +359,7 @@ exports.color.ssSuccession = function(grad, coilColor) {
       }
       this.chainLimits[chains[i].name()] = {
         indices : indices,
-        max: maxIndex,
+        max: maxIndex
       };
     }
   },function(obj) {
