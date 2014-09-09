@@ -81,8 +81,9 @@ exports.forceRGB = function(color) {
         g = parseInt(color[2], 16);
         b = parseInt(color[3], 16);
         a = 1.0;
-        if(color.length===5)
+        if(color.length===5) {
           a = parseInt(color[4], 16);
+        }
         var oneOver15 = 1/15.0;
         return rgb.fromValues(oneOver15 * r, oneOver15 * g, oneOver15 * b, oneOver15 * a);
       }
@@ -90,15 +91,16 @@ exports.forceRGB = function(color) {
         r = parseInt(color.substr(1, 2), 16);
         g = parseInt(color.substr(3, 2), 16);
         b = parseInt(color.substr(5, 2), 16);
-        if(color.length===9)
+        if(color.length===9) {
           a = parseInt(color.substr(7, 2), 16);
+        }
         var oneOver255 = 1/255.0;
         return rgb.fromValues(oneOver255 * r, oneOver255 * g, oneOver255 * b, oneOver255 * a);
       }
     }
   }
   // in case no alpha component is provided, default alpha to 1.0
-  if (color.length == 3) {
+  if (color.length === 3) {
     return [color[0], color[1], color[2], 1.0];
   }
   return color;
