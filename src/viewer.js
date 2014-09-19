@@ -733,6 +733,12 @@ PV.prototype.surface = function(name, data, opts) {
   return this.add(name, obj);
 };
 
+PV.prototype.multiResModel = function(name, data, opts) {
+  var options = this._handleStandardOptions(opts);
+  var obj = render.multiResModel(data, this._gl, options);
+  return this.add(name, obj);
+};
+
 // renders the protein using a smoothly interpolated tube, essentially
 // identical to the cartoon render mode, but without special treatment for
 // helices and strands.
@@ -777,10 +783,11 @@ PV.prototype.fitTo = function(what, slabMode) {
   var axes = this._cam.mainAxes();
   slabMode = slabMode || this._options.slabMode;
   var intervals = [ new Range(), new Range(), new Range() ];
-  if (what instanceof SceneNode) {
+  if (what.updateProjectionIntervals) {
     what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                    intervals[1], intervals[2]);
   } else if (what.eachAtom !== undefined) {
+    console.log('bbb');
     what.eachAtom(function(atom) {
       var pos = atom.pos();
       for (var i = 0; i < 3; ++i) {
@@ -790,6 +797,8 @@ PV.prototype.fitTo = function(what, slabMode) {
     for (var i = 0; i < 3; ++i) {
       intervals[i].extend(1.5);
     }
+  } else {
+    console.error('unhandled object type', what);
   }
   this._fitToIntervals(axes, intervals, slabMode);
 };

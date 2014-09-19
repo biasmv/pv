@@ -161,7 +161,8 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, view) {
     var assoc = this._assocs[i];
     var ai = assoc.slice;
     var newColors = colorData[assoc.traceIndex];
-    var r = newColors[ai*4], g = newColors[ai*4+1], b = newColors[ai*4+2], a=newColors[ai*4+3];
+    var r = newColors[ai*4],   g = newColors[ai*4+1], 
+        b = newColors[ai*4+2], a = newColors[ai*4+3];
     var va = assoc.vertexArray;
     for (j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
       va.setColor(j, r, g, b, a);

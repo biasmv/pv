@@ -211,6 +211,7 @@ TraceSubset.prototype.centralAtomAt = function(index) {
 TraceSubset.prototype.fullTraceIndex = function(index) {
   return this._fullTraceBegin + index;
 };
+
 TraceSubset.prototype.tangentAt = function(out, index) {
   return this._fullTrace.tangentAt(out, index + this._fullTraceBegin);
 };

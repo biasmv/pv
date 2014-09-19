@@ -594,6 +594,72 @@ exports.cartoon = function(structure, gl, options) {
   return meshGeom;
 };
 
+exports.multiResModel = (function() {
+  var pos_one = vec3.create(), pos_two = vec3.create(), 
+      color = vec4.fromValues(0.8, 0.8, 0.0, 1.0);
+  return function(data, gl, options) {
+    var offset = 0;
+    var version = data.getUint32(0);
+    offset += 4;
+    var numChains = data.getUint32(offset);
+    offset += 4;
+    var numSSPieces = 0;
+    console.log(numChains);
+    for (var i = 0; i < numChains; ++i) {
+      var numPieces = data.getUint32(offset);
+      offset += 4;
+      for (var j = 0; j < numPieces; ++j) {
+        var type = data.getUint32(offset);
+        offset += 4;
+        if (type === 1) {
+          // secondary structure element
+          numSSPieces += 1;
+          offset += 4 + 3 * 8;
+        }
+        if (type === 2) {
+          // coil
+          var numPositions = data.getUint32(offset);
+          offset += 4;
+          offset += 4 * 3 * numPositions;
+        }
+      }
+    }
+    var lineGeom = new LineGeom(gl, options.float32Allocator);
+    lineGeom.setShowRelated('asym');
+    var va = lineGeom.addChainVertArray({ 
+      name : function() { return "A" } }, numSSPieces);
+    offset = 8;
+    for (var i = 0; i < numChains; ++i) {
+      var numPieces = data.getUint32(offset);
+      offset += 4;
+      for (var j = 0; j < numPieces; ++j) {
+        var type = data.getUint32(offset);
+        offset += 4;
+        if (type === 1) {
+          offset += 4;
+          // secondary structure element
+          pos_one[0] = data.getFloat32(offset+0);
+          pos_one[1] = data.getFloat32(offset+4);
+          pos_one[2] = data.getFloat32(offset+8);
+          offset += 3 * 4;
+          pos_two[0] = data.getFloat32(offset+0);
+          pos_two[1] = data.getFloat32(offset+4);
+          pos_two[2] = data.getFloat32(offset+8);
+          offset += 3 * 4;
+          va.addLine(pos_one, color, pos_two, color);
+        }
+        if (type === 2) {
+          // coil
+          var numPositions = data.getUint32(offset);
+          offset += 4;
+          offset += 4 * 3 * numPositions;
+        }
+      }
+    }
+    return lineGeom;
+  };
+})();
+
 exports.surface = (function() {
   var pos = vec3.create(), normal = vec3.create(), 
       color = vec4.fromValues(0.8, 0.8, 0.8, 1.0);
@@ -631,6 +697,7 @@ exports.surface = (function() {
     return meshGeom;
   };
 })();
+
 
 var _cartoonAddTube = (function() {
   var rotation = mat3.create();

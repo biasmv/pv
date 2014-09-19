@@ -160,7 +160,10 @@ BaseGeom.prototype.select = function(what) {
 };
 
 BaseGeom.prototype.structure = function() {
-  return this._vertAssoc._structure;
+  if (this._vertAssoc) {
+    return this._vertAssoc._structure;
+  }
+  return null;
 };
 
 BaseGeom.prototype.setVertAssoc = function(assoc) {
@@ -231,8 +234,11 @@ BaseGeom.prototype.updateProjectionIntervals =
     return this._updateProjectionIntervalsAsym(xAxis, yAxis, zAxis, xInterval, 
                                                yInterval, zInterval);
   } 
-  var assembly = this.structure().assembly(showRelated);
+  var structure = this.structure();
+  var assembly = structure !== null ? structure.assembly() : null;
   // in case there is no assembly, fallback to asymmetric unit and bail out.
+  // FIXME: should detect that assembly does not exist when trying to set the
+  //    assembly and not when it's already too late.
   if (!assembly) {
     console.error('no assembly', showRelated, 
                   'found. Falling back to asymmetric unit');
@@ -310,7 +316,8 @@ BaseGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
     return this._drawVertArrays(cam, shader, this.vertArrays(), null);
   } 
 
-  var assembly = this.structure().assembly(showRelated);
+  var structure = this.structure();
+  var assembly = structure !== null? this.structure().assembly(showRelated) : null;
   // in case there is no assembly, fallback to asymmetric unit and bail out.
   if (!assembly) {
     console.error('no assembly', showRelated, 
@@ -766,7 +773,7 @@ UniqueObjectIdPool.prototype.getContinuousRange = function(num) {
   var start = this._unusedRangeStart;
   var end = start + num;
   if (end > 65536) {
-    console.log('not enough free object ids.');
+    console.error('not enough free object ids.');
     return null;
   }
   this._unusedRangeStart = end;

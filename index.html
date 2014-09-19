@@ -232,7 +232,7 @@
                        { quality : 'medium', width: 500, height : 500,
                          antialias : true, outline : false,
                          background : 'white',
-                        slabMode : 'auto'});
+                         slabMode : 'auto'});
     var structure;
     function lines() {
       pv.clear();
@@ -380,14 +380,20 @@
       pv.requestRedraw();
     }
 
-    var auto = true;
     function test() {
-      if (auto) {
-        pv.slabMode('fixed', { near: 0.1, far : 400.0});
-      } else {
-        pv.slabMode('auto');
-      }
-      auto = !auto;
+      pv.clear();
+      var oReq = new XMLHttpRequest();
+      oReq.open("GET", "/mrm/hiv-capsid", true);
+      oReq.responseType = "arraybuffer";
+      oReq.onload = function (oEvent) {
+        if (oReq.response) {
+          var data = new DataView(oReq.response);
+          var mdl = pv.multiResModel('mrm', data);
+          pv.fitTo(mdl);
+          
+        }
+      };
+      oReq.send(null);
     }
 
     $('#cartoon').click(cartoon);
