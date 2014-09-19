@@ -16,6 +16,7 @@ Contents:
    scene
    coloring
    mol
+   multi-resolution-models
 
 
 
