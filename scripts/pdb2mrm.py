@@ -38,9 +38,9 @@ class Coil:
     # a connected piece of coil residues
     self.positions = positions
   def write(self, out):
-    out.write(pack('!II', 2, len(self.positions)))
+    out.write(pack('!BI', 2, len(self.positions)))
     for p in self.positions:
-      out.write(pack('!fff', p[0], p[1], p[2]))
+      out.write(pack('!3f', p[0], p[1], p[2]))
 
 class SS:
   def __init__(self, ss_type, start, end):
@@ -48,7 +48,7 @@ class SS:
     self.start = start
     self.end = end
   def write(self, out):
-    out.write(pack('!IIffffff', 1, ord(self.ss_type), 
+    out.write(pack('!BB6f', 1, ord(self.ss_type), 
                    self.start[0], self.start[1], self.start[2], self.end[0],
                    self.end[1], self.end[2]))
 
@@ -86,7 +86,12 @@ def process_ss_element(residues):
 
 
     
-def process_chain(chain):
+def writestr(s):
+  data = pack('!B', len(s))
+  for c in s:
+    data += pack('!B', ord(c))
+  return data
+def process_chain(pdb_id, chain):
   same_ss = []
   pieces = []
   for res in chain.residues:
@@ -101,12 +106,12 @@ def process_chain(chain):
     same_ss = [res]
   if len(same_ss):
     pieces.append(process_ss_element(same_ss))
-  return Chain(chain.name, pieces)
+  return Chain('%s:%s' % (pdb_id, chain.name), pieces)
 
-def convert(ent):
+def convert(pdb_id, ent):
   chains = []
   for chain in ent.chains:
-    chains.append(process_chain(chain))
+    chains.append(process_chain(pdb_id, chain))
   return chains
   
 def main(args):
@@ -126,15 +131,18 @@ def main(args):
     print ' - processing input %s' % file_name
     ent = io.LoadPDB(file_name)
     center += ent.center_of_mass
-    chains += convert(ent)
+    pdb_id = os.path.basename(os.path.splitext(file_name)[0])
+    chains += convert(pdb_id, ent)
   center /= len(input_file_names)
   print 'center of structure: ', center
-  version = 1
+  version = 2
   out.write(pack('!I', version))
   out.write(pack('!I', len(chains)))
   print 'writing a total of %d chains' % len(chains)
   for chain in chains:
     out.write(pack('!I', len(chain.pieces)))
+    print chain.name;
+    out.write(writestr(chain.name))
     for piece in chain.pieces:
       piece.write(out)
   out.close()

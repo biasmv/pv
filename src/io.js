@@ -239,33 +239,45 @@ function readVec3(dataView, offset, out) {
 }
 
 
+function readStr(dataView, offset) {
+  var string = '';
+  var length = dataView.getUint8(offset);
+  offset += 1;
+  for (var i = 0; i < length; ++i) {
+    string += String.fromCharCode(dataView.getUint8(offset));
+    offset += 1;
+  }
+  return [string, offset];
+}
+
+
 // load a multi (low?) resolution from the given binary data buffer)
 // data must be a DataView
 var mrm = (function () {
   return function(data) {
     var offset = 0;
     var version = data.getUint32(0);
-    console.assert(version === 1);
+    console.assert(version === 2);
     offset += 4;
     var numChains = data.getUint32(offset);
     offset += 4;
     var numSSPieces = 0;
     var numCoilResidues = 0;
-    console.log('number of chains in MRM', numChains);
     var model = new LowResModel();
     for (var i = 0; i < numChains; ++i) {
-      var chain = model.addChain('A');
-      // FIXME: implement this correctly
+      var numPieces = data.getUint32(offset); offset += 4;
+      var result = readStr(data, offset);
+      offset = result[1];
+      var chainName = result[0];
+      var chain = model.addChain(chainName);
       var trace = chain.addTrace();
-      var numPieces = data.getUint32(offset);
-      offset += 4;
       for (var j = 0; j < numPieces; ++j) {
-        var type = data.getUint32(offset);
-        offset += 4;
+        var type = data.getUint8(offset);
+        offset += 1;
         if (type === 1) {
           // secondary structure element
           numSSPieces += 1;
-          offset += 4;
+          offset += 1;
           var startPos = vec3.create();
           var endPos = vec3.create();
           offset = readVec3(data, offset, startPos);
