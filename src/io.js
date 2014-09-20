@@ -20,6 +20,8 @@
 
 (function(exports) {
 
+"use strict";
+
 function PDBReader() {
 }
 
@@ -214,9 +216,82 @@ function pdb(text) {
   return structure;
 }
 
+function fetchMrm(url, callback) {
+  var oReq = new XMLHttpRequest();
+  oReq.open("GET", url, true);
+  oReq.responseType = "arraybuffer";
+  oReq.onload = function (oEvent) {
+    if (oReq.response) {
+      var data = new DataView(oReq.response);
+      var model = io.mrm(data);
+      callback(model);
+    }
+  };
+  oReq.send(null);
+}
+
+
+function readVec3(dataView, offset, out) {
+  out[0] = dataView.getFloat32(offset + 0);
+  out[1] = dataView.getFloat32(offset + 4);
+  out[2] = dataView.getFloat32(offset + 8);
+  return offset + 12;
+}
+
+
+// load a multi (low?) resolution from the given binary data buffer)
+// data must be a DataView
+var mrm = (function () {
+  return function(data) {
+    var offset = 0;
+    var version = data.getUint32(0);
+    console.assert(version === 1);
+    offset += 4;
+    var numChains = data.getUint32(offset);
+    offset += 4;
+    var numSSPieces = 0;
+    var numCoilResidues = 0;
+    console.log('number of chains in MRM', numChains);
+    var model = new LowResModel();
+    for (var i = 0; i < numChains; ++i) {
+      var chain = model.addChain('A');
+      // FIXME: implement this correctly
+      var trace = chain.addTrace();
+      var numPieces = data.getUint32(offset);
+      offset += 4;
+      for (var j = 0; j < numPieces; ++j) {
+        var type = data.getUint32(offset);
+        offset += 4;
+        if (type === 1) {
+          // secondary structure element
+          numSSPieces += 1;
+          offset += 4;
+          var startPos = vec3.create();
+          var endPos = vec3.create();
+          offset = readVec3(data, offset, startPos);
+          offset = readVec3(data, offset, endPos);
+          trace.addHelix(startPos, endPos);
+        }
+        if (type === 2) {
+          // coil
+          var numPositions = data.getUint32(offset);
+          offset += 4;
+          for (var k = 0; k < numPositions; ++k) {
+            var coilPos = vec3.create();
+            offset = readVec3(data, offset, coilPos);
+            trace.addCoilResidue(coilPos);
+          }
+        }
+      }
+    }
+    return model;
+  };
+})();
 
 exports.io = {};
 exports.io.pdb = pdb;
+exports.io.mrm = mrm;
+exports.io.fetchMrm = fetchMrm;
 exports.io.Remark350Reader = Remark350Reader;
 
 

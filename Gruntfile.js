@@ -11,6 +11,7 @@ SOURCE_FILES = [
   'src/scene.js',
   'src/symmetry.js', 
   'src/mol.js', 
+  'src/multi-res-model.js', 
   'src/io.js', 
   'src/trace.js',
   'src/render.js', 

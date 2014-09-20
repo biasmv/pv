@@ -12,6 +12,7 @@
     <script src='src/trace.js'></script>
     <script src='src/symmetry.js'></script>
     <script src='src/mol.js'></script>
+    <script src='src/multi-res-model.js'></script>
     <script src='src/io.js'></script>
     <script src='src/vert-assoc.js'></script>
     <script src='src/buffer-allocators.js'></script>
@@ -387,18 +388,10 @@
     function virus_capsid() {
       pv.clear();
       pv.slabMode('fixed', { near : 0.1, far: 10000 });
-      var oReq = new XMLHttpRequest();
-      oReq.open("GET", "/mrm/hiv-capsid.mrm", true);
-      oReq.responseType = "arraybuffer";
-      oReq.onload = function (oEvent) {
-        if (oReq.response) {
-          var data = new DataView(oReq.response);
-          var mdl = pv.multiResModel('mrm', data);
+      io.fetchMrm('/mrm/hiv-capsid.mrm', function(model) {
+          var mdl = pv.multiResModel('mrm', model);
           pv.fitTo(mdl);
-          
-        }
-      };
-      oReq.send(null);
+      });
     }
 
     $('#cartoon').click(cartoon);

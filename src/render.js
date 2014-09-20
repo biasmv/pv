@@ -594,87 +594,37 @@ exports.cartoon = function(structure, gl, options) {
   return meshGeom;
 };
 
+function lowResChainNumVerts(chain) {
+  var count = 0;
+  var traces = chain.traces();
+  for (var i = 0; i < traces.length; ++i) {
+    var trace = traces[i];
+    count += trace.length() -1;
+  }
+  return count * 2;
+}
+
 exports.multiResModel = (function() {
-  var posOne = vec3.create(), posTwo = vec3.create(), 
-      colorSS = vec4.fromValues(0.5, 0.5, 0.0, 1.0),
-      colorC = vec4.fromValues(0.3, 0.8, 0.8, 1.0);
-  return function(data, gl, options) {
-    var offset = 0;
-    var version = data.getUint32(0);
-    offset += 4;
-    var numChains = data.getUint32(offset);
-    offset += 4;
-    var numSSPieces = 0;
-    var numCoilResidues = 0;
-    console.log('number of chains in MRM', numChains);
-    for (var i = 0; i < numChains; ++i) {
-      var numPieces = data.getUint32(offset);
-      offset += 4;
-      for (var j = 0; j < numPieces; ++j) {
-        var type = data.getUint32(offset);
-        offset += 4;
-        if (type === 1) {
-          // secondary structure element
-          numSSPieces += 1;
-          offset += 4 + 3 * 8;
-        }
-        if (type === 2) {
-          // coil
-          var numPositions = data.getUint32(offset);
-          numCoilResidues += numPositions;
-          offset += 4;
-          offset += 4 * 3 * numPositions;
-        }
-      }
-    }
+  var colors = {
+    'S' : [0.5, 0.5, 0.5, 1.0],
+    'H' : [0.8, 0.8, 0.5, 1.0],
+    'C' : [0.2, 0.8, 0.8, 1.0]
+  };
+  return function(model, gl, options) {
     var lineGeom = new LineGeom(gl, options.float32Allocator);
     lineGeom.setShowRelated('asym');
-    var last = null;
-    console.log('number of secondary structure elements', numSSPieces);
-    console.log('number of coil residues', numCoilResidues);
-    var va = lineGeom.addChainVertArray({ 
-      name : function() { return "A" } }, 
-      2 * (numSSPieces + 1 + numCoilResidues));
-    offset = 8;
-    for (var i = 0; i < numChains; ++i) {
-      var numPieces = data.getUint32(offset);
-      offset += 4;
-      for (var j = 0; j < numPieces; ++j) {
-        var type = data.getUint32(offset);
-        offset += 4;
-        if (type === 1) {
-          offset += 4;
-          // secondary structure element
-          posOne[0] = data.getFloat32(offset+0);
-          posOne[1] = data.getFloat32(offset+4);
-          posOne[2] = data.getFloat32(offset+8);
-          offset += 3 * 4;
-          posTwo[0] = data.getFloat32(offset+0);
-          posTwo[1] = data.getFloat32(offset+4);
-          posTwo[2] = data.getFloat32(offset+8);
-          last = posTwo;
-          offset += 3 * 4;
-          va.addLine(posOne, colorSS, posTwo, colorSS);
-        }
-        if (type === 2) {
-          // coil
-          var numPositions = data.getUint32(offset);
-          offset += 4;
-          for (var k = 0; k < numPositions; ++k) {
-            if (last) {
-              posOne[0] = last[0];
-              posOne[1] = last[1];
-              posOne[2] = last[2];
-            }
-            posTwo[0] = data.getFloat32(offset+0);
-            posTwo[1] = data.getFloat32(offset+4);
-            posTwo[2] = data.getFloat32(offset+8);
-            if (last) {
-              va.addLine(posOne, colorC, posTwo, colorC);
-            }
-            last = posTwo;
-            offset += 4 * 3;
-          }
+    var chains = model.chains();
+    for (var i = 0; i < chains.length; ++i) {
+      var chain = chains[i];
+      var numVerts = lowResChainNumVerts(chain);
+      var va = lineGeom.addChainVertArray(chain, numVerts);
+      var traces = chain.traces();
+      for (var j = 0; j < traces.length; ++j) {
+        var trace = traces[j];
+        for (var k = 0, e = trace.length(); k < e -1; ++k) {
+          var ssOne = trace.residueAt(k + 0).ss();
+          var ssTwo = trace.residueAt(k + 1).ss();
+          va.addLine(trace.posAt(k),  colors[ssOne], trace.posAt(k+1), colors[ssTwo]);
         }
       }
     }
