@@ -733,9 +733,12 @@ PV.prototype.surface = function(name, data, opts) {
   return this.add(name, obj);
 };
 
+
 PV.prototype.multiResModel = function(name, data, opts) {
   var options = this._handleStandardOptions(opts);
+  console.time('multiResModel');
   var obj = render.multiResModel(data, this._gl, options);
+  console.timeEnd('multiResModel');
   return this.add(name, obj);
 };
 
@@ -783,11 +786,12 @@ PV.prototype.fitTo = function(what, slabMode) {
   var axes = this._cam.mainAxes();
   slabMode = slabMode || this._options.slabMode;
   var intervals = [ new Range(), new Range(), new Range() ];
+  // use updateProjectionIntervals for object that have it by default.
   if (what.updateProjectionIntervals) {
     what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                    intervals[1], intervals[2]);
   } else if (what.eachAtom !== undefined) {
-    console.log('bbb');
+    // loop over atoms for other objects
     what.eachAtom(function(atom) {
       var pos = atom.pos();
       for (var i = 0; i < 3; ++i) {

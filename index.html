@@ -218,7 +218,8 @@
        <li id=2por>Porin</li>
        <li id=2f8v>Telethonin</li>
        <li id=4c46>Long Helices</li>
-       <li id=1rb8>Capsid</li>
+       <li id=1rb8>Virus Capsid</li>
+       <li id=hiv>HIV Capsid</li>
     </ul>
   </div>
   <div id=gl>
@@ -232,7 +233,7 @@
                        { quality : 'medium', width: 500, height : 500,
                          antialias : true, outline : false,
                          background : 'white',
-                         slabMode : 'auto'});
+                         slabMode : 'fixed'});
     var structure;
     function lines() {
       pv.clear();
@@ -381,9 +382,13 @@
     }
 
     function test() {
+    }
+
+    function virus_capsid() {
       pv.clear();
+      pv.slabMode('fixed', { near : 0.1, far: 10000 });
       var oReq = new XMLHttpRequest();
-      oReq.open("GET", "/mrm/hiv-capsid", true);
+      oReq.open("GET", "/mrm/hiv-capsid.mrm", true);
       oReq.responseType = "arraybuffer";
       oReq.onload = function (oEvent) {
         if (oReq.response) {
@@ -410,6 +415,7 @@
     $('#1r6a').click(transferase);
     $('#1crn').click(crambin);
     $('#2por').click(porin);
+    $('#hiv').click(virus_capsid);
     $('#1rb8').click(function() { load('1rb8'); });
     $('#2f8v').click(telethonin);
     $('#4c46').click(longHelices);
@@ -453,7 +459,7 @@
       pv.requestRedraw();
     });
 
-    document.addEventListener('DOMContentLoaded', crambin);
+    document.addEventListener('DOMContentLoaded', virus_capsid);
     /*
     window.addEventListener('resize', function() {
       pv.fitParent();

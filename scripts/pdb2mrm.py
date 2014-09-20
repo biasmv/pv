@@ -1,7 +1,7 @@
 #!/usr/bin/env ost
 """
-Converts structure contained in a set of PDB files into the multi-resolution file 
-format.
+Converts structure contained in a set of PDB files into the PV multi resolution model
+file format.
 """
 import sys
 import os
@@ -110,27 +110,34 @@ def convert(ent):
   return chains
   
 def main(args):
-    BIN_VERSION = 1
-    if len(args) < 3:
-        print_usage(-1)
-    input_file_names = args[1:-1]
-    output_file_name = args[-1]
-    print output_file_name
-    for file_name in input_file_names:
-      if not check_readable(file_name):
-        sys.exit(-1)
-    out = open(output_file_name, 'wb')
-    for file_name in input_file_names:
-      ent = io.LoadPDB(file_name)
-      chains = convert(ent)
-      version = 1
-      out.write(pack('!I', version))
-      out.write(pack('!I', len(chains)))
-      for chain in chains:
-        out.write(pack('!I', len(chain.pieces)))
-        for piece in chain.pieces:
-          piece.write(out)
-    out.close()
+  BIN_VERSION = 1
+  if len(args) < 3:
+      print_usage(-1)
+  input_file_names = args[1:-1]
+  output_file_name = args[-1]
+  print output_file_name
+  for file_name in input_file_names:
+    if not check_readable(file_name):
+      sys.exit(-1)
+  out = open(output_file_name, 'wb')
+  chains = []
+  center = geom.Vec3()
+  for file_name in input_file_names:
+    print ' - processing input %s' % file_name
+    ent = io.LoadPDB(file_name)
+    center += ent.center_of_mass
+    chains += convert(ent)
+  center /= len(input_file_names)
+  print 'center of structure: ', center
+  version = 1
+  out.write(pack('!I', version))
+  out.write(pack('!I', len(chains)))
+  print 'writing a total of %d chains' % len(chains)
+  for chain in chains:
+    out.write(pack('!I', len(chain.pieces)))
+    for piece in chain.pieces:
+      piece.write(out)
+  out.close()
 
 
 if __name__ == '__main__':

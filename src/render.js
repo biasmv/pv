@@ -595,8 +595,9 @@ exports.cartoon = function(structure, gl, options) {
 };
 
 exports.multiResModel = (function() {
-  var pos_one = vec3.create(), pos_two = vec3.create(), 
-      color = vec4.fromValues(0.8, 0.8, 0.0, 1.0);
+  var posOne = vec3.create(), posTwo = vec3.create(), 
+      colorSS = vec4.fromValues(0.5, 0.5, 0.0, 1.0),
+      colorC = vec4.fromValues(0.3, 0.8, 0.8, 1.0);
   return function(data, gl, options) {
     var offset = 0;
     var version = data.getUint32(0);
@@ -604,7 +605,8 @@ exports.multiResModel = (function() {
     var numChains = data.getUint32(offset);
     offset += 4;
     var numSSPieces = 0;
-    console.log(numChains);
+    var numCoilResidues = 0;
+    console.log('number of chains in MRM', numChains);
     for (var i = 0; i < numChains; ++i) {
       var numPieces = data.getUint32(offset);
       offset += 4;
@@ -619,6 +621,7 @@ exports.multiResModel = (function() {
         if (type === 2) {
           // coil
           var numPositions = data.getUint32(offset);
+          numCoilResidues += numPositions;
           offset += 4;
           offset += 4 * 3 * numPositions;
         }
@@ -626,8 +629,12 @@ exports.multiResModel = (function() {
     }
     var lineGeom = new LineGeom(gl, options.float32Allocator);
     lineGeom.setShowRelated('asym');
+    var last = null;
+    console.log('number of secondary structure elements', numSSPieces);
+    console.log('number of coil residues', numCoilResidues);
     var va = lineGeom.addChainVertArray({ 
-      name : function() { return "A" } }, numSSPieces);
+      name : function() { return "A" } }, 
+      2 * (numSSPieces + 1 + numCoilResidues));
     offset = 8;
     for (var i = 0; i < numChains; ++i) {
       var numPieces = data.getUint32(offset);
@@ -638,21 +645,36 @@ exports.multiResModel = (function() {
         if (type === 1) {
           offset += 4;
           // secondary structure element
-          pos_one[0] = data.getFloat32(offset+0);
-          pos_one[1] = data.getFloat32(offset+4);
-          pos_one[2] = data.getFloat32(offset+8);
+          posOne[0] = data.getFloat32(offset+0);
+          posOne[1] = data.getFloat32(offset+4);
+          posOne[2] = data.getFloat32(offset+8);
           offset += 3 * 4;
-          pos_two[0] = data.getFloat32(offset+0);
-          pos_two[1] = data.getFloat32(offset+4);
-          pos_two[2] = data.getFloat32(offset+8);
+          posTwo[0] = data.getFloat32(offset+0);
+          posTwo[1] = data.getFloat32(offset+4);
+          posTwo[2] = data.getFloat32(offset+8);
+          last = posTwo;
           offset += 3 * 4;
-          va.addLine(pos_one, color, pos_two, color);
+          va.addLine(posOne, colorSS, posTwo, colorSS);
         }
         if (type === 2) {
           // coil
           var numPositions = data.getUint32(offset);
           offset += 4;
-          offset += 4 * 3 * numPositions;
+          for (var k = 0; k < numPositions; ++k) {
+            if (last) {
+              posOne[0] = last[0];
+              posOne[1] = last[1];
+              posOne[2] = last[2];
+            }
+            posTwo[0] = data.getFloat32(offset+0);
+            posTwo[1] = data.getFloat32(offset+4);
+            posTwo[2] = data.getFloat32(offset+8);
+            if (last) {
+              va.addLine(posOne, colorC, posTwo, colorC);
+            }
+            last = posTwo;
+            offset += 4 * 3;
+          }
         }
       }
     }
