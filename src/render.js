@@ -606,7 +606,7 @@ function lowResChainNumVerts(chain) {
 
 exports.multiResModel = (function() {
   var colors = {
-    'S' : [0.5, 0.5, 0.5, 1.0],
+    'E' : [0.5, 0.5, 0.5, 1.0],
     'H' : [0.8, 0.8, 0.5, 1.0],
     'C' : [0.2, 0.8, 0.8, 1.0]
   };

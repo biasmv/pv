@@ -96,6 +96,13 @@ LowResTrace.prototype.addHelix = function(startPos, endPos) {
   this._residues.push(end);
 };
 
+LowResTrace.prototype.addStrand = function(startPos, endPos) {
+  var start = new LowResResidue('E', startPos);
+  var end = new LowResResidue('E', endPos);
+  this._residues.push(start);
+  this._residues.push(end);
+};
+
 LowResTrace.prototype.addCoil = function(positions) {
   for (var i = 0; i < positions.length; ++i) {
     this.addCoilresidue(positions[i]);
