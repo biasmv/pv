@@ -46,9 +46,17 @@ LowResChain.prototype.name = function() {
   return this._name;
 };
 
-LowResChain.prototype.traces = function() {
+LowResChain.prototype.backboneTraces = function() {
   return this._traces;
 };
+
+
+LowResModel.prototype.eachChain = function(callback) {
+  for (var i = 0; i < this._chains.length; ++i) {
+    callback(this._chains[i]);
+  }
+
+}
 
 LowResChain.prototype.addTrace = function() {
   var trace = new LowResTrace();
@@ -61,7 +69,9 @@ function LowResTrace() {
 }
 
 
-LowResTrace.prototype.length = function() { return this._residues.length; };
+LowResTrace.prototype.length = function() { 
+  return this._residues.length; 
+};
 
 LowResTrace.prototype.residueAt = function(index) {
   return this._residues[index];
@@ -69,6 +79,10 @@ LowResTrace.prototype.residueAt = function(index) {
 
 LowResTrace.prototype.posAt = function(index) {
   return this._residues[index].centralPos();
+};
+
+LowResTrace.prototype.centralAtomAt = function(index) {
+  return null;
 };
 
 

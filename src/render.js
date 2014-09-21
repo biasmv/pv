@@ -596,7 +596,7 @@ exports.cartoon = function(structure, gl, options) {
 
 function lowResChainNumVerts(chain) {
   var count = 0;
-  var traces = chain.traces();
+  var traces = chain.backboneTraces();
   for (var i = 0; i < traces.length; ++i) {
     var trace = traces[i];
     count += trace.length() -1;
@@ -618,7 +618,7 @@ exports.multiResModel = (function() {
       var chain = chains[i];
       var numVerts = lowResChainNumVerts(chain);
       var va = lineGeom.addChainVertArray(chain, numVerts);
-      var traces = chain.traces();
+      var traces = chain.backboneTraces();
       for (var j = 0; j < traces.length; ++j) {
         var trace = traces[j];
         for (var k = 0, e = trace.length(); k < e -1; ++k) {
