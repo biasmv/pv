@@ -648,7 +648,12 @@ PV.prototype._handleStandardOptions = function(opts) {
   opts = copy(opts);
   opts.float32Allocator = this._float32Allocator;
   opts.uint16Allocator = this._uint16Allocator;
-  opts.idPool = this._objectIdManager;
+  if (opts.pickable !== false) {
+    opts.idPool = this._objectIdManager;
+  } else {
+    console.log('using zero pool');
+    opts.idPool = new ZeroObjectIdPool();
+  }
   opts.showRelated = opts.showRelated || 'asym';
   return opts;
 };

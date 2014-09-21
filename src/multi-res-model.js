@@ -77,8 +77,11 @@ LowResTrace.prototype.residueAt = function(index) {
   return this._residues[index];
 };
 
-LowResTrace.prototype.posAt = function(index) {
-  return this._residues[index].centralPos();
+LowResTrace.prototype.posAt = function(out, index) {
+  var pos = this._residues[index].centralPos();
+  out[0] = pos[0];
+  out[1] = pos[1];
+  out[2] = pos[2];
 };
 
 LowResTrace.prototype.centralAtomAt = function(index) {

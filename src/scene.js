@@ -746,6 +746,31 @@ ContinuousIdRange.prototype.length = function() {
   return this._end - this._start;
 };
 
+function ZeroObjectIdPool() {
+
+}
+
+
+ZeroObjectIdPool.prototype.recycle = function() {}
+ZeroObjectIdPool.prototype.getContinuousRange = function() {
+  return new ZeroRange();
+}
+
+function ZeroRange() {
+
+}
+
+
+ZeroRange.prototype.nextId = function() {
+  return 0;
+}
+
+ZeroRange.prototype.length = function() {
+  return 0;
+}
+
+ZeroRange.prototype.recycle = function() {}
+
 function UniqueObjectIdPool() {
   this._objects = {};
   this._unusedRangeStart = 0;
@@ -867,6 +892,8 @@ exports.MeshGeom = MeshGeom;
 exports.LineGeom = LineGeom;
 exports.TextLabel = TextLabel;
 exports.UniqueObjectIdPool = UniqueObjectIdPool;
+exports.ZeroObjectIdPool = ZeroObjectIdPool;
 exports.Range = Range;
+
 })(this);
 

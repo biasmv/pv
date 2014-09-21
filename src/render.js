@@ -610,6 +610,7 @@ exports.multiResModel = (function() {
     'H' : [0.8, 0.8, 0.5, 1.0],
     'C' : [0.2, 0.8, 0.8, 1.0]
   };
+  var posOne = vec3.create(), posTwo = vec3.create();
   return function(model, gl, options) {
     var lineGeom = new LineGeom(gl, options.float32Allocator);
     lineGeom.setShowRelated('asym');
@@ -624,7 +625,9 @@ exports.multiResModel = (function() {
         for (var k = 0, e = trace.length(); k < e -1; ++k) {
           var ssOne = trace.residueAt(k + 0).ss();
           var ssTwo = trace.residueAt(k + 1).ss();
-          va.addLine(trace.posAt(k),  colors[ssOne], trace.posAt(k+1), colors[ssTwo]);
+          trace.posAt(posOne, k + 0);
+          trace.posAt(posTwo, k + 1);
+          va.addLine(posOne,  colors[ssOne], posTwo, colors[ssTwo]);
         }
       }
     }
