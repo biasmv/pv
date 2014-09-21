@@ -255,6 +255,7 @@ function readStr(dataView, offset) {
 // data must be a DataView
 var mrm = (function () {
   return function(data) {
+    console.time('io.mrm');
     var offset = 0;
     var version = data.getUint32(0);
     console.assert(version === 2);
@@ -277,25 +278,36 @@ var mrm = (function () {
         if (type === 1) {
           // secondary structure element
           numSSPieces += 1;
+          var ssType = String.fromCharCode(data.getUint8(offset));
           offset += 1;
-          var startPos = vec3.create();
-          var endPos = vec3.create();
+          var startPos = [0,0,0];
+          var endPos = [0,0,0];
           offset = readVec3(data, offset, startPos);
           offset = readVec3(data, offset, endPos);
-          trace.addHelix(startPos, endPos);
+          if (ssType === 'H') {
+            trace.addHelix(startPos, endPos);
+          } else {
+            trace.addStrand(startPos, endPos);
+          }
         }
         if (type === 2) {
           // coil
           var numPositions = data.getUint32(offset);
           offset += 4;
           for (var k = 0; k < numPositions; ++k) {
-            var coilPos = vec3.create();
+            // it's much faster to use small lists instead of typed float 
+            // arrays. (loading of a large structure goes down from 250ms 
+            // to 60ms!). We will have to measure what the impact of using
+            // normal arrays instead of typed arrays is down the line, 
+            // tough.
+            var coilPos = [0,0,0];
             offset = readVec3(data, offset, coilPos);
             trace.addCoilResidue(coilPos);
           }
         }
       }
     }
+    console.timeEnd('io.mrm');
     return model;
   };
 })();
