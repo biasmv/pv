@@ -308,8 +308,7 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
     console.error(this._gl.getShaderInfoLog(shaderProgram));
     return null;
   }
-
-  this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
+  this._gl.clearColor(this._options.background[0], this._options.background[1], this._options.background[2], 1.0);
   if(this._blend) {
     this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
     this._gl.depthFunc(this._gl.LESS);
