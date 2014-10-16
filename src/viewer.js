@@ -308,7 +308,7 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
     console.error(this._gl.getShaderInfoLog(shaderProgram));
     return null;
   }
-
+  
   this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
   if(this._blend) {
     this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
@@ -523,6 +523,9 @@ PV.prototype._mouseDoubleClick = (function() {
     var picked = this.pick(
         { x : event.clientX - rect.left, y : event.clientY - rect.top });
     if (!picked) {
+      this.setCenter(transformedPos, this._options.animateTime);
+      this.requestRedraw();
+      
       return;
     }
     var pos = picked.object().atom.pos();
@@ -539,6 +542,30 @@ PV.prototype._mouseDoubleClick = (function() {
 PV.prototype._mouseDown = function(event) {
   if (event.button !== 0) {
     return;
+  }
+  var currentTime = (new Date()).getTime();
+  // make sure it isn't a double click
+  if (typeof this.lastClickTime === 'undefined' || (currentTime - this.lastClickTime > 300)) {
+    this.lastClickTime = currentTime;
+    var rect = this._canvas.getBoundingClientRect();
+    var picked = this.pick(
+        { x : event.clientX - rect.left, y : event.clientY - rect.top });
+    if (picked) {
+      // an atom has been picked, send an event to the dom element
+      var atomPickedEvent = new CustomEvent(
+          "atompicked", 
+          {
+            detail: {
+              atom: picked.object().atom,
+              originalEvent: event,
+              geom: picked.object().geom
+            },
+            bubbles: true,
+            cancelable: true
+          }
+        );
+      this._domElement.dispatchEvent(atomPickedEvent);
+    }
   }
   event.preventDefault();
   if (event.shiftKey === true) {
