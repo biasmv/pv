@@ -697,7 +697,7 @@ PV.prototype.fitTo = function(what, slabMode) {
   if (what instanceof SceneNode) {
     what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                    intervals[1], intervals[2]);
-  } else if (what instanceof mol.MolView || what instanceof mol.Mol) {
+  } else if (what instanceof mol.MolView || what instanceof mol.Mol || what instanceof mol.Chain) {
     what.eachAtom(function(atom) {
       var pos = atom.pos();
       for (var i = 0; i < 3; ++i) {
