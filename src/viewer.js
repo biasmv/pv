@@ -73,7 +73,7 @@ function PV(domElement, opts) {
     antialias : opts.antialias,
     quality : opts.quality || 'low',
     style : opts.style || 'hemilight',
-    background : opts.background ? vec3.clone(opts.background) : vec3.fromValues(1,1,1),
+    background : opts.background ? forceRGB(opts.background) : vec3.fromValues(1,1,1),
     slabMode : slabModeToStrategy(opts.slabMode)
   };
   this._objects = [];
