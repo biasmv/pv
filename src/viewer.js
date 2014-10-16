@@ -502,22 +502,36 @@ PV.prototype._mouseDoubleClick = (function() {
     var rect = this._canvas.getBoundingClientRect();
     var picked = this.pick(
         { x : event.clientX - rect.left, y : event.clientY - rect.top });
-    if (!picked) {
-      this.setCenter(transformedPos, this._options.animateTime);
-      this.requestRedraw();
-      
-      return;
+    if (picked) {
+      var pos = picked.object().atom.pos();
+      if (picked.transform()) {
+        vec3.transformMat4(transformedPos, pos, picked.transform());
+        this.setCenter(transformedPos, this._options.animateTime);
+      } else {
+        this.setCenter(pos, this._options.animateTime);
+        }
     }
-    var pos = picked.object().atom.pos();
-    if (picked.transform()) {
-      vec3.transformMat4(transformedPos, pos, picked.transform());
-      this.setCenter(transformedPos, this._options.animateTime);
-    } else {
-      this.setCenter(pos, this._options.animateTime);
-      }
+    this._dispatchPickedEvent(event, 'atomDoubleClicked', picked);
     this.requestRedraw();
   };
 })();
+
+PV.prototype._dispatchPickedEvent = function(event, newEventName, picked) {
+  var atomPickedEvent = new CustomEvent(
+      newEventName, 
+      {
+        detail: {
+          atom: picked ? picked.object().atom : null,
+          originalEvent: event,
+          geom: picked ? picked.object().geom : null
+        },
+        bubbles: true,
+        cancelable: true
+      }
+    );
+  this._domElement.dispatchEvent(atomPickedEvent);
+
+};
 
 PV.prototype._mouseDown = function(event) {
   if (event.button !== 0) {
@@ -530,22 +544,7 @@ PV.prototype._mouseDown = function(event) {
     var rect = this._canvas.getBoundingClientRect();
     var picked = this.pick(
         { x : event.clientX - rect.left, y : event.clientY - rect.top });
-    if (picked) {
-      // an atom has been picked, send an event to the dom element
-      var atomPickedEvent = new CustomEvent(
-          "atompicked", 
-          {
-            detail: {
-              atom: picked.object().atom,
-              originalEvent: event,
-              geom: picked.object().geom
-            },
-            bubbles: true,
-            cancelable: true
-          }
-        );
-      this._domElement.dispatchEvent(atomPickedEvent);
-    }
+    this._dispatchPickedEvent(event, 'atomSelected', picked);
   }
   event.preventDefault();
   if (event.shiftKey === true) {
