@@ -485,6 +485,9 @@ PV.prototype._mouseDoubleClick = (function() {
     var picked = this.pick(
         { x : event.clientX - rect.left, y : event.clientY - rect.top });
     if (!picked) {
+      this.setCenter(transformedPos, this._options.animateTime);
+      this.requestRedraw();
+      
       return;
     }
     var pos = picked.object().atom.pos();
