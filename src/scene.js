@@ -130,6 +130,7 @@ derive(BaseGeom, SceneNode);
 
 BaseGeom.prototype.setShowRelated = function(rel) {
   this._showRelated = rel;
+  return rel;
 };
 
 BaseGeom.prototype.symWithIndex = function(index) {
@@ -336,7 +337,7 @@ LineGeom.prototype._drawVertArrays = function(cam, shader, vertArrays,
     for (i = 0; i < vertArrays.length; ++i) {
       vertArrays[i].bind(shader);
       vertArrays[i].draw();
-      vertArray[i].releaseAttribs(shader);
+      vertArrays[i].releaseAttribs(shader);
     }
   }
 };
@@ -351,6 +352,15 @@ LineGeom.prototype.colorBy = function(colorFunc, view) {
   console.timeEnd('LineGeom.colorBy');
 };
 
+LineGeom.prototype.setOpacity = function(val, view) {
+  console.time('LineGeom.setOpacity');
+  this._ready = false;
+  view = view || this.structure();
+  this._vertAssoc.setOpacity(val, view);
+  console.timeEnd('LineGeom.setOpacity');
+};
+
+
 // an (indexed) mesh geometry container
 // ------------------------------------------------------------------------
 //
@@ -360,7 +370,7 @@ LineGeom.prototype.colorBy = function(colorFunc, view) {
 //
 // the vertex data is stored in the following format;
 //
-// Px Py Pz Nx Ny Nz Cr Cg Cb Id
+// Px Py Pz Nx Ny Nz Cr Cg Cb Ca Id
 //
 // , where P is the position, N the normal and C the color information
 // of the vertex.
@@ -474,6 +484,14 @@ MeshGeom.prototype.colorBy = function(colorFunc, view) {
   view = view || this.structure();
   this._vertAssoc.recolor(colorFunc, view);
   console.timeEnd('MeshGeom.colorBy');
+};
+
+MeshGeom.prototype.setOpacity = function(val, view) {
+  console.time('MeshGeom.setOpacity');
+  this._ready = false;
+  view = view || this.structure();
+  this._vertAssoc.setOpacity(val , view);
+  console.timeEnd('MeshGeom.setOpacity');
 };
 
 MeshGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays, 

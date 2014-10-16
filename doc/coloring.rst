@@ -4,7 +4,7 @@ Coloring Molecular Structures
 
 This document describes how a molecular structure's color can be controlled. 
 
-The coloring scheme can be specified when generating the render geometry, e.g. when using one of the :ref:`render <pv.viewer.rendering>`. functions. Coloring can also be changed later on using the :func:`BaseGeom.colorBy` function. The latter also allows to apply coloring to subparts of the structure only. These two different ways to control the coloring is displayed in the following code example:
+The coloring scheme can be specified when generating the render geometry, e.g. when using one of the :ref:`render <pv.viewer.rendering>`. functions. Coloring can also be changed later on using the :func:`BaseGeom.colorBy` function. The latter also allows to apply coloring to subparts of the structure only. These two different ways to control the coloring is described in the following code example:
 
 .. code-block:: javascript
 
@@ -13,7 +13,7 @@ The coloring scheme can be specified when generating the render geometry, e.g. w
   // oh, no, I changed my mind: We wan't everything in blue!
   geom.colorBy(color.uniform('blue'));
 
-Coloring is implemented with coloring operations. These operations are small objects which map a certain atom or residue to a color. They can be as simple as coloring a complete structure in :func:`one color <color.uniform>`, or as complex as mapping a :func:`float property to a color gradient <color.byAtomProp>`. PV includes a variety of coloring operations for the most common tasks. For more complex applications it is also possible to extend the coloring with new operations.
+Coloring is implemented with coloring operations. These operations are small function objects which map a certain atom or residue to a color. They can be as simple as coloring a complete structure in :func:`one color <color.uniform>`, or as complex as mapping a :func:`float property to a color gradient <color.byAtomProp>`. PV includes a variety of coloring operations for the most common tasks. For more complex applications it is also possible to extend the coloring with new operations.
 
 Available color operations
 --------------------------------------------------------------------------
@@ -68,6 +68,21 @@ The following color operations are available:
   :param range: an array of length two specifying the minimum and maximum value of the float properties. When not specified, the value range is determined from observed values.
 
 
+.. _pv.color.opacity:
+
+Opacity
+--------------------------------------------------------------------------
+
+In addition to RGB color, the opacity of structures can be controlled as well. Opacity (alpha) is handled like the other RGB components. To render a structure semi-transparently, simply pass a color with an alpha smaller than one to the color operations. 
+
+Additionally, the opacity of a rendered structure can directly be changed by calling :func:`BaseGeom.setOpacity`, for example, to change the opacity of all structures to 0.5,
+
+.. code-block:: javascript
+
+  // assuming viewer is an instance of pv.Viewer
+  viewer.forEach(function(object) {
+    object.setOpacity(0.5);
+  });
 
 Adding a new color operation
 --------------------------------------------------------------------------

@@ -5,6 +5,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <script src='js/jquery-2.0.2.min.js'></script>
+    <script src="js/jquery-ui.min.js"></script>
     <script src='src/gl-matrix.js'></script>
     <script src='src/core.js'></script>
     <script src='src/geom.js'></script>
@@ -28,6 +29,9 @@
     <script src='src/slab.js'></script>
     <script src='src/animation.js'></script>
     <script src='src/viewer.js'></script>
+
+    <link rel="stylesheet" href="css/jquery-ui.min.css">
+
     <style>
     body {
       font-family: Helvetica;
@@ -162,6 +166,7 @@
       border-style:solid;
       border-width:1px;
     }
+    .sl { display: block; }
     </style>
     </head>
 <body>
@@ -170,6 +175,7 @@
     placeholder='Enter PDB identifier to load' />&nbsp;&nbsp;<span id=status></span>
   </div>
   <div id=inspector>
+
     <span class=btn onclick='showTab("styleTab")'>Style</span>
     <span class=btn onclick='showTab("colorTab")'>Color</span>
     <ul id=styleTab>
@@ -197,6 +203,7 @@
     </ul>
      <ul>
       <h1></h1>
+      <li><div id="slider" class="sl"></div></li>
       <li><input type="checkbox" name="outline" 
                  value="yes" id=showOutline autocomplete=off>Show Outline</li>
       <li><input type="checkbox" name="fog" 
@@ -291,6 +298,19 @@
     function kinase() {
       load('1ake');
     }
+
+    $(function() {
+      $( "#slider" ).slider({
+        slide: function(event, ui) {
+
+          pv.forEach(function(go) {
+            go.setOpacity(1.0 - ui.value/100. , go);
+          });
+          pv.requestRedraw();
+        }
+      })
+    });
+
     function showTab(tabName) {
       $('#'+activeTab).hide();
       $('#'+tabName).show();
