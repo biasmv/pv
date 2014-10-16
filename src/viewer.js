@@ -412,10 +412,23 @@ PV.prototype._drawWithPass = function(pass) {
   }
 };
 
-PV.prototype.setCamera = function(rotation, center, zoom) {
-  this._cam.setCenter(center);
-  this._cam.setRotation(rotation);
-  this._cam.setZoom(zoom);
+PV.prototype.setCamera = function(rotation, center, zoom, ms) {
+  
+  ms |= 0;
+  if (ms === 0) {
+    this._cam.setCenter(center);
+    this._cam.setRotation(rotation);
+    this._cam.setZoom(zoom);
+    this.requestRedraw();
+    return;
+  }
+  this._camAnim.center = new Move(this._cam.center(), 
+                                  vec3.clone(center), ms);
+  this._camAnim.rotation = new Rotate(this._cam.rotation(), 
+      mat4.clone(rotation), ms);
+
+  this._camAnim.zoom = new Animation(this._cam.zoom(), 
+      zoom, ms);
   this.requestRedraw();
 };
 
@@ -433,6 +446,13 @@ PV.prototype._animateCam = function() {
     this._cam.setRotation(this._camAnim.rotation.step());
     if (this._camAnim.rotation.finished()) {
       this._camAnim.rotation = null;
+    }
+    anotherRedraw = true;
+  }
+  if (this._camAnim.zoom) {
+    this._cam.setZoom(this._camAnim.zoom.step());
+    if (this._camAnim.zoom.finished()) {
+      this._camAnim.zoom = null;
     }
     anotherRedraw = true;
   }
@@ -724,8 +744,6 @@ PV.prototype._fitToIntervals = function(axes, intervals) {
     cx * axes[0][1] + cy * axes[1][1] + cz * axes[2][1],
     cx * axes[0][2] + cy * axes[1][2] + cz * axes[2][2]
   ];
-  this.setCenter(center);
-
   var fovY = this._cam.fieldOfViewY();
   var aspect = this._cam.aspectRatio();
   var inPlaneX = intervals[0].length() / aspect;
@@ -734,11 +752,11 @@ PV.prototype._fitToIntervals = function(axes, intervals) {
   var distanceToFront =  inPlane / Math.tan(0.5 * fovY);
   var newZoom =
       (distanceToFront + 0.5*intervals[2].length());
-  this._cam.setZoom(newZoom);
   var grace = 0.5;
   var near = Math.max(distanceToFront - grace, 0.1);
   var far = 2 * grace + distanceToFront + intervals[2].length();
   this._cam.setNearFar(near,  far);
+  this.setCamera(this._cam.rotation(), center, newZoom, this._options.animateTime);
   this.requestRedraw();
 };
 
