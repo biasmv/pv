@@ -69,7 +69,7 @@ function PV(domElement, opts) {
   this._options = {
     width : (opts.width || 500),
     height : (opts.height || 500),
-    animateTime : (opts.animateTime || 100),
+    animateTime : (opts.animateTime || 0),
     antialias : opts.antialias,
     quality : opts.quality || 'low',
     style : opts.style || 'hemilight',
