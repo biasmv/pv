@@ -107,3 +107,51 @@ The following will add a new color operation which colors atoms based on their i
       }
     });
   }
+
+.. _pv.color.notation:
+
+Color Notations
+--------------------------------------------------------------------------
+
+Whenever a function takes a color as its argument, these colors can be specified in different ways:
+
+- using RGB hex-code notation with an optional alpha value. Either as 6 (8 with alpha) hexadecimal numbers, or as 3 (4 with alpha) hexadecimal numbers. These color strings must be prefixed with a hash (``'#'``) sign. Examples: ``'#badcode'``, or ``'#abc'``. 
+
+- as an array of floating-point values. Each RGBA component is in the range between 0 and 1. The array must either be of length 3 (implicit alpha of 1.0) or length 4. 
+- as one of the hardcoded color strings
+
+  +-----------+--------------+----------------+
+  | white     | black        |                |
+  +-----------+--------------+----------------+
+  | grey      | lightgrey    | darkgrey       |
+  +-----------+--------------+----------------+
+  | red       | darkred      | lightred       |
+  +-----------+--------------+----------------+
+  | green     | darkgreen    | lightgreen     |
+  +-----------+--------------+----------------+
+  | blue      | darkblue     | lightblue      |
+  +-----------+--------------+----------------+
+  | yellow    | darkyellow   | lightyellow    |
+  +-----------+--------------+----------------+
+  | cyan      | darkcyan     | lightcyan      |
+  +-----------+--------------+----------------+
+  | magenta   | darkmagenta  | lightmagenta   |
+  +-----------+--------------+----------------+
+  | orange    | darkorange   | lightorange    |
+  +-----------+--------------+----------------+
+
+Examples
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. code-block:: javascript
+
+  // These colors are all the same (guess what)
+  var color1 = [ 1, 0, 0 ]; // implicit alpha of 1
+  var color2 = [ 1, 0, 0, 1 ]; 
+  var color3 = 'red';
+  var color4 = '#f00';      // implicit alpha of f
+  var color5 = '#ff0000';   // implicit alpha of ff
+  var color6 = '#ff0000ff'; 
+  var color7 = '#f00f'; 
+
+

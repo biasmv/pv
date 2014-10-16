@@ -73,7 +73,7 @@ function PV(domElement, opts) {
     antialias : opts.antialias,
     quality : opts.quality || 'low',
     style : opts.style || 'hemilight',
-    background : opts.background ? vec3.clone(opts.background) : vec3.fromValues(1,1,1),
+    background : opts.background ? forceRGB(opts.background) : vec3.fromValues(1,1,1),
     slabMode : slabModeToStrategy(opts.slabMode)
   };
   this._objects = [];
@@ -308,8 +308,7 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
     console.error(this._gl.getShaderInfoLog(shaderProgram));
     return null;
   }
-
-  this._gl.clearColor(1.0, 1.0, 1.0, 1.0);
+  this._gl.clearColor(this._options.background[0], this._options.background[1], this._options.background[2], 1.0);
   if(this._blend) {
     this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
     this._gl.depthFunc(this._gl.LESS);
@@ -723,7 +722,7 @@ PV.prototype.fitTo = function(what, slabMode) {
   if (what instanceof SceneNode) {
     what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                    intervals[1], intervals[2]);
-  } else if (what instanceof mol.MolView || what instanceof mol.Mol) {
+  } else if (what.eachAtom !== undefined) {
     what.eachAtom(function(atom) {
       var pos = atom.pos();
       for (var i = 0; i < 3; ++i) {

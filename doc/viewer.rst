@@ -24,6 +24,7 @@ Initialization and Configuration
   * *antialias*: whether full-scene antialiasing should be enabled. When available, antialiasing will use the built-in WebGL antialiasing. When not, it will fall back to a manual supersampling of the scene. Enabling antialiasing improve the visual results considerably, but also slows down rendering. When rendering speed is a concern, the *antialias* option should be set to false. Defaults to false.
   * *quality* the level of detail for the geometry. Accepted values are *low*, *medium*, and *high*. See :func:`~pv.Viewer.quality` for a description of these values. Defaults to *low*.
   * *slabMode* sets the default slab mode for the viewer. See :func:`~pv.Viewer.slabMode` for possible values. Defaults to 'auto'.
+  * *background* set the default background color of the viewer. Defaults to 'white'. See :ref:`pv.color.notation`
 
 
 The following code defines a new viewer. This can be done during page load time, before the DOMContentLoaded event has been emitted. Render objects can only be added once the DOMContentLoaded event has fired. Typically it's best to put any object loading and display code into a DOMContentLoaded event handler.
