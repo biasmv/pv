@@ -524,12 +524,14 @@ PV.prototype._mouseDown = function(event) {
     return;
   }
   var currentTime = (new Date()).getTime();
+  // make sure it isn't a double click
   if (typeof this.lastClickTime === 'undefined' || (currentTime - this.lastClickTime > 300)) {
     this.lastClickTime = currentTime;
     var rect = this._canvas.getBoundingClientRect();
     var picked = this.pick(
         { x : event.clientX - rect.left, y : event.clientY - rect.top });
     if (picked) {
+      // an atom has been picked, send an event to the dom element
       var atomPickedEvent = new CustomEvent(
           "atompicked", 
           {
