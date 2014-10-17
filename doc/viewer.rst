@@ -28,6 +28,7 @@ Initialization and Configuration
   * *background* set the default background color of the viewer. Defaults to 'white'. See :ref:`pv.color.notation`
   * *atomDoubleClick* set the event handler for an atom double clicked event. When the parameter is a function it is added as a new 'atomDoubleClicked' event handler. See :func:`~pv.Viewer.addListener` for details. If it is set to the special value 'center', an event listener is installed that centers the viewer on the double clicked atom, residue. The default is 'center'.
   * *atomClicked* set the event handler for an atom double clicked event (see *atomDoubleClick*). The default is null (no listener).
+  * *animateTime* controls the default animation duration in milliseconds. By default, the animation is set to 0 (no animation). By setting it to higher values, rotation, zoom and shift are animated. Note that enabling this can have negative impact on performance, especially with large molecules and on low-end devices.
 
 
 The following code defines a new viewer. This can be done during page load time, before the DOMContentLoaded event has been emitted. Render objects can only be added once the DOMContentLoaded event has fired. Typically it's best to put any object loading and display code into a DOMContentLoaded event handler.
