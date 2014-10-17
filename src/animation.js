@@ -55,6 +55,12 @@ Animation.prototype.step = function() {
   return this._setTo(t);
 };
 
+Animation.prototype._setTo = function(t) {
+  var smoothInterval = (1 - Math.cos(t * Math.PI ) ) / 2;
+  this._current = this._from * (1-smoothInterval) + this._to * smoothInterval;
+  return this._current;
+};
+
 Animation.prototype.finished = function() {
   return this._finished;
 };
@@ -75,6 +81,31 @@ Move.prototype._setTo = function(t) {
   return this._current;
 };
 
+function Rotate(initialRotation, destinationRotation, duration) {
+  var initial = mat3.create();
+  var to = mat3.create();
+  mat3.fromMat4(initial, initialRotation);
+  mat3.fromMat4(to, destinationRotation);
+  var initialQuat = quat.create();
+  var toQuat = quat.create();
+  quat.fromMat3(initialQuat, initial);
+  quat.fromMat3(toQuat, to);
+  this._current = mat3.create();
+  Animation.prototype.constructor.call(this, initialQuat, toQuat, duration);
+}
+
+derive(Rotate, Animation);
+
+Rotate.prototype._setTo = (function() {
+  var quatRot = quat.create();
+  
+  return function(t) {
+    quat.slerp(quatRot, this._from, this._to, t);
+    mat3.fromQuat(this._current, quatRot);
+    return this._current;
+  };
+})();
+
 function RockAndRoll(rotation, axis, duration) {
   var initial = mat3.create();
   mat3.fromMat4(initial, rotation);
@@ -82,7 +113,6 @@ function RockAndRoll(rotation, axis, duration) {
   this._axis = vec3.clone(axis);
   this.setLooping(true);
   this._current = mat3.create();
-  this._angle = 0.0;
 }
 
 derive(RockAndRoll, Animation);
@@ -98,7 +128,8 @@ RockAndRoll.prototype._setTo = (function() {
 })();
 
 exports.Move = Move;
+exports.Rotate = Rotate;
 exports.RockAndRoll = RockAndRoll;
-
+exports.Animation = Animation;
 return true;
 })(this);
