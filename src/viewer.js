@@ -148,7 +148,7 @@ PV.prototype._centerOnClicked = function(picked, originalEvent) {
   } else {
     this.setCenter(pos, this._options.animateTime);
   }
-}
+};
   
 
 // resizes the canvas, separated out from PV.resize because we want
