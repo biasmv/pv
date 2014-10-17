@@ -81,6 +81,7 @@ function PV(domElement, opts) {
   this._redrawRequested = false;
   this._resize = false;
   this._lastTimestamp = null;
+  this.listenerMap = {};
   // NOTE: make sure to only request features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
   // detection only happens in PV._initGL. Once this happened, we are
@@ -516,40 +517,33 @@ PV.prototype._mouseWheelFF = function(event) {
 };
 
 PV.prototype._mouseDoubleClick = (function() {
-  var transformedPos = vec3.create();
   return function(event) {
     var rect = this._canvas.getBoundingClientRect();
     var picked = this.pick(
         { x : event.clientX - rect.left, y : event.clientY - rect.top });
-    if (picked) {
-      var pos = picked.object().atom.pos();
-      if (picked.transform()) {
-        vec3.transformMat4(transformedPos, pos, picked.transform());
-        this.setCenter(transformedPos, this._options.animateTime);
-      } else {
-        this.setCenter(pos, this._options.animateTime);
-        }
-    }
     this._dispatchPickedEvent(event, 'atomDoubleClicked', picked);
     this.requestRedraw();
   };
 })();
 
-PV.prototype._dispatchPickedEvent = function(event, newEventName, picked) {
-  var atomPickedEvent = new CustomEvent(
-      newEventName, 
-      {
-        detail: {
-          atom: picked ? picked.object().atom : null,
-          originalEvent: event,
-          geom: picked ? picked.object().geom : null
-        },
-        bubbles: true,
-        cancelable: true
-      }
-    );
-  this._domElement.dispatchEvent(atomPickedEvent);
 
+PV.prototype.addListener = function(eventName, callback) {
+  var callbacks = this.listenerMap[eventName];
+  if (typeof callbacks === 'undefined') {
+    callbacks = [];
+    this.listenerMap[eventName] = callbacks;
+  }
+  callbacks.push(callback);
+};
+
+PV.prototype._dispatchPickedEvent = function(event, newEventName, picked) {
+  var callbacks = this.listenerMap[newEventName];
+  if (callbacks) {
+    
+    callbacks.forEach(function (callback) {
+      callback(picked, event);
+    });
+  }
 };
 
 PV.prototype._mouseDown = function(event) {
@@ -563,7 +557,7 @@ PV.prototype._mouseDown = function(event) {
     var rect = this._canvas.getBoundingClientRect();
     var picked = this.pick(
         { x : event.clientX - rect.left, y : event.clientY - rect.top });
-    this._dispatchPickedEvent(event, 'atomSelected', picked);
+    this._dispatchPickedEvent(event, 'atomClicked', picked);
   }
   event.preventDefault();
   if (event.shiftKey === true) {
