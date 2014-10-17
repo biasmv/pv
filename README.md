@@ -42,7 +42,7 @@ Acknowledgements
 PV uses the amazing [gl-matrix](https://github.com/toji/gl-matrix) JavaScript library for matrix and vector operations.
 
 
-Thanks to @Traksewth and @kozmad for their contributions
+Thanks to @Traksewt and @kozmad for their contributions
 
 Documentation
 ---------------------------------------
@@ -66,8 +66,8 @@ Changelog
 - support for displaying molecular assemblies, including support for picking of symmetry-related copies
 - implement different slab-modes
 - rudimentary support for rendering MSMS surfaces in the browser. Requires conversion to binary format first.
-- adding customisable animation time (@Traksewth)
-- add customizable atom picking events (double and single click) (@Traksewth)
-- improved animation support (@Traksewth)
-- customizable background color (@Traksewth)
+- adding customisable animation time (@Traksewt)
+- add customizable atom picking events (double and single click) (@Traksewt)
+- improved animation support (@Traksewt)
+- customizable background color (@Traksewt)
 
