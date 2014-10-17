@@ -74,7 +74,9 @@ function PV(domElement, opts) {
     quality : opts.quality || 'low',
     style : opts.style || 'hemilight',
     background : opts.background ? forceRGB(opts.background) : vec3.fromValues(1,1,1),
-    slabMode : slabModeToStrategy(opts.slabMode)
+    slabMode : slabModeToStrategy(opts.slabMode),
+    atomClick: opts.atomClick || null,
+    atomDoubleClick : 'center', // option is handled below
   };
   this._objects = [];
   this._domElement = domElement;
@@ -103,6 +105,9 @@ function PV(domElement, opts) {
   } else {
     this._options.outline = true;
   }
+  if ('atomDoubleClicked' in opts) {
+    this._options.atomDoubleClick = opts.atomDoubleClick;
+  }
   this._ok = false;
   this._camAnim = { 
       center : null, zoom : null, 
@@ -121,6 +126,27 @@ function PV(domElement, opts) {
     this._initPV();
   } else {
     document.addEventListener('DOMContentLoaded', bind(this, this._initPV));
+  }
+  if (this._options.atomDoubleClick !== null) {
+    this.addListener('atomDoubleClicked', this._options.atomDoubleClick);
+  }
+  if (this._options.atomClick !== null) {
+    this.addListener('atomClicked', this._options.atomClick);
+  }
+}
+
+PV.prototype._centerOnClicked = function(picked, originalEvent) {
+  if (picked === null) {
+    return;
+  }
+  var transformedPos = vec3.create();
+  var newAtom = picked.object().atom;
+  var pos = newAtom.pos();
+  if (picked.transform()) {
+    vec3.transformMat4(transformedPos, pos, picked.transform());
+    this.setCenter(transformedPos, this._options.animateTime);
+  } else {
+    this.setCenter(pos, this._options.animateTime);
   }
 }
   
@@ -533,7 +559,11 @@ PV.prototype.addListener = function(eventName, callback) {
     callbacks = [];
     this.listenerMap[eventName] = callbacks;
   }
-  callbacks.push(callback);
+  if (callback === 'center') {
+    callbacks.push(bind(this, this._centerOnClicked));
+  } else {
+    callbacks.push(callback);
+  }
 };
 
 PV.prototype._dispatchPickedEvent = function(event, newEventName, picked) {
