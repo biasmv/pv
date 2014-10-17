@@ -210,36 +210,42 @@ Mouse selection events are fired when the user clicks or double clicks a residue
   :param type: The type of event to listen to. Must be either 'atomClicked' or 'atomDoubleClicked' 
   :param callback: The function to receive the callback. type of event to listen to. Must be either 'atomClicked' or 'atomDoubleClicked' The arguments of the callback function is *picked*, and *originalEvent* which is the mouse event. 
 
-  The following code shows how to listen for double click events to either make the selection the focal point and center of zoom, or zoom out to the whole structure if the background is double clicked. 
-  .. code-block:: javascript
-    var structure = .... // point to what you want the default background selection to view
-    viewer.addListener("atomDoubleClicked", function(picked, originalEvent) {
-      if (picked === null) {
-        viewer.fitTo(structure);
-      }
-      else {
-        var transformedPos = vec3.create();
-        var newAtom = picked.object().atom;
-        var pos = newAtom.pos();
-        if (picked.transform()) {
-          vec3.transformMat4(transformedPos, pos, picked.transform());
-          viewer.setCenter(transformedPos, 500);
-        } else {
-          viewer.setCenter(pos, 500);
-        }
-      }
-    });
+The following code simply logs the clicked residue to the console when an atom is clicked.
 
-  .. code-block:: javascript
-    viewer.addListener("atomClicked", function(picked, originalEvent) {
-  
-      if (picked) {
-        var newAtom = picked.object().atom;
-        var geom = picked.object().geom;
-        
-        console.log(" Residue number=" + newAtom.residue().num());
+.. code-block:: javascript
+
+  viewer.addListener("atomClicked", function(picked, originalEvent) {
+
+    if (picked) {
+      var newAtom = picked.object().atom;
+      var geom = picked.object().geom;
+      
+      console.log(" Residue number=" + newAtom.residue().num());
+    }
+  });
+
+The following code shows how to listen for double click events to either make the selection the focal point and center of zoom, or zoom out to the whole structure if the background is double clicked. 
+
+.. code-block:: javascript
+
+  var structure = .... // point to what you want the default background selection to view
+  viewer.addListener("atomDoubleClicked", function(picked, originalEvent) {
+    if (picked === null) {
+      viewer.fitTo(structure);
+    }
+    else {
+      var transformedPos = vec3.create();
+      var newAtom = picked.object().atom;
+      var pos = newAtom.pos();
+      if (picked.transform()) {
+          vec3.transformMat4(transformedPos, pos, picked.transform());
+        viewer.setCenter(transformedPos, 500);
+      } else {
+        viewer.setCenter(pos, 500);
       }
-    });
+    }
+  });
+
 
 .. _pv.viewer.management:
 
