@@ -35,7 +35,39 @@ I would love you to! Most features you would expect from a protein viewer are al
 
  * DNA/RNA visualisation is not implemented yet, for protein-centric workflows that's fine though. In case you are interested in DNA/RNA rendering, just open a feature request and I'll try to get around to it.
 
+
+Acknowledgements
+----------------------------------------
+
+PV uses the amazing [gl-matrix](https://github.com/toji/gl-matrix) JavaScript library for matrix and vector operations.
+
+
+Thanks to @Traksewth and @kozmad for their contributions
+
 Documentation
 ---------------------------------------
 
 Documentation for pv is available [here](http://pv.readthedocs.org). 
+
+Changelog
+----------------------------------------
+
+### New in Version 1.2
+
+- add transparancy support to mesh and line geoms (@kozmad)
+- substantial speed improvements through implementation of buffer pool for typed arrays.
+- method to assign secondary structure based on carbon-alpha positions
+- improved documentation
+- improve dictionary selection
+- support for adding text labels to the 3D scene
+- autoZoom to fit structure into viewport
+- work around uint16 buffer limit of WebGL by automatically splitting the geometry of large molecules into multiple buffers
+- support for different color notations, e.g. hex, color names.
+- support for displaying molecular assemblies, including support for picking of symmetry-related copies
+- implement different slab-modes
+- rudimentary support for rendering MSMS surfaces in the browser. Requires conversion to binary format first.
+- adding customisable animation time (@Traksewth)
+- add customizable atom picking events (double and single click) (@Traksewth)
+- improved animation support (@Traksewth)
+- customizable background color (@Traksewth)
+
