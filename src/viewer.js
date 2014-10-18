@@ -651,14 +651,13 @@ PV.prototype._handleStandardOptions = function(opts, structure) {
   if (opts.pickable !== false) {
     opts.idPool = this._objectIdManager;
   } else {
-    console.log('using zero pool');
     opts.idPool = new ZeroObjectIdPool();
   }
   opts.showRelated = opts.showRelated || 'asym';
   if (opts.showRelated && opts.showRelated !== 'asym') {
     if (structure.assembly(1) === null) {
-      console.error('no assembly with name',opts.showRelated,
-                    '. Falling back to assymetric unit');
+      console.error('structure has no assembly with name "'+opts.showRelated+
+                    '". Falling back to assymetric unit');
       opts.showRelated = 'asym';
     }
   }
