@@ -213,7 +213,7 @@ Cam.prototype.zoom = function(delta) {
   }
   this._updateMat = true;
   var factor = 1.0 + delta * 0.1;
-  this._zoom = Math.min(1000.0, Math.max(2.0, factor * this._zoom));
+  this._zoom = Math.min(20000.0, Math.max(2.0, factor * this._zoom));
   return this._zoom;
 };
 
