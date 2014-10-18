@@ -176,7 +176,7 @@ CsfReader.prototype._readInt16 = function() {
 
 CsfReader.prototype._readInt16Vec = function() {
   return [this._readInt16(), this._readInt16(), this._readInt16()];
-}
+};
 
 CsfReader.prototype._readResidue = function(chain) {
   var flags = this._readUint8();
@@ -192,30 +192,32 @@ CsfReader.prototype._readResidue = function(chain) {
     ssType = 'E';
   }
   var number = this._readInt32();
+  var atomCount = 0, i = 0;
+  var name = null, residueCenter = null, residue = null;
   if (dictResidue) {
     var index = this._readUint8();
     var dict = STANDARD_RESIDUES[index];
-    var name = dict.name;
-    var residueCenter = this._readInt16Vec();
-    var residue = chain.addResidue(name, number);
+    name = dict.name;
+    residueCenter = this._readInt16Vec();
+    residue = chain.addResidue(name, number);
     residue.setSS(ssType);
     // handle dictionary residue
-    var atomCount = this._readUint8();
-    for (var i = 0; i < atomCount; ++i) {
+    atomCount = this._readUint8();
+    for (i = 0; i < atomCount; ++i) {
       this._readDictAtom(residue, residueCenter, dict);
     }
     return true;
   } 
-  var name = this._readShortString();
-  var residue = chain.addResidue(name, number);
+  name = this._readShortString();
+  residue = chain.addResidue(name, number);
   residue.setSS(ssType);
-  var residueCenter = this._readInt16Vec();
-  var atomCount = this._readUint8();
-  for (var i = 0; i < atomCount; ++i) {
+  residueCenter = this._readInt16Vec();
+  atomCount = this._readUint8();
+  for (i = 0; i < atomCount; ++i) {
     this._readAtom(residue, residueCenter);
   }
   return true;
-}
+};
 
 CsfReader.prototype._readAtomPos = function(residueCenter) {
   var relativePos = this._readInt16Vec();
@@ -248,7 +250,7 @@ CsfReader.prototype._readShortString = function() {
     string += this._readChar();
   }
   return string;
-}
+};
 
 CsfReader.prototype._readUint8 = function() {
   var result = this._data.getUint8(this._offset);
@@ -276,7 +278,7 @@ CsfReader.prototype._readInt32 = function() {
   var result = this._data.getInt32(this._offset);
   this._offset += 4;
   return result;
-}
+};
 
 CsfReader.prototype._readHeader = function() {
   var magicWord = '';

@@ -55,8 +55,7 @@ LowResModel.prototype.eachChain = function(callback) {
   for (var i = 0; i < this._chains.length; ++i) {
     callback(this._chains[i]);
   }
-
-}
+};
 
 LowResChain.prototype.addTrace = function() {
   var trace = new LowResTrace();

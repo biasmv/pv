@@ -658,7 +658,7 @@ PV.prototype._handleStandardOptions = function(opts, structure) {
   if (opts.showRelated && opts.showRelated !== 'asym') {
     if (structure.assembly(1) === null) {
       console.error('no assembly with name',opts.showRelated,
-                    '. Falling back to assymetric unit')
+                    '. Falling back to assymetric unit');
       opts.showRelated = 'asym';
     }
   }

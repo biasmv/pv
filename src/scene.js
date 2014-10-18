@@ -736,10 +736,12 @@ function ZeroObjectIdPool() {
 }
 
 
-ZeroObjectIdPool.prototype.recycle = function() {}
+ZeroObjectIdPool.prototype.recycle = function() {
+};
+
 ZeroObjectIdPool.prototype.getContinuousRange = function() {
   return new ZeroRange();
-}
+};
 
 function ZeroRange() {
 
@@ -748,13 +750,13 @@ function ZeroRange() {
 
 ZeroRange.prototype.nextId = function() {
   return 0;
-}
+};
 
 ZeroRange.prototype.length = function() {
   return 0;
-}
+};
 
-ZeroRange.prototype.recycle = function() {}
+ZeroRange.prototype.recycle = function() {};
 
 function UniqueObjectIdPool() {
   this._objects = {};
