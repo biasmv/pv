@@ -57,11 +57,30 @@ LowResModel.prototype.eachChain = function(callback) {
   }
 };
 
+
 LowResChain.prototype.addTrace = function() {
   var trace = new LowResTrace();
   this._traces.push(trace);
   return trace;
 };
+
+LowResChain.prototype.center = (function() {
+    var pos = vec3.create();
+    return function() {
+    var center = vec3.create();
+    var count = 0;
+    for (var i = 0; i < this._traces.length; ++i) {
+      var trace = this._traces[i];
+      for (var j = 0; j < trace.length(); ++j) {
+          vec3.add(center, center, trace.posAt(pos, j));
+          count += 1;
+      }
+    }
+    vec3.scale(center, center, 1.0/(count > 0 ? count : 1));
+    return center;
+  };
+})();
+
 
 function LowResTrace() {
   this._residues = [];
@@ -81,6 +100,7 @@ LowResTrace.prototype.posAt = function(out, index) {
   out[0] = pos[0];
   out[1] = pos[1];
   out[2] = pos[2];
+  return out;
 };
 
 LowResTrace.prototype.centralAtomAt = function(index) {

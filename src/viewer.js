@@ -138,15 +138,8 @@ PV.prototype._centerOnClicked = function(picked, originalEvent) {
   if (picked === null) {
     return;
   }
-  var transformedPos = vec3.create();
-  var newAtom = picked.object().atom;
-  var pos = newAtom.pos();
-  if (picked.transform()) {
-    vec3.transformMat4(transformedPos, pos, picked.transform());
-    this.setCenter(transformedPos, this._options.animateTime);
-  } else {
-    this.setCenter(pos, this._options.animateTime);
-  }
+  var pos = picked.transformedObjectCenter();
+  this.setCenter(pos, this._options.animateTime);
 };
   
 
@@ -930,6 +923,26 @@ PickingResult.prototype.symIndex = function() {
 PickingResult.prototype.transform = function() { 
   return this._transform; 
 };
+
+PickingResult.prototype.objectCenter = function() {
+  if (this._obj.atom !== undefined && this._obj.atom.pos !== undefined) {
+    return this._obj.atom.pos();
+  }
+  if (this._obj.chain !== undefined && this._obj.chain.center !== undefined) {
+    return this._obj.chain.center();
+  }
+  return null;
+};
+
+PickingResult.prototype.transformedObjectCenter = function() {
+  if (this._transform !== null) {
+    var transformed = vec3.create();
+    return vec3.transformMat4(transformed, this.objectCenter(), 
+                              picked.transform());
+  }
+  return this.objectCenter();
+};
+
 
 PV.prototype.pick = function(pos) {
   this._pickBuffer.bind();

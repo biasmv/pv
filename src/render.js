@@ -615,8 +615,11 @@ exports.multiResModel = (function() {
     var lineGeom = new LineGeom(gl, options.float32Allocator);
     lineGeom.setShowRelated('asym');
     var chains = model.chains();
+    var idRange = options.idPool.getContinuousRange(chains.length);
+    lineGeom.addIdRange(idRange);
     for (var i = 0; i < chains.length; ++i) {
       var chain = chains[i];
+      var chainId = idRange.nextId({ geom : lineGeom, chain : chain });
       var numVerts = lowResChainNumVerts(chain);
       var va = lineGeom.addChainVertArray(chain, numVerts);
       var traces = chain.backboneTraces();
@@ -627,7 +630,8 @@ exports.multiResModel = (function() {
           var ssTwo = trace.residueAt(k + 1).ss();
           trace.posAt(posOne, k + 0);
           trace.posAt(posTwo, k + 1);
-          va.addLine(posOne,  colors[ssOne], posTwo, colors[ssTwo]);
+          va.addLine(posOne,  colors[ssOne], posTwo, colors[ssTwo], 
+                     chainId, chainId);
         }
       }
     }
