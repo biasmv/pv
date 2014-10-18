@@ -216,19 +216,54 @@ function pdb(text) {
   return structure;
 }
 
-function fetchMrm(url, callback) {
+
+function csf(data) {
+  console.time('io.csf');
+  var reader = new io.CsfReader(data);
+  var structure = reader.read();
+  structure.deriveConnectivity();
+  console.timeEnd('io.csf');
+  return structure;
+}
+
+function fetchBinaryResource(url, callback) {
   var oReq = new XMLHttpRequest();
   oReq.open("GET", url, true);
   oReq.responseType = "arraybuffer";
   oReq.onload = function (oEvent) {
     if (oReq.response) {
       var data = new DataView(oReq.response);
-      var model = io.mrm(data);
-      callback(model);
+      callback(data);
     }
   };
   oReq.send(null);
 }
+function fetchMrm(url, callback) {
+  fetchBinaryResource(url, function(data) {
+    var model = io.mrm(data);
+    callback(model);
+  });
+}
+
+function fetchPdb(url, callback) {
+  var oReq = new XMLHttpRequest();
+  oReq.open("GET", url, true);
+  oReq.onload = function (oEvent) {
+    if (oReq.response) {
+      var structure= io.pdb(oReq.response)
+      callback(structure);
+    }
+  };
+  oReq.send(null);
+}
+
+function fetchCsf(url, callback) {
+  fetchBinaryResource(url, function(data) {
+    var model = io.csf(data);
+    callback(model);
+  });
+}
+
 
 
 function readVec3(dataView, offset, out) {
@@ -312,10 +347,15 @@ var mrm = (function () {
   };
 })();
 
-exports.io = {};
+if (exports.io === undefined) {
+  exports.io = {};
+}
 exports.io.pdb = pdb;
 exports.io.mrm = mrm;
+exports.io.csf = csf;
 exports.io.fetchMrm = fetchMrm;
+exports.io.fetchCsf = fetchCsf;
+exports.io.fetchPdb = fetchPdb;
 exports.io.Remark350Reader = Remark350Reader;
 
 

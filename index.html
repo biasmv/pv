@@ -13,6 +13,7 @@
     <script src='src/symmetry.js'></script>
     <script src='src/mol.js'></script>
     <script src='src/multi-res-model.js'></script>
+    <script src='src/csf.js'></script>
     <script src='src/io.js'></script>
     <script src='src/vert-assoc.js'></script>
     <script src='src/buffer-allocators.js'></script>
@@ -293,12 +294,11 @@
     }
 
     function load(pdb_id) {
-      $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
-        structure = io.pdb(data);
-        //mol.assignHelixSheet(structure);
-        cartoon();
-        pv.autoZoom();
-      }});
+      io.fetchCsf('pdbs/'+pdb_id+'.csf', function(loaded) {
+          structure = loaded;
+          preset();
+          pv.autoZoom();
+      });
     }
     function kinase() {
       load('1ake');
@@ -322,7 +322,7 @@
       activeTab = tabName;
     }
     function crambin() {
-      load('1crn');
+      load('1jd2');
     }
 
     function transferase() {
@@ -455,7 +455,7 @@
       pv.requestRedraw();
     });
 
-    document.addEventListener('DOMContentLoaded', virus_capsid);
+    document.addEventListener('DOMContentLoaded', crambin);
     /*
     window.addEventListener('resize', function() {
       pv.fitParent();
