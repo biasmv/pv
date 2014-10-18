@@ -644,7 +644,7 @@ PV.prototype.renderAs = function(name, structure, mode, opts) {
 };
 
 
-PV.prototype._handleStandardOptions = function(opts) {
+PV.prototype._handleStandardOptions = function(opts, structure) {
   opts = copy(opts);
   opts.float32Allocator = this._float32Allocator;
   opts.uint16Allocator = this._uint16Allocator;
@@ -655,12 +655,19 @@ PV.prototype._handleStandardOptions = function(opts) {
     opts.idPool = new ZeroObjectIdPool();
   }
   opts.showRelated = opts.showRelated || 'asym';
+  if (opts.showRelated && opts.showRelated !== 'asym') {
+    if (structure.assembly(1) === null) {
+      console.error('no assembly with name',opts.showRelated,
+                    '. Falling back to assymetric unit')
+      opts.showRelated = 'asym';
+    }
+  }
   return opts;
 };
 
 
 PV.prototype.lineTrace = function(name, structure, opts) {
-  var options = this._handleStandardOptions(opts);
+  var options = this._handleStandardOptions(opts, structure);
   options.color = options.color || color.uniform([ 1, 0, 1 ]);
   options.lineWidth = options.lineWidth || 4.0;
 
@@ -669,7 +676,7 @@ PV.prototype.lineTrace = function(name, structure, opts) {
 };
 
 PV.prototype.spheres = function(name, structure, opts) {
-  var options = this._handleStandardOptions(opts);
+  var options = this._handleStandardOptions(opts, structure);
   options.color = options.color || color.byElement();
   options.sphereDetail = this.options('sphereDetail');
   options.radiusMultiplier = options.radiusMultiplier || 1.0;
@@ -679,7 +686,7 @@ PV.prototype.spheres = function(name, structure, opts) {
 };
 
 PV.prototype.sline = function(name, structure, opts) {
-  var options = this._handleStandardOptions(opts);
+  var options = this._handleStandardOptions(opts, structure);
   options.color = options.color || color.uniform([ 1, 0, 1 ]);
   options.splineDetail = options.splineDetail || this.options('splineDetail');
   options.strength = options.strength || 1.0;
@@ -715,7 +722,7 @@ PV.prototype.boundingSpheres = function(gl, obj, options) {
 };
 
 PV.prototype.cartoon = function(name, structure, opts) {
-  var options = this._handleStandardOptions(opts);
+  var options = this._handleStandardOptions(opts, structure);
   options.color = options.color || color.bySS();
   options.strength = options.strength || 1.0;
   options.splineDetail = options.splineDetail || this.options('splineDetail');
@@ -733,14 +740,14 @@ PV.prototype.cartoon = function(name, structure, opts) {
 
 
 PV.prototype.surface = function(name, data, opts) {
-  var options = this._handleStandardOptions(opts);
+  var options = this._handleStandardOptions(opts, structure);
   var obj = render.surface(data, this._gl, options);
   return this.add(name, obj);
 };
 
 
 PV.prototype.multiResModel = function(name, data, opts) {
-  var options = this._handleStandardOptions(opts);
+  var options = this._handleStandardOptions(opts, structure);
   console.time('multiResModel');
   var obj = render.multiResModel(data, this._gl, options);
   console.timeEnd('multiResModel');
@@ -757,7 +764,7 @@ PV.prototype.tube = function(name, structure, opts) {
 };
 
 PV.prototype.ballsAndSticks = function(name, structure, opts) {
-  var options = this._handleStandardOptions(opts);
+  var options = this._handleStandardOptions(opts, structure);
 
   options.color = options.color || color.byElement();
   options.radius = options.radius || 0.3;
@@ -769,7 +776,7 @@ PV.prototype.ballsAndSticks = function(name, structure, opts) {
 };
 
 PV.prototype.lines = function(name, structure, opts) {
-  var options = this._handleStandardOptions(opts);
+  var options = this._handleStandardOptions(opts, structure);
   options.color = options.color || color.byElement();
   options.lineWidth = options.lineWidth || 4.0;
   var obj = render.lines(structure, this._gl, options);
@@ -777,7 +784,7 @@ PV.prototype.lines = function(name, structure, opts) {
 };
 
 PV.prototype.trace = function(name, structure, opts) {
-  var options = this._handleStandardOptions(opts);
+  var options = this._handleStandardOptions(opts, structure);
   options.color = options.color || color.uniform([ 1, 0, 0 ]);
   options.radius = options.radius || 0.3;
   options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;

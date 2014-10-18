@@ -236,15 +236,6 @@ BaseGeom.prototype.updateProjectionIntervals =
   } 
   var structure = this.structure();
   var assembly = structure !== null ? structure.assembly() : null;
-  // in case there is no assembly, fallback to asymmetric unit and bail out.
-  // FIXME: should detect that assembly does not exist when trying to set the
-  //    assembly and not when it's already too late.
-  if (!assembly) {
-    console.error('no assembly', showRelated, 
-                  'found. Falling back to asymmetric unit');
-    return this._updateProjectionIntervalsAsym(xAxis, yAxis, zAxis, xInterval, 
-                                               yInterval, zInterval);
-  }
   var gens = assembly.generators();
   for (var i = 0; i < gens.length; ++i) {
     var gen = gens[i];
@@ -318,12 +309,6 @@ BaseGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
 
   var structure = this.structure();
   var assembly = structure !== null? this.structure().assembly(showRelated) : null;
-  // in case there is no assembly, fallback to asymmetric unit and bail out.
-  if (!assembly) {
-    console.error('no assembly', showRelated, 
-                  'found. Falling back to asymmetric unit');
-    return this._drawVertArrays(cam, shader, this.vertArrays(), null);
-  }
   return this._drawSymmetryRelated(cam, shader, assembly);
 };
 
