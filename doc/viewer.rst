@@ -213,7 +213,7 @@ Mouse selection events are fired when the user clicks or double clicks a residue
   :param type: The type of event to listen to. Must be either 'atomClicked' or 'atomDoubleClicked' 
   :param callback: The function to receive the callback. If the special value 'center' is passed to the callback, a event handler is installed that centers the viewer on the clicked atom/residue. 
 
-  The arguments of the callback function are *picked*, and *originalEvent* which is the original mouse event. Picked contains information about the scene nodes that was clicked/doubleClicked as well as the actual clicked atom. It also contains a transformation matrix, that if set needs to be applied to the atom's position to get the correct position in global coordinates. This is illustrated in the second example below.
+  The arguments of the callback function are *picked*, and *originalEvent* which is the original mouse event. Picked contains information about the scene nodes that was clicked/doubleClicked as well as the actual clicked atom. 
 
 The following code simply logs the clicked residue to the console when an atom is clicked.
 
@@ -235,19 +235,12 @@ The following code shows how to listen for double click events to either make th
 
   var structure = .... // point to what you want the default background selection to view
   viewer.addListener("atomDoubleClicked", function(picked, originalEvent) {
-    if (picked === null) {
-      viewer.fitTo(structure);
-      return;
-    }
-    var transformedPos = vec3.create();
-    var newAtom = picked.object().atom;
-    var pos = newAtom.pos();
-    if (picked.transform()) {
-        vec3.transformMat4(transformedPos, pos, picked.transform());
-      viewer.setCenter(transformedPos, 500);
-    } else {
+      if (picked === null) {
+        viewer.fitTo(structure);
+        return;
+      }
+      var pos = picked.transformedObjectCenter();
       viewer.setCenter(pos, 500);
-    }
   });
 
 
