@@ -83,8 +83,8 @@ function PV(domElement, opts) {
   this._redrawRequested = false;
   this._resize = false;
   this._lastTimestamp = null;
-  this.listenerMap = {};
-  // NOTE: make sure to only request features supported by all browsers,
+  this._listenerMap = {};
+  // NOTE: make sure to only use features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
   // detection only happens in PV._initGL. Once this happened, we are
   // save to use whatever feature pleases us, e.g. typed arrays, 2D 
@@ -540,10 +540,10 @@ PV.prototype._mouseDoubleClick = (function() {
 
 
 PV.prototype.addListener = function(eventName, callback) {
-  var callbacks = this.listenerMap[eventName];
+  var callbacks = this._listenerMap[eventName];
   if (typeof callbacks === 'undefined') {
     callbacks = [];
-    this.listenerMap[eventName] = callbacks;
+    this._listenerMap[eventName] = callbacks;
   }
   if (callback === 'center') {
     callbacks.push(bind(this, this._centerOnClicked));
@@ -552,8 +552,10 @@ PV.prototype.addListener = function(eventName, callback) {
   }
 };
 
+PV.prototype.on = PV.prototype.addListener;
+
 PV.prototype._dispatchPickedEvent = function(event, newEventName, picked) {
-  var callbacks = this.listenerMap[newEventName];
+  var callbacks = this._listenerMap[newEventName];
   if (callbacks) {
     
     callbacks.forEach(function (callback) {
