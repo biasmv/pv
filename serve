@@ -2,10 +2,55 @@
 import SimpleHTTPServer
 import BaseHTTPServer
 import os
+import urllib
+import cStringIO
+import sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'lib'))
+import csf
+from io import BytesIO
 
 # essentially like SimpleHTTPRequestHandler, but sets the allow origin
 # header.
 class RelaxedRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+    def get_requested_chains(self, query):
+      """
+      Cheap and dirty way to get the list of requested chains from the query.
+      """
+      unquoted = urllib.unquote(query)
+      if unquoted.startswith('chains='):
+          chains_string =query.split('=', 1)[1]
+          return chains_string.split(',')
+      return None
+
+    def csf_with_chain_subset(self, the_file, requested_chains):
+        subset = BytesIO()
+        structure_data = csf.CompressedStructureFile(the_file)
+        structure_data.write_chain_subset(subset, requested_chains)
+        # rewind
+        size = subset.tell()
+        subset.seek(0)
+        return subset, size
+
+    def file_like_object_for_request(self, path):
+        # Always read in binary mode. Opening files in text mode may cause newline 
+        # translations, making the actual size of the content transmitted *less* 
+        # than the content-length!
+        the_file = open(path, 'rb')
+        fs = os.fstat(the_file.fileno())
+        modified = fs.st_mtime
+        if path.endswith('.csf'):
+            # in case a selection of chains is specified, open the file read the 
+            # TOC and write a new cStringIO file containing only the selected 
+            # chains
+            if  '?' in self.path:
+                _, query = self.path.split('?')
+                requested_chains = self.get_requested_chains(query)
+                if requested_chains:
+                  contents, size = self.csf_with_chain_subset(the_file, requested_chains)
+                  return contents, size, modified
+        return the_file, fs[6], modified
+
     def send_head(self):
         """
         This is a verbatim copy of the SimpleHTTPRequestHandler.send_head
@@ -13,6 +58,7 @@ class RelaxedRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         header here...
         """
         path = self.translate_path(self.path)
+        print path, self.path
         f = None
         if os.path.isdir(path):
             if not self.path.endswith('/'):
@@ -30,21 +76,17 @@ class RelaxedRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
                 return self.list_directory(path)
         ctype = self.guess_type(path)
         try:
-            # Always read in binary mode. Opening files in text mode may cause
-            # newline translations, making the actual size of the content
-            # transmitted *less* than the content-length!
-            f = open(path, 'rb')
+            contents, size, modified = self.file_like_object_for_request(path)
         except IOError:
             self.send_error(404, "File not found")
             return None
         self.send_response(200)
         self.send_header("Content-type", ctype)
-        fs = os.fstat(f.fileno())
-        self.send_header("Content-Length", str(fs[6]))
+        self.send_header("Content-Length", str(size))
         self.send_header('Access-Control-Allow-Origin', '"*"')
-        self.send_header("Last-Modified", self.date_time_string(fs.st_mtime))
+        self.send_header("Last-Modified", self.date_time_string(modified))
         self.end_headers()
-        return f
+        return contents
 
 
 BaseHTTPServer.test(RelaxedRequestHandler, BaseHTTPServer.HTTPServer)
