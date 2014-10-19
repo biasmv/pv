@@ -23,7 +23,11 @@ class CompressedStructureFile:
         return self._version
     def _read_table_of_contents(self):
         num_chains, = unpack_from('!H', self._file_like.read(2))
-        toc = dict()# should really be collections.OrderedDict()
+        # should really be collections.OrderedDict(), but it's not available
+        # in python 2.6, so for now just use a normal dictionary which ignores
+        # the order in which the keys were inserted....
+        toc = dict()
+                   
         for i in range(num_chains):
             data = TOC_ENTRY.unpack_from(self._file_like.read(TOC_ENTRY.size))
             chain_name, offset, size = data
