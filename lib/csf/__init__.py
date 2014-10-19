@@ -50,8 +50,8 @@ class CompressedStructureFile:
 
         # chec that all chains exist, raise IOError otherwise
         for chain_name in chain_names:
-          if chain_name not in self._toc:
-            raise IOError('chain "%s" does not exist' % chain_name)
+            if chain_name not in self._toc:
+                raise IOError('chain "%s" does not exist' % chain_name)
         # struct.pack_into is rather limited. We can't directly write to the file-
         # like object. Instead we have to first create temporary buffer for the 
         # TOC. 
