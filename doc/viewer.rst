@@ -26,6 +26,9 @@ Initialization and Configuration
   * *quality* the level of detail for the geometry. Accepted values are *low*, *medium*, and *high*. See :func:`~pv.Viewer.quality` for a description of these values. Defaults to *low*.
   * *slabMode* sets the default slab mode for the viewer. See :func:`~pv.Viewer.slabMode` for possible values. Defaults to 'auto'.
   * *background* set the default background color of the viewer. Defaults to 'white'. See :ref:`pv.color.notation`
+  * *atomDoubleClick* set the event handler for an atom double clicked event. When the parameter is a function it is added as a new 'atomDoubleClicked' event handler. See :func:`~pv.Viewer.addListener` for details. If it is set to the special value 'center', an event listener is installed that centers the viewer on the double clicked atom, residue. The default is 'center'.
+  * *atomClicked* set the event handler for an atom double clicked event (see *atomDoubleClick*). The default is null (no listener).
+  * *animateTime* controls the default animation duration in milliseconds. By default, the animation is set to 0 (no animation). By setting it to higher values, rotation, zoom and shift are animated. Note that enabling this can have negative impact on performance, especially with large molecules and on low-end devices.
 
 
 The following code defines a new viewer. This can be done during page load time, before the DOMContentLoaded event has been emitted. Render objects can only be added once the DOMContentLoaded event has fired. Typically it's best to put any object loading and display code into a DOMContentLoaded event handler.
@@ -208,38 +211,45 @@ Mouse selection events are fired when the user clicks or double clicks a residue
   Add a new listener for *atomClicked* or *atomDoubleClicked* events.
 
   :param type: The type of event to listen to. Must be either 'atomClicked' or 'atomDoubleClicked' 
-  :param callback: The function to receive the callback. type of event to listen to. Must be either 'atomClicked' or 'atomDoubleClicked' The arguments of the callback function is *picked*, and *originalEvent* which is the mouse event. 
+  :param callback: The function to receive the callback. If the special value 'center' is passed to the callback, a event handler is installed that centers the viewer on the clicked atom/residue. 
 
-  The following code shows how to listen for double click events to either make the selection the focal point and center of zoom, or zoom out to the whole structure if the background is double clicked. 
-  .. code-block:: javascript
-    var structure = .... // point to what you want the default background selection to view
-    viewer.addListener("atomDoubleClicked", function(picked, originalEvent) {
-      if (picked === null) {
-        viewer.fitTo(structure);
-      }
-      else {
-        var transformedPos = vec3.create();
-        var newAtom = picked.object().atom;
-        var pos = newAtom.pos();
-        if (picked.transform()) {
-          vec3.transformMat4(transformedPos, pos, picked.transform());
-          viewer.setCenter(transformedPos, 500);
-        } else {
-          viewer.setCenter(pos, 500);
-        }
-      }
-    });
+  The arguments of the callback function are *picked*, and *originalEvent* which is the original mouse event. Picked contains information about the scene nodes that was clicked/doubleClicked as well as the actual clicked atom. It also contains a transformation matrix, that if set needs to be applied to the atom's position to get the correct position in global coordinates. This is illustrated in the second example below.
 
-  .. code-block:: javascript
-    viewer.addListener("atomClicked", function(picked, originalEvent) {
-  
-      if (picked) {
-        var newAtom = picked.object().atom;
-        var geom = picked.object().geom;
-        
-        console.log(" Residue number=" + newAtom.residue().num());
-      }
-    });
+The following code simply logs the clicked residue to the console when an atom is clicked.
+
+.. code-block:: javascript
+
+  viewer.addListener("atomClicked", function(picked, originalEvent) {
+
+    if (picked) {
+      var newAtom = picked.object().atom;
+      var geom = picked.object().geom;
+      
+      console.log(" Residue number=" + newAtom.residue().num());
+    }
+  });
+
+The following code shows how to listen for double click events to either make the selection the focal point and center of zoom, or zoom out to the whole structure if the background is double clicked.
+
+.. code-block:: javascript
+
+  var structure = .... // point to what you want the default background selection to view
+  viewer.addListener("atomDoubleClicked", function(picked, originalEvent) {
+    if (picked === null) {
+      viewer.fitTo(structure);
+      return;
+    }
+    var transformedPos = vec3.create();
+    var newAtom = picked.object().atom;
+    var pos = newAtom.pos();
+    if (picked.transform()) {
+        vec3.transformMat4(transformedPos, pos, picked.transform());
+      viewer.setCenter(transformedPos, 500);
+    } else {
+      viewer.setCenter(pos, 500);
+    }
+  });
+
 
 .. _pv.viewer.management:
 

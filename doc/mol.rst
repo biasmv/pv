@@ -120,12 +120,13 @@ The Mol (and MolView) API
 
     var oddResidues = structure.residueSelect(function(res) { return res.index() % 2; });
 
-.. function:: mol.pdb(pdbData)
+.. function:: io.pdb(pdbData)
 
   Loads a structure from the *pdbData* string and returns it. In case multiple models are present in the file (as designated by MODEL/ENDMDL), only the first is read. The following record types are handled:
 
    * *ATOM/HETATM* for the actual coordinate data. Alternative atom locations other than those labelled as *A* are discarded.
    * *HELIX/STRAND* for assignment of secondary structure information.
+   * *REMARK 350* for handling of biological assemblies
 
 The Chain (and ChainView) API
 -----------------------------------------------------------------------------------------

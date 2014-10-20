@@ -1006,6 +1006,10 @@ ResidueView.prototype.qualifiedName = function() {
   return this._residue.qualifiedName();
 };
 
+ResidueView.prototype.containsResidue = function(residue) {
+  return this._residue.full() === residue.full();
+};
+
 
 
 function AtomView(resView, atom) {

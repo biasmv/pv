@@ -174,7 +174,7 @@ var ballsAndSticksForChain = (function() {
         vec3.add(midPoint, midPoint, atom.pos());
         vec3.scale(midPoint, midPoint, 0.5);
         options.protoCyl.addTransformed(va, midPoint, length, options.radius, 
-                                        rotation, color, color, objId);
+                                        rotation, color, color, objId, objId);
       });
       var vertEnd = va.numVerts();
       vertAssoc.addAssoc(atom, va, vertStart, vertEnd);
