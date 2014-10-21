@@ -494,8 +494,8 @@ ResidueBase.prototype.isWater = function() {
 
 ResidueBase.prototype.eachAtom = function(callback, index) {
   index |= 0;
-  for (var i =0; i< this._atoms.length; i+=1) {
-    if (callback(this._atoms[i], index) === false) {
+  for (var i =0; i< this.full()._atoms.length; i+=1) {
+    if (callback(this.full()._atoms[i], index) === false) {
       return false;
     }
     index +=1;
@@ -516,6 +516,11 @@ ResidueBase.prototype.atom = function(index_or_name) {
     }
   }
   return this._atoms[index_or_name]; 
+};
+
+ResidueBase.prototype.atomCount = function() {
+  var count = this.full()._atoms.length;
+  return count;
 };
 
 
