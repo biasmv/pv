@@ -710,7 +710,7 @@ TextLabel.prototype.draw = function(cam, shaderCatalog, style, pass) {
   this._gl.disable(this._gl.BLEND);
 };
 
-// A continous range of object identifiers.
+// A continuous range of object identifiers.
 function ContinuousIdRange(pool, start, end) {
   this._pool = pool;
   this._start = start;

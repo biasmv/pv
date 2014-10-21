@@ -90,6 +90,17 @@ Cam.prototype.aspectRatio = function() {
   return this._width / this._height;
 };
 
+// stores the position of the camera in out
+Cam.prototype.viewerPos = (function() {
+  var viewingDir = vec3.create();
+  return function(out) {
+    viewingDir[0] = this._rotation[ 2];
+    viewingDir[1] = this._rotation[ 6];
+    viewingDir[2] = this._rotation[10];
+    return vec3.scaleAndAdd(out, this._center, viewingDir, this._zoom);
+  };
+})();
+
 Cam.prototype.rotation = function() {
   return this._rotation;
 };
@@ -110,6 +121,12 @@ Cam.prototype._updateIfRequired = function() {
                     this._near, this._far);
   this._updateMat = false;
   return true;
+};
+
+// returns the current model view of the camera. 
+Cam.prototype.modelView = function() {
+  this._updateIfRequired();
+  return this._camModelView;
 };
 
 Cam.prototype.setViewportSize = function(width, height) {

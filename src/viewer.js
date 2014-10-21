@@ -84,6 +84,7 @@ function PV(domElement, opts) {
   this._resize = false;
   this._lastTimestamp = null;
   this._listenerMap = {};
+  this._cameraPositionChanged = false;
   // NOTE: make sure to only use features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
   // detection only happens in PV._initGL. Once this happened, we are
@@ -430,6 +431,7 @@ PV.prototype.setCamera = function(rotation, center, zoom, ms) {
     this._cam.setCenter(center);
     this._cam.setRotation(rotation);
     this._cam.setZoom(zoom);
+    this._cameraPositionChanged = true;
     this.requestRedraw();
     return;
   }
@@ -440,6 +442,7 @@ PV.prototype.setCamera = function(rotation, center, zoom, ms) {
 
   this._camAnim.zoom = new Animation(this._cam.zoom(), 
       zoom, ms);
+  this._cameraPositionChanged = true;
   this.requestRedraw();
 };
 
@@ -469,6 +472,22 @@ PV.prototype._animateCam = function() {
   }
   if (anotherRedraw) {
     this.requestRedraw();
+    this._cameraPositionChanged = true;
+  }
+};
+
+PV.prototype._getListeners = function(eventName) {
+  var listeners = this._listenerMap[eventName];
+  if (listeners === undefined) {
+    return [];
+  }
+  return listeners;
+};
+
+PV.prototype._notifyCameraPositionChangedListeners = function() {
+  var listeners = this._getListeners('cameraPositionChanged');
+  for (var i = 0; i < listeners.length; ++i) {
+      listeners[i](this._cam);
   }
 };
 
@@ -478,6 +497,10 @@ PV.prototype._draw = function() {
   this._animateCam();
   var newSlab = this._options.slabMode.update(this._objects, this._cam);
   this._cam.setNearFar(newSlab.near, newSlab.far);
+  if (this._cameraPositionChanged) {
+    this._notifyCameraPositionChangedListeners();
+    this._cameraPositionChanged = false;
+  }
 
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
   this._gl.viewport(0, 0, this._options.realWidth, this._options.realHeight);
@@ -518,12 +541,14 @@ PV.prototype.clear = function() {
 
 PV.prototype._mouseWheel = function(event) {
   this._cam.zoom(event.wheelDelta < 0 ? -1 : 1);
+  this._cameraPositionChanged = true;
   event.preventDefault();
   this.requestRedraw();
 };
 
 PV.prototype._mouseWheelFF = function(event) {
   this._cam.zoom(event.deltaY < 0 ? 1 : -1);
+  this._cameraPositionChanged = true;
   event.preventDefault();
   this.requestRedraw();
 };
@@ -601,6 +626,7 @@ PV.prototype._mouseRotate = function(event) {
   var speed = 0.005;
   this._cam.rotateX(speed * delta.y);
   this._cam.rotateY(speed * delta.x);
+  this._cameraPositionChanged = true;
   this._lastMousePos = newMousePos;
   this.requestRedraw();
 };
@@ -744,6 +770,9 @@ PV.prototype.multiResModel = function(name, data, opts) {
   var options = this._handleStandardOptions(opts, structure);
   console.time('multiResModel');
   var obj = render.multiResModel(data, this._gl, options);
+  var lodManager = new LevelOfDetailManager(data, obj, '/pdb/');
+  this.on('cameraPositionChanged', 
+          bind(lodManager, lodManager.onCameraPositionChange));
   console.timeEnd('multiResModel');
   return this.add(name, obj);
 };
@@ -1033,11 +1062,13 @@ PV.prototype.rm = function(glob) {
     if (!regex.test(obj.name())) {
       newObjects.push(obj);
     } else {
+      console.log('destroying');
       obj.destroy();
     }
   }
   this._objects = newObjects;
 };
+
 
 PV.prototype.all = function() {
   return this._objects;

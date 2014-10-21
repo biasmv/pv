@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>pv - JavaScript protein viewer</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <script src='/js/jquery-2.0.2.min.js'></script>
+    <script src="/js/jquery-ui.min.js"></script>
+    <script src='/src/gl-matrix.js'></script>
+    <script src='/src/core.js'></script>
+    <script src='/src/geom.js'></script>
+    <script src='/src/trace.js'></script>
+    <script src='/src/symmetry.js'></script>
+    <script src='/src/mol.js'></script>
+    <script src='/src/multi-res-model.js'></script>
+    <script src='/src/csf.js'></script>
+    <script src='/src/io.js'></script>
+    <script src='/src/vert-assoc.js'></script>
+    <script src='/src/buffer-allocators.js'></script>
+    <script src='/src/vertex-array-base.js'></script>
+    <script src='/src/indexed-vertex-array.js'></script>
+    <script src='/src/vertex-array.js'></script>
+    <script src='/src/chain-data.js'></script>
+    <script src='/src/geom-builders.js'></script>
+    <script src='/src/scene.js'></script>
+    <script src='/src/render.js'></script>
+    <script src='/src/shade.js'></script>
+    <script src='/src/cam.js'></script>
+    <script src='/src/shaders.js'></script>
+    <script src='/src/framebuffer.js'></script>
+    <script src='/src/slab.js'></script>
+    <script src='/src/animation.js'></script>
+    <script src='/src/viewer.js'></script>
+
+    <style>
+    body {
+      font-family: Helvetica;
+      /*background-color: #fff;/*#f0f0f0;*/*/
+      background-color: #000;
+      width:100%;
+      height:100%;
+      font-weight: lighter;
+      margin: 0px;
+      overflow: hidden;
+    }
+    #gl {
+      position:fixed;
+      left:183px;
+      top:0px;
+      bottom:0px;
+      right:0px;
+    }
+    .screenshot {
+      position:fixed;
+      top:49px;
+      left:233px;
+    }
+    #inspector {
+      position:fixed;
+      width:150px;
+      top:0px;
+      font-size:10pt;
+      bottom:0px;
+      
+      background-color:white;
+      border-right-color:#ccc;
+      padding:15px;
+      box-shadow: 2px 0px 2px #ddd;
+    }
+
+    #inspector ul {
+      padding:0px;
+    }
+
+    #inspector ul li {
+      margin-left:5px;
+      margin-right:5px;
+      margin-bottom:5px;
+      list-style:none;
+      cursor: pointer;
+      color:#660000
+    }
+
+    #inspector ul li:hover {
+      color:#994444;
+    }
+    #toolbar {
+      position:fixed;
+      background-color:#fafafa;
+      top:0px;
+      left:0px;
+      padding-top:8px;
+      padding-left:8px;
+      border-bottom-style:solid;
+      border-bottom-color:#ccc;
+      border-bottom-width:1px;
+      right:0px;
+      height:40px;
+    }
+    #copyright {
+      bottom:0px;
+      position: fixed;
+      left:20px;
+      color:#888;
+      border-top-style:solid;
+      border-top-color:#ccc;
+      border-top-width:1px;
+      font-size:10pt;
+      padding-bottom:20px;
+      padding-left:5px;
+      padding-top:20px;
+    }
+    #toolbar a {
+      float:right;
+      padding-right:10px;
+      color:#660000;
+      text-decoration:none;
+    }
+
+    #toolbar a:hover {
+      color:#994444;
+    }
+
+    #inspector h1 {
+      margin-top:10px;
+      margin-bottom:0px;
+      border-top-style:solid;
+      border-top-color:#ccc;
+      border-top-width:1px;
+      padding-bottom:10px;
+      padding-top:10px;
+      font-size:10pt;
+      font-weight:lighter;
+      color:#888;
+      text-align:center;
+    }
+    #toolbar input {
+      padding: 0.5em 0.6em;
+      display: inline-block;
+      border: 1px solid #ccc;
+      font-size: 0.8em;
+      width:210px;
+      box-shadow: inset 0 1px 3px #ddd;
+      border-radius: 4px;
+      -webkit-transition: 0.3s linear border;
+      -moz-transition: 0.3s linear border;
+      -ms-transition: 0.3s linear border;
+      -o-transition: 0.3s linear border;
+      transition: 0.3s linear border;
+      -webkit-box-sizing: border-box;
+      -moz-box-sizing: border-box;
+      box-sizing: border-box;
+    }
+
+    span.btn:hover {
+      border-color:#dcc;
+    }
+    span.btn {
+      background-color:#fdd;
+      margin-left:5px;
+      margin-right:5px;
+      border-color:#edd;
+      padding:5px;
+      padding-left:8px;
+      padding-right:8px;
+      color:#977;
+      cursor:pointer;
+      border-radius:3px;
+      border-style:solid;
+      border-width:1px;
+    }
+    .sl { display: block; }
+    </style>
+    </head>
+<body>
+  <div id=inspector>
+    <ul id=styleTab>
+      <h1></h1>
+      <li id=preset>Preset</li>
+      <li id=cartoon>Cartoon</li>
+      <li id=tube>Tube</li>
+      <li id=lines>Lines</li>
+      <li id=line-trace>Line Trace</li>
+      <li id=sline>Smooth Line Trace</li>
+      <li id=trace>Trace</li>
+      <li id=spheres>Spheres</li>
+      <li id=balls-and-sticks>Balls and Sticks</li>
+      <li id=test>Test</li>
+    </ul>
+     <ul>
+      <h1></h1>
+      <li><div id="slider" class="sl"></div></li>
+      <li><input type="checkbox" name="outline" 
+                 value="yes" id=showOutline autocomplete=off>Show Outline</li>
+      <li><input type="checkbox" name="fog" 
+                 value="yes" checked=true id=fog autocomplete=off>Fog</li>
+      <li id=save>Export As Image</li>
+    </ul>
+  </div>
+  <div id=gl>
+  </div>
+ </body>
+  <script>
+    var activeTab = 'styleTab';
+    var viewer = pv.Viewer(document.getElementById('gl'), 
+                       { quality : 'medium', width: 500, height : 500,
+                         antialias : true, outline : false,
+                         background : 'white', 
+                         slabMode : 'auto'});
+    var structure;
+
+    function load(pdb_id) {
+      io.fetchCsf('pdbs/'+pdb_id+'.csf', function(loaded) {
+          structure = loaded;
+          preset();
+          viewer.autoZoom();
+      });
+    }
+
+    function virusCapsid() {
+      viewer.clear();
+      io.fetchMrm('/mrm/hiv-capsid.mrm', function(model) {
+          var mdl = viewer.multiResModel('mrm', model);
+          viewer.fitTo(mdl);
+      });
+    }
+
+    $('#save').click(function() {
+      var imgDataURL = viewer.imageData();
+      window.open(imgDataURL);
+    });
+    $('#showOutline').change(function() {
+      viewer.options('outline', this.checked);
+      viewer.requestRedraw();
+    });
+    $('#fog').change(function() {
+      viewer.options('fog', this.checked);
+      viewer.requestRedraw();
+    });
+
+    document.addEventListener('DOMContentLoaded', virusCapsid);
+  </script>
+</html>

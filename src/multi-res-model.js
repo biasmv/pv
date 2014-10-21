@@ -147,6 +147,60 @@ LowResResidue.prototype.ss = function() {
 };
 
 
+function LevelOfDetailManager(lowResModel, geom, viewer, baseUrl) {
+  this._viewer = viewer;
+  this._geom = geom;
+  this._lowResModel = lowResModel;
+  this._baseUrl = baseUrl;
+  this._highResModels = {};
+  this._objectCount = 0;
+}
+
+var onLoadStructure = function(name, vertArray, self) {
+  return function(structure) {
+      var model = viewer.lineTrace(name, structure, { 
+        quality : 'low'//, color : color.ssSuccession() 
+      });
+      console.log(name);
+      self._highResModels[name] = model;
+  };
+};
+
+LevelOfDetailManager.prototype.onCameraPositionChange = (function() {
+  var viewerPos = vec3.create();
+  return function(cam) {
+    var vertArrays = this._geom.vertArrays();
+    cam.viewerPos(viewerPos);
+    var shortest = 1000000000000000000;
+    for (var i = 0; i < vertArrays.length; ++i) {
+      var vertArray = vertArrays[i];
+      var sphere = vertArray.boundingSphere();
+      var dist = vec3.squaredDistance(viewerPos, sphere.center());
+      var id = vertArray.chain().substr(0,4);
+      var chain = vertArray.chain().substr(5,1);
+      var key = id + chain;
+      if (dist < 100000) {
+        if (this._highResModels[key] !== undefined || 
+            this._objectCount > 50) {
+          continue;
+        }
+        this._highResModels[key] = 'fetching';
+        this._objectCount += 1;
+        io.fetchCsf('/pdbs/'+id+'.csf?chains='+chain, onLoadStructure(key, vertArray, this));
+      } else {
+        var value = this._highResModels[key];
+        if (value !== undefined && value !== 'fetching') {
+          console.log('RM!', key);
+          viewer.rm(key);
+          delete this._highResModels[key];
+          this._objectCount -= 1;
+        }
+      }
+    }
+  };
+})();
+
 exports.LowResModel = LowResModel;
+exports.LevelOfDetailManager = LevelOfDetailManager;
 
 })(this);
