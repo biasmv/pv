@@ -6,6 +6,51 @@ Molecular structures are represented by the :class:`mol.Mol` class. While nothin
 Tightly coupled to :class:`mol.Mol` is the concept of structural subset, a :class:`mol.MolView`. MolViews have the exact same interface than :class:`mol.Mol` and in most cases behave exactly the same. Thus, from a user perspective it mostly does not matter whether one is working with a complete structure or a subset thereof. In the following, the APIs for the :class:`mol.Mol` and :class:`mol.MolView` classes are described together. Where differences exist, they are documented.
 
 
+Obtaining and Creating Molecular Structures
+-----------------------------------------------------------------------------------------
+
+The most common way to construct :class:`molecules <mol.Mol>` is through one of the io functions. For example, to import the structure from a PDB file, use :func:`io.pdb`. The whole structure, or a subset thereof can then be displayed on the screen by using one of the :ref:`rendering functions<pv.viewer.rendering>`.
+
+The following code example fetches a PDB file from PDB.org imports it and displays the chain with name 'A' on the screen. For more details on how to create subsets, see :ref:`mol.creating-views`.
+
+.. code-block:: javascript
+
+  $.ajax('http://pdb.org/pdb/files/'+pdbId+'.pdb')
+  .done(function(data) {
+      // data contains the contents of the PDB file in text form
+      var structure = io.pdb(data);
+      var firstChain = structure.select({chain: 'A'});
+      viewer.cartoon('firstChain', firstChain);
+  });
+
+Alternatively, you can create the structure *by hand*. That's typically not required, unless you are implementing your own importer for a custom format.  The following code creates a simple molecule consisting of 10 atoms arranged along the x-axis.
+
+.. code-block:: javascript
+
+  var structure = new mol.Mol();
+  var chain = structure.addChain('A');
+  for (var i = 0; i < 10; ++i) {
+    var residue = chain.addResidue('ABC', i);
+    residue.addAtom('X', [i, 0, 0], 'C');
+  }
+
+
+.. _mol.creating-views:
+
+Creating Subsets of a Molecular Structure
+-----------------------------------------------------------------------------------------
+
+It is quite common to only apply operations (coloring, displaying) to subset of a molecular structure. These subsets are modelled as *views* and can be created in different ways.
+
+ - The most convenient way to create views is by using :func:`mol.Mol.select`. Select accepts a set of predicates and returns a view containing only chains, residues and atoms that match the predicates. 
+ - Alternatively for more complex selections, one can use :func:`mol.Mol.residueSelect`, which evaluates a function on each residue and includes residues for which the function returns true.
+
+ - Selection by distance allows to select parts of a molecule that are within a certain radius of  another molecule.
+ - Views can be assembled manually through :func:`mol.MolView.addChain`, :func:`mol.ChainView.addResidue`, :func:`mol.ResidueView.addAtom`. This is the most flexible but also the most verbose way of creating views.
+
+
+
+
 The Mol (and MolView) API
 -----------------------------------------------------------------------------------------
 
@@ -95,7 +140,7 @@ The Mol (and MolView) API
     // included in the result.
     var chainACarbonAlpha = myStructure.select({cname : 'A', aname : 'CA'});
 
-  When none of the above selection mechanisms is flexible enough, consider using :func:`mol.Mol.residueSelect`, or :func:`mol.Mol.atomSelect`.
+  When none of the above selection mechanisms is flexible enough, consider using :func:`mol.Mol.residueSelect`.
 
 
   :returns: :class:`mol.MolView` containing the subset of chains, residues and atoms.
@@ -106,7 +151,13 @@ The Mol (and MolView) API
   Returns an instance of :class:`mol.MolView` containing chains, residues and atoms which are in spatial proximity to *structure*. 
 
   :param structure: :class:`mol.Mol` or :class:`mol.MolView` to which proximity is required.
-  :param options: An optional dictionary of options to control the behavior of selectWithin.  **radius** sets the distance cutoff in Angstrom. The default radius is 4.   **matchResidues** whether to use residue matching mode. When set to true, all atom of a residue are included in result as soon as one atom is in proximity.
+  :param options: An optional dictionary of options to control the behavior of selectWithin (see below)
+
+  **Options**
+
+  - **radius** sets the distance cutoff in Angstrom. The default radius is 4.   
+      
+  - **matchResidues** whether to use residue matching mode. When set to true, all atom of a residue are included in result as soon as one atom is in proximity.
 
 
 .. function:: mol.Mol.residueSelect(predicate)
@@ -119,6 +170,23 @@ The Mol (and MolView) API
   .. code-block:: javascript
 
     var oddResidues = structure.residueSelect(function(res) { return res.index() % 2; });
+
+.. function:: mol.Mol.addChain(name)
+
+  Adds a new chain with the given name to the  structure
+
+  :param name: the name of the chain
+
+  :returns: the newly created :class:`mol.Chain` instance
+
+.. function:: mol.MolView.addChain(residue, includeAllResiduesAndAtoms)
+
+  Adds the given chain to the structure view
+
+  :param chain: the chain to add. Must either be a :class:`mol.ChainView`, or :class:`mol.Chain` instance.
+  :param includeAllResiduesAndAtoms: when true, residues and atoms contained in the chain are directly added as new :class:`mol.ResidueView`, :class:`mol.AtomView` instances. When set to false (the default), the new chain view is created with an empty list of residues.
+
+  :returns: the newly created :class:`mol.ChainView` instance
 
 .. function:: io.pdb(pdbData)
 
@@ -157,6 +225,24 @@ The Chain (and ChainView) API
               mol.ChainView.backboneTraces()
 
   Convenience function which returns all backbone traces of the chain as a list. See :func:`mol.Chain.eachBackboneTrace`.
+
+.. function:: mol.Chain.addResidue(name, number)
+
+  Appends a new residue at the end of the chain
+
+  :param name: the name of the residue, for example 'GLY' for glycine.
+  :param number: the residue number
+
+  :returns: the newly created :class:`mol.Residue` instance
+
+.. function:: mol.ChainView.addResidue(residue, includeAllAtoms)
+
+  Adds the given residue to the chain view
+
+  :param residue: the residue to add. Must either be a :class:`mol.ResidueView`, or :class:`mol.Residue` instance.
+  :param includeAllAtoms: when true, all atoms of the residue are directly added as new AtomViews to the residue. When set to false (the default), a new residue view is created with an empty list of atoms.
+
+  :returns: the newly created :class:`mol.ResidueView` instance
 
 
 
@@ -209,6 +295,22 @@ The Residue (and ResidueView) API
 
   :returns: For :class:`mol.Residue`, a :class:`mol.Atom` instance, for :class:`mol.ResidueView`, a :class:`mol.AtomView` instance. If no matching atom could be found, null is returned. 
 
+
+.. function:: mol.Residue.addAtom(name, pos, element)
+
+  Adds a new atom to the residue. 
+
+  :param name: the name of the atom, for example CA for carbon-alpha
+  :param pos: the atom position
+  :param element: the atom element string, e.g. 'C' for carbon, 'N' for nitrogen
+
+  :returns: the newly created :class:`mol.Atom` instance
+
+.. function:: mol.ResidueView.addAtom(atom)
+
+  Adds the given atom to the residue view
+
+  :returns: the newly created :class:`mol.AtomView` instance
 
 
 The Atom (and AtomView) API
