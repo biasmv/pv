@@ -34,7 +34,7 @@ function Cam(gl) {
   this._near = 0.10;
   this._far = 4000.0;
   this._fogNear = -5;
-  this._fogFar = 10;
+  this._fogFar = 50;
   this._fog = true;
   this._fovY = Math.PI * 45.0 / 180.0;
   this._paramsChanged = false;
@@ -71,6 +71,15 @@ Cam.prototype.setRotation = function(rot) {
     this._rotation[15] = 1.0;
   }
   this._updateMat = true;
+};
+
+// returns the 3 main axes of the current camera rotation
+Cam.prototype.mainAxes = function() {
+  return[
+    vec3.fromValues(this._rotation[0], this._rotation[4], this._rotation[8]),
+    vec3.fromValues(this._rotation[1], this._rotation[5], this._rotation[9]),
+    vec3.fromValues(this._rotation[2], this._rotation[6], this._rotation[10])
+  ];
 };
 
 Cam.prototype.fieldOfViewY = function() {

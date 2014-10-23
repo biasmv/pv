@@ -95,6 +95,28 @@ VertexArrayBase.prototype.bindBuffers = function() {
   this._ready = true;
 };
 
+// Helper method to calculate the squared bounding sphere radius of the sphere 
+// centered on "sphereCenter" over multiple vertex arrays. 
+VertexArrayBase.prototype.updateSquaredSphereRadius =  (function() {
+
+  var transformedCenter = vec3.create();
+  return function(sphereCenter, radius, transform) {
+    var bounds = this.boundingSphere();
+    if (!bounds) {
+      return radius;
+    }
+    // Note: Math.max(radius, null) returns the radius for positive values 
+    // of radius, which is exactly what we want.
+    if (transform) {
+      vec3.transformMat4(transformedCenter, bounds.center(), transform);
+      return Math.max(vec3.sqrDist(transformedCenter, sphereCenter), radius);
+    } 
+
+    var sphereRadSquare = bounds.radius() * bounds.radius();
+    return Math.max(vec3.sqrDist(bounds.center(), sphereCenter) + sphereRadSquare, radius);
+  };
+})();
+
 VertexArrayBase.prototype.updateProjectionIntervals =  (function() {
 
   var transformedCenter = vec3.create();

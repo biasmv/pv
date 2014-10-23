@@ -216,6 +216,7 @@ BaseGeom.prototype._updateProjectionIntervalsAsym =
                                               yInterval, zInterval);
     }
 };
+
 BaseGeom.prototype.updateProjectionIntervals =
     function(xAxis, yAxis, zAxis, xInterval, yInterval, zInterval) {
   if (!this._visible) {
@@ -247,6 +248,46 @@ BaseGeom.prototype.updateProjectionIntervals =
       }
     }
   }
+};
+
+
+// FIXME: investigate the performance cost of sharing code between updateSquaredSphereRadius
+// and updateProjectionIntervals 
+BaseGeom.prototype._updateSquaredSphereRadiusAsym = function(center, radius) {
+    var vertArrays = this.vertArrays();
+    for (var i = 0; i < vertArrays.length; ++i) {
+      radius = vertArrays[i].updateSquaredSphereRadius(center, radius);
+    }
+    return radius;
+};
+
+BaseGeom.prototype.updateSquaredSphereRadius = function(center, radius) {
+  if (!this._visible) {
+    return radius;
+  }
+  var showRelated = this.showRelated();
+  if (showRelated === 'asym') {
+    return this._updateSquaredSphereRadiusAsym(center, radius);
+  } 
+  var assembly = this.structure().assembly(showRelated);
+  // in case there is no assembly, fallback to asymmetric unit and bail out.
+  if (!assembly) {
+    console.error('no assembly', showRelated, 
+                  'found. Falling back to asymmetric unit');
+    return this._updateSquaredSphereRadiusAsym(center, radius);
+  }
+  var gens = assembly.generators();
+  for (var i = 0; i < gens.length; ++i) {
+    var gen = gens[i];
+    var affectedVertArrays = this._vertArraysInvolving(gen.chains());
+    for (var j = 0; j < gen.matrices().length; ++j) {
+      for (var k = 0; k < affectedVertArrays.length; ++k) {
+        var transform = gen.matrix(j);
+        radius = affectedVertArrays[k].updateSquaredSphereRadius(center, radius);
+      }
+    }
+  }
+  return radius;
 };
 
 BaseGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {

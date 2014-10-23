@@ -101,9 +101,11 @@ The following will add a new color operation which colors atoms based on their i
   function evenOdd() {
     return new ColorOp(function(atom, out, index) {
       if (atom.index() % 2 === 0) {
-        out[index] = 1.0; out[index+1] = 0.0; out[index+2] = 0.0;
+        out[index+0] = 1.0; out[index+1] = 0.0; 
+        out[index+2] = 0.0; out[index+3] = 1.0;
       } else {
-        out[index] = 0.0; out[index+1] = 0.0; out[index+2] = 1.0;
+        out[index+0] = 0.0; out[index+1] = 0.0; 
+        out[index+2] = 1.0; out[index+3] = 1.0;
       }
     });
   }

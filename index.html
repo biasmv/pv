@@ -243,7 +243,7 @@
     function cartoon() {
       pv.clear();
       pv.cartoon('structure', structure, { 
-                 color : color.rainbow(), showRelated : '1' 
+                 color : color.rainbow(), showRelated : '1', boundingSpheres : true
       });
     }
     function lineTrace() {
@@ -283,9 +283,8 @@
       pv.clear();
       var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
       pv.ballsAndSticks('structure.ligand', ligand, { 
-        showRelated: '1' 
       });
-      pv.cartoon('structure.protein', structure, { showRelated : '1' });
+      pv.cartoon('structure.protein', structure, { boundingSpheres: false });
     }
 
     function load(pdb_id) {
@@ -448,7 +447,7 @@
       pv.requestRedraw();
     });
 
-    document.addEventListener('DOMContentLoaded', crambin);
+    document.addEventListener('DOMContentLoaded', porin);
     /*
     window.addEventListener('resize', function() {
       pv.fitParent();
