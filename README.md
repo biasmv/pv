@@ -54,9 +54,9 @@ Changelog
 
 ### New Since version 1.2
 
-- smoothing if strands
+- smoothing of strands when rendering as helix, strand, coil cartoon
 - implement proper strand "arrows"
-- improved auto-slabbing when the molecule are off-center
+- improved auto-slabbing when the rendered objects are off-center
 
 ### New in Version 1.2
 
