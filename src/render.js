@@ -40,6 +40,20 @@ var render = (function() {
     1.0 * R,
     0
   ];
+  var ARROW_POINTS = [
+    -10 * R,
+    -1.0 * R,
+    0,
+    10 * R,
+    -1.0 * R,
+    0,
+    10 * R,
+    1.0 * R,
+    0,
+    -10 * R,
+    1.0 * R,
+    0
+  ];
 
 // performs an in-place smoothing over 3 consecutive positions.
 var inplaceStrandSmoothing = (function() {
@@ -555,9 +569,11 @@ var cartoonForChain = function(meshGeom, vertAssoc, options, traceIndex, chain) 
 
 exports.cartoon = function(structure, gl, options) {
   console.time('cartoon');
+  options.arrowSkip = Math.floor(options.splineDetail * 3 / 4);
   options.coilProfile = new TubeProfile(COIL_POINTS, options.arcDetail, 1.0);
   options.helixProfile = new TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
   options.strandProfile = new TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
+  options.arrowProfile = new TubeProfile(ARROW_POINTS, options.arcDetail, 0.1);
 
   var meshGeom = new MeshGeom(gl, options.float32Allocator, 
                               options.uint16Allocator);
@@ -620,14 +636,17 @@ var _cartoonAddTube = (function() {
   var rotation = mat3.create();
   var up = vec3.create();
 
-  return function(vertArray, pos, left, res, tangent, color, first, options, 
+  return function(vertArray, pos, left, ss, tangent, color, first, options, 
                   offset, objId) {
-    var ss = res.ss();
     var prof = options.coilProfile;
-    if (ss === 'H' && !options.forceTube) {
-      prof = options.helixProfile;
-    } else if (ss === 'E' && !options.forceTube) {
-      prof = options.strandProfile;
+    if (ss !== 'C' && !options.forceTube) {
+      if (ss === 'H') {
+        prof = options.helixProfile;
+      } else if (ss === 'E') {
+        prof = options.strandProfile;
+      } else if (ss === 'A') {
+        prof = options.arrowProfile;
+      } 
     } else {
       if (first) {
         geom.ortho(left, tangent);
@@ -770,33 +789,50 @@ var _cartoonForSingleTrace = (function() {
                       //    transitions.
       var residueIndex = Math.floor(i / options.splineDetail);
       var prevResidueIndex = Math.floor((i - 1) / options.splineDetail);
-      if (residueIndex !== prevResidueIndex && !options.forceTube) {
-        // for helix and strand regions, we can't base the left vector
-        // of the current residue on the previous one, since it determines
-        // the orientation of the strand and helix profiles.
-        //
-        // frequently, the transition regions from coil to strand and helix
-        // contain strong twists which severely hamper visual quality. there
-        // is not problem however when transitioning from helix or strand
-        // to coil or inside a helix or strand.
-        //
-        // to avoid these visual artifacts, we calculate the best fit between
-        // the current normal and the normal "after" which gives us an offset
-        // for stitching the two parts together.
-        if (trace.residueAt(prevResidueIndex).ss() === 'C' &&
-            (trace.residueAt(residueIndex).ss() === 'H' ||
-              trace.residueAt(residueIndex).ss() === 'E')) {
-          // we don't want to generate holes, so we have to make sure
-          // the vertices of the rotated profile align with the previous
-          // profile.
-          vec3.set(normal2, normalSdiv[imox3] - sdiv[imox3],
-                    normalSdiv[imox3 + 1] - sdiv[imox3 + 1],
-                    normalSdiv[imox3 + 2] - sdiv[imox3 + 2]);
-          vec3.normalize(normal2, normal2);
-          var argAngle = 2 * Math.PI / (options.arcDetail * 4);
-          var signedAngle = geom.signedAngle(normal, normal2, tangent);
-          offset = Math.round(signedAngle / argAngle);
-          offset = (offset + options.arcDetail * 4) % (options.arcDetail * 4);
+
+      // used to determine whether we have to add an arrow profile. when the 
+      // current residue is the last strand residue, the arrow tip has to land 
+      // exactly on the first slice of the next residue. Because we would like 
+      // to have larger arrows we use multiple slices for the arrow (set to 
+      // 3/4 of splineDetail).
+      var arrowEndIndex = Math.floor((i + options.arrowSkip) / options.splineDetail);
+      var drawArrow = false;
+      var thisSS = trace.residueAt(residueIndex).ss();
+      if (!options.forceTube) {
+        if (residueIndex !== prevResidueIndex) {
+          // for helix and strand regions, we can't base the left vector
+          // of the current residue on the previous one, since it determines
+          // the orientation of the strand and helix profiles.
+          //
+          // frequently, the transition regions from coil to strand and helix
+          // contain strong twists which severely hamper visual quality. there
+          // is not problem however when transitioning from helix or strand
+          // to coil or inside a helix or strand.
+          //
+          // to avoid these visual artifacts, we calculate the best fit between
+          // the current normal and the normal "after" which gives us an offset
+          // for stitching the two parts together.
+          var prevSS = trace.residueAt(prevResidueIndex).ss();
+          if (prevSS === 'C' && (thisSS === 'H' || thisSS === 'E')) {
+            // we don't want to generate holes, so we have to make sure
+            // the vertices of the rotated profile align with the previous
+            // profile.
+            vec3.set(normal2, normalSdiv[imox3] - sdiv[imox3],
+                      normalSdiv[imox3 + 1] - sdiv[imox3 + 1],
+                      normalSdiv[imox3 + 2] - sdiv[imox3 + 2]);
+            vec3.normalize(normal2, normal2);
+            var argAngle = 2 * Math.PI / (options.arcDetail * 4);
+            var signedAngle = geom.signedAngle(normal, normal2, tangent);
+            offset = Math.round(signedAngle / argAngle);
+            offset = (offset + options.arcDetail * 4) % (options.arcDetail * 4);
+          }
+        }
+        // figure out if we have to draw an arrow head
+        if (arrowEndIndex !== residueIndex && arrowEndIndex < trace.length()) {
+          var nextSS = trace.residueAt(arrowEndIndex).ss();
+          if (nextSS === 'C' && thisSS === 'E') {
+            drawArrow = true;
+          }
         }
       }
       // only set normal *after* handling the coil -> helix,strand
@@ -808,11 +844,24 @@ var _cartoonForSingleTrace = (function() {
       vertStart = vertArray.numVerts();
       var objIndex = Math.floor((i + halfSplineDetail) / options.splineDetail);
       var objId = objIds[Math.min(objIds.length - 1, objIndex)];
-      _cartoonAddTube(vertArray, pos, normal, trace.residueAt(residueIndex),
+      _cartoonAddTube(vertArray, pos, normal, thisSS,
                       tangent, color, false, options, offset, objId);
+      if (drawArrow) {
+        vertAssoc.addAssoc(traceIndex, vertArray, slice, vertStart, vertEnd);
+        // FIXME: arrow has completely wrong normals. Profile normals are 
+        // generate perpendicular to the direction of the tube. The arrow 
+        // normals are anti-parallel to the direction of the tube.
+        _cartoonAddTube(vertArray, pos, normal, 'A', 
+                        tangent, color, false, options, 0, objId);
+        // We skip a few profiles to get a larger arrow.
+        i += options.arrowSkip;
+      }
       vertEnd = vertArray.numVerts();
       vertAssoc.addAssoc(traceIndex, vertArray, slice, vertStart, vertEnd);
       slice += 1;
+      if (drawArrow) {
+        slice += options.arrowSkip;
+      }
     }
     options.float32Allocator.release(normals);
     options.float32Allocator.release(positions);
