@@ -41,20 +41,17 @@ var render = (function() {
     0
   ];
 
-  // performs an in-place smoothing over 3 consecutive positions.
-var inplaceSmooth = (function() {
-    var bf = vec3.create(), af = vec3.create(), cf = vec3.create();
-    return function(positions, from, to) {
-      vec3.set(bf, positions[3 * (from - 1)], positions[3 * (from - 1) + 1],
-               positions[3 * (from - 1) + 2]);
-    vec3.set(cf, positions[3 * from], positions[3 * from + 1],
-             positions[3 * from + 2]);
-    for (var i = from + 1; i < to; ++i) {
-      vec3.set(af, positions[3 * i], positions[3 * i + 1],
-               positions[3 * i + 2]);
-      positions[3 * (i - 1)] = af[0] * 0.25 + cf[0] * 0.50 + bf[0] * 0.25;
-      positions[3 * (i - 1) + 1] = af[1] * 0.25 + cf[1] * 0.50 + bf[1] * 0.25;
-      positions[3 * (i - 1) + 2] = af[2] * 0.25 + cf[2] * 0.50 + bf[2] * 0.25;
+// performs an in-place smoothing over 3 consecutive positions.
+var inplaceStrandSmoothing = (function() {
+  var bf = vec3.create(), af = vec3.create(), cf = vec3.create();
+  return function(p, from, to) {
+    vec3.set(bf, p[3 * (from - 1)], p[3 * (from - 1) + 1], p[3 * (from - 1) + 2]);
+    vec3.set(cf, p[3 * from], p[3 * from + 1], p[3 * from + 2]);
+    for (var i = from; i <= to; ++i) {
+      vec3.set(af, p[3 * i], p[3 * i + 1], p[3 * i + 2]);
+      p[3 * (i - 1)] = af[0] * 0.25 + cf[0] * 0.50 + bf[0] * 0.25;
+      p[3 * (i - 1) + 1] = af[1] * 0.25 + cf[1] * 0.50 + bf[1] * 0.25;
+      p[3 * (i - 1) + 2] = af[2] * 0.25 + cf[2] * 0.50 + bf[2] * 0.25;
       vec3.copy(bf, cf);
       vec3.copy(cf, af);
     }
@@ -671,20 +668,18 @@ var _colorPosNormalsFromTrace = (function() {
       if (vec3.dot(normal, lastNormal) < 0) {
         vec3.scale(normal, normal, -1);
       }
-      if (trace.residueAt(i).ss() === 'E' && !options.force_tube) {
+      if (trace.residueAt(i).ss() === 'E' && !options.forceTube) {
         if (strand_start === null) {
           strand_start = i;
         }
         strand_end = i;
       }
-      /*
       if (trace.residueAt(i).ss() === 'C' && strand_start !== null) {
-        //inplaceSmooth(positions, strand_start, strand_end+1);
-        //inplaceSmooth(normals, strand_start-1, strand_end+1);
+        inplaceStrandSmoothing(positions, strand_start, strand_end);
+        inplaceStrandSmoothing(normals, strand_start, strand_end);
         strand_start = null;
-        strand_start = null;
+        strand_end = null;
       }
-      */
       normals[i * 3] = positions[3 * i] + normal[0] + lastNormal[0];
       normals[i * 3 + 1] = positions[3 * i + 1] + normal[1] + lastNormal[1];
       normals[i * 3 + 2] = positions[3 * i + 2] + normal[2] + lastNormal[2];
