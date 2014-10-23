@@ -32,7 +32,7 @@ function FixedSlab(options) {
   this._far = options.far || 400.0;
 }
 
-FixedSlab.prototype.update = function(viewer) {
+FixedSlab.prototype.update = function() {
   return new Slab(this._near, this._far);
 };
 
@@ -40,8 +40,28 @@ function AutoSlab(options) {
   this._far = 100.0;
 }
 
-AutoSlab.prototype.update = function(viewer) {
-  return viewer.slabInterval();
+AutoSlab.prototype.update = function(objects, cam) {
+  var axes = cam.mainAxes();
+  var intervals = [ new Range(), new Range(), new Range() ];
+  for (var i = 0; i < objects.length; ++i) {
+    var obj = objects[i];
+    if (!obj.visible()) {
+      continue;
+    }
+    obj.updateProjectionIntervals(axes[0], axes[1], axes[2], 
+                                  intervals[0], intervals[1], 
+                                  intervals[2]);
+  }
+  if (intervals[0].empty() || intervals[1].empty() || intervals[2].empty()) {
+    // no object visible, or only objects that do not affect the 
+    // slab interval are shown. Just return null in that case.
+    return null;
+  }
+  var projectedCamCenter = vec3.dot(axes[2], cam.center());
+  var projectedCamPos = projectedCamCenter + cam.zoom();
+  var newFar = Math.max(10, projectedCamPos-intervals[2].min());
+  var newNear = Math.max(0.1, projectedCamPos-intervals[2].max());
+  return new Slab(newNear, newFar);
 };
 
 exports.FixedSlab = FixedSlab;

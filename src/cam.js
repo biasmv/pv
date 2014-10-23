@@ -73,6 +73,15 @@ Cam.prototype.setRotation = function(rot) {
   this._updateMat = true;
 };
 
+// returns the 3 main axes of the current camera rotation
+Cam.prototype.mainAxes = function() {
+  return[
+    vec3.fromValues(this._rotation[0], this._rotation[4], this._rotation[8]),
+    vec3.fromValues(this._rotation[1], this._rotation[5], this._rotation[9]),
+    vec3.fromValues(this._rotation[2], this._rotation[6], this._rotation[10])
+  ];
+};
+
 Cam.prototype.fieldOfViewY = function() {
   return this._fovY;
 };

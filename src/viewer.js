@@ -483,7 +483,7 @@ PV.prototype._draw = function() {
   this._redrawRequested = false;
   this._ensureSize();
   this._animateCam();
-  var newSlab = this._options.slabMode.update(this);
+  var newSlab = this._options.slabMode.update(this._objects, this._cam);
   this._cam.setNearFar(newSlab.near, newSlab.far);
 
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
@@ -773,17 +773,8 @@ PV.prototype.trace = function(name, structure, opts) {
   return this.add(name, obj);
 };
 
-PV.prototype._axesFromCamRotation = function() {
-  var rotation = this._cam.rotation();
-  return[
-    vec3.fromValues(rotation[0], rotation[4], rotation[8]),
-    vec3.fromValues(rotation[1], rotation[5], rotation[9]),
-    vec3.fromValues(rotation[2], rotation[6], rotation[10])
-  ];
-};
-
 PV.prototype.fitTo = function(what, slabMode) {
-  var axes = this._axesFromCamRotation();
+  var axes = this.mainAxes();
   slabMode = slabMode || this._options.slabMode;
   var intervals = [ new Range(), new Range(), new Range() ];
   if (what instanceof SceneNode) {
@@ -834,7 +825,7 @@ PV.prototype._fitToIntervals = function(axes, intervals) {
 
 // adapt the zoom level to fit the viewport to all visible objects.
 PV.prototype.autoZoom = function() {
-  var axes = this._axesFromCamRotation();
+  var axes = this._cam.mainAxes();
   var intervals = [ new Range(), new Range(), new Range() ];
   this.forEach(function(obj) {
     if (!obj.visible()) {
@@ -847,28 +838,10 @@ PV.prototype.autoZoom = function() {
 };
 
 PV.prototype.slabInterval = function() {
-  var axes = this._axesFromCamRotation();
-  var intervals = [ new Range(), new Range(), new Range() ];
-  this.forEach(function(obj) {
-    if (!obj.visible()) {
-      return null;
-    }
-    obj.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
-                                  intervals[1], intervals[2]);
-  });
-  if (intervals[0].empty() || intervals[1].empty() || intervals[2].empty()) {
-    console.error('could not determine interval. No objects shown?');
-    return null;
-  }
-  var projectedCamCenter = vec3.dot(axes[2], this._cam.center());
-  var projectedCamPos = projectedCamCenter + this._cam.zoom();
-  var newFar = Math.max(10, projectedCamPos-intervals[2].min());
-  var newNear = Math.max(0.1, projectedCamPos-intervals[2].max());
-  return new Slab(newNear, newFar);
 };
 
 PV.prototype.autoSlab = function() {
-  var slab = this.slabInterval();
+  var slab = this._options._slabMode.update(this._objects, this._cam);
   if (slab !== null) {
     this._cam.setNearFar(slab.near, slab.far);
   }
@@ -891,7 +864,7 @@ PV.prototype.rockAndRoll = function(enable) {
 PV.prototype.slabMode = function(mode, options) {
   options = options || {};
   var strategy = slabModeToStrategy(mode, options);
-  var slab = strategy.update(this);
+  var slab = strategy.update(this._objects, this._cam);
   this._cam.setNearFar(slab.near, slab.far);
   this._options.slabMode = strategy;
   this.requestRedraw();
