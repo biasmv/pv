@@ -626,30 +626,32 @@ Mol.prototype.deriveConnectivity = function() {
   var prev_residue;
   this.eachResidue(function(res) {
     var sqr_dist;
-    var d = vec3.create();
-    for (var i = 0; i < res.atoms().length; i+=1) {
-      var atomI = res.atom(i);
+    var atoms = res.atoms();
+    var numAtoms = atoms.length;
+    for (var i = 0; i < numAtoms; i++) {
+      var atomI = atoms[i];
+      var posI = atomI.pos();
       var covalentI = covalentRadius(atomI.element());
-      for (var j = 0; j < i; j+=1) {
-        var atomJ = res.atom(j);
+      for (var j = 0; j < i; j++) {
+        var atomJ = atoms[j];
         var covalentJ = covalentRadius(atomJ.element());
-        sqr_dist = vec3.sqrDist(atomI.pos(), atomJ.pos());
+        sqr_dist = vec3.sqrDist(posI, atomJ.pos());
         var lower = covalentI+covalentJ-0.30;
         var upper = covalentI+covalentJ+0.30;
         if (sqr_dist < upper*upper && sqr_dist > lower*lower) {
-          this_structure.connect(res.atom(i), res.atom(j));
+          this_structure.connect(atomI, atomJ);
         }
       }
     }
     if (prev_residue) {
-    var c_atom = prev_residue.atom('C');
-    var n_atom = res.atom('N');
-    if (c_atom && n_atom) {
-      sqr_dist = vec3.sqrDist(c_atom.pos(), n_atom.pos());
-      if (sqr_dist < 1.6*1.6) {
-        this_structure.connect(n_atom, c_atom);
+      var c_atom = prev_residue.atom('C');
+      var n_atom = res.atom('N');
+      if (c_atom && n_atom) {
+        sqr_dist = vec3.sqrDist(c_atom.pos(), n_atom.pos());
+        if (sqr_dist < 1.6*1.6) {
+          this_structure.connect(n_atom, c_atom);
+        }
       }
-    }
     }
     prev_residue = res;
   });
