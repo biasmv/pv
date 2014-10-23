@@ -80,7 +80,7 @@ exports.forceRGB = function(color) {
         r = parseInt(color[1], 16);
         g = parseInt(color[2], 16);
         b = parseInt(color[3], 16);
-        a = 1.0;
+        a = 15;
         if(color.length===5) {
           a = parseInt(color[4], 16);
         }
@@ -91,6 +91,7 @@ exports.forceRGB = function(color) {
         r = parseInt(color.substr(1, 2), 16);
         g = parseInt(color.substr(3, 2), 16);
         b = parseInt(color.substr(5, 2), 16);
+        a = 255;
         if(color.length===9) {
           a = parseInt(color.substr(7, 2), 16);
         }
