@@ -774,7 +774,7 @@ PV.prototype.trace = function(name, structure, opts) {
 };
 
 PV.prototype.fitTo = function(what, slabMode) {
-  var axes = this.mainAxes();
+  var axes = this._cam.mainAxes();
   slabMode = slabMode || this._options.slabMode;
   var intervals = [ new Range(), new Range(), new Range() ];
   if (what instanceof SceneNode) {
