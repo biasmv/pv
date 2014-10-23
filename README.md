@@ -52,6 +52,12 @@ Documentation for pv is available [here](http://pv.readthedocs.org).
 Changelog
 ----------------------------------------
 
+### New Since version 1.2
+
+- smoothing if strands
+- implement proper strand "arrows"
+- improved auto-slabbing when the molecule are off-center
+
 ### New in Version 1.2
 
 - add transparancy support to mesh and line geoms (@kozmad)
