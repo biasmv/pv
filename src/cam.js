@@ -34,7 +34,7 @@ function Cam(gl) {
   this._near = 0.10;
   this._far = 4000.0;
   this._fogNear = -5;
-  this._fogFar = 10;
+  this._fogFar = 50;
   this._fog = true;
   this._fovY = Math.PI * 45.0 / 180.0;
   this._paramsChanged = false;
