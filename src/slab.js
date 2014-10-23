@@ -41,26 +41,22 @@ function AutoSlab(options) {
 }
 
 AutoSlab.prototype.update = function(objects, cam) {
-  var axes = cam.mainAxes();
-  var intervals = [ new Range(), new Range(), new Range() ];
+  var center = cam.center();
+  var radius = null;
   for (var i = 0; i < objects.length; ++i) {
     var obj = objects[i];
     if (!obj.visible()) {
       continue;
     }
-    obj.updateProjectionIntervals(axes[0], axes[1], axes[2], 
-                                  intervals[0], intervals[1], 
-                                  intervals[2]);
+    radius = obj.updateSquaredSphereRadius(center, radius);
   }
-  if (intervals[0].empty() || intervals[1].empty() || intervals[2].empty()) {
-    // no object visible, or only objects that do not affect the 
-    // slab interval are shown. Just return null in that case.
+  if (radius === null) {
     return null;
   }
-  var projectedCamCenter = vec3.dot(axes[2], cam.center());
-  var projectedCamPos = projectedCamCenter + cam.zoom();
-  var newFar = Math.max(10, projectedCamPos-intervals[2].min());
-  var newNear = Math.max(0.1, projectedCamPos-intervals[2].max());
+  radius = Math.sqrt(radius);
+  var zoom = cam.zoom();
+  var newFar = (radius + zoom) * 1.05;
+  var newNear = 0.1;//Math.max(0.1, zoom - radius);
   return new Slab(newNear, newFar);
 };
 
