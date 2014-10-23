@@ -113,7 +113,6 @@ function PV(domElement, opts) {
       center : null, zoom : null, 
       rotation : null 
   };
-  this._blend = true;
   this.quality(this._options.quality);
   this._canvas.width = this._options.width;
   this._canvas.height = this._options.height;
@@ -336,17 +335,10 @@ PV.prototype._initShader = function(vert_shader, frag_shader) {
     return null;
   }
   this._gl.clearColor(this._options.background[0], this._options.background[1], this._options.background[2], 1.0);
-  if(this._blend) {
-    this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
-    this._gl.depthFunc(this._gl.LESS);
-    this._gl.enable(this._gl.BLEND);
-    this._gl.blendFunc(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA);
-  }
-  else {
-    this._gl.enable(this._gl.CULL_FACE);
-    this._gl.enable(this._gl.DEPTH_TEST);
-  }
-
+  this._gl.enable(this._gl.BLEND);
+  this._gl.blendFunc(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA);
+  this._gl.enable(this._gl.CULL_FACE);
+  this._gl.enable(this._gl.DEPTH_TEST);
 
   // get vertex attribute location for the shader once to
   // avoid repeated calls to getAttribLocation/getUniformLocation
@@ -498,6 +490,7 @@ PV.prototype._draw = function() {
   this._gl.viewport(0, 0, this._options.realWidth, this._options.realHeight);
   this._gl.cullFace(this._gl.FRONT);
   this._gl.enable(this._gl.CULL_FACE);
+  this._gl.enable(this._gl.BLEND);
   this._drawWithPass('normal');
   if (!this._options.outline) {
     return;
