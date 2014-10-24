@@ -27,9 +27,12 @@ The displaying of molecules is handled by :class:`BaseGeom`, and subclasses. The
 
   :param view: when specified, the color operation will only be applied to parts contained in the view. Other parts will be left untouched. When omitted, the color operation will be applied to the whole structure.
 
+.. function:: BaseGeom.getColorForAtom(atom, color)
 
+  Convenience function to obtain the current color of a given atom.
 
-
-
-
-
+  :param atom: the atom for which to retrieve the color. Can be an :class:`~mol.AtomView`, 
+      or :class:`~mol.Atom` instance, independent of whether the geometry was created
+      with a :class:`~mol.Mol`, or :class:`~mol.MolView`
+  :param color: array of length 4 into which the color is placed
+  :returns: the array holding the color, or null if the atom is not part of the rendered geometry

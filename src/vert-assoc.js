@@ -68,12 +68,26 @@ AtomVertexAssoc.prototype.recolor = function(colorOp, view) {
     if (ai === undefined) {
       continue;
     }
-    var r = colorData[ai*4], g = colorData[ai*4+1], b = colorData[ai*4+2], a = colorData[ai*4+3];
+    var r = colorData[ai*4+0], g = colorData[ai*4+1], 
+        b = colorData[ai*4+2], a = colorData[ai*4+3];
     var va = assoc.vertexArray;
     for (var j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
       va.setColor(j, r, g, b, a);
     }
   }
+};
+
+AtomVertexAssoc.prototype.getColorForAtom = function(atom, color) {
+  // FIXME: this can potentially get slow when called for many atoms
+  for (var i = 0; i < this._assocs.length; ++i) {
+    var assoc = this._assocs[i];
+    if (assoc.atom.full() === atom.full()) {
+      // for atom-based color, the color for each atom is constant, so just 
+      // use any vertex to the determine color.
+      return assoc.vertexArray.getColor(assoc.vertStart, color);
+    }
+  }
+  return null;
 };
 
 AtomVertexAssoc.prototype.setOpacity = function( val, view) {
@@ -156,6 +170,29 @@ TraceVertexAssoc.prototype.recolor = function(colorOp, view) {
   if (this._callBeginEnd) {
     colorOp.end(this._structure);
   }
+};
+
+TraceVertexAssoc.prototype.getColorForAtom = function(atom, color) {
+  // FIXME: this can potentially get slow when called for many atoms
+  var i, j;
+  var traces = this._structure.backboneTraces();
+  var residue = atom.full().residue();
+  for (i = 0; i < traces.length; ++i) {
+    var data = this._perResidueColors[i];
+    var index = 0;
+    var trace = traces[i];
+    for (j = 0; j < trace.length(); ++j) {
+      if (residue === trace.residueAt(j).full()) {
+        color[0] = data[index + 0];
+        color[1] = data[index + 1];
+        color[2] = data[index + 2];
+        color[3] = data[index + 3];
+        return color;
+      }
+      index+=4;
+    }
+  }
+  return null;
 };
 
 

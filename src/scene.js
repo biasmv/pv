@@ -167,6 +167,10 @@ BaseGeom.prototype.setVertAssoc = function(assoc) {
   this._vertAssoc = assoc;
 };
 
+BaseGeom.prototype.getColorForAtom = function(atom, color) {
+  return this._vertAssoc.getColorForAtom(atom, color);
+};
+
 BaseGeom.prototype.addIdRange = function(range) {
   this._idRanges.push(range);
 };

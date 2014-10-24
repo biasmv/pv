@@ -243,7 +243,7 @@
     function cartoon() {
       pv.clear();
       pv.cartoon('structure', structure, { 
-                 color : color.rainbow(), showRelated : '1', 
+                 color : color.ssSuccession(), showRelated : '1', 
       });
     }
     function lineTrace() {
@@ -291,7 +291,7 @@
       $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
         structure = io.pdb(data);
         //mol.assignHelixSheet(structure);
-        preset();
+        cartoon();
         pv.autoZoom();
       }});
     }
@@ -447,7 +447,7 @@
       pv.requestRedraw();
     });
 
-    document.addEventListener('DOMContentLoaded', porin);
+    document.addEventListener('DOMContentLoaded', crambin);
     /*
     window.addEventListener('resize', function() {
       pv.fitParent();
