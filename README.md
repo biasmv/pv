@@ -54,6 +54,7 @@ Changelog
 
 ### New Since version 1.2
 
+- add method to retrieve current color of atom. This is useful for highlighting purposes, where the color of certain atoms is temporarily changed and then reverted back to the original.
 - smoothing of strands when rendering as helix, strand, coil cartoon
 - implement proper strand "arrows"
 - improved auto-slabbing when the rendered objects are off-center
