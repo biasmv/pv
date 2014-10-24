@@ -369,8 +369,10 @@ LineGeom.prototype._drawVertArrays = function(cam, shader, vertArrays,
       vertArrays[i].drawSymmetryRelated(cam, shader, additionalTransforms);
     }
   } else {
-    this._gl.uniform1i(shader.symId, 255);
     cam.bind(shader);
+    if (shader.symId) {
+      this._gl.uniform1i(shader.symId, 255);
+    }
     for (i = 0; i < vertArrays.length; ++i) {
       vertArrays[i].bind(shader);
       vertArrays[i].draw();
@@ -540,7 +542,9 @@ MeshGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays,
     }
   } else {
     cam.bind(shader);
-    this._gl.uniform1i(shader.symId, 255);
+    if (shader.symId) {
+      this._gl.uniform1i(shader.symId, 255);
+    }
     for (i = 0; i < indexedVertArrays.length; ++i) {
       indexedVertArrays[i].bind(shader);
       indexedVertArrays[i].draw();

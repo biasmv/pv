@@ -67,10 +67,12 @@ VertexArray.prototype.bindAttribs = function(shader) {
   this._gl.vertexAttribPointer(shader.posAttrib, 3, this._gl.FLOAT, false,
                                 this._FLOATS_PER_VERT * 4,
                                 this._POS_OFFSET * 4);
-  this._gl.vertexAttribPointer(shader.colorAttrib, 4, this._gl.FLOAT, false,
-                                this._FLOATS_PER_VERT * 4,
-                                this._COLOR_OFFSET * 4);
-  this._gl.enableVertexAttribArray(shader.colorAttrib);
+  if (shader.colorAttrib !== -1) {
+    this._gl.vertexAttribPointer(shader.colorAttrib, 4, this._gl.FLOAT, 
+                                 false, this._FLOATS_PER_VERT * 4,
+                                 this._COLOR_OFFSET * 4);
+    this._gl.enableVertexAttribArray(shader.colorAttrib);
+  }
   this._gl.enableVertexAttribArray(shader.posAttrib);
   if (shader.objIdAttrib !== -1) {
     this._gl.vertexAttribPointer(shader.objIdAttrib, 1, this._gl.FLOAT, false,
@@ -82,7 +84,9 @@ VertexArray.prototype.bindAttribs = function(shader) {
 
 VertexArray.prototype.releaseAttribs = function(shader) {
   this._gl.disableVertexAttribArray(shader.posAttrib);
-  this._gl.disableVertexAttribArray(shader.colorAttrib);
+  if (shader.colorAttrib !== -1) {
+    this._gl.disableVertexAttribArray(shader.colorAttrib);
+  }
   if (shader.objIdAttrib !== -1) {
     this._gl.disableVertexAttribArray(shader.objIdAttrib);
   }
