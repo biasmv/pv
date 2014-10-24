@@ -1062,7 +1062,6 @@ PV.prototype.rm = function(glob) {
     if (!regex.test(obj.name())) {
       newObjects.push(obj);
     } else {
-      console.log('destroying');
       obj.destroy();
     }
   }

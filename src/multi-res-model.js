@@ -161,7 +161,6 @@ var onLoadStructure = function(name, vertArray, self) {
       var model = viewer.lineTrace(name, structure, { 
         quality : 'low'//, color : color.ssSuccession() 
       });
-      console.log(name);
       self._highResModels[name] = model;
   };
 };
@@ -178,7 +177,7 @@ LevelOfDetailManager.prototype.onCameraPositionChange = (function() {
       var dist = vec3.squaredDistance(viewerPos, sphere.center());
       var id = vertArray.chain().substr(0,4);
       var chain = vertArray.chain().substr(5,1);
-      var key = id + chain;
+      var key = vertArray.chain();
       if (dist < 100000) {
         if (this._highResModels[key] !== undefined || 
             this._objectCount > 50) {
@@ -186,11 +185,11 @@ LevelOfDetailManager.prototype.onCameraPositionChange = (function() {
         }
         this._highResModels[key] = 'fetching';
         this._objectCount += 1;
-        io.fetchCsf('/pdbs/'+id+'.csf?chains='+chain, onLoadStructure(key, vertArray, this));
+        io.fetchCsf('/pdbs/'+id+'.csf?chains='+chain, 
+                    onLoadStructure(vertArray.chain(), key, this));
       } else {
         var value = this._highResModels[key];
         if (value !== undefined && value !== 'fetching') {
-          console.log('RM!', key);
           viewer.rm(key);
           delete this._highResModels[key];
           this._objectCount -= 1;
