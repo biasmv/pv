@@ -175,8 +175,6 @@ LevelOfDetailManager.prototype.onCameraPositionChange = (function() {
       var vertArray = vertArrays[i];
       var sphere = vertArray.boundingSphere();
       var dist = vec3.squaredDistance(viewerPos, sphere.center());
-      var id = vertArray.chain().substr(0,4);
-      var chain = vertArray.chain().substr(5,1);
       var key = vertArray.chain();
       if (dist < 100000) {
         if (this._highResModels[key] !== undefined || 
@@ -185,6 +183,8 @@ LevelOfDetailManager.prototype.onCameraPositionChange = (function() {
         }
         this._highResModels[key] = 'fetching';
         this._objectCount += 1;
+        var id = vertArray.chain().substr(0,4);
+        var chain = vertArray.chain().substr(5,1);
         io.fetchCsf('/pdbs/'+id+'.csf?chains='+chain, 
                     onLoadStructure(vertArray.chain(), key, this));
       } else {
