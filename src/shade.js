@@ -256,12 +256,12 @@ exports.color.bySS = function() {
         out[index+2] = 0.8; out[index+3] = 1.0;
         return;
       case 'H':
-        out[index] = 0.6;   out[index+1] = 0.6; 
-        out[index+2] = 0.9; out[index+3] = 1.0;
+        out[index] = 0.3;   out[index+1] = 0.3; 
+        out[index+2] = 0.8; out[index+3] = 1.0;
         return;
       case 'E':
-        out[index] = 0.2;   out[index+1] = 0.8; 
-        out[index+2] = 0.2; out[index+3] = 1.0;
+        out[index] = 0.8;   out[index+1] = 0.3; 
+        out[index+2] = 0.3; out[index+3] = 1.0;
         return;
     }
   }, null, null);

@@ -26,6 +26,12 @@ var render = (function() {
   var R = 0.7071;
   var COIL_POINTS = [ -R, -R, 0, R, -R, 0, R, R, 0, -R, R, 0 ];
 
+  var TRIANGLE_POINTS = [ 
+    0, 1, 0, 
+    -0.86, -0.5, 0,
+    0.86, -0.5, 0
+  ];
+
   var HELIX_POINTS = [
     -6 * R,
     -1.0 * R,
@@ -80,9 +86,10 @@ var inplaceStrandSmoothing = (function() {
 // direction.
 var buildRotation = (function() {
   return function(rotation, tangent, left, up, use_left_hint) {
-    if (use_left_hint) { vec3.cross(up, tangent, left);
+    if (use_left_hint) { 
+      vec3.cross(up, tangent, left);
     } else {
-  geom.ortho(up, tangent);
+      geom.ortho(up, tangent);
     }
 
     vec3.cross(left, up, tangent);
@@ -599,43 +606,77 @@ function lowResChainNumVerts(chain) {
   var traces = chain.backboneTraces();
   for (var i = 0; i < traces.length; ++i) {
     var trace = traces[i];
-    count += trace.length() -1;
+    count += trace.length();
   }
-  return count * 2;
+  return count * 3;
+}
+
+function lowResChainNumIndices(chain) {
+  var count = 0;
+  var traces = chain.backboneTraces();
+  for (var i = 0; i < traces.length; ++i) {
+    var trace = traces[i];
+    count += trace.length() - 1;
+  }
+  return count * 6;
 }
 
 exports.multiResModel = (function() {
   var colors = {
-    'E' : [0.5, 0.5, 0.5, 1.0],
-    'H' : [0.8, 0.8, 0.5, 1.0],
-    'C' : [0.2, 0.8, 0.8, 1.0]
+    'E' : [0.8, 0.3, 0.3, 1.0],
+    'H' : [0.3, 0.3, 0.8, 1.0],
+    'C' : [0.8, 0.8, 0.8, 1.0]
+  };
+  var radii = {
+    'E' : 2.5,
+    'H' : 2.5,
+    'C' : 1,
   };
   var posOne = vec3.create(), posTwo = vec3.create();
+  var posThree = vec3.create();
+  var normal = vec3.create(), tangent = vec3.create();
+  var rotation = mat3.create();
+  var up = vec3.create();
   return function(model, gl, options) {
-    var lineGeom = new LineGeom(gl, options.float32Allocator);
-    lineGeom.setShowRelated('asym');
+    var profile = new TubeProfile(TRIANGLE_POINTS, 1, 0.1);
+    var meshGeom = new MeshGeom(gl, options.float32Allocator, 
+                                options.uint16Allocator);
+    meshGeom.setShowRelated('asym');
     var chains = model.chains();
     var idRange = options.idPool.getContinuousRange(chains.length);
-    lineGeom.addIdRange(idRange);
+    meshGeom.addIdRange(idRange);
     for (var i = 0; i < chains.length; ++i) {
       var chain = chains[i];
-      var chainId = idRange.nextId({ geom : lineGeom, chain : chain });
+      var chainId = idRange.nextId({ geom : meshGeom, chain : chain });
       var numVerts = lowResChainNumVerts(chain);
-      var va = lineGeom.addChainVertArray(chain, numVerts);
+      var numIndices = lowResChainNumIndices(chain);
+      meshGeom.addChainVertArray(chain, numVerts, numIndices);
+      var va = meshGeom.vertArrayWithSpaceFor(numVerts);
       var traces = chain.backboneTraces();
       for (var j = 0; j < traces.length; ++j) {
         var trace = traces[j];
-        for (var k = 0, e = trace.length(); k < e -1; ++k) {
+        trace.posAt(posOne, 1);
+        trace.posAt(posTwo, 0);
+        vec3.sub(tangent, posOne, posTwo);
+        vec3.normalize(tangent, tangent);
+        geom.ortho(normal, tangent);
+        for (var k = 0, e = trace.length(); k < e; ++k) {
           var ssOne = trace.residueAt(k + 0).ss();
-          var ssTwo = trace.residueAt(k + 1).ss();
           trace.posAt(posOne, k + 0);
-          trace.posAt(posTwo, k + 1);
-          va.addLine(posOne,  colors[ssOne], posTwo, colors[ssTwo], 
-                     chainId, chainId);
+          if (k > 0 && k < trace.length() -1) {
+            trace.posAt(posThree, k+1);
+            trace.posAt(posTwo, k-1);
+            vec3.sub(tangent, posThree, posTwo);
+            vec3.normalize(tangent, tangent);
+          }
+          buildRotation(rotation, tangent, normal , up, true);
+          profile.addTransformed(va, posOne, radii[ssOne], rotation, 
+                                 colors[ssOne], k === 0, 0, chainId);
+          vec3.copy(posTwo, posOne);
         }
       }
     }
-    return lineGeom;
+    return meshGeom;
   };
 })();
 

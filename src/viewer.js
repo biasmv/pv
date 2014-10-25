@@ -767,7 +767,7 @@ PV.prototype.surface = function(name, data, opts) {
 
 
 PV.prototype.multiResModel = function(name, data, opts) {
-  var options = this._handleStandardOptions(opts, structure);
+  var options = this._handleStandardOptions(opts, data);
   console.time('multiResModel');
   var obj = render.multiResModel(data, this._gl, options);
   var lodManager = new LevelOfDetailManager(data, obj, '/pdb/');

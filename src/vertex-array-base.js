@@ -29,7 +29,16 @@ function VertexArrayBase(gl, numVerts, float32Allocator) {
   this._boundingSphere = null;
   var numFloats = this._FLOATS_PER_VERT * numVerts;
   this._vertData = float32Allocator.request(numFloats);
+  this._visible = true;
 }
+
+VertexArrayBase.prototype.show = function() {
+  this._visible = true;
+};
+
+VertexArrayBase.prototype.hide = function() {
+  this._visible = false;
+};
 
 VertexArrayBase.prototype.setColor = function(index, r, g, b, a) {
   var colorStart = index * this._FLOATS_PER_VERT + this._COLOR_OFFSET;

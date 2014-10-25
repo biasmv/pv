@@ -158,10 +158,11 @@ function LevelOfDetailManager(lowResModel, geom, viewer, baseUrl) {
 
 var onLoadStructure = function(name, vertArray, self) {
   return function(structure) {
-      var model = viewer.lineTrace(name, structure, { 
+      var model = viewer.cartoon(name, structure, { 
         quality : 'low'//, color : color.ssSuccession() 
       });
       self._highResModels[name] = model;
+      vertArray.hide();
   };
 };
 
@@ -186,13 +187,14 @@ LevelOfDetailManager.prototype.onCameraPositionChange = (function() {
         var id = vertArray.chain().substr(0,4);
         var chain = vertArray.chain().substr(5,1);
         io.fetchCsf('/pdbs/'+id+'.csf?chains='+chain, 
-                    onLoadStructure(vertArray.chain(), key, this));
+                    onLoadStructure(vertArray.chain(), vertArray, this));
       } else {
         var value = this._highResModels[key];
         if (value !== undefined && value !== 'fetching') {
           viewer.rm(key);
           delete this._highResModels[key];
           this._objectCount -= 1;
+          vertArray.show();
         }
       }
     }

@@ -174,19 +174,6 @@
     </head>
 <body>
   <div id=inspector>
-    <ul id=styleTab>
-      <h1></h1>
-      <li id=preset>Preset</li>
-      <li id=cartoon>Cartoon</li>
-      <li id=tube>Tube</li>
-      <li id=lines>Lines</li>
-      <li id=line-trace>Line Trace</li>
-      <li id=sline>Smooth Line Trace</li>
-      <li id=trace>Trace</li>
-      <li id=spheres>Spheres</li>
-      <li id=balls-and-sticks>Balls and Sticks</li>
-      <li id=test>Test</li>
-    </ul>
      <ul>
       <h1></h1>
       <li><div id="slider" class="sl"></div></li>
@@ -195,6 +182,7 @@
       <li><input type="checkbox" name="fog" 
                  value="yes" checked=true id=fog autocomplete=off>Fog</li>
       <li id=save>Export As Image</li>
+      <li id=center>Center</li>
     </ul>
   </div>
   <div id=gl>
@@ -203,25 +191,17 @@
   <script>
     var activeTab = 'styleTab';
     var viewer = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'medium', width: 500, height : 500,
+                       { quality : 'medium', width: 'auto', height : 'auto',
                          antialias : true, outline : false,
                          background : 'white', 
                          slabMode : 'auto'});
-    var structure;
-
-    function load(pdb_id) {
-      io.fetchCsf('pdbs/'+pdb_id+'.csf', function(loaded) {
-          structure = loaded;
-          preset();
-          viewer.autoZoom();
-      });
-    }
+    var fullCapsid;
 
     function virusCapsid() {
       viewer.clear();
       io.fetchMrm('/mrm/hiv-capsid.mrm', function(model) {
-          var mdl = viewer.multiResModel('mrm', model);
-          viewer.fitTo(mdl);
+          fullCapsid = viewer.multiResModel('mrm', model);
+          viewer.fitTo(fullCapsid);
       });
     }
 
@@ -231,6 +211,10 @@
     });
     $('#showOutline').change(function() {
       viewer.options('outline', this.checked);
+      viewer.requestRedraw();
+    });
+    $('#center').click(function() {
+      viewer.fitTo(fullCapsid);
       viewer.requestRedraw();
     });
     $('#fog').change(function() {
