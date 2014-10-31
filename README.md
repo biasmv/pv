@@ -38,7 +38,7 @@ I would love you to! Most features you would expect from a protein viewer are al
 Contributing
 -----------------------------------------
 
-Contributions of any kind (bugfixes, documentation, new features etc) are more than welcome. Just file bugs or file bug requests. Before submitting pull requests, please make sure to follow these [guide-lines](https://github.com/biasmv/pv/CONTRIBUTING.md).
+Contributions of any kind (bugfixes, documentation, new features etc) are more than welcome. Just file bugs or file bug requests. Before submitting pull requests, please make sure to follow these [guide-lines](https://github.com/biasmv/pv/blob/master/CONTRIBUTE.md).
 
 
 Acknowledgements
