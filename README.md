@@ -35,6 +35,11 @@ I would love you to! Most features you would expect from a protein viewer are al
 
  * DNA/RNA visualisation is not implemented yet, for protein-centric workflows that's fine though. In case you are interested in DNA/RNA rendering, just open a feature request and I'll try to get around to it.
 
+Contributing
+-----------------------------------------
+
+Contributions of any kind (bugfixes, documentation, new features etc) are more than welcome. Just file bugs or file bug requests. Before submitting pull requests, please make sure to follow these [guide-lines](https://github.com/biasmv/pv/CONTRIBUTING.md).
+
 
 Acknowledgements
 ----------------------------------------
