@@ -24,19 +24,27 @@ function PDBReader() {
 }
 
 function parseHelixRecord(line) {
-  // FIXME: handle insertion codes
-  var frst_num = parseInt(line.substr(21, 4), 10);
-  var last_num = parseInt(line.substr(33, 4), 10);
+  var frstNum = parseInt(line.substr(21, 4), 10);
+  var frstInsCode = line[25] === ' ' ? '\0' : line[25];
+  var lastNum = parseInt(line.substr(33, 4), 10);
+  var lastInsCode = line[37] === ' ' ? '\0' : line[37];
   var chainName = line[19];
-  return { first : frst_num, last : last_num, chainName : chainName };
+  return { first : [frstNum, frstInsCode], 
+           last : [lastNum, lastInsCode], chainName : chainName 
+  };
 }
 
 function parseSheetRecord(line) {
-  // FIXME: handle insertion codes
-  var frst_num = parseInt(line.substr(22, 4), 10);
-  var last_num = parseInt(line.substr(33, 4), 10);
+  var frstNum = parseInt(line.substr(22, 4), 10);
+  var frstInsCode = line[26] === ' ' ? '\0' : line[26];
+  var lastNum = parseInt(line.substr(33, 4), 10);
+  var lastInsCode = line[37] === ' ' ? '\0' : line[37];
   var chainName = line[21];
-  return { first : frst_num, last : last_num, chainName : chainName };
+  return { 
+    first : [frstNum, frstInsCode],
+    last : [lastNum, lastInsCode],
+    chainName : chainName
+  };
 }
 
 function Remark350Reader() {
@@ -130,14 +138,14 @@ function pdb(text) {
     var resName = line.substr(17, 3).trim();
     var atomName = line.substr(12, 4).trim();
     var rnumNum = parseInt(line.substr(22, 4), 10);
-    var insCode = line[26];
+    var insCode = line[26] === ' ' ? '\0' : line[26];
     var updateResidue = false;
     var updateChain = false;
     if (!currChain || currChain.name() !== chainName) {
       updateChain = true;
       updateResidue = true;
     }
-    if (!currRes || currRes.num() !== rnumNum) {
+    if (!currRes || currRes.num() !== rnumNum || currRes.insCode() !== insCode) {
       updateResidue = true;
     }
     if (updateChain) {
@@ -146,8 +154,7 @@ function pdb(text) {
       currChain = structure.chain(chainName) || structure.addChain(chainName);
     }
     if (updateResidue) {
-      currRes = currChain.addResidue(resName, rnumNum,
-                                       currChain.residues().length);
+      currRes = currChain.addResidue(resName, rnumNum, insCode);
     }
     var pos = vec3.create();
     for (var i=0;i<3;++i) {

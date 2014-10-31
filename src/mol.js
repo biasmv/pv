@@ -48,6 +48,14 @@ function covalentRadius(ele) {
   return 1.5;
 }
 
+// combines the numeric part of the residue number with the insertion
+// code and returns a single number. Note that this is completely safe
+// and we do not have to worry about overflows, as for PDB files the 
+// range of permitted residue numbers is quite limited anyway.
+function rnumInsCodeHash(num, insCode) {
+  return num << 8 | insCode.charCodeAt(0);
+}
+
 //-----------------------------------------------------------------------------
 // MolBase, ChainBase, ResidueBase, AtomBase
 //-----------------------------------------------------------------------------
@@ -671,25 +679,34 @@ Chain.prototype.name = function() { return this._name; };
 
 Chain.prototype.full = function() { return this; };
 
-Chain.prototype.addResidue = function(name, num) {
-  var residue = new Residue(this, name, num);
-  this._rnumsOrdered = this._residues.length === 0 || 
-    (this._rnumsOrdered && this._residues[this._residues.length-1].num() <= num);
+Chain.prototype.addResidue = function(name, num, insCode) {
+  insCode = insCode || '\0';
+  var residue = new Residue(this, name, num, insCode);
+  if (this._residues.length > 0 && this._rnumsOrdered) {
+    var combinedRNum = rnumInsCodeHash(num, insCode);
+    var last = this._residues[this._residues.length-1];
+    var lastCombinedRNum = rnumInsCodeHash(last.num(),last.insCode());
+    this._rnumsOrdered = lastCombinedRNum < combinedRNum;
+  }
   this._residues.push(residue);
   return residue;
 };
 
 
 Chain.prototype.residuesInRnumRange = function(start, end) {
+  // FIXME: this currently only works with the numeric part, insertion
+  // codes are not honoured.
   var matching = [];
   var i, e;
   if (this._rnumsOrdered === true) {
     // binary search our way to heaven
-    var startIdx = indexFirstLargerEqualThan(this._residues, numify(start), rnumComp);
+    var startIdx = indexFirstLargerEqualThan(this._residues, numify(start), 
+                                             rnumComp);
     if (startIdx === -1) {
       return matching;
     }
-    var endIdx = indexLastSmallerEqualThan(this._residues, numify(end), rnumComp);
+    var endIdx = indexLastSmallerEqualThan(this._residues, numify(end), 
+                                           rnumComp);
     if (endIdx === -1) {
       return matching;
     }
@@ -708,16 +725,19 @@ Chain.prototype.residuesInRnumRange = function(start, end) {
 };
 
 // assigns secondary structure to residues in range from_num to to_num.
-Chain.prototype.assignSS = function(from_num, to_num, ss) {
+Chain.prototype.assignSS = function(fromNumAndIns, toNumAndIns, ss) {
   // FIXME: when the chain numbers are completely ordered, perform binary 
   // search to identify range of residues to assign secondary structure to.
+  var from = rnumInsCodeHash(fromNumAndIns[0], fromNumAndIns[1]);
+  var to = rnumInsCodeHash(toNumAndIns[0], toNumAndIns[1]);
   for (var i = 1; i < this._residues.length-1; ++i) {
     var res = this._residues[i];
     // FIXME: we currently don't set the secondary structure of the first and 
     // last residue of helices and sheets. that takes care of better 
     // transitions between coils and helices. ideally, this should be done
     // in the cartoon renderer, NOT in this function.
-    if (res.num() <=  from_num || res.num() >= to_num) {
+    var combined = rnumInsCodeHash(res.num(), res.insCode());
+    if (combined <=  from || combined >= to) {
       continue;
     }
     res.setSS(ss);
@@ -778,10 +798,11 @@ Chain.prototype.backboneTraces = function() {
 
 };
 
-function Residue(chain, name, num) {
+function Residue(chain, name, num, insCode) {
   ResidueBase.prototype.constructor.call(this);
   this._name = name;
   this._num = num;
+  this._insCode = insCode;
   this._atoms = [];
   this._ss = 'C';
   this._chain = chain;
@@ -791,6 +812,7 @@ function Residue(chain, name, num) {
 derive(Residue, ResidueBase);
 
 Residue.prototype.name = function() { return this._name; };
+Residue.prototype.insCode = function() { return this._insCode; };
 
 Residue.prototype.num = function() { return this._num; };
 
@@ -996,6 +1018,10 @@ ResidueView.prototype.addAtom = function(atom) {
 
 ResidueView.prototype.full = function() { return this._residue; };
 ResidueView.prototype.num = function() { return this._residue.num(); };
+
+ResidueView.prototype.insCode = function() { 
+  return this._residue.insCode(); 
+};
 ResidueView.prototype.ss = function() { return this._residue.ss(); };
 ResidueView.prototype.index = function() { return this._residue.index(); };
 ResidueView.prototype.chain = function() { return this._chainView; };
