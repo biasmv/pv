@@ -24,8 +24,8 @@
 exports.rgb = {};
 
 exports.rgb.create = vec4.create;
-exports.rgb.scale = vec3.scale;
-exports.rgb.copy = vec3.copy;
+exports.rgb.scale = vec4.scale;
+exports.rgb.copy = vec4.copy;
 exports.rgb.fromValues = vec4.fromValues;
 
 exports.rgb.mix = function(out, colorOne, colorTwo, t) {
