@@ -21,7 +21,7 @@
 function BackboneTrace() { this._trace = []; }
 
 if(typeof(exports) !== 'undefined') {
-  module.exports.backboneTrace = BackboneTrace;
+  exports.backboneTrace = BackboneTrace;
 }
 
 BackboneTrace.prototype.push = function(residue) {

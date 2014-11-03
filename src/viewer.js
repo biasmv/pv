@@ -1012,5 +1012,5 @@ return { Viewer : function(elem, options) { return new PV(elem, options);
 })();
 
 if(typeof(exports) !== 'undefined') {
-    module.exports = pv;
+    exports = pv;
 }
