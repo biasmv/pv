@@ -198,5 +198,5 @@ return {
 })();
 
 if(typeof(exports) !== 'undefined') {
-  exports = geom;
+  module.exports = geom;
 }

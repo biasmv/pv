@@ -945,5 +945,5 @@ return exports;
 })();
 
 if(typeof(exports) !== 'undefined') {
-  exports = render;
+  module.exports = render;
 }
