@@ -944,3 +944,6 @@ var _renderSingleTrace = (function() {
 return exports;
 })();
 
+if(typeof(exports) !== 'undefined') {
+  module.exports = render;
+}

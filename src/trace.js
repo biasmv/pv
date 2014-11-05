@@ -20,6 +20,10 @@
 
 function BackboneTrace() { this._trace = []; }
 
+if(typeof(exports) !== 'undefined') {
+  exports.backboneTrace = BackboneTrace;
+}
+
 BackboneTrace.prototype.push = function(residue) {
   this._trace.push(residue);
 };
@@ -214,3 +218,4 @@ TraceSubset.prototype.fullTraceIndex = function(index) {
 TraceSubset.prototype.tangentAt = function(out, index) {
   return this._fullTrace.tangentAt(out, index + this._fullTraceBegin);
 };
+

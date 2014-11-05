@@ -22,6 +22,7 @@
 "use strict";
 
 exports.rgb = {};
+var rgb = exports.rgb;
 
 exports.rgb.create = vec4.create;
 exports.rgb.scale = vec4.scale;
@@ -160,6 +161,7 @@ exports.gradient = function(colors, stops) {
   }
   return new Gradient(colors, stops);
 };
+var gradient = exports.gradient;
 
 GRADIENTS.rainbow =gradient(['red', 'yellow', 'green', 'blue']);
 GRADIENTS.reds = gradient(['lightred', 'darkred']);

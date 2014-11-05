@@ -25,6 +25,11 @@ SOURCE_FILES = [
 
 ALL_FILES = ['src/gl-matrix.js'];
 Array.prototype.push.apply(ALL_FILES, SOURCE_FILES);
+
+var browserify = require("browserify");
+var fs = require("fs");
+var mkdirp = require("mkdirp");
+
 module.exports = function(grunt) {
 
   // Project configuration.
@@ -75,4 +80,37 @@ module.exports = function(grunt) {
     'concat', 'jshint', 'removelogging', 'uglify', 
   ]);
 
+
+  grunt.registerTask('browserify', 'Browserifies the source', function(){
+    // task is async
+    var done = this.async();
+
+    // create tmp dir
+    mkdirp("build");
+
+    var ws = fs.createWriteStream('build/pv.js');
+    ws.on('finish', function () {
+      done();
+    });
+
+    // expose the pv viewer
+    var b = browserify({debug: true,hasExports: true});
+    exposeBundles(b);
+    b.bundle().pipe(ws);
+  });
+
+  // exposes the main package
+  // + checks the config whether it should expose other packages
+  function exposeBundles(b){
+    var packageConfig = require("./package.json");
+
+    b.add('./index.js', {expose: packageConfig.name });
+
+    // check for addition exposed packages (not needed here)
+    if(packageConfig.sniper !== undefined && packageConfig.sniper.exposed !== undefined){
+      for(var i=0; i<packageConfig.sniper.exposed.length; i++){
+        b.require(packageConfig.sniper.exposed[i]);
+      }
+    }
+  }
 };

@@ -38,6 +38,10 @@ function AtomVertexAssoc(structure, callColoringBeginEnd) {
 
 }
 
+if(typeof(exports) !== 'undefined') {
+    exports.AtomVertexAssoc = AtomVertexAssoc;
+}
+
 AtomVertexAssoc.prototype.addAssoc = function(atom, va, vertStart, vertEnd)  {
   this._assocs.push({ 
     atom: atom, vertexArray : va, vertStart : vertStart, vertEnd : vertEnd 
@@ -109,6 +113,10 @@ function TraceVertexAssoc(structure, interpolation, callColoringBeginEnd,
   this._callBeginEnd = callColoringBeginEnd;
   this._interpolation = interpolation || 1;
   this._perResidueColors = {};
+}
+
+if(typeof(exports) !== 'undefined') {
+    exports.TraceVertexAssoc = TraceVertexAssoc;
 }
 
 TraceVertexAssoc.prototype.setPerResidueColors = function(traceIndex, colors) {
