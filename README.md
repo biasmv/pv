@@ -47,7 +47,7 @@ Acknowledgements
 PV uses the amazing [gl-matrix](https://github.com/toji/gl-matrix) JavaScript library for matrix and vector operations.
 
 
-Thanks to @Traksewt and @kozmad for their contributions
+Thanks to @Traksewt, @kozmad, @greenify for their contributions
 
 Documentation
 ---------------------------------------
@@ -57,8 +57,10 @@ Documentation for pv is available [here](http://pv.readthedocs.org).
 Changelog
 ----------------------------------------
 
-### New Since version 1.2
+### New in Version 1.3
 
+- publish it as an npm module
+- PDB IO: parse insertion codes
 - add method to retrieve current color of atom. This is useful for highlighting purposes, where the color of certain atoms is temporarily changed and then reverted back to the original.
 - smoothing of strands when rendering as helix, strand, coil cartoon
 - implement proper strand "arrows"
