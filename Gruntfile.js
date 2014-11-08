@@ -42,8 +42,8 @@ module.exports = function(grunt) {
         report : 'min'
       },
       build: {
-        src: 'js/<%= pkg.name %>.rel.js',
-        dest: 'js/<%= pkg.name %>.min.js'
+        src: 'js/pv.rel.js',
+        dest: 'js/pv.min.js'
       }
     },
     jshint : {
