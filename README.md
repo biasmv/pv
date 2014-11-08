@@ -26,14 +26,23 @@ cd pv
 
 Open a WebGL-enabled web browser and visit http://localhost:8000
 
-Should I use it on my website?
+Want to use PV on your website?
 ----------------------------------------
 
 I would love you to! Most features you would expect from a protein viewer are already present and working. Two considerations are important though:
 
  * WebGL is only supported in a subset of browsers. If you can afford to lose users of IE and older versions of browsers, `pv` is a good solution for protein visualisation.
 
- * DNA/RNA visualisation is not implemented yet, for protein-centric workflows that's fine though. In case you are interested in DNA/RNA rendering, just open a feature request and I'll try to get around to it.
+ * DNA/RNA visualisation is not implemented yet, for protein-centric workflows that's probably fine. In case you are interested in DNA/RNA rendering, just open a feature request and I'll try to get around to it.
+
+Citing PV?
+----------------------------------------
+
+I'm planning on writing a small application note, but in the mean time, use the following DOI for citing PV in your work.
+
+[![DOI](https://zenodo.org/badge/7050/biasmv/pv.png)](http://dx.doi.org/10.5281/zenodo.12620)
+
+
 
 Contributing
 -----------------------------------------
