@@ -58,14 +58,18 @@ var render = (function() {
 // performs an in-place smoothing over 3 consecutive positions.
 var inplaceStrandSmoothing = (function() {
   var bf = vec3.create(), af = vec3.create(), cf = vec3.create();
-  return function(p, from, to) {
-    vec3.set(bf, p[3 * (from - 1)], p[3 * (from - 1) + 1], p[3 * (from - 1) + 2]);
+  return function(p, from, to, length) {
+    from = Math.max(from, 1);
+    to = Math.min(length - 1, to);
+    var startIndex = 3 * (from - 1);
+    vec3.set(bf, p[startIndex], p[startIndex + 1], p[startIndex + 2]);
     vec3.set(cf, p[3 * from], p[3 * from + 1], p[3 * from + 2]);
-    for (var i = from; i <= to; ++i) {
-      vec3.set(af, p[3 * i], p[3 * i + 1], p[3 * i + 2]);
-      p[3 * (i - 1)] = af[0] * 0.25 + cf[0] * 0.50 + bf[0] * 0.25;
-      p[3 * (i - 1) + 1] = af[1] * 0.25 + cf[1] * 0.50 + bf[1] * 0.25;
-      p[3 * (i - 1) + 2] = af[2] * 0.25 + cf[2] * 0.50 + bf[2] * 0.25;
+    for (var i = from; i < to; ++i) {
+      startIndex = 3 * (i + 1);
+      vec3.set(af, p[startIndex], p[startIndex + 1], p[startIndex + 2]);
+      p[3 * i + 0] = af[0] * 0.25 + cf[0] * 0.50 + bf[0] * 0.25;
+      p[3 * i + 1] = af[1] * 0.25 + cf[1] * 0.50 + bf[1] * 0.25;
+      p[3 * i + 2] = af[2] * 0.25 + cf[2] * 0.50 + bf[2] * 0.25;
       vec3.copy(bf, cf);
       vec3.copy(cf, af);
     }
@@ -670,8 +674,9 @@ var _colorPosNormalsFromTrace = (function() {
   return function(meshGeom, trace, colors, positions, normals, objIds, pool, 
                   options) {
     var strand_start = null, strand_end = null;
+    var trace_length = trace.length();
     vec3.set(lastNormal, 0.0, 0.0, 0.0);
-    for (var i = 0; i < trace.length(); ++i) {
+    for (var i = 0; i < trace_length; ++i) {
       objIds.push(pool.nextId({ geom : meshGeom, 
                                 atom : trace.centralAtomAt(i)}));
       trace.smoothPosAt(pos, i, options.strength);
@@ -694,8 +699,8 @@ var _colorPosNormalsFromTrace = (function() {
         strand_end = i;
       }
       if (trace.residueAt(i).ss() === 'C' && strand_start !== null) {
-        inplaceStrandSmoothing(positions, strand_start, strand_end);
-        inplaceStrandSmoothing(normals, strand_start, strand_end);
+        inplaceStrandSmoothing(positions, strand_start, strand_end, trace_length);
+        inplaceStrandSmoothing(normals, strand_start, strand_end, trace_length);
         strand_start = null;
         strand_end = null;
       }
