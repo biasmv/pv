@@ -66,6 +66,11 @@ Documentation for pv is available [here](http://pv.readthedocs.org).
 Changelog
 ----------------------------------------
 
+### New in Version 1.3.1
+
+- fix bug in strand smoothing which would cause residues at the beginning of the trace to get collapsed.
+- rendering: check for null slab object to allow drawing to work when no objects are visible.
+
 ### New in Version 1.3
 
 - publish it as an npm module
