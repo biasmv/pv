@@ -37,6 +37,7 @@ uniform bool fog;\n\
 \n\
 void main(void) {\n\
   gl_FragColor = vec4(vertColor);\n\
+  if (gl_FragColor.a == 0.0) { discard; }\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
   if (fog) {\n\
     float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
@@ -61,6 +62,7 @@ void main(void) {\n\
   float hemi = max(0.0, dp)*0.5+0.5;\n\
   hemi *= vertColor.a;\n\
   gl_FragColor = vec4(vertColor.rgb*hemi, vertColor.a);\n\
+  if (gl_FragColor.a == 0.0) { discard; }\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
   if (fog) {\n\
     float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
