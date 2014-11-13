@@ -484,7 +484,9 @@ PV.prototype._draw = function() {
   this._ensureSize();
   this._animateCam();
   var newSlab = this._options.slabMode.update(this._objects, this._cam);
-  this._cam.setNearFar(newSlab.near, newSlab.far);
+  if (newSlab !== null) {
+    this._cam.setNearFar(newSlab.near, newSlab.far);
+  }
 
   this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
   this._gl.viewport(0, 0, this._options.realWidth, this._options.realHeight);
@@ -865,7 +867,9 @@ PV.prototype.slabMode = function(mode, options) {
   options = options || {};
   var strategy = slabModeToStrategy(mode, options);
   var slab = strategy.update(this._objects, this._cam);
-  this._cam.setNearFar(slab.near, slab.far);
+  if (slab !== null) {
+    this._cam.setNearFar(slab.near, slab.far);
+  }
   this._options.slabMode = strategy;
   this.requestRedraw();
 };
