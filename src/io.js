@@ -109,9 +109,9 @@ Remark350Reader.prototype.nextLine = function(line) {
 };
 
 // a truly minimalistic PDB parser. It will die as soon as the input is 
-// not well-formed. it only reads ATOM, HETATM, HELIX and SHEET records, 
-// everything else is ignored. in case of multi-model files, only the 
-// first model is read.
+// not well-formed. it only reads ATOM, HETATM, HELIX, SHEET and REMARK 
+// 350 records, everything else is ignored. in case of multi-model 
+// files, only the first model is read.
 //
 // FIXME: load PDB currently spends a substantial amount of time creating
 // the vec3 instances for the atom positions. it's possible that it's
