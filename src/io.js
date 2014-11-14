@@ -20,32 +20,6 @@
 
 (function(exports) {
 
-function PDBReader() {
-}
-
-function parseHelixRecord(line) {
-  var frstNum = parseInt(line.substr(21, 4), 10);
-  var frstInsCode = line[25] === ' ' ? '\0' : line[25];
-  var lastNum = parseInt(line.substr(33, 4), 10);
-  var lastInsCode = line[37] === ' ' ? '\0' : line[37];
-  var chainName = line[19];
-  return { first : [frstNum, frstInsCode], 
-           last : [lastNum, lastInsCode], chainName : chainName 
-  };
-}
-
-function parseSheetRecord(line) {
-  var frstNum = parseInt(line.substr(22, 4), 10);
-  var frstInsCode = line[26] === ' ' ? '\0' : line[26];
-  var lastNum = parseInt(line.substr(33, 4), 10);
-  var lastInsCode = line[37] === ' ' ? '\0' : line[37];
-  var chainName = line[21];
-  return { 
-    first : [frstNum, frstInsCode],
-    last : [lastNum, lastInsCode],
-    chainName : chainName
-  };
-}
 
 function Remark350Reader() {
   this._assemblies = {};
@@ -108,6 +82,134 @@ Remark350Reader.prototype.nextLine = function(line) {
   }
 };
 
+function PDBReader() {
+  this._helices = [];
+  this._sheets = [];
+  this._structure = new mol.Mol();
+  this._remark350Reader = new Remark350Reader();
+  this._currChain =  null;
+  this._currRes = null;
+  this._currAtom = null;
+}
+
+PDBReader.prototype.parseHelixRecord = function(line) {
+  var frstNum = parseInt(line.substr(21, 4), 10);
+  var frstInsCode = line[25] === ' ' ? '\0' : line[25];
+  var lastNum = parseInt(line.substr(33, 4), 10);
+  var lastInsCode = line[37] === ' ' ? '\0' : line[37];
+  var chainName = line[19];
+  this._helices.push({ first : [frstNum, frstInsCode], 
+           last : [lastNum, lastInsCode], chainName : chainName 
+  });
+  return true;
+};
+
+PDBReader.prototype.parseSheetRecord = function(line) {
+  var frstNum = parseInt(line.substr(22, 4), 10);
+  var frstInsCode = line[26] === ' ' ? '\0' : line[26];
+  var lastNum = parseInt(line.substr(33, 4), 10);
+  var lastInsCode = line[37] === ' ' ? '\0' : line[37];
+  var chainName = line[21];
+  this._sheets.push({ 
+    first : [frstNum, frstInsCode],
+    last : [lastNum, lastInsCode],
+    chainName : chainName
+  });
+  return true;
+};
+
+PDBReader.prototype.parseAndAddAtom = function(line, hetatm) {
+  var alt_loc = line[16];
+  if (alt_loc !== ' ' && alt_loc !== 'A') {
+    return true;
+  }
+  var chainName = line[21];
+  var resName = line.substr(17, 3).trim();
+  var atomName = line.substr(12, 4).trim();
+  var rnumNum = parseInt(line.substr(22, 4), 10);
+  var insCode = line[26] === ' ' ? '\0' : line[26];
+  var updateResidue = false;
+  var updateChain = false;
+  if (!this._currChain || this._currChain.name() !== chainName) {
+    updateChain = true;
+    updateResidue = true;
+  }
+  if (!this._currRes || this._currRes.num() !== rnumNum || 
+      this._currRes.insCode() !== insCode) {
+    updateResidue = true;
+  }
+  if (updateChain) {
+    // residues of one chain might appear interspersed with residues from
+    // other chains.
+    this._currChain = this._structure.chain(chainName) || 
+                      this._structure.addChain(chainName);
+  }
+  if (updateResidue) {
+    this._currRes = this._currChain.addResidue(resName, rnumNum, insCode);
+  }
+  var pos = vec3.create();
+  for (var i=0;i<3;++i) {
+    pos[i] = (parseFloat(line.substr(30+i*8, 8)));
+  }
+  this._currRes.addAtom(atomName, pos, line.substr(76, 2).trim());
+  return true;
+};
+
+PDBReader.prototype.processLine = function(line) {
+  var recordName = line.substr(0, 6);
+  if (recordName === 'ATOM  ') {
+    return this.parseAndAddAtom(line, false);
+  }
+  if (recordName === 'HETATM') {
+    return this.parseAndAddAtom(line, true);
+  }
+  if (recordName === 'REMARK') {
+    // for now we are only interested in the biological assembly information
+    // contained in remark 350.
+    var remarkNumber = line.substr(7, 3);
+    if (remarkNumber === '350') {
+      this._remark350Reader.nextLine(line);
+    }
+    return true;
+  }
+  if (recordName === 'HELIX ') {
+    return this.parseHelixRecord(line);
+  }
+  if (recordName === 'SHEET ') {
+    return this.parseSheetRecord(line);
+  }
+  if (recordName === 'END') {
+    return false;
+  }
+  return true;
+};
+
+// assigns the secondary structure information found in the helix sheet records, 
+// derives connectivity and assigns assembly information.
+PDBReader.prototype.finish = function() {
+  var chain = null;
+  for (i = 0; i < this._sheets.length; ++i) {
+    var sheet = this._sheets[i];
+    chain = this._structure.chain(sheet.chainName);
+    if (chain) {
+      chain.assignSS(sheet.first, sheet.last, 'E');
+    }
+  }
+  for (i = 0; i < this._helices.length; ++i) {
+    var helix = this._helices[i];
+    chain = this._structure.chain(helix.chainName);
+    if (chain) {
+      chain.assignSS(helix.first, helix.last, 'H');
+    }
+  }
+  this._structure.setAssemblies(this._remark350Reader.assemblies());
+  this._structure.deriveConnectivity();
+  console.log('imported', this._structure.chains().length, 'chain(s),',
+              this._structure.residueCount(), 'residue(s)');
+  console.timeEnd('pdb');
+  return this._structure;
+};
+
 // a truly minimalistic PDB parser. It will die as soon as the input is 
 // not well-formed. it only reads ATOM, HETATM, HELIX, SHEET and REMARK 
 // 350 records, everything else is ignored. in case of multi-model 
@@ -121,103 +223,16 @@ Remark350Reader.prototype.nextLine = function(line) {
 // released once the structure is deleted.
 function pdb(text) {
   console.time('pdb'); 
-  var structure = new mol.Mol();
-  var currChain = null;
-  var currRes = null;
-  var currAtom = null;
-  
-  var helices = [];
-  var sheets = [];
-  
-  function parseAndAddAtom(line, hetatm) {
-    var alt_loc = line[16];
-    if (alt_loc !== ' ' && alt_loc !== 'A') {
-      return;
-    }
-    var chainName = line[21];
-    var resName = line.substr(17, 3).trim();
-    var atomName = line.substr(12, 4).trim();
-    var rnumNum = parseInt(line.substr(22, 4), 10);
-    var insCode = line[26] === ' ' ? '\0' : line[26];
-    var updateResidue = false;
-    var updateChain = false;
-    if (!currChain || currChain.name() !== chainName) {
-      updateChain = true;
-      updateResidue = true;
-    }
-    if (!currRes || currRes.num() !== rnumNum || currRes.insCode() !== insCode) {
-      updateResidue = true;
-    }
-    if (updateChain) {
-      // residues of one chain might appear interspersed with residues from
-      // other chains.
-      currChain = structure.chain(chainName) || structure.addChain(chainName);
-    }
-    if (updateResidue) {
-      currRes = currChain.addResidue(resName, rnumNum, insCode);
-    }
-    var pos = vec3.create();
-    for (var i=0;i<3;++i) {
-      pos[i] = (parseFloat(line.substr(30+i*8, 8)));
-    }
-    currRes.addAtom(atomName, pos, line.substr(76, 2).trim());
-  }
-  var remark350Reader = new Remark350Reader();
+  var reader = new PDBReader();
   var lines = text.split(/\r\n|\r|\n/g);
   var i = 0;
   for (i = 0; i < lines.length; i++) {
-    var line = lines[i];
-    var recordName = line.substr(0, 6);
-
-    if (recordName === 'ATOM  ') {
-      parseAndAddAtom(line, false);
-      continue;
-    }
-    if (recordName === 'HETATM') {
-      parseAndAddAtom(line, true);
-      continue;
-    }
-    if (recordName === 'REMARK') {
-      // for now we are only interested in the biological assembly information
-      // contained in remark 350.
-      var remarkNumber = line.substr(7, 3);
-      if (remarkNumber === '350') {
-        remark350Reader.nextLine(line);
-      }
-    }
-    if (recordName === 'HELIX ') {
-      helices.push(parseHelixRecord(line));
-      continue;
-    }
-    if (recordName === 'SHEET ') {
-      sheets.push(parseSheetRecord(line));
-      continue;
-    }
-    if (recordName === 'END') {
+    if (!reader.processLine(lines[i])) {
       break;
     }
   }
-  var chain = null;
-  for (i = 0; i < sheets.length; ++i) {
-    var sheet = sheets[i];
-    chain = structure.chain(sheet.chainName);
-    if (chain) {
-      chain.assignSS(sheet.first, sheet.last, 'E');
-    }
-  }
-  for (i = 0; i < helices.length; ++i) {
-    var helix = helices[i];
-    chain = structure.chain(helix.chainName);
-    if (chain) {
-      chain.assignSS(helix.first, helix.last, 'H');
-    }
-  }
-  structure.setAssemblies(remark350Reader.assemblies());
-  structure.deriveConnectivity();
-  console.log('imported', structure.chains().length, 'chain(s),',
-              structure.residueCount(), 'residue(s)');
+  var structure = reader.finish();
   console.timeEnd('pdb');
-
   return structure;
 }
 
