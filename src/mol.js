@@ -650,14 +650,22 @@ Mol.prototype.deriveConnectivity = function() {
       }
     }
     if (prev_residue) {
-    var c_atom = prev_residue.atom('C');
-    var n_atom = res.atom('N');
-    if (c_atom && n_atom) {
-      sqr_dist = vec3.sqrDist(c_atom.pos(), n_atom.pos());
-      if (sqr_dist < 1.6*1.6) {
-        this_structure.connect(n_atom, c_atom);
+      var c_atom = prev_residue.atom('C');
+      var n_atom = res.atom('N');
+      if (c_atom && n_atom) {
+        sqr_dist = vec3.sqrDist(c_atom.pos(), n_atom.pos());
+        if (sqr_dist < 1.6*1.6) {
+          this_structure.connect(n_atom, c_atom);
+        }
+      } 
+      var o3Prime = prev_residue.atom('O3\'');
+      var pAtom = res.atom('P');
+      if (o3Prime && pAtom) {
+        sqr_dist = vec3.sqrDist(o3Prime.pos(), pAtom.pos());
+        if (sqr_dist < 1.65*1.65) {
+          this_structure.connect(o3Prime, pAtom);
+        }
       }
-    }
     }
     prev_residue = res;
   });
