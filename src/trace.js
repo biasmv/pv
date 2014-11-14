@@ -37,13 +37,15 @@ BackboneTrace.prototype.residueAt = function(index) {
 };
 
 BackboneTrace.prototype.posAt = function(out, index) {
-  vec3.copy(out, this._trace[index].atom('CA').pos());
+  vec3.copy(out, this._trace[index].centralAtom().pos());
   return out;
 };
 
 BackboneTrace.prototype.normalAt = function(out, index) {
-  vec3.sub(out, this._trace[index].atom('O').pos(),
-           this._trace[index].atom('C').pos());
+  var residue = this._trace[index];
+  if (residue.isAminoacid()) {
+    vec3.sub(out, residue.atom('O').pos(), residue.atom('C').pos());
+  }
   vec3.normalize(out, out);
   return out;
 };
@@ -53,7 +55,7 @@ BackboneTrace.prototype.smoothPosAt = BackboneTrace.prototype.posAt;
 BackboneTrace.prototype.smoothNormalAt = BackboneTrace.prototype.normalAt;
 
 BackboneTrace.prototype.centralAtomAt = function(index) {
-  return this._trace[index].atom('CA');
+  return this._trace[index].centralAtom();
 };
 
 BackboneTrace.prototype.tangentAt = (function() {
@@ -209,7 +211,7 @@ TraceSubset.prototype.posAt = function(out, index) {
 };
 
 TraceSubset.prototype.centralAtomAt = function(index) {
-  return this.residueAt(index).atom('CA');
+  return this.residueAt(index).centralAtom();
 };
 
 TraceSubset.prototype.fullTraceIndex = function(index) {

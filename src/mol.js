@@ -518,12 +518,27 @@ ResidueBase.prototype.qualifiedName = function() {
 ResidueBase.prototype.atom = function(index_or_name) { 
   if (typeof index_or_name === 'string') {
     for (var i =0; i < this._atoms.length; ++i) {
-     if (this._atoms[i].name() === index_or_name) {
-       return this._atoms[i];
-     }
+      if (this._atoms[i].name() === index_or_name) {
+        return this._atoms[i];
+      }
     }
+    return null;
+  }
+  if (index_or_name >= this._atoms.length && index_or_name < 0) {
+    return null;
   }
   return this._atoms[index_or_name]; 
+};
+
+// CA for amino acids, P for nucleotides, nucleosides
+ResidueBase.prototype.centralAtom = function() {
+  if (this.isAminoacid()) {
+    return this.atom('CA');
+  }
+  if (this.isNucleotide()) {
+    return this.atom('C3\'');
+  }
+  return null;
 };
 
 
@@ -541,8 +556,14 @@ ResidueBase.prototype.center = function() {
 };
 
 ResidueBase.prototype.isAminoacid = function() { 
-  return this.atom('N') && this.atom('CA') && this.atom('C') && this.atom('O');
+  return this._isAminoacid;
 };
+
+ResidueBase.prototype.isNucleotide = function() { 
+  return this._isNucleotide;
+};
+
+
 function AtomBase() {
 }
 
@@ -626,12 +647,36 @@ Mol.prototype.connect = function(atom_a, atom_b) {
   return bond;
 };
 
+
+function connectPeptides(structure, left, right) {
+  var cAtom = left.atom('C');
+  var nAtom = right.atom('N');
+  if (cAtom && nAtom) {
+    var sqrDist = vec3.sqrDist(cAtom.pos(), nAtom.pos());
+    if (sqrDist < 1.6*1.6) {
+      structure.connect(nAtom, cAtom);
+    }
+  } 
+}
+
+function connectNucleotides(structure, left, right) {
+  var o3Prime = left.atom('O3\'');
+  var pAtom = right.atom('P');
+  if (o3Prime && pAtom) {
+    var sqrDist = vec3.sqrDist(o3Prime.pos(), pAtom.pos());
+    // FIXME: make sure 1.7 is a good threshold here...
+    if (sqrDist < 1.7*1.7) {
+      structure.connect(o3Prime, pAtom);
+    }
+  }
+}
+
 // determine connectivity structure. for simplicity only connects atoms of the 
 // same residue and peptide bonds
 Mol.prototype.deriveConnectivity = function() {
   console.time('Mol.deriveConnectivity');
   var this_structure = this;
-  var prev_residue;
+  var prevResidue;
   this.eachResidue(function(res) {
     var sqr_dist;
     var d = vec3.create();
@@ -649,25 +694,16 @@ Mol.prototype.deriveConnectivity = function() {
         }
       }
     }
-    if (prev_residue) {
-      var c_atom = prev_residue.atom('C');
-      var n_atom = res.atom('N');
-      if (c_atom && n_atom) {
-        sqr_dist = vec3.sqrDist(c_atom.pos(), n_atom.pos());
-        if (sqr_dist < 1.6*1.6) {
-          this_structure.connect(n_atom, c_atom);
-        }
-      } 
-      var o3Prime = prev_residue.atom('O3\'');
-      var pAtom = res.atom('P');
-      if (o3Prime && pAtom) {
-        sqr_dist = vec3.sqrDist(o3Prime.pos(), pAtom.pos());
-        if (sqr_dist < 1.65*1.65) {
-          this_structure.connect(o3Prime, pAtom);
-        }
+    res._deduceType();
+    if (prevResidue != null) {
+      if (res.isAminoacid() && prevResidue.isAminoacid()) {
+        connectPeptides(this_structure, prevResidue, res);
+      }
+      if (res.isNucleotide() && prevResidue.isNucleotide()) {
+        connectNucleotides(this_structure, prevResidue, res);
       }
     }
-    prev_residue = res;
+    prevResidue = res;
   });
   console.timeEnd('Mol.deriveConnectivity');
 };
@@ -766,23 +802,45 @@ Chain.prototype._cacheBackboneTraces = function() {
   if (this._cachedTraces.length > 0) {
     return;
   }
-  var  stretch = new BackboneTrace();
+  var stretch = new BackboneTrace();
+  // true when the stretch consists of amino acid residues, false
+  // if the stretch consists of nucleotides. 
+  var aaStretch = null;
   for (var i = 0; i < this._residues.length; i+=1) {
     var residue = this._residues[i];
-    if (!residue.isAminoacid()) {
+    var isAminoacid = residue.isAminoacid();
+    var isNucleotide = residue.isNucleotide();
+    if ((aaStretch  === true && !isAminoacid) ||
+        (aaStretch === false && !isNucleotide) ||
+        (aaStretch === null && !isNucleotide && !isAminoacid)) {
+      // a break in the trace: push stretch if there were enough residues
+      // in it and create new backbone trace.
       if (stretch.length() > 1) {
         this._cachedTraces.push(stretch);
       }
+      aaStretch = null;
       stretch = new BackboneTrace();
       continue;
     }
     if (stretch.length() === 0) {
       stretch.push(residue);
+      aaStretch = residue.isAminoacid();
       continue;
     }
-    var caPrev = this._residues[i-1].atom('C');
-    var nThis = residue.atom('N');
-    if (Math.abs(vec3.sqrDist(caPrev.pos(), nThis.pos()) - 1.5*1.5) < 1) {
+    // these checks are on purpose more relaxed than the checks we use in 
+    // deriveConnectivity(). We don't really care about correctness of bond 
+    // lengths here. The only thing that matters is that the residues are 
+    // more or less close so that they could potentially/ be connected.
+    var prevAtom, thisAtom;
+    if (aaStretch) {
+      prevAtom = this._residues[i-1].atom('C');
+      thisAtom = residue.atom('N');
+    } else {
+      prevAtom = this._residues[i-1].atom('O3\'');
+      thisAtom = residue.atom('P');
+    }
+    var sqrDist = vec3.sqrDist(prevAtom.pos(), thisAtom.pos());
+    if (Math.abs(sqrDist - 1.5*1.5) < 1) {
       stretch.push(residue);
     } else {
       if (stretch.length() > 1) {
@@ -814,10 +872,18 @@ function Residue(chain, name, num, insCode) {
   this._atoms = [];
   this._ss = 'C';
   this._chain = chain;
+  this._isAminoacid = false;
+  this._isNucleotide = false;
   this._index = chain.residues().length;
 }
 
 derive(Residue, ResidueBase);
+
+Residue.prototype._deduceType = function() {
+  this._isNucleotide = this.atom('P')!== null && this.atom('C3\'') !== null;
+  this._isAminoacid = this.atom('N') !== null && this.atom('CA') !== null && 
+                      this.atom('C') !== null && this.atom('O') !== null;
+};
 
 Residue.prototype.name = function() { return this._name; };
 Residue.prototype.insCode = function() { return this._insCode; };

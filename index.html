@@ -189,7 +189,6 @@
       <li id=trace>Trace</li>
       <li id=spheres>Spheres</li>
       <li id=balls-and-sticks>Balls and Sticks</li>
-      <li id=test>Test</li>
     </ul>
     <ul id=colorTab>
       <h1></h1>
@@ -219,6 +218,7 @@
        <li id=2f8v>Telethonin</li>
        <li id=4c46>Long Helices</li>
        <li id=1rb8>Capsid</li>
+       <li id=4ubb>DNA Polymerase</li>
     </ul>
   </div>
   <div id=gl>
@@ -379,17 +379,9 @@
       });
       pv.requestRedraw();
     }
-
-    var auto = true;
-    function test() {
-      if (auto) {
-        pv.slabMode('fixed', { near: 0.1, far : 400.0});
-      } else {
-        pv.slabMode('auto');
-      }
-      auto = !auto;
-    }
-
+    function polymerase() { 
+      load('4ubb'); 
+    };
     $('#cartoon').click(cartoon);
     $('#line-trace').click(lineTrace);
     $('#preset').click(preset);
@@ -398,7 +390,7 @@
     $('#sline').click(sline);
     $('#spheres').click(spheres);
     $('#balls-and-sticks').click(ballsAndSticks);
-    $('#test').click(test);
+    $('#4ubb').click(polymerase);
     $('#tube').click(tube);
     $('#1ake').click(kinase);
     $('#1r6a').click(transferase);
@@ -447,7 +439,7 @@
       pv.requestRedraw();
     });
 
-    document.addEventListener('DOMContentLoaded', crambin);
+    document.addEventListener('DOMContentLoaded', polymerase);
     /*
     window.addEventListener('resize', function() {
       pv.fitParent();
