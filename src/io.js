@@ -206,7 +206,6 @@ PDBReader.prototype.finish = function() {
   this._structure.deriveConnectivity();
   console.log('imported', this._structure.chains().length, 'chain(s),',
               this._structure.residueCount(), 'residue(s)');
-  console.timeEnd('pdb');
   return this._structure;
 };
 
