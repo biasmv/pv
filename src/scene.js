@@ -123,6 +123,7 @@ function BaseGeom(gl) {
   SceneNode.prototype.constructor.call(this, gl);
   this._gl = gl;
   this._idRanges = [];
+  this._vertAssocs = [];
   this._showRelated = null;
 }
 
@@ -160,15 +161,13 @@ BaseGeom.prototype.select = function(what) {
 };
 
 BaseGeom.prototype.structure = function() {
-  return this._vertAssoc._structure;
+  return this._vertAssocs[0]._structure;
 };
 
-BaseGeom.prototype.setVertAssoc = function(assoc) {
-  this._vertAssoc = assoc;
-};
 
 BaseGeom.prototype.getColorForAtom = function(atom, color) {
-  return this._vertAssoc.getColorForAtom(atom, color);
+  // FIXME: what to do in case there are multiple assocs?
+  return this._vertAssoc[0].getColorForAtom(atom, color);
 };
 
 BaseGeom.prototype.addIdRange = function(range) {
@@ -180,6 +179,11 @@ BaseGeom.prototype.destroy = function() {
   for (var i = 0; i < this._idRanges.length; ++i) {
     this._idRanges[i].recycle();
   }
+};
+
+
+BaseGeom.prototype.addVertAssoc = function(assoc) {
+  this._vertAssocs.push(assoc);
 };
 
 // returns all vertex arrays that contain geometry for one of the specified
@@ -326,7 +330,7 @@ function LineGeom(gl, float32Allocator) {
   BaseGeom.prototype.constructor.call(this, gl);
   this._vertArrays = [];
   this._float32Allocator = float32Allocator;
-  this._vertAssoc = null;
+  this._vertAssocs = [];
   this._lineWidth = 1.0;
 }
 
@@ -389,20 +393,24 @@ LineGeom.prototype._drawVertArrays = function(cam, shader, vertArrays,
 
 LineGeom.prototype.vertArray = function() { return this._va; };
 
-LineGeom.prototype.colorBy = function(colorFunc, view) {
-  console.time('LineGeom.colorBy');
+BaseGeom.prototype.colorBy = function(colorFunc, view) {
+  console.time('BaseGeom.colorBy');
   this._ready = false;
   view = view || this.structure();
-  this._vertAssoc.recolor(colorFunc, view);
-  console.timeEnd('LineGeom.colorBy');
+  for (var i = 0; i < this._vertAssocs.length; ++i) {
+    this._vertAssocs[i].recolor(colorFunc, view);
+  }
+  console.timeEnd('BaseGeom.colorBy');
 };
 
-LineGeom.prototype.setOpacity = function(val, view) {
-  console.time('LineGeom.setOpacity');
+BaseGeom.prototype.setOpacity = function(val, view) {
+  console.time('BaseGeom.setOpacity');
   this._ready = false;
   view = view || this.structure();
-  this._vertAssoc.setOpacity(val, view);
-  console.timeEnd('LineGeom.setOpacity');
+  for (var i = 0; i < this._vertAssocs.length; ++i) {
+    this._vertAssocs[i].setOpacity(val, view);
+  }
+  console.timeEnd('BaseGeom.setOpacity');
 };
 
 
@@ -434,7 +442,6 @@ function MeshGeom(gl, float32Allocator, uint16Allocator) {
   this._uint16Allocator = uint16Allocator;
   this._remainingVerts = null;
   this._remainingIndices = null;
-  this._vertAssoc = null;
 }
 
 MeshGeom.prototype._boundedVertArraySize = function(size) {
@@ -490,11 +497,6 @@ MeshGeom.prototype.vertArrayWithSpaceFor = function(numVerts) {
 
 derive(MeshGeom, BaseGeom);
 
-MeshGeom.prototype.setVertAssoc = function(assoc) {
-  this._vertAssoc = assoc;
-};
-
-
 MeshGeom.prototype.vertArray = function(index) {
   return this._indexedVertArrays[index];
 };
@@ -521,22 +523,6 @@ MeshGeom.prototype.shaderForStyleAndPass =
   }
   var shader = shaderCatalog[style];
   return shader !== undefined ? shader : null;
-};
-
-MeshGeom.prototype.colorBy = function(colorFunc, view) {
-  console.time('MeshGeom.colorBy');
-  this._ready = false;
-  view = view || this.structure();
-  this._vertAssoc.recolor(colorFunc, view);
-  console.timeEnd('MeshGeom.colorBy');
-};
-
-MeshGeom.prototype.setOpacity = function(val, view) {
-  console.time('MeshGeom.setOpacity');
-  this._ready = false;
-  view = view || this.structure();
-  this._vertAssoc.setOpacity(val , view);
-  console.timeEnd('MeshGeom.setOpacity');
 };
 
 MeshGeom.prototype._drawVertArrays = function(cam, shader, indexedVertArrays, 

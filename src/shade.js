@@ -195,7 +195,6 @@ exports.ColorOp = ColorOp;
 
 exports.color.uniform = function(color) {
   color = exports.forceRGB(color);
-  console.log(color);
   return new ColorOp(function(atom, out, index) {
     out[index+0] = color[0];
     out[index+1] = color[1];

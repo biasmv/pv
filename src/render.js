@@ -137,7 +137,7 @@ exports.spheres = function(structure, gl, options) {
   options.protoSphere = protoSphere;
   var geom = new MeshGeom(gl, options.float32Allocator, options.uint16Allocator);
   var vertAssoc = new AtomVertexAssoc(structure, true);
-  geom.setVertAssoc(vertAssoc);
+  geom.addVertAssoc(vertAssoc);
   geom.setShowRelated(options.showRelated);
   options.color.begin(structure);
   structure.eachChain(function(chain) {
@@ -206,7 +206,7 @@ exports.ballsAndSticks = function(structure, gl, options) {
   options.protoCyl = protoCyl;
   var meshGeom = new MeshGeom(gl, options.float32Allocator, 
                               options.uint16Allocator);
-  meshGeom.setVertAssoc(vertAssoc);
+  meshGeom.addVertAssoc(vertAssoc);
   meshGeom.setShowRelated(options.showRelated);
   options.color.begin(structure);
   structure.eachChain(function(chain) {
@@ -273,7 +273,7 @@ exports.lines = function(structure, gl, options) {
   var lineGeom = new LineGeom(gl, options.float32Allocator);
   lineGeom.setLineWidth(options.lineWidth);
   var va = lineGeom.vertArray();
-  lineGeom.setVertAssoc(vertAssoc);
+  lineGeom.addVertAssoc(vertAssoc);
   lineGeom.setShowRelated(options.showRelated);
   structure.eachChain(function(chain) {
     linesForChain(lineGeom, vertAssoc, chain, options);
@@ -373,7 +373,7 @@ exports.lineTrace = function(structure, gl, options) {
     traceIndex = lineTraceForChain(lineGeom, vertAssoc, options, 
                                    traceIndex, chain);
   });
-  lineGeom.setVertAssoc(vertAssoc);
+  lineGeom.addVertAssoc(vertAssoc);
   lineGeom.setShowRelated(options.showRelated);
   options.color.end(structure);
   console.timeEnd('lineTrace');
@@ -473,7 +473,7 @@ exports.sline = function(structure, gl, options) {
   structure.eachChain(function(chain) {
     traceIndex = slineForChain(lineGeom, vertAssoc, options, chain, traceIndex);
   });
-  lineGeom.setVertAssoc(vertAssoc);
+  lineGeom.addVertAssoc(vertAssoc);
   options.color.end(structure);
   console.timeEnd('sline');
   return lineGeom;
@@ -522,7 +522,7 @@ exports.trace = function(structure, gl, options) {
   var meshGeom = new MeshGeom(gl, options.float32Allocator, 
                               options.uint16Allocator);
   var vertAssoc = new TraceVertexAssoc(structure, 1, true);
-  meshGeom.setVertAssoc(vertAssoc);
+  meshGeom.addVertAssoc(vertAssoc);
   meshGeom.setShowRelated(options.showRelated);
 
   options.color.begin(structure);
@@ -582,7 +582,7 @@ exports.cartoon = function(structure, gl, options) {
   var meshGeom = new MeshGeom(gl, options.float32Allocator, 
                               options.uint16Allocator);
   var vertAssoc = new TraceVertexAssoc(structure, options.splineDetail, true);
-  meshGeom.setVertAssoc(vertAssoc);
+  meshGeom.addVertAssoc(vertAssoc);
   meshGeom.setShowRelated(options.showRelated);
 
   options.color.begin(structure);
