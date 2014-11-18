@@ -554,20 +554,88 @@ var _cartoonNumIndices = function(traces, vertsPerSlice, splineDetail) {
   return numIndices;
 };
 
+// creates the capped cylinders for DNA/RNA pointing towards the end of the bases.
+var _addNucleotideSticks = (function() {
+  var rotation = mat3.create();
+  var up = vec3.create(), left = vec3.create(), dir = vec3.create();
+  var center = vec3.create();
+  var color = vec4.create();
+  return function(meshGeom, traces, options) {
+    var vertAssoc = new AtomVertexAssoc(meshGeom.structure(), true);
+    meshGeom.addVertAssoc(vertAssoc);
+    for (var i = 0; i < traces.length; ++i) {
+      var trace = traces[i];
+      var idRange = options.idPool.getContinuousRange(trace.length());
+      for (var j = 0; j <  trace.length(); ++j) {
+        var atomVerts = options.protoCyl.numVerts();
+        var va = meshGeom.vertArrayWithSpaceFor(atomVerts);
+        var vertStart = va.numVerts();
+        var residue = trace.residueAt(j);
+        var resName = residue.name();
+        var startAtom = residue.atom('C3\'');
+        var endAtom = null;
+        if (resName === 'A' || resName === 'G' || resName === 'DA' || resName === 'DG') {
+          endAtom = residue.atom('N1');
+        } else {
+          endAtom = residue.atom('N3');
+        }
+        if (endAtom === null || startAtom === null) {
+          continue;
+        }
+        var objId = idRange.nextId({ geom: meshGeom, atom : endAtom });
+        vec3.add(center, startAtom.pos(), endAtom.pos());
+        vec3.scale(center, center, 0.5);
+
+        options.color.colorFor(endAtom, color, 0);
+        vec3.sub(dir, endAtom.pos(), startAtom.pos());
+        var length = vec3.length(dir);
+        vec3.scale(dir, dir, 1.0/length);
+        buildRotation(rotation, dir, left, up, false);
+
+        options.protoCyl.addTransformed(va, center, length, options.radius, 
+                                        rotation, color, color, objId, objId);
+        options.protoSphere.addTransformed(va, endAtom.pos(), options.radius, 
+                                           color, objId);
+        options.protoSphere.addTransformed(va, startAtom.pos(), options.radius, 
+                                           color, objId);
+        var vertEnd = va.numVerts();
+        vertAssoc.addAssoc(endAtom, va, vertStart, vertEnd);
+      }
+    }
+  };
+})();
+
+// generates the mesh geometry for displaying a single chain as either cartoon
+// or tube (options.forceTube === true).
 var cartoonForChain = function(meshGeom, vertAssoc, options, traceIndex, chain) {
-
-
   var traces = chain.backboneTraces();
   var numVerts = _cartoonNumVerts(traces, options.arcDetail * 4,
                                   options.splineDetail);
   var numIndices = _cartoonNumIndices(traces, options.arcDetail * 4,
                                       options.splineDetail);
+  // figure out which of the traces consist of nucleic acids. They require additional 
+  // space for rendering the sticks.
+  var nucleicAcidTraces = [];
+  var vertForBaseSticks = options.protoCyl.numVerts() + 
+    2 * options.protoSphere.numVerts();
+  var indicesForBaseSticks = options.protoCyl.numIndices() + 
+    2 * options.protoSphere.numIndices();
+  for (var i = 0; i < traces.length; ++i) {
+    var trace = traces[i];
+    if (trace.residueAt(0).isNucleotide()) {
+      nucleicAcidTraces.push(trace);
+      // each DNA/RNA base gets a double-capped cylinder
+      numVerts += trace.length() * vertForBaseSticks;
+      numIndices += trace.length() * indicesForBaseSticks;
+    }
+  }
   meshGeom.addChainVertArray(chain, numVerts, numIndices);
   for (var ti = 0; ti < traces.length; ++ti) {
     _cartoonForSingleTrace(meshGeom, vertAssoc, traces[ti], traceIndex, 
                            options);
     traceIndex++;
   }
+  _addNucleotideSticks(meshGeom, nucleicAcidTraces, options);
   return traceIndex;
 };
 
@@ -578,6 +646,8 @@ exports.cartoon = function(structure, gl, options) {
   options.helixProfile = new TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
   options.strandProfile = new TubeProfile(HELIX_POINTS, options.arcDetail, 0.1);
   options.arrowProfile = new TubeProfile(ARROW_POINTS, options.arcDetail, 0.1);
+  options.protoCyl = new ProtoCylinder(options.arcDetail * 4);
+  options.protoSphere = new ProtoSphere(options.arcDetail * 4, options.arcDetail * 4);
 
   var meshGeom = new MeshGeom(gl, options.float32Allocator, 
                               options.uint16Allocator);
