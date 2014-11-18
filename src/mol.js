@@ -695,7 +695,7 @@ Mol.prototype.deriveConnectivity = function() {
       }
     }
     res._deduceType();
-    if (prevResidue != null) {
+    if (prevResidue !== null) {
       if (res.isAminoacid() && prevResidue.isAminoacid()) {
         connectPeptides(this_structure, prevResidue, res);
       }
