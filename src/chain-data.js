@@ -47,8 +47,8 @@ MeshChainData.prototype.chain = function() { return this._chain; };
 LineChainData.prototype.drawSymmetryRelated = function(cam, shader, transforms) {
   this.bind(shader);
   for (var i = 0; i < transforms.length; ++i) {
-    this._gl.uniform1i(shader.symId, i);
     cam.bind(shader, transforms[i]);
+    this._gl.uniform1i(shader.symId, i);
     this.draw();
   }
   this.releaseAttribs(shader);
