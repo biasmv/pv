@@ -561,6 +561,7 @@ var _addNucleotideSticks = (function() {
   var center = vec3.create();
   var color = vec4.create();
   return function(meshGeom, vertAssoc, traces, options) {
+    var radius = options.radius * 1.8;
     for (var i = 0; i < traces.length; ++i) {
       var trace = traces[i];
       var idRange = options.idPool.getContinuousRange(trace.length());
@@ -590,11 +591,11 @@ var _addNucleotideSticks = (function() {
         vec3.scale(dir, dir, 1.0/length);
         buildRotation(rotation, dir, left, up, false);
 
-        options.protoCyl.addTransformed(va, center, length, options.radius, 
+        options.protoCyl.addTransformed(va, center, length, radius, 
                                         rotation, color, color, objId, objId);
-        options.protoSphere.addTransformed(va, endAtom.pos(), options.radius, 
+        options.protoSphere.addTransformed(va, endAtom.pos(), radius, 
                                            color, objId);
-        options.protoSphere.addTransformed(va, startAtom.pos(), options.radius, 
+        options.protoSphere.addTransformed(va, startAtom.pos(), radius, 
                                            color, objId);
         var vertEnd = va.numVerts();
         vertAssoc.addAssoc(endAtom, va, vertStart, vertEnd);
@@ -716,7 +717,7 @@ var _cartoonAddTube = (function() {
   var rotation = mat3.create();
   var up = vec3.create();
 
-  return function(vertArray, pos, left, ss, tangent, color, first, options, 
+  return function(vertArray, pos, left, ss, tangent, color, radius, first, options, 
                   offset, objId) {
     var prof = options.coilProfile;
     if (ss !== 'C' && !options.forceTube) {
@@ -736,7 +737,7 @@ var _cartoonAddTube = (function() {
     }
 
     buildRotation(rotation, tangent, left, up, true);
-    prof.addTransformed(vertArray, pos, options.radius, rotation, color, first,
+    prof.addTransformed(vertArray, pos, radius, rotation, color, first,
                         offset, objId);
   };
 })();
@@ -818,6 +819,7 @@ var _cartoonForSingleTrace = (function() {
         normals, trace.length(), options.splineDetail, options.strength, false,
         options.float32Allocator);
     vertAssoc.setPerResidueColors(traceIndex, colors);
+    var radius = options.radius * (trace.residueAt(0).isAminoacid() ? 1.0 : 1.8);
     var interpColors = interpolateColor(colors, options.splineDetail);
     // handle start of trace. this could be moved inside the for-loop, but
     // at the expense of a conditional inside the loop. unrolling is
@@ -835,8 +837,8 @@ var _cartoonForSingleTrace = (function() {
     vec4.set(color, interpColors[0], interpColors[1], interpColors[2], interpColors[3] );
 
     var vertStart = vertArray.numVerts();
-    _cartoonAddTube(vertArray, pos, normal, trace.residueAt(0), tangent, color,
-                    true, options, 0, objIds[0]);
+    _cartoonAddTube(vertArray, pos, normal, trace.residueAt(0), tangent,
+                    color, radius, true, options, 0, objIds[0]);
     var vertEnd = vertArray.numVerts();
     var slice = 0;
     vertAssoc.addAssoc(traceIndex, vertArray, slice, vertStart, vertEnd);
@@ -926,14 +928,14 @@ var _cartoonForSingleTrace = (function() {
       var objIndex = Math.floor((i + halfSplineDetail) / options.splineDetail);
       var objId = objIds[Math.min(objIds.length - 1, objIndex)];
       _cartoonAddTube(vertArray, pos, normal, thisSS,
-                      tangent, color, false, options, offset, objId);
+                      tangent, color, radius, false, options, offset, objId);
       if (drawArrow) {
         vertAssoc.addAssoc(traceIndex, vertArray, slice, vertStart, vertEnd);
         // FIXME: arrow has completely wrong normals. Profile normals are 
         // generate perpendicular to the direction of the tube. The arrow 
         // normals are anti-parallel to the direction of the tube.
         _cartoonAddTube(vertArray, pos, normal, 'A', 
-                        tangent, color, false, options, 0, objId);
+                        tangent, color, radius, false, options, 0, objId);
         // We skip a few profiles to get a larger arrow.
         i += options.arrowSkip;
       }
