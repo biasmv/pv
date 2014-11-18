@@ -560,9 +560,7 @@ var _addNucleotideSticks = (function() {
   var up = vec3.create(), left = vec3.create(), dir = vec3.create();
   var center = vec3.create();
   var color = vec4.create();
-  return function(meshGeom, traces, options) {
-    var vertAssoc = new AtomVertexAssoc(meshGeom.structure(), true);
-    meshGeom.addVertAssoc(vertAssoc);
+  return function(meshGeom, vertAssoc, traces, options) {
     for (var i = 0; i < traces.length; ++i) {
       var trace = traces[i];
       var idRange = options.idPool.getContinuousRange(trace.length());
@@ -607,7 +605,8 @@ var _addNucleotideSticks = (function() {
 
 // generates the mesh geometry for displaying a single chain as either cartoon
 // or tube (options.forceTube === true).
-var cartoonForChain = function(meshGeom, vertAssoc, options, traceIndex, chain) {
+var cartoonForChain = function(meshGeom, vertAssoc, nucleotideAssoc, options, 
+                               traceIndex, chain) {
   var traces = chain.backboneTraces();
   var numVerts = _cartoonNumVerts(traces, options.arcDetail * 4,
                                   options.splineDetail);
@@ -635,7 +634,7 @@ var cartoonForChain = function(meshGeom, vertAssoc, options, traceIndex, chain) 
                            options);
     traceIndex++;
   }
-  _addNucleotideSticks(meshGeom, nucleicAcidTraces, options);
+  _addNucleotideSticks(meshGeom, nucleotideAssoc, nucleicAcidTraces, options);
   return traceIndex;
 };
 
@@ -658,9 +657,16 @@ exports.cartoon = function(structure, gl, options) {
   options.color.begin(structure);
 
   var traceIndex = 0;
+  // the following vert-assoc is for rendering of DNA/RNA. Create vertex assoc 
+  // from N1/N3 atoms only, this will speed up recoloring later on, which when 
+  // performed on the complete structure, is slower than recalculating the 
+  // whole geometry.
+  var selection = structure.select({anames: ['N1', 'N3']});
+  var nucleotideAssoc = new AtomVertexAssoc(selection, true);
+  meshGeom.addVertAssoc(nucleotideAssoc);
   structure.eachChain(function(chain) {
-    traceIndex = cartoonForChain(meshGeom, vertAssoc, options, traceIndex, 
-                                 chain);
+    traceIndex = cartoonForChain(meshGeom, vertAssoc, nucleotideAssoc, options, 
+                                 traceIndex, chain);
   });
 
   options.color.end(structure);
