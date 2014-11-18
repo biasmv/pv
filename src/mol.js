@@ -676,7 +676,7 @@ function connectNucleotides(structure, left, right) {
 Mol.prototype.deriveConnectivity = function() {
   console.time('Mol.deriveConnectivity');
   var this_structure = this;
-  var prevResidue;
+  var prevResidue = null;
   this.eachResidue(function(res) {
     var sqr_dist;
     var d = vec3.create();
