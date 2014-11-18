@@ -178,7 +178,7 @@ PDBReader.prototype.processLine = function(line) {
   if (recordName === 'SHEET ') {
     return this.parseSheetRecord(line);
   }
-  if (recordName === 'END') {
+  if (recordName === 'END   ' || recordName == 'ENDMDL') {
     return false;
   }
   return true;
