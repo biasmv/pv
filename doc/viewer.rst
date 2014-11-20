@@ -179,6 +179,18 @@ Camera Positioning/Orientation
 
   :param what: must be an object which implements updateProjectionInterval, e.g. a SceneNode, a :class:`mol.MolView`, or :class:`mol.Mol`.
 
+.. function:: pv.Viewer.setCamera(rotation, center, zoom, ms)
+
+  Function to directly set the rotation, center and zoom of the camera. 
+
+
+  The combined transformation matrix for the camera is calculated as follows: First the origin is shifted to the center, then the rotation is applied, and lastly the camera is translated away from the center by the negative zoom along the rotated Z-axis.
+
+  :param rotation: Either a 4x4 or 3x3 matrix, e.g. as returned by :func:`mat4.create` or :func:`mat3.create` that contains the rotation.
+  :param center: the new camera center.
+  :param zoom: distance of the eye position from the viewing center
+  :param ms: if provided and non-zero defines the animation time for moving/rotating/zooming the camera from the current position to the new rotation,center and zoom.
+
 Fog and Slab Modes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
