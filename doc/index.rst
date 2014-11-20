@@ -6,7 +6,10 @@
 Welcome to pv's documentation!
 ==============================
 
+PV is a WebGL-based viewer for proteins and other biological macromolecules. It aims to be fast and easy to integrate into websites.
+
 Contents:
+------------------------------
 
 .. toctree::
    :maxdepth: 2
