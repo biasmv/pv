@@ -324,6 +324,26 @@ BaseGeom.prototype.draw = function(cam, shaderCatalog, style, pass) {
   return this._drawSymmetryRelated(cam, shader, assembly);
 };
 
+BaseGeom.prototype.colorBy = function(colorFunc, view) {
+  console.time('BaseGeom.colorBy');
+  this._ready = false;
+  view = view || this.structure();
+  for (var i = 0; i < this._vertAssocs.length; ++i) {
+    this._vertAssocs[i].recolor(colorFunc, view);
+  }
+  console.timeEnd('BaseGeom.colorBy');
+};
+
+BaseGeom.prototype.setOpacity = function(val, view) {
+  console.time('BaseGeom.setOpacity');
+  this._ready = false;
+  view = view || this.structure();
+  for (var i = 0; i < this._vertAssocs.length; ++i) {
+    this._vertAssocs[i].setOpacity(val, view);
+  }
+  console.timeEnd('BaseGeom.setOpacity');
+};
+
 // Holds geometrical data for objects rendered as lines. For each vertex,
 // the color and position is stored in an interleaved format.
 function LineGeom(gl, float32Allocator) {
@@ -393,25 +413,6 @@ LineGeom.prototype._drawVertArrays = function(cam, shader, vertArrays,
 
 LineGeom.prototype.vertArray = function() { return this._va; };
 
-BaseGeom.prototype.colorBy = function(colorFunc, view) {
-  console.time('BaseGeom.colorBy');
-  this._ready = false;
-  view = view || this.structure();
-  for (var i = 0; i < this._vertAssocs.length; ++i) {
-    this._vertAssocs[i].recolor(colorFunc, view);
-  }
-  console.timeEnd('BaseGeom.colorBy');
-};
-
-BaseGeom.prototype.setOpacity = function(val, view) {
-  console.time('BaseGeom.setOpacity');
-  this._ready = false;
-  view = view || this.structure();
-  for (var i = 0; i < this._vertAssocs.length; ++i) {
-    this._vertAssocs[i].setOpacity(val, view);
-  }
-  console.timeEnd('BaseGeom.setOpacity');
-};
 
 
 // an (indexed) mesh geometry container
