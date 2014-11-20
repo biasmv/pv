@@ -65,11 +65,19 @@ Remark350Reader.prototype.nextLine = function(line) {
   }
   if (line.substr(0, 7) === '  BIOMT') {
     var col = parseInt(line[7], 10) - 1;
-    // FIXME: don't base matrix number of BIOMT1
-    var x = parseFloat(line.substr(13, 9));
-    var y = parseFloat(line.substr(23, 9));
-    var z = parseFloat(line.substr(33, 9));
-    var w = parseFloat(line.substr(46, 12).trim());
+    var offset = 0;
+    // for PDB files with 100 or more BIOMT matrices, the columns are 
+    // shifted to the right by one digit (see PDB entry 1m4x, for 
+    // example). The offset increases by one for every additional 
+    // digit.
+    while (line[12 + offset] !== ' ') {
+      offset += 1;
+    }
+    var x = parseFloat(line.substr(13 + offset, 9));
+    var y = parseFloat(line.substr(23 + offset, 9));
+    var z = parseFloat(line.substr(33 + offset, 9));
+    var w = parseFloat(line.substr(43 + offset, 14));
+    var l = x*x + y*y + z*z;
     this._currentMatrix[4*0+col] = x;
     this._currentMatrix[4*1+col] = y;
     this._currentMatrix[4*2+col] = z;
