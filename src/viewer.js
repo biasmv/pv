@@ -97,7 +97,7 @@ function PV(domElement, opts) {
   // NOTE: make sure to only request features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
   // detection only happens in PV._initGL. Once this happened, we are
-  // save to use whatever feature pleases us, e.g. typed arrays, 2D 
+  // save to use whatever feature pleases us, e.g. typed arrays, 2D
   // contexts etc.
   this._canvas = document.createElement('canvas');
   this._textureCanvas = document.createElement('canvas');
@@ -119,9 +119,9 @@ function PV(domElement, opts) {
     this._options.atomDoubleClick = opts.atomDoubleClick;
   }
   this._ok = false;
-  this._camAnim = { 
-      center : null, zoom : null, 
-      rotation : null 
+  this._camAnim = {
+      center : null, zoom : null,
+      rotation : null
   };
   this.quality(this._options.quality);
   this._canvas.width = this._options.width;
@@ -129,8 +129,8 @@ function PV(domElement, opts) {
   this._domElement.appendChild(this._canvas);
   this._domElement.appendChild(this._textureCanvas);
 
-  if (document.readyState === "complete" ||  
-    document.readyState === "loaded" ||  
+  if (document.readyState === "complete" ||
+    document.readyState === "loaded" ||
       document.readyState === "interactive") {
     this._initPV();
   } else {
@@ -158,7 +158,7 @@ PV.prototype._centerOnClicked = function(picked, originalEvent) {
     this.setCenter(pos, this._options.animateTime);
   }
 };
-  
+
 
 // resizes the canvas, separated out from PV.resize because we want
 // to call this function directly in a requestAnimationFrame together
@@ -418,10 +418,10 @@ PV.prototype._initPV = function() {
   // the mousewheel event. Register different event handlers, depending on
   // what properties are available.
   if ('onwheel' in this._canvas) {
-  this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF),
+    this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF),
                               false);
   } else {
-  this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel),
+    this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel),
                               false);
   }
   this._canvas.addEventListener('dblclick', bind(this, this._mouseDoubleClick),
@@ -451,7 +451,7 @@ PV.prototype._drawWithPass = function(pass) {
 };
 
 PV.prototype.setCamera = function(rotation, center, zoom, ms) {
-  
+
   ms |= 0;
   if (ms === 0) {
     this._cam.setCenter(center);
@@ -460,12 +460,12 @@ PV.prototype.setCamera = function(rotation, center, zoom, ms) {
     this.requestRedraw();
     return;
   }
-  this._camAnim.center = new Move(this._cam.center(), 
+  this._camAnim.center = new Move(this._cam.center(),
                                   vec3.clone(center), ms);
-  this._camAnim.rotation = new Rotate(this._cam.rotation(), 
+  this._camAnim.rotation = new Rotate(this._cam.rotation(),
       mat4.clone(rotation), ms);
 
-  this._camAnim.zoom = new Animation(this._cam.zoom(), 
+  this._camAnim.zoom = new Animation(this._cam.zoom(),
       zoom, ms);
   this.requestRedraw();
 };
@@ -528,7 +528,7 @@ PV.prototype.setCenter = function(center, ms) {
     this._cam.setCenter(center);
     return;
   }
-  this._camAnim.center = new Move(this._cam.center(), 
+  this._camAnim.center = new Move(this._cam.center(),
                                   vec3.clone(center), ms);
   this.requestRedraw();
 };
@@ -584,7 +584,7 @@ PV.prototype.addListener = function(eventName, callback) {
 PV.prototype._dispatchPickedEvent = function(event, newEventName, picked) {
   var callbacks = this.listenerMap[newEventName];
   if (callbacks) {
-    
+
     callbacks.forEach(function (callback) {
       callback(picked, event);
     });
@@ -776,11 +776,11 @@ PV.prototype.sline = function(name, structure, opts) {
   return this.add(name, obj);
 };
 
-// internal method for debugging the auto-slabbing code. 
+// internal method for debugging the auto-slabbing code.
 // not meant to be used otherwise. Will probably be removed again.
 PV.prototype.boundingSpheres = function(gl, obj, options) {
   var vertArrays = obj.vertArrays();
-  var mg = new MeshGeom(gl, options.float32Allocator, 
+  var mg = new MeshGeom(gl, options.float32Allocator,
                         options.uint16Allocator);
   mg.order(100);
   var protoSphere = new ProtoSphere(16, 16);
@@ -788,7 +788,7 @@ PV.prototype.boundingSpheres = function(gl, obj, options) {
   var indicesPerSphere = protoSphere.numIndices();
   var vertAssoc = new AtomVertexAssoc(obj.structure());
   mg.setVertAssoc(vertAssoc);
-  mg.addChainVertArray({ name : function() { return "a"; }}, 
+  mg.addChainVertArray({ name : function() { return "a"; }},
                        vertArrays.length * vertsPerSphere,
                        indicesPerSphere * vertArrays.length);
   mg.setShowRelated('asym');
@@ -943,7 +943,7 @@ PV.prototype.autoSlab = function() {
 // enable disable rock and rolling of camera
 PV.prototype.rockAndRoll = function(enable) {
   if (enable === true) {
-    this._camAnim.rotation = new RockAndRoll(this._cam.rotation(), 
+    this._camAnim.rotation = new RockAndRoll(this._cam.rotation(),
                                              [0, 1, 0], 2000);
     this.requestRedraw();
   } else if (enable === false) {
@@ -989,16 +989,16 @@ function PickingResult(obj, symIndex, transform) {
   this._transform = transform;
 }
 
-PickingResult.prototype.object = function() { 
-  return this._obj; 
+PickingResult.prototype.object = function() {
+  return this._obj;
 };
 
-PickingResult.prototype.symIndex = function() { 
-  return this._symIndex; 
+PickingResult.prototype.symIndex = function() {
+  return this._symIndex;
 };
 
-PickingResult.prototype.transform = function() { 
-  return this._transform; 
+PickingResult.prototype.transform = function() {
+  return this._transform;
 };
 
 PV.prototype.pick = function(pos) {
