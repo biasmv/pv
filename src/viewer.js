@@ -44,6 +44,16 @@ graphic card might be blocked. Check the browser documentation for details\
   };
 }
 
+function touchDistance (event) {
+  if (event.touches.length < 2) {
+    return 0;
+  }
+
+  var a = event.touches[0], b = event.touches[1];
+
+  return vec3.dist([a.pageX, a.pageX, 0], [b.pageX, b.pageY, 0]);
+}
+
 
 var requestAnimFrame = (function(){
   return window.requestAnimationFrame || window.webkitRequestAnimationFrame ||
@@ -368,6 +378,13 @@ PV.prototype._mouseUp = function(event) {
   document.removeEventListener('mouseup', this._mouseUpListener, false);
   document.removeEventListener('mousemove', this._mouseRotateListener);
   document.removeEventListener('mousemove', this._mousePanListener);
+
+  this._canvas.removeEventListener('touchmove', this._mouseRotateListener, false);
+  this._canvas.removeEventListener('touchmove', this._mousePanListener, false);
+  this._canvas.removeEventListener('touchup', this._mouseUpListener, false);
+  document.removeEventListener('touchup', this._mouseUpListener, false);
+  document.removeEventListener('touchmove', this._mouseRotateListener);
+  document.removeEventListener('touchmove', this._mousePanListener);
 };
 
 PV.prototype._initPV = function() {
@@ -411,6 +428,9 @@ PV.prototype._initPV = function() {
                             false);
   this._canvas.addEventListener('mousedown', bind(this, this._mouseDown),
                             false);
+
+  this._canvas.addEventListener('touchstart', bind(this, this._mouseDown),
+                                false);
 
   return true;
 };
@@ -572,7 +592,7 @@ PV.prototype._dispatchPickedEvent = function(event, newEventName, picked) {
 };
 
 PV.prototype._mouseDown = function(event) {
-  if (event.button !== 0) {
+  if (!(event.button === 0 || event.touches)) {
     return;
   }
   var currentTime = (new Date()).getTime();
@@ -580,26 +600,57 @@ PV.prototype._mouseDown = function(event) {
   if (typeof this.lastClickTime === 'undefined' || (currentTime - this.lastClickTime > 300)) {
     this.lastClickTime = currentTime;
     var rect = this._canvas.getBoundingClientRect();
-    var picked = this.pick(
+    var picked;
+    if (event.touches) {
+      picked = this.pick(
+        { x : event.touches[0].clientX - rect.left,
+          y : event.touches[0].clientY - rect.top });
+    } else {
+      picked = this.pick(
         { x : event.clientX - rect.left, y : event.clientY - rect.top });
+    }
     this._dispatchPickedEvent(event, 'atomClicked', picked);
   }
   event.preventDefault();
-  if (event.shiftKey === true) {
-    this._canvas.addEventListener('mousemove', this._mousePanListener, false);
-    document.addEventListener('mousemove', this._mousePanListener, false);
+  if (event.touches) {
+    // because touchstart events can fire without a touchend inbetween,
+    // we need to call _mouseUp manually, to clean up previously set up
+    // listeners.
+    this._mouseUpListener();
+    if (event.touches.length === 2) {
+      this._canvas.addEventListener('touchmove', this._mousePanListener, false);
+      document.addEventListener('touchmove', this._mousePanListener, false);
+      this._lastMousePos = { x : event.touches[0].pageX,
+                             y : event.touches[0].pageY,
+                             d : touchDistance(event)};
+    } else {
+      this._canvas.addEventListener('touchmove', this._mouseRotateListener,
+                                    false);
+      document.addEventListener('touchmove', this._mouseRotateListener, false);
+      this._lastMousePos = { x : event.touches[0].pageX, y : event.touches[0].pageY, d : 0 };
+    }
+    this._canvas.addEventListener('touchend', this._mouseUpListener, false);
+    document.addEventListener('touchend', this._mouseUpListener, false);
   } else {
-    this._canvas.addEventListener('mousemove', this._mouseRotateListener,
-                                  false);
-    document.addEventListener('mousemove', this._mouseRotateListener, false);
+    if (event.shiftKey === true) {
+      this._canvas.addEventListener('mousemove', this._mousePanListener, false);
+      document.addEventListener('mousemove', this._mousePanListener, false);
+    } else {
+      this._canvas.addEventListener('mousemove', this._mouseRotateListener,
+                                    false);
+      document.addEventListener('mousemove', this._mouseRotateListener, false);
+    }
+    this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
+    document.addEventListener('mouseup', this._mouseUpListener, false);
+    this._lastMousePos = { x : event.pageX, y : event.pageY, d : 0 };
   }
-  this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
-  document.addEventListener('mouseup', this._mouseUpListener, false);
-  this._lastMousePos = { x : event.pageX, y : event.pageY };
 };
 
 PV.prototype._mouseRotate = function(event) {
-  var newMousePos = { x : event.pageX, y : event.pageY };
+  if (event.touches) {
+    event = event.touches[0];
+  }
+  var newMousePos = { x : event.pageX, y : event.pageY, d : 0 };
   var delta = {
     x : newMousePos.x - this._lastMousePos.x,
     y : newMousePos.y - this._lastMousePos.y
@@ -613,14 +664,53 @@ PV.prototype._mouseRotate = function(event) {
 };
 
 PV.prototype._mousePan = function(event) {
-  var newMousePos = { x : event.pageX, y : event.pageY };
-  var delta = {
+  var newMousePos;
+  var delta;
+  var distance = 0;
+  var speed = 0.05;
+  var zoomspeed = 0.5;
+  var MINTOUCHMOVE = 20;
+
+  if (event.touches) {
+    newMousePos = { x : event.touches[0].pageX,
+                    y : event.touches[0].pageY,
+                    d : touchDistance(event),
+                    ZOOM : this._lastMousePos.ZOOM,
+                    PAN : this._lastMousePos.PAN };
+  } else {
+      newMousePos = { x : event.pageX,
+                      y : event.pageY,
+                      d : 0 };
+  }
+
+  delta = {
     x : newMousePos.x - this._lastMousePos.x,
-    y : newMousePos.y - this._lastMousePos.y
+    y : newMousePos.y - this._lastMousePos.y,
+    d : newMousePos.d - this._lastMousePos.d
   };
 
-  var speed = 0.05;
-  this._cam.panXY(speed * delta.x, speed * delta.y);
+  if (event.touches) {
+      if (!(newMousePos.PAN || newMousePos.ZOOM)) {
+          if (Math.abs(delta.d) > MINTOUCHMOVE) {
+              newMousePos.ZOOM = true;
+          } else if (Math.abs(delta.x) + Math.abs(delta.y) > MINTOUCHMOVE) {
+              newMousePos.PAN = true;
+          }
+      }
+
+      if (newMousePos.PAN) {
+          document.querySelector('input').value = 'PAN';
+          this._cam.panXY(speed * delta.x, speed * delta.y);
+      } else if (newMousePos.ZOOM && (Math.abs(delta.d) > (MINTOUCHMOVE/4))) {
+          document.querySelector('input').value = 'ZOOM |' + (delta.d > 0 ? -1 : 1);
+          this._cam.zoom((delta.d > 0 ? -1 : 1) * zoomspeed);
+      } else {
+          document.querySelector('input').value = 'UNDEF';
+          return; // abort
+      }
+  } else {
+    this._cam.panXY(speed * delta.x, speed * delta.y);
+  }
   this._lastMousePos = newMousePos;
   this.requestRedraw();
 };
