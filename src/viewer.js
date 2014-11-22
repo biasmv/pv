@@ -699,13 +699,10 @@ PV.prototype._mousePan = function(event) {
       }
 
       if (newMousePos.PAN) {
-          document.querySelector('input').value = 'PAN';
           this._cam.panXY(speed * delta.x, speed * delta.y);
       } else if (newMousePos.ZOOM && (Math.abs(delta.d) > (MINTOUCHMOVE/4))) {
-          document.querySelector('input').value = 'ZOOM |' + (delta.d > 0 ? -1 : 1);
           this._cam.zoom((delta.d > 0 ? -1 : 1) * zoomspeed);
       } else {
-          document.querySelector('input').value = 'UNDEF';
           return; // abort
       }
   } else {
