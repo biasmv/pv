@@ -669,7 +669,7 @@ PV.prototype._mousePan = function(event) {
   var distance = 0;
   var speed = 0.05;
   var zoomspeed = 0.5;
-  var MINTOUCHMOVE = 20;
+  var MINTOUCHMOVE = 30;
 
   if (event.touches) {
     newMousePos = { x : event.touches[0].pageX,
