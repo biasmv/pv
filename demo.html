@@ -122,7 +122,7 @@
       xhr.setRequestHeader('Content-type', 'application/x-pdb');
       xhr.onreadystatechange = function() {
         if (xhr.readyState == 4) {
-          structure = mol.pdb(xhr.responseText);
+          structure = io.pdb(xhr.responseText);
           preset();
           pv.centerOn(structure);
         }
