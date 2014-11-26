@@ -77,6 +77,7 @@ function PV(domElement, opts) {
     slabMode : slabModeToStrategy(opts.slabMode),
     atomClick: opts.atomClick || null,
     atomDoubleClick : 'center', // option is handled below
+    viewMode : 'original'
   };
   this._objects = [];
   this._domElement = domElement;
@@ -276,6 +277,13 @@ PV.prototype._initPickBuffer = function() {
   this._pickBuffer = new FrameBuffer(this._gl, fbOptions);
 };
 
+PV.prototype._initEntropyBuffer = function() {
+  var fbOptions = {
+    width : this._options.width, height : this._options.height
+  };
+  this._entropyBuffer = new FrameBuffer(this._gl, fbOptions);
+}
+
 PV.prototype._initGL = function() {
   var samples = 1;
   if (!this._initContext()) {
@@ -300,6 +308,7 @@ PV.prototype._initGL = function() {
   this._gl.enable(this._gl.CULL_FACE);
   this._gl.enable(this._gl.DEPTH_TEST);
   this._initPickBuffer();
+  this._initEntropyBuffer();
   return true;
 };
 
@@ -873,6 +882,81 @@ PV.prototype.slabMode = function(mode, options) {
   this._options.slabMode = strategy;
   this.requestRedraw();
 };
+
+PV.prototype.viewMode = function(mode) {
+	this._options.viewMode = mode;
+	
+	if (mode === 'entropy') {
+		
+		var maxI = 0;
+		var rotation = this._cam.rotation();
+		var samples = 32;
+		
+		for (var i = 0; i < samples; ++i) {
+			var phi = Math.random() * 2 * Math.PI;
+			var theta = Math.random() * 2 * Math.PI;
+			var u = Math.cos(phi);
+			var x = Math.sqrt(1 - u*u) * Math.cos(theta);
+			var y = Math.sqrt(1 - u*u) * Math.sin(theta);
+			var q = quat.fromValues(0, x, y, u);
+			var auxRotation = mat4.create();
+			mat4.fromQuat(auxRotation, q);
+			
+			var auxI = this.computeEntropy(auxRotation);
+			if (auxI > maxI) {
+				rotation = auxRotation;
+				maxI = auxI;
+			}
+		}
+		
+		this._camAnim.rotation = new Rotate(this._cam.rotation(), 
+			      mat4.clone(rotation), 100);
+		this.requestRedraw();
+	}
+};
+	
+PV.prototype.computeEntropy = function(rotation) {
+
+  this._cam.setRotation(rotation);
+  this._entropyBuffer.bind();
+  this._drawPickingScene();
+  var size = this._entropyBuffer.width() * this._entropyBuffer.height();
+  var pixels = new Uint8Array(size * 4);
+  this._gl.readPixels(0, 0, this._entropyBuffer.width(), this._entropyBuffer.height(),
+                      this._gl.RGBA, this._gl.UNSIGNED_BYTE, pixels);
+  this._entropyBuffer.release();
+  if (pixels.data) {
+    pixels = pixels.data;
+  }
+  
+  var e = 0;
+  var npix = [];
+  for (var p = 0; p < size; ++p) {
+	  var i = p * 4;
+	  if (pixels[i + 3] === 0) {
+	    continue;
+	  }
+	  var objId = pixels[i] | pixels[i + 1] << 8;
+	  //var symIndex = pixels[2];
+
+	  var obj = this._objectIdManager.objectForId(objId);
+	  if (obj !== undefined) {
+		if (npix[objId] === undefined) {
+			npix[objId] = 1;
+		} else {
+			npix[objId]++;
+		}
+	  }
+  }
+  
+  npix.forEach(function(N) {
+	  var tmp = N/size;
+	  e += tmp * Math.log(tmp);
+  });
+  
+  return -e;
+	
+}
 
 PV.prototype.label = function(name, text, pos) {
   var label =
