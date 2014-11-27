@@ -875,8 +875,8 @@ PV.prototype.slabMode = function(mode, options) {
 };
 
 PV.prototype.label = function(name, text, pos) {
-  var label =
-      new TextLabel(this._gl, this._textureCanvas, this._2dcontext, pos, text);
+  var label = new TextLabel(this._gl, this._textureCanvas, 
+                            this._2dcontext, pos, text);
   this.add(name, label);
   return label;
 };
