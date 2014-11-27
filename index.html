@@ -178,6 +178,7 @@
 
     <span class=btn onclick='showTab("styleTab")'>Style</span>
     <span class=btn onclick='showTab("colorTab")'>Color</span>
+    <span class=btn onclick='showTab("viewTab")'>View</span>
     <ul id=styleTab>
       <h1></h1>
       <li id=preset>Preset</li>
@@ -199,6 +200,12 @@
        <li id=ss>Secondary Structure</li>
        <li id=ss-suc>Secondary Structure Succession</li>
        <li id=pro-in-red>Prolines in Red</li>
+    </ul>
+    <ul id=viewTab>
+      <h1></h1>
+       <li id=original>Original</li>
+       <li id=pca>PCA</li>
+       <li id=entropy>Entropy</li>
     </ul>
      <ul>
       <h1></h1>
@@ -232,7 +239,8 @@
                        { quality : 'medium', width: 500, height : 500,
                          antialias : true, outline : false,
                          background : 'white',
-                        slabMode : 'auto'});
+                        slabMode : 'auto',
+                        viewMode : 'original'});
     var structure;
     function lines() {
       pv.clear();
@@ -382,6 +390,20 @@
     function polymerase() { 
       load('4ubb'); 
     };
+    
+    function originalView() {
+    	pv.viewMode('original');
+    	pv.requestRedraw();
+    };
+    function entropyView() {
+    	pv.viewMode('entropy');
+    	pv.requestRedraw();
+    };
+    function pcaView() {
+    	pv.viewMode('pca');
+    	pv.requestRedraw();
+    };
+    
     $('#cartoon').click(cartoon);
     $('#line-trace').click(lineTrace);
     $('#preset').click(preset);
@@ -438,7 +460,10 @@
       pv.options('fog', this.checked);
       pv.requestRedraw();
     });
-
+    $('#original').click(originalView);
+    $('#entropy').click(entropyView);
+	$('#pca').click(pcaView);
+	
     document.addEventListener('DOMContentLoaded', polymerase);
     /*
     window.addEventListener('resize', function() {
