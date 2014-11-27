@@ -282,7 +282,7 @@ PV.prototype._initEntropyBuffer = function() {
     width : this._options.width, height : this._options.height
   };
   this._entropyBuffer = new FrameBuffer(this._gl, fbOptions);
-}
+};
 
 PV.prototype._initGL = function() {
   var samples = 1;
@@ -909,8 +909,7 @@ PV.prototype.viewMode = function(mode) {
 			}
 		}
 		
-		this._camAnim.rotation = new Rotate(this._cam.rotation(), 
-			      mat4.clone(rotation), 100);
+		this._camAnim.rotation = new Rotate(this._cam.rotation(), mat4.clone(rotation), 100);
 		this.requestRedraw();
 	}
 };
@@ -923,40 +922,40 @@ PV.prototype.computeEntropy = function(rotation) {
   var size = this._entropyBuffer.width() * this._entropyBuffer.height();
   var pixels = new Uint8Array(size * 4);
   this._gl.readPixels(0, 0, this._entropyBuffer.width(), this._entropyBuffer.height(),
-                      this._gl.RGBA, this._gl.UNSIGNED_BYTE, pixels);
+      this._gl.RGBA, this._gl.UNSIGNED_BYTE, pixels);
   this._entropyBuffer.release();
   if (pixels.data) {
     pixels = pixels.data;
   }
-  
+
   var e = 0;
   var npix = [];
   for (var p = 0; p < size; ++p) {
-	  var i = p * 4;
-	  if (pixels[i + 3] === 0) {
-	    continue;
-	  }
-	  var objId = pixels[i] | pixels[i + 1] << 8;
-	  //var symIndex = pixels[2];
+    var i = p * 4;
+    if (pixels[i + 3] === 0) {
+      continue;
+    }
+    var objId = pixels[i] | pixels[i + 1] << 8;
+    //var symIndex = pixels[2];
 
-	  var obj = this._objectIdManager.objectForId(objId);
-	  if (obj !== undefined) {
-		if (npix[objId] === undefined) {
-			npix[objId] = 1;
-		} else {
-			npix[objId]++;
-		}
-	  }
+    var obj = this._objectIdManager.objectForId(objId);
+    if (obj !== undefined) {
+      if (npix[objId] === undefined) {
+        npix[objId] = 1;
+      } else {
+        npix[objId]++;
+      }
+    }
   }
-  
+
   npix.forEach(function(N) {
-	  var tmp = N/size;
-	  e += tmp * Math.log(tmp);
+    var tmp = N/size;
+    e += tmp * Math.log(tmp);
   });
-  
+
   return -e;
-	
-}
+
+};
 
 PV.prototype.label = function(name, text, pos) {
   var label =
