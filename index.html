@@ -61,7 +61,7 @@
       top:49px;
       font-size:10pt;
       bottom:0px;
-      
+
       background-color:white;
       border-right-color:#ccc;
       padding:15px;
@@ -171,7 +171,7 @@
     </head>
 <body>
   <div id=toolbar>
-    <input type=text name=pdbid id=pdbid 
+    <input type=text name=pdbid id=pdbid
     placeholder='Enter PDB identifier to load' />&nbsp;&nbsp;<span id=status></span>
   </div>
   <div id=inspector>
@@ -203,9 +203,9 @@
      <ul>
       <h1></h1>
       <li><div id="slider" class="sl"></div></li>
-      <li><input type="checkbox" name="outline" 
+      <li><input type="checkbox" name="outline"
                  value="yes" id=showOutline autocomplete=off>Show Outline</li>
-      <li><input type="checkbox" name="fog" 
+      <li><input type="checkbox" name="fog"
                  value="yes" checked=true id=fog autocomplete=off>Fog</li>
       <li id=save>Export As Image</li>
     </ul>
@@ -228,7 +228,7 @@
   <script>
     var activeTab = 'styleTab';
     $('#colorTab').hide();
-    var pv = pv.Viewer(document.getElementById('gl'), 
+    var pv = pv.Viewer(document.getElementById('gl'),
                        { quality : 'medium', width: 500, height : 500,
                          antialias : true, outline : false,
                          background : 'white',
@@ -236,14 +236,14 @@
     var structure;
     function lines() {
       pv.clear();
-      pv.lines('structure', structure, { 
+      pv.lines('structure', structure, {
                  color: color.byResidueProp('num'),
                  showRelated : '1' });
     }
     function cartoon() {
       pv.clear();
-      pv.cartoon('structure', structure, { 
-                 color : color.ssSuccession(), showRelated : '1', 
+      pv.cartoon('structure', structure, {
+                 color : color.ssSuccession(), showRelated : '1',
       });
     }
     function lineTrace() {
@@ -258,14 +258,14 @@
 
     function sline() {
       pv.clear();
-      pv.sline('structure', structure, 
+      pv.sline('structure', structure,
               { color : color.uniform('red'), showRelated : '1'});
     }
 
     function tube() {
       pv.clear();
       pv.tube('structure', structure);
-      pv.lines('structure.ca', structure.select({aname :'CA'}), 
+      pv.lines('structure.ca', structure.select({aname :'CA'}),
                { color: color.uniform('blue'), lineWidth : 1,
                  showRelated : '1' });
     }
@@ -282,7 +282,7 @@
     function preset() {
       pv.clear();
       var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
-      pv.ballsAndSticks('structure.ligand', ligand, { 
+      pv.ballsAndSticks('structure.ligand', ligand, {
       });
       pv.cartoon('structure.protein', structure, { boundingSpheres: false });
     }
@@ -326,11 +326,11 @@
 
     function telethonin() { load('2f8v'); }
 
-    function porin() { 
-      load('2por'); 
+    function porin() {
+      load('2por');
     }
     function longHelices() {
-      load('4c46');
+      load('4C46');
     }
 
     function ssSuccession() {
@@ -379,8 +379,8 @@
       });
       pv.requestRedraw();
     }
-    function polymerase() { 
-      load('4ubb'); 
+    function polymerase() {
+      load('4UBB');
     };
     $('#cartoon').click(cartoon);
     $('#line-trace').click(lineTrace);

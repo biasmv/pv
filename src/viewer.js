@@ -44,6 +44,16 @@ graphic card might be blocked. Check the browser documentation for details\
   };
 }
 
+function touchDistance (event) {
+  if (event.touches.length < 2) {
+    return 0;
+  }
+
+  var a = event.touches[0], b = event.touches[1];
+
+  return vec3.dist([a.pageX, a.pageX, 0], [b.pageX, b.pageY, 0]);
+}
+
 
 var requestAnimFrame = (function(){
   return window.requestAnimationFrame || window.webkitRequestAnimationFrame ||
@@ -87,7 +97,7 @@ function PV(domElement, opts) {
   // NOTE: make sure to only request features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
   // detection only happens in PV._initGL. Once this happened, we are
-  // save to use whatever feature pleases us, e.g. typed arrays, 2D 
+  // save to use whatever feature pleases us, e.g. typed arrays, 2D
   // contexts etc.
   this._canvas = document.createElement('canvas');
   this._textureCanvas = document.createElement('canvas');
@@ -109,9 +119,9 @@ function PV(domElement, opts) {
     this._options.atomDoubleClick = opts.atomDoubleClick;
   }
   this._ok = false;
-  this._camAnim = { 
-      center : null, zoom : null, 
-      rotation : null 
+  this._camAnim = {
+      center : null, zoom : null,
+      rotation : null
   };
   this.quality(this._options.quality);
   this._canvas.width = this._options.width;
@@ -119,8 +129,8 @@ function PV(domElement, opts) {
   this._domElement.appendChild(this._canvas);
   this._domElement.appendChild(this._textureCanvas);
 
-  if (document.readyState === "complete" ||  
-    document.readyState === "loaded" ||  
+  if (document.readyState === "complete" ||
+    document.readyState === "loaded" ||
       document.readyState === "interactive") {
     this._initPV();
   } else {
@@ -148,7 +158,7 @@ PV.prototype._centerOnClicked = function(picked, originalEvent) {
     this.setCenter(pos, this._options.animateTime);
   }
 };
-  
+
 
 // resizes the canvas, separated out from PV.resize because we want
 // to call this function directly in a requestAnimationFrame together
@@ -368,6 +378,13 @@ PV.prototype._mouseUp = function(event) {
   document.removeEventListener('mouseup', this._mouseUpListener, false);
   document.removeEventListener('mousemove', this._mouseRotateListener);
   document.removeEventListener('mousemove', this._mousePanListener);
+
+  this._canvas.removeEventListener('touchmove', this._mouseRotateListener, false);
+  this._canvas.removeEventListener('touchmove', this._mousePanListener, false);
+  this._canvas.removeEventListener('touchup', this._mouseUpListener, false);
+  document.removeEventListener('touchup', this._mouseUpListener, false);
+  document.removeEventListener('touchmove', this._mouseRotateListener);
+  document.removeEventListener('touchmove', this._mousePanListener);
 };
 
 PV.prototype._initPV = function() {
@@ -401,16 +418,19 @@ PV.prototype._initPV = function() {
   // the mousewheel event. Register different event handlers, depending on
   // what properties are available.
   if ('onwheel' in this._canvas) {
-  this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF),
+    this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF),
                               false);
   } else {
-  this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel),
+    this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel),
                               false);
   }
   this._canvas.addEventListener('dblclick', bind(this, this._mouseDoubleClick),
                             false);
   this._canvas.addEventListener('mousedown', bind(this, this._mouseDown),
                             false);
+
+  this._canvas.addEventListener('touchstart', bind(this, this._mouseDown),
+                                false);
 
   return true;
 };
@@ -431,7 +451,7 @@ PV.prototype._drawWithPass = function(pass) {
 };
 
 PV.prototype.setCamera = function(rotation, center, zoom, ms) {
-  
+
   ms |= 0;
   if (ms === 0) {
     this._cam.setCenter(center);
@@ -440,12 +460,12 @@ PV.prototype.setCamera = function(rotation, center, zoom, ms) {
     this.requestRedraw();
     return;
   }
-  this._camAnim.center = new Move(this._cam.center(), 
+  this._camAnim.center = new Move(this._cam.center(),
                                   vec3.clone(center), ms);
-  this._camAnim.rotation = new Rotate(this._cam.rotation(), 
+  this._camAnim.rotation = new Rotate(this._cam.rotation(),
       mat4.clone(rotation), ms);
 
-  this._camAnim.zoom = new Animation(this._cam.zoom(), 
+  this._camAnim.zoom = new Animation(this._cam.zoom(),
       zoom, ms);
   this.requestRedraw();
 };
@@ -508,7 +528,7 @@ PV.prototype.setCenter = function(center, ms) {
     this._cam.setCenter(center);
     return;
   }
-  this._camAnim.center = new Move(this._cam.center(), 
+  this._camAnim.center = new Move(this._cam.center(),
                                   vec3.clone(center), ms);
   this.requestRedraw();
 };
@@ -564,7 +584,7 @@ PV.prototype.addListener = function(eventName, callback) {
 PV.prototype._dispatchPickedEvent = function(event, newEventName, picked) {
   var callbacks = this.listenerMap[newEventName];
   if (callbacks) {
-    
+
     callbacks.forEach(function (callback) {
       callback(picked, event);
     });
@@ -572,7 +592,7 @@ PV.prototype._dispatchPickedEvent = function(event, newEventName, picked) {
 };
 
 PV.prototype._mouseDown = function(event) {
-  if (event.button !== 0) {
+  if (!(event.button === 0 || event.touches)) {
     return;
   }
   var currentTime = (new Date()).getTime();
@@ -580,26 +600,57 @@ PV.prototype._mouseDown = function(event) {
   if (typeof this.lastClickTime === 'undefined' || (currentTime - this.lastClickTime > 300)) {
     this.lastClickTime = currentTime;
     var rect = this._canvas.getBoundingClientRect();
-    var picked = this.pick(
+    var picked;
+    if (event.touches) {
+      picked = this.pick(
+        { x : event.touches[0].clientX - rect.left,
+          y : event.touches[0].clientY - rect.top });
+    } else {
+      picked = this.pick(
         { x : event.clientX - rect.left, y : event.clientY - rect.top });
+    }
     this._dispatchPickedEvent(event, 'atomClicked', picked);
   }
   event.preventDefault();
-  if (event.shiftKey === true) {
-    this._canvas.addEventListener('mousemove', this._mousePanListener, false);
-    document.addEventListener('mousemove', this._mousePanListener, false);
+  if (event.touches) {
+    // because touchstart events can fire without a touchend inbetween,
+    // we need to call _mouseUp manually, to clean up previously set up
+    // listeners.
+    this._mouseUpListener();
+    if (event.touches.length === 2) {
+      this._canvas.addEventListener('touchmove', this._mousePanListener, false);
+      document.addEventListener('touchmove', this._mousePanListener, false);
+      this._lastMousePos = { x : event.touches[0].pageX,
+                             y : event.touches[0].pageY,
+                             d : touchDistance(event)};
+    } else {
+      this._canvas.addEventListener('touchmove', this._mouseRotateListener,
+                                    false);
+      document.addEventListener('touchmove', this._mouseRotateListener, false);
+      this._lastMousePos = { x : event.touches[0].pageX, y : event.touches[0].pageY, d : 0 };
+    }
+    this._canvas.addEventListener('touchend', this._mouseUpListener, false);
+    document.addEventListener('touchend', this._mouseUpListener, false);
   } else {
-    this._canvas.addEventListener('mousemove', this._mouseRotateListener,
-                                  false);
-    document.addEventListener('mousemove', this._mouseRotateListener, false);
+    if (event.shiftKey === true) {
+      this._canvas.addEventListener('mousemove', this._mousePanListener, false);
+      document.addEventListener('mousemove', this._mousePanListener, false);
+    } else {
+      this._canvas.addEventListener('mousemove', this._mouseRotateListener,
+                                    false);
+      document.addEventListener('mousemove', this._mouseRotateListener, false);
+    }
+    this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
+    document.addEventListener('mouseup', this._mouseUpListener, false);
+    this._lastMousePos = { x : event.pageX, y : event.pageY, d : 0 };
   }
-  this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
-  document.addEventListener('mouseup', this._mouseUpListener, false);
-  this._lastMousePos = { x : event.pageX, y : event.pageY };
 };
 
 PV.prototype._mouseRotate = function(event) {
-  var newMousePos = { x : event.pageX, y : event.pageY };
+  if (event.touches) {
+    event = event.touches[0];
+  }
+  var newMousePos = { x : event.pageX, y : event.pageY, d : 0 };
   var delta = {
     x : newMousePos.x - this._lastMousePos.x,
     y : newMousePos.y - this._lastMousePos.y
@@ -613,14 +664,50 @@ PV.prototype._mouseRotate = function(event) {
 };
 
 PV.prototype._mousePan = function(event) {
-  var newMousePos = { x : event.pageX, y : event.pageY };
-  var delta = {
+  var newMousePos;
+  var delta;
+  var distance = 0;
+  var speed = 0.05;
+  var zoomspeed = 0.5;
+  var MINTOUCHMOVE = 30;
+
+  if (event.touches) {
+    newMousePos = { x : event.touches[0].pageX,
+                    y : event.touches[0].pageY,
+                    d : touchDistance(event),
+                    ZOOM : this._lastMousePos.ZOOM,
+                    PAN : this._lastMousePos.PAN };
+  } else {
+      newMousePos = { x : event.pageX,
+                      y : event.pageY,
+                      d : 0 };
+  }
+
+  delta = {
     x : newMousePos.x - this._lastMousePos.x,
-    y : newMousePos.y - this._lastMousePos.y
+    y : newMousePos.y - this._lastMousePos.y,
+    d : newMousePos.d - this._lastMousePos.d
   };
 
-  var speed = 0.05;
-  this._cam.panXY(speed * delta.x, speed * delta.y);
+  if (event.touches) {
+      if (!(newMousePos.PAN || newMousePos.ZOOM)) {
+          if (Math.abs(delta.d) > MINTOUCHMOVE) {
+              newMousePos.ZOOM = true;
+          } else if (Math.abs(delta.x) + Math.abs(delta.y) > MINTOUCHMOVE) {
+              newMousePos.PAN = true;
+          }
+      }
+
+      if (newMousePos.PAN) {
+          this._cam.panXY(speed * delta.x, speed * delta.y);
+      } else if (newMousePos.ZOOM && (Math.abs(delta.d) > (MINTOUCHMOVE/4))) {
+          this._cam.zoom((delta.d > 0 ? -1 : 1) * zoomspeed);
+      } else {
+          return; // abort
+      }
+  } else {
+    this._cam.panXY(speed * delta.x, speed * delta.y);
+  }
   this._lastMousePos = newMousePos;
   this.requestRedraw();
 };
@@ -686,11 +773,11 @@ PV.prototype.sline = function(name, structure, opts) {
   return this.add(name, obj);
 };
 
-// internal method for debugging the auto-slabbing code. 
+// internal method for debugging the auto-slabbing code.
 // not meant to be used otherwise. Will probably be removed again.
 PV.prototype.boundingSpheres = function(gl, obj, options) {
   var vertArrays = obj.vertArrays();
-  var mg = new MeshGeom(gl, options.float32Allocator, 
+  var mg = new MeshGeom(gl, options.float32Allocator,
                         options.uint16Allocator);
   mg.order(100);
   var protoSphere = new ProtoSphere(16, 16);
@@ -698,7 +785,7 @@ PV.prototype.boundingSpheres = function(gl, obj, options) {
   var indicesPerSphere = protoSphere.numIndices();
   var vertAssoc = new AtomVertexAssoc(obj.structure());
   mg.setVertAssoc(vertAssoc);
-  mg.addChainVertArray({ name : function() { return "a"; }}, 
+  mg.addChainVertArray({ name : function() { return "a"; }},
                        vertArrays.length * vertsPerSphere,
                        indicesPerSphere * vertArrays.length);
   mg.setShowRelated('asym');
@@ -853,7 +940,7 @@ PV.prototype.autoSlab = function() {
 // enable disable rock and rolling of camera
 PV.prototype.rockAndRoll = function(enable) {
   if (enable === true) {
-    this._camAnim.rotation = new RockAndRoll(this._cam.rotation(), 
+    this._camAnim.rotation = new RockAndRoll(this._cam.rotation(),
                                              [0, 1, 0], 2000);
     this.requestRedraw();
   } else if (enable === false) {
@@ -899,16 +986,16 @@ function PickingResult(obj, symIndex, transform) {
   this._transform = transform;
 }
 
-PickingResult.prototype.object = function() { 
-  return this._obj; 
+PickingResult.prototype.object = function() {
+  return this._obj;
 };
 
-PickingResult.prototype.symIndex = function() { 
-  return this._symIndex; 
+PickingResult.prototype.symIndex = function() {
+  return this._symIndex;
 };
 
-PickingResult.prototype.transform = function() { 
-  return this._transform; 
+PickingResult.prototype.transform = function() {
+  return this._transform;
 };
 
 PV.prototype.pick = function(pos) {
