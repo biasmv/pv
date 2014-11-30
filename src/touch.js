@@ -46,7 +46,7 @@ TouchHandler.prototype._touchMove = function(event) {
   // to visible jumps.
   if (event.targetTouches.length === 2 && 
       this._touchState.numTouches === 2) { 
-    var deltaScale = (this._touchState.scale - event.scale) * 2.0;
+    var deltaScale = (this._touchState.scale - event.scale) * 4.0;
     if (deltaScale !== 0) {
       this._cam.zoom(deltaScale);
     }
