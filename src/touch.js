@@ -26,16 +26,19 @@ function TouchHandler(element, viewer, cam) {
   this._element.addEventListener('touchmove', bind(this, this._touchMove));
   this._element.addEventListener('touchstart', bind(this, this._touchStart));
   this._element.addEventListener('touchend', bind(this, this._touchEnd));
+  this._element.addEventListener('touchcancel', bind(this, this._touchEnd));
   this._touchState = {
     scale : 1.0,
     rotation : 0.0,
     center : null,
+    lastSingleTap : null
   };
   this._viewer = viewer;
   this._cam = cam;
 }
 
 TouchHandler.prototype._touchMove = function(event) {
+  event.preventDefault();
   var newCenter = getCenter(event.targetTouches);
   var deltaCenter = { 
       x : newCenter.x - this._touchState.center.x,
@@ -73,7 +76,6 @@ TouchHandler.prototype._touchMove = function(event) {
   this._touchState.scale = event.scale;
   this._touchState.rotation = event.rotation;
   this._touchState.numTouches = event.targetTouches.length;
-  event.preventDefault();
 };
 
 function getCenter(touches) {
@@ -89,6 +91,21 @@ function getCenter(touches) {
 
 TouchHandler.prototype._touchStart = function(event) {
   event.preventDefault();
+  if (event.targetTouches.length === 1) {
+    // detect double tap
+    var now = new Date().getTime();
+    if (this._touchState.lastSingleTap !== null) {
+      var delta = now - this._touchState.lastSingleTap;
+      if (delta < 500) {
+        this._viewer._mouseDoubleClick({ 
+            clientX : event.targetTouches[0].clientX, 
+            clientY : event.targetTouches[0].clientY });
+      }
+    }
+    this._touchState.lastSingleTap = now;
+  } else {
+    this._touchState.lastSingleTap = null;
+  }
   this._touchState.scale = event.scale;
   this._touchState.rotation = event.rotation;
   this._touchState.center = getCenter(event.targetTouches);
