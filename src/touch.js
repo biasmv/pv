@@ -84,12 +84,10 @@ function getCenter(touches) {
   }
   centerX /= touches.length;
   centerY /= touches.length;
-  console.log(touches.length, centerX, centerY);
   return { x : centerX, y : centerY };
 }
 
 TouchHandler.prototype._touchStart = function(event) {
-  console.log(event);
   event.preventDefault();
   this._touchState.scale = event.scale;
   this._touchState.rotation = event.rotation;
