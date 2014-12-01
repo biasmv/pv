@@ -22,20 +22,100 @@
 "use strict";
 
 function TouchHandler(element, viewer, cam) {
-  this._element = element;
-  this._element.addEventListener('touchmove', bind(this, this._touchMove));
-  this._element.addEventListener('touchstart', bind(this, this._touchStart));
-  this._element.addEventListener('touchend', bind(this, this._touchEnd));
-  this._element.addEventListener('touchcancel', bind(this, this._touchEnd));
-  this._touchState = {
-    scale : 1.0,
-    rotation : 0.0,
-    center : null,
-    lastSingleTap : null
-  };
-  this._viewer = viewer;
-  this._cam = cam;
+	if( /(iPad|iPhone|iPod)/g.test( navigator.userAgent ) ) {
+		this._element = element;
+		this._element.addEventListener('touchmove', bind(this, this._touchMove));
+		this._element.addEventListener('touchstart', bind(this, this._touchStart));
+		this._element.addEventListener('touchend', bind(this, this._touchEnd));
+		this._element.addEventListener('touchcancel', bind(this, this._touchEnd));
+		this._touchState = {
+		  scale : 1.0,
+		  rotation : 0.0,
+		  center : null,
+		  lastSingleTap : null
+		};
+		this._viewer = viewer;
+		this._cam = cam;
+	}
+	else {
+		this._element = element;
+		this._element.addEventListener('touchmove', bind(this, this._touchMoveAndroid));
+		this._element.addEventListener('touchstart', bind(this, this._touchStartAndroid));
+		this._element.addEventListener('touchend', bind(this, this._touchEndAndroid));
+		this._element.addEventListener('touchcancel', bind(this, this._touchEnd));
+		this._touchState = {
+		  scale : 1.0,
+		  rotation : 0.0,
+		  center : null,
+		  lastSingleTap : null
+		};
+		this._viewer = viewer;
+		this._cam = cam;
+	}
 }
+
+TouchHandler.prototype._touchStartAndroid = function(event) {
+  event.preventDefault();
+  if (event.touches.length === 1) {
+    // detect double tap
+    var now = new Date().getTime();
+    if (this._touchState.lastSingleTap !== null) {
+      var delta = now - this._touchState.lastSingleTap;
+      if (delta < 500) {
+        this._viewer._mouseDoubleClick({ 
+            clientX : event.touches[0].clientX, 
+            clientY : event.touches[0].clientY });
+      }
+    }
+    this._touchState.lastSingleTap = now;
+  } else {
+    this._touchState.lastSingleTap = null;
+  }
+  this._lastTouchPos = event.touches;
+  return;
+};
+
+TouchHandler.prototype._touchMoveAndroid = function(event) {
+  event.preventDefault();
+  var newTouchPos = event.changedTouches;
+  if( event.touches.length==1 ) {
+    var delta = {
+      x : newTouchPos[0].pageX - this._lastTouchPos[0].pageX,
+      y : newTouchPos[0].pageY - this._lastTouchPos[0].pageY
+    };
+    var speed = 0.005;
+    this._cam.rotateX(speed * delta.y);
+    this._cam.rotateY(speed * delta.x);
+  }
+  else if( event.touches.length==2 ) {
+    //translate
+    var delta = {
+      x : (newTouchPos[0].pageX - this._lastTouchPos[0].pageX + newTouchPos[1].pageX - this._lastTouchPos[1].pageX)/2,
+      y : (newTouchPos[0].pageY - this._lastTouchPos[0].pageY + newTouchPos[1].pageY - this._lastTouchPos[1].pageY)/2
+    };
+    var speed = 0.05;
+    this._cam.panXY(speed * delta.x, speed * delta.y);
+
+    // spin
+    var beg_slope = Math.atan2(this._lastTouchPos[0].pageX-this._lastTouchPos[1].pageX, this._lastTouchPos[0].pageY-this._lastTouchPos[1].pageY);
+    var curr_slope = Math.atan2(newTouchPos[0].pageX-newTouchPos[1].pageX, newTouchPos[0].pageY-newTouchPos[1].pageY);
+    var delta_slope = curr_slope - beg_slope;
+    this._cam.rotateZ(delta_slope);
+
+    // zoom
+    var ox = this._lastTouchPos[0].pageX-this._lastTouchPos[1].pageX;
+    var nx = newTouchPos[0].pageX-newTouchPos[1].pageX;
+    var oy = this._lastTouchPos[0].pageY-this._lastTouchPos[1].pageY;
+    var ny = newTouchPos[0].pageY-newTouchPos[1].pageY;
+    var od = Math.sqrt(ox*ox+oy*oy);
+    var nd = Math.sqrt(nx*nx+ny*ny);
+    var delta =  (od-nd)/od;
+    speed = 0.05																																								
+    this._cam.zoom( delta*speed );
+  }
+  this._lastTouchPos = event.touches;
+	this._viewer.requestRedraw();
+};
 
 TouchHandler.prototype._touchMove = function(event) {
   event.preventDefault();
