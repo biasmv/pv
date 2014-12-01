@@ -77,7 +77,6 @@ function PV(domElement, opts) {
     slabMode : slabModeToStrategy(opts.slabMode),
     atomClick: opts.atomClick || null,
     atomDoubleClick : 'center', // option is handled below
-    viewMode : 'original'
   };
   this._objects = [];
   this._domElement = domElement;
@@ -277,13 +276,6 @@ PV.prototype._initPickBuffer = function() {
   this._pickBuffer = new FrameBuffer(this._gl, fbOptions);
 };
 
-PV.prototype._initEntropyBuffer = function() {
-  var fbOptions = {
-    width : this._options.width, height : this._options.height
-  };
-  this._entropyBuffer = new FrameBuffer(this._gl, fbOptions);
-};
-
 PV.prototype._initGL = function() {
   var samples = 1;
   if (!this._initContext()) {
@@ -308,7 +300,6 @@ PV.prototype._initGL = function() {
   this._gl.enable(this._gl.CULL_FACE);
   this._gl.enable(this._gl.DEPTH_TEST);
   this._initPickBuffer();
-  this._initEntropyBuffer();
   return true;
 };
 
@@ -883,102 +874,17 @@ PV.prototype.slabMode = function(mode, options) {
   this.requestRedraw();
 };
 
-PV.prototype.viewMode = function(mode, options) {
-  options = options || {};
-  options.samples = options.samples || 32;
-  this._options.viewMode = mode;
-  var rotation = this._cam.rotation();
-  
-  if (mode === 'entropy') {
-    // start with PCA view
-    rotation = this._computePCA();
-    var maxI = this.computeEntropy(rotation);
-    //console.log("Entropy for PCA: " + maxI);
-
-    for (var i = 0; i < options.samples; ++i) {
-      var phi = Math.random() * 2 * Math.PI;
-      var theta = Math.random() * 2 * Math.PI;
-      var u = Math.cos(phi);
-      var x = Math.sqrt(1 - u*u) * Math.cos(theta);
-      var y = Math.sqrt(1 - u*u) * Math.sin(theta);
-      var q = quat.fromValues(0, x, y, u);
-      var auxRotation = mat4.create();
-      mat4.fromQuat(auxRotation, q);
-
-      var auxI = this.computeEntropy(auxRotation);
-      if (auxI > maxI) {
-        rotation = auxRotation;
-        maxI = auxI;
-      }
-    }
-    //console.log("Best Entropy: " + maxI);
-  
-  } else if (mode === 'pca') {
-    
-    rotation = this._computePCA();
-    
-  }
-  
-  this._camAnim.rotation = new Rotate(this._cam.rotation(), mat4.clone(rotation), 500);
-  
-};
-
-PV.prototype._computePCA = function() {
-  var X = [];
-  
-  this.forEach(function(obj) {
-    obj.structure().eachAtom(function(atom) {
-      if (atom.name() !== 'CA') {
-        return;
-      } else if (!atom.residue().isAminoacid()) {
-        return;
-      }
-      var pos = atom.pos();
-      X.push([pos[0], pos[1], pos[2]]);
-    });
-  });
-      
-  if (!X.length) {
-    return(mat4.create());
-  }
-  
-  // compute and subtract column means
-  var XT = numeric.transpose(X);
-  var mean = XT.map(function(row) {return numeric.sum(row) / row.length;});
-  X = numeric.transpose(XT.map(function(row, i) {return numeric.sub(row, mean[i]);}));
-  
-  var sigma = numeric.dot(numeric.transpose(X), X);
-  var svd = numeric.svd(sigma);
-  var V = svd.V;
-  var right = V[0];
-  var up = V[1];
-  var view = V[2];
-  var m = mat4.fromValues(right[0], right[1], right[2], 0,
-                          up[0], up[1], up[2], 0,
-                          view[0], view[1], view[2], 0,
-                          0, 0, 0, 1);
-  
-  var r = mat3.create();
-  mat3.fromMat4(r, m);
-  if (mat3.determinant(r) < 0) {
-      m = mat4.fromValues(right[0], right[1], right[2], 0,
-                          up[0], up[1], up[2], 0,
-                          -view[0], -view[1], -view[2], 0,
-                          0, 0, 0, 1);
-  }
-  return(m);
-};
-	
 PV.prototype.computeEntropy = function(rotation) {
-
+  var currentRotation = this._cam.rotation();
+  rotation = rotation | currentRotation;
   this._cam.setRotation(rotation);
-  this._entropyBuffer.bind();
+  this._pickBuffer.bind();
   this._drawPickingScene();
   var size = this._entropyBuffer.width() * this._entropyBuffer.height();
   var pixels = new Uint8Array(size * 4);
   this._gl.readPixels(0, 0, this._entropyBuffer.width(), this._entropyBuffer.height(),
       this._gl.RGBA, this._gl.UNSIGNED_BYTE, pixels);
-  this._entropyBuffer.release();
+  this._pickBuffer.release();
   if (pixels.data) {
     pixels = pixels.data;
   }
@@ -1009,8 +915,8 @@ PV.prototype.computeEntropy = function(rotation) {
     e += tmp * Math.log(tmp);
   });
 
+  this._cam.setRotation(currentRotation);
   return -e;
-
 };
 
 PV.prototype.label = function(name, text, pos) {
