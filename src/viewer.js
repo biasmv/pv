@@ -407,7 +407,7 @@ PV.prototype._initPV = function() {
                             false);
   this._canvas.addEventListener('mousedown', bind(this, this._mouseDown),
                             false);
-  this._touchHandler = new TouchHandler(this._canvas, viewer, this._cam);
+  this._touchHandler = new TouchHandler(this._canvas, this, this._cam);
 
   return true;
 };
