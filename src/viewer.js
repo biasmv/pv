@@ -883,35 +883,90 @@ PV.prototype.slabMode = function(mode, options) {
   this.requestRedraw();
 };
 
-PV.prototype.viewMode = function(mode) {
-	this._options.viewMode = mode;
-	
-	if (mode === 'entropy') {
-		
-		var maxI = 0;
-		var rotation = this._cam.rotation();
-		var samples = 32;
-		
-		for (var i = 0; i < samples; ++i) {
-			var phi = Math.random() * 2 * Math.PI;
-			var theta = Math.random() * 2 * Math.PI;
-			var u = Math.cos(phi);
-			var x = Math.sqrt(1 - u*u) * Math.cos(theta);
-			var y = Math.sqrt(1 - u*u) * Math.sin(theta);
-			var q = quat.fromValues(0, x, y, u);
-			var auxRotation = mat4.create();
-			mat4.fromQuat(auxRotation, q);
-			
-			var auxI = this.computeEntropy(auxRotation);
-			if (auxI > maxI) {
-				rotation = auxRotation;
-				maxI = auxI;
-			}
-		}
-		
-		this._camAnim.rotation = new Rotate(this._cam.rotation(), mat4.clone(rotation), 100);
-		this.requestRedraw();
-	}
+PV.prototype.viewMode = function(mode, options) {
+  options = options || {};
+  options.samples = options.samples || 32;
+  this._options.viewMode = mode;
+  var rotation = this._cam.rotation();
+  
+  if (mode === 'entropy') {
+    // start with PCA view
+    rotation = this._computePCA();
+    var maxI = this.computeEntropy(rotation);
+    //console.log("Entropy for PCA: " + maxI);
+
+    for (var i = 0; i < options.samples; ++i) {
+      var phi = Math.random() * 2 * Math.PI;
+      var theta = Math.random() * 2 * Math.PI;
+      var u = Math.cos(phi);
+      var x = Math.sqrt(1 - u*u) * Math.cos(theta);
+      var y = Math.sqrt(1 - u*u) * Math.sin(theta);
+      var q = quat.fromValues(0, x, y, u);
+      var auxRotation = mat4.create();
+      mat4.fromQuat(auxRotation, q);
+
+      var auxI = this.computeEntropy(auxRotation);
+      if (auxI > maxI) {
+        rotation = auxRotation;
+        maxI = auxI;
+      }
+    }
+    //console.log("Best Entropy: " + maxI);
+  
+  } else if (mode === 'pca') {
+    
+    rotation = this._computePCA();
+    
+  }
+  
+  this._camAnim.rotation = new Rotate(this._cam.rotation(), mat4.clone(rotation), 500);
+  
+};
+
+PV.prototype._computePCA = function() {
+  var X = [];
+  
+  this.forEach(function(obj) {
+    obj.structure().eachAtom(function(atom) {
+      if (atom.name() !== 'CA') {
+        return;
+      } else if (!atom.residue().isAminoacid()) {
+        return;
+      }
+      var pos = atom.pos();
+      X.push([pos[0], pos[1], pos[2]]);
+    });
+  });
+      
+  if (!X.length) {
+    return(mat4.create());
+  }
+  
+  // compute and subtract column means
+  var XT = numeric.transpose(X);
+  var mean = XT.map(function(row) {return numeric.sum(row) / row.length;});
+  X = numeric.transpose(XT.map(function(row, i) {return numeric.sub(row, mean[i]);}));
+  
+  var sigma = numeric.dot(numeric.transpose(X), X);
+  var svd = numeric.svd(sigma);
+  var V = svd.V;
+  var right = V[0];
+  var up = V[1];
+  var view = V[2];
+  var m = mat4.fromValues(right[0], right[1], right[2], 0,
+                          up[0], up[1], up[2], 0,
+                          view[0], view[1], view[2], 0,
+                          0, 0, 0, 1);
+  
+  var r = mat3.create();
+  mat3.fromMat4(r, m);
+  if (mat3.determinant(r) < 0) {
+      m = mat4.fromValues(right[0], right[1], right[2], 0,
+                          up[0], up[1], up[2], 0,
+                          -view[0], -view[1], -view[2], 0,
+                          0, 0, 0, 1);
+  }
+  return(m);
 };
 	
 PV.prototype.computeEntropy = function(rotation) {
@@ -930,13 +985,13 @@ PV.prototype.computeEntropy = function(rotation) {
 
   var e = 0;
   var npix = [];
+  var total = 0;
   for (var p = 0; p < size; ++p) {
     var i = p * 4;
     if (pixels[i + 3] === 0) {
       continue;
     }
     var objId = pixels[i] | pixels[i + 1] << 8;
-    //var symIndex = pixels[2];
 
     var obj = this._objectIdManager.objectForId(objId);
     if (obj !== undefined) {
@@ -945,11 +1000,12 @@ PV.prototype.computeEntropy = function(rotation) {
       } else {
         npix[objId]++;
       }
+      total++;
     }
   }
 
   npix.forEach(function(N) {
-    var tmp = N/size;
+    var tmp = N/total;
     e += tmp * Math.log(tmp);
   });
 
