@@ -241,8 +241,7 @@
                        { quality : 'medium', width: 500, height : 500,
                          antialias : true, outline : false,
                          background : 'white',
-                        slabMode : 'auto',
-                        viewMode : 'original'});
+                        slabMode : 'auto'});
     var structure;
     function lines() {
       pv.clear();
@@ -398,14 +397,94 @@
     	pv.requestRedraw();
     };
     function entropyView() {
-    	pv.viewMode('entropy');
+    	viewMode('entropy');
     	pv.requestRedraw();
     };
     function pcaView() {
-    	pv.viewMode('pca');
+    	viewMode('pca');
     	pv.requestRedraw();
     };
-    
+    function viewMode(mode, options) {
+	  options = options || {};
+	  options.samples = options.samples || 32;
+	  var rotation = mat4.create();
+	  
+	  if (mode === 'entropy') {
+	    
+	    rotation = computePCA();
+	    var maxI = pv.computeEntropy(rotation);
+	    
+	    for (var i = 0; i < options.samples; ++i) {
+	      var phi = Math.random() * 2 * Math.PI;
+	      var theta = Math.random() * 2 * Math.PI;
+	      var u = Math.cos(phi);
+	      var x = Math.sqrt(1 - u*u) * Math.cos(theta);
+	      var y = Math.sqrt(1 - u*u) * Math.sin(theta);
+	      var q = quat.fromValues(0, x, y, u);
+	      var auxRotation = mat4.create();
+	      mat4.fromQuat(auxRotation, q);
+	
+	      var auxI = pv.computeEntropy(auxRotation);
+	      if (auxI > maxI) {
+	        rotation = auxRotation;
+	        maxI = auxI;
+	      }
+	    }
+	  
+	  } else if (mode === 'pca') {
+	    
+	    rotation = computePCA();
+	    
+	  }
+	  
+	  pv.setRotation(rotation, 200);
+	  
+	};
+    function computePCA() {
+      var X = [];
+  
+	  pv.forEach(function(obj) {
+	    obj.structure().eachAtom(function(atom) {
+	      if (atom.name() !== 'CA') {
+	        return;
+	      } else if (!atom.residue().isAminoacid()) {
+	        return;
+	      }
+	      var pos = atom.pos();
+	      X.push([pos[0], pos[1], pos[2]]);
+	    });
+	  });
+	      
+	  if (!X.length) {
+	    return(mat4.create());
+	  }
+	  
+	  // compute and subtract column means
+	  var XT = numeric.transpose(X);
+	  var mean = XT.map(function(row) {return numeric.sum(row) / row.length;});
+	  X = numeric.transpose(XT.map(function(row, i) {return numeric.sub(row, mean[i]);}));
+	  
+	  var sigma = numeric.dot(numeric.transpose(X), X);
+	  var svd = numeric.svd(sigma);
+	  var V = svd.V;
+	  var right = V[0];
+	  var up = V[1];
+	  var view = V[2];
+	  var m = mat4.fromValues(right[0], right[1], right[2], 0,
+	                          up[0], up[1], up[2], 0,
+	                          view[0], view[1], view[2], 0,
+	                          0, 0, 0, 1);
+	  
+	  var r = mat3.create();
+	  mat3.fromMat4(r, m);
+	  if (mat3.determinant(r) < 0) {
+	      m = mat4.fromValues(right[0], right[1], right[2], 0,
+	                          up[0], up[1], up[2], 0,
+	                          -view[0], -view[1], -view[2], 0,
+	                          0, 0, 0, 1);
+	  }
+	  return(m);
+    }
     $('#cartoon').click(cartoon);
     $('#line-trace').click(lineTrace);
     $('#preset').click(preset);
