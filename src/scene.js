@@ -70,10 +70,11 @@ Range.prototype.update = function(val) {
 // A scene node holds a set of child nodes to be rendered on screen. Later on,
 // the SceneNode might grow additional functionality commonly found in a scene
 // graph, e.g. coordinate transformations.
-function SceneNode(name) {
+function SceneNode(gl) {
   this._children = [];
   this._visible = true;
   this._name = name || '';
+  this._gl = gl;
   this._order = 1;
 }
 
@@ -121,7 +122,6 @@ SceneNode.prototype.visible = function() {
 
 function BaseGeom(gl) {
   SceneNode.prototype.constructor.call(this, gl);
-  this._gl = gl;
   this._idRanges = [];
   this._vertAssocs = [];
   this._showRelated = null;
@@ -561,7 +561,6 @@ MeshGeom.prototype.addTriangle = function(idx1, idx2, idx3) {
 
 function TextLabel(gl, canvas, context, pos, text) {
   SceneNode.prototype.constructor.call(this, gl);
-  this._gl = gl;
   this._order = 100;
   this._pos = pos;
   this._interleavedBuffer = this._gl.createBuffer();
@@ -612,6 +611,11 @@ TextLabel.prototype.updateProjectionIntervals = function() {
   // text labels don't affect the projection interval. Don't do anything.
 };
 
+TextLabel.prototype.updateSquaredSphereRadius = function(center, radius) { 
+  // text labels don't affect the bounding spheres. 
+  return radius;
+};
+
 derive(TextLabel, SceneNode);
 
 TextLabel.prototype._setupTextParameters = function(ctx) {
@@ -620,6 +624,7 @@ TextLabel.prototype._setupTextParameters = function(ctx) {
   ctx.textBaseline = 'bottom';
   ctx.font = '24px Verdana';
 };
+
 
 function smallestPowerOfTwo(size) {
   var s = 1;
@@ -636,7 +641,11 @@ TextLabel.prototype._prepareText = function(canvas, ctx, text) {
   canvas.width = smallestPowerOfTwo(estimatedWidth);
   canvas.height = smallestPowerOfTwo(estimatedHeight);
   this._setupTextParameters(ctx);
-  ctx.strokeStyle = 'black';
+  ctx.fillStyle = '#666';
+  ctx.globalAlpha = 0.5;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.globalAlpha = 1.0;
+  ctx.fillStyle = 'black';
   ctx.lineWidth = 0.5;
   ctx.fillText(text, 0, canvas.height);
   ctx.strokeText(text, 0, canvas.height);

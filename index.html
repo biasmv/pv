@@ -5,8 +5,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <script src='js/jquery-2.0.2.min.js'></script>
-    <script src='js/jquery-ui.min.js'></script>
     <script src='js/numeric-1.2.6.min.js'></script>
+    <script src='js/modernizr.js'></script>
+    <script src="js/foundation-5.4.7.min.js"></script>
     <script src='src/gl-matrix.js'></script>
     <script src='src/core.js'></script>
     <script src='src/geom.js'></script>
@@ -29,527 +30,142 @@
     <script src='src/framebuffer.js'></script>
     <script src='src/slab.js'></script>
     <script src='src/animation.js'></script>
-    <script src='src/pca.js'></script>
     <script src='src/viewer.js'></script>
-
-    <link rel="stylesheet" href="css/jquery-ui.min.css">
-
+    <script src='demo.js'></script>
+    <link rel='stylesheet' href='css/foundation.css'>
     <style>
-    body {
-      font-family: Helvetica;
-      /*background-color: #fff;/*#f0f0f0;*/*/
-      background-color: #000;
-      width:100%;
-      height:100%;
-      font-weight: lighter;
-      margin: 0px;
-      overflow: hidden;
-    }
-    #gl {
-      position:fixed;
-      left:233px;
-      top:49px;
-      bottom:0px;
-      right:0px;
-    }
-    .screenshot {
-      position:fixed;
-      top:49px;
-      left:233px;
-    }
-    #inspector {
-      position:fixed;
-      width:200px;
-      top:49px;
-      font-size:10pt;
-      bottom:0px;
-      
-      background-color:white;
-      border-right-color:#ccc;
-      padding:15px;
-      box-shadow: 2px 0px 2px #ddd;
-    }
-
-    #inspector ul {
-      padding:0px;
-    }
-
-    #inspector ul li {
-      margin-left:5px;
-      margin-right:5px;
-      margin-bottom:5px;
-      list-style:none;
-      cursor: pointer;
-      color:#660000
-    }
-
-    #inspector ul li:hover {
-      color:#994444;
-    }
-    #toolbar {
-      position:fixed;
-      background-color:#fafafa;
-      top:0px;
-      left:0px;
-      padding-top:8px;
-      padding-left:8px;
-      border-bottom-style:solid;
-      border-bottom-color:#ccc;
-      border-bottom-width:1px;
-      right:0px;
-      height:40px;
-    }
-    #copyright {
-      bottom:0px;
-      position: fixed;
-      left:20px;
-      color:#888;
-      border-top-style:solid;
-      border-top-color:#ccc;
-      border-top-width:1px;
-      font-size:10pt;
-      padding-bottom:20px;
-      padding-left:5px;
-      padding-top:20px;
-    }
-    #toolbar a {
-      float:right;
-      padding-right:10px;
-      color:#660000;
-      text-decoration:none;
-    }
-    #toolbar a:hover {
-      color:#994444;
-    }
-    #inspector h1 {
-      margin-top:20px;
-      border-top-style:solid;
-      border-top-color:#ccc;
-      border-top-width:1px;
-      padding-bottom:10px;
-      padding-top:10px;
-      font-size:10pt;
-      font-weight:lighter;
-      color:#888;
-      text-align:center;
-    }
-    #toolbar input {
-      padding: 0.5em 0.6em;
-      display: inline-block;
-      border: 1px solid #ccc;
-      font-size: 0.8em;
-      width:210px;
-      box-shadow: inset 0 1px 3px #ddd;
-      border-radius: 4px;
-      -webkit-transition: 0.3s linear border;
-      -moz-transition: 0.3s linear border;
-      -ms-transition: 0.3s linear border;
-      -o-transition: 0.3s linear border;
-      transition: 0.3s linear border;
-      -webkit-box-sizing: border-box;
-      -moz-box-sizing: border-box;
-      box-sizing: border-box;
-    }
-
-    span.btn:hover {
-      border-color:#dcc;
-    }
-    span.btn {
-      background-color:#fdd;
-      margin-left:5px;
-      margin-right:5px;
-      border-color:#edd;
-      padding:5px;
-      padding-left:8px;
-      padding-right:8px;
-      color:#977;
-      cursor:pointer;
-      border-radius:3px;
-      border-style:solid;
-      border-width:1px;
-    }
-    .sl { display: block; }
+      body {
+        padding:0px;
+        margin:0px;
+        height: 100%;
+      }
+      #viewer {
+        position:absolute;
+        top : 0px; 
+        left: 0px;
+        bottom : 0px;
+        right : 0px;
+        margin : 0px;
+        padding:0px;
+        overflow:hidden;
+      }
     </style>
     </head>
-<body>
-  <div id=toolbar>
-    <input type=text name=pdbid id=pdbid 
-    placeholder='Enter PDB identifier to load' />&nbsp;&nbsp;<span id=status></span>
+    <body>
+
+<div id="viewer"> 
+<nav class="top-bar" data-topbar role="navigation">
+  <ul class="title-area">
+    <li class="name">
+      <h1><a href="#">PV</a></h1>
+    </li>
+     <!-- Remove the class "menu-icon" to get rid of menu icon. Take out "Menu" to just have icon alone -->
+    <li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a></li>
+  </ul>
+
+  <section class="top-bar-section">
+    <!-- Right Nav Section -->
+    <ul class=left>
+<div class="row collapse">
+    <div class="large-8 small-9 columns">
+      <input type="text" id=load-from-pdb placeholder="1ake">
+    </div>
+    <div class="large-4 small-3 columns">
+      <a href="#" class="alert button expand">Get</a>
+    </div>
   </div>
-  <div id=inspector>
-
-    <span class=btn onclick='showTab("styleTab")'>Style</span>
-    <span class=btn onclick='showTab("colorTab")'>Color</span>
-    <span class=btn onclick='showTab("viewTab")'>View</span>
-    <ul id=styleTab>
-      <h1></h1>
-      <li id=preset>Preset</li>
-      <li id=cartoon>Cartoon</li>
-      <li id=tube>Tube</li>
-      <li id=lines>Lines</li>
-      <li id=line-trace>Line Trace</li>
-      <li id=sline>Smooth Line Trace</li>
-      <li id=trace>Trace</li>
-      <li id=spheres>Spheres</li>
-      <li id=balls-and-sticks>Balls and Sticks</li>
     </ul>
-    <ul id=colorTab>
-      <h1></h1>
-       <li id=uniform>Uniform</li>
-       <li id=by-chain>By Chain</li>
-       <li id=by-ele>By Element (CPK)</li>
-       <li id=rainbow>Rainbow</li>
-       <li id=ss>Secondary Structure</li>
-       <li id=ss-suc>Secondary Structure Succession</li>
-       <li id=pro-in-red>Prolines in Red</li>
+    <ul class="right">
+      <li class="has-dropdown">
+        <a href="#">Load</a>
+        <ul class="dropdown">
+          <li><a id=1r6a href="#">Methyl Transferase</a></li>
+          <li><a id=4c46 href="#">Long Helices</a></li>
+          <li><a id=2f8v href="#">Telethonin</a></li>
+          <li><a id=1ake href="#">Adenylate Kinase</a></li>
+          <li><a id=4ubb href="#">DNA Polymerase</a></li>
+        </ul>
+      </li>
+      <li class="has-dropdown">
+        <a href="#">Style</a>
+        <ul class="dropdown">
+          <li><a id=style-cartoon href="#">Cartoon</a></li>
+          <li><a id=style-tube href="#">Tube</a></li>
+          <li><a id=style-trace href="#">Trace</a></li>
+          <li><a id=style-line-trace href="#">Line Trace</a></li>
+          <li><a id=style-sline href="#">Smooth Line Trace</a></li>
+          <li><a id=style-lines href="#">Bonds (Lines)</a></li>
+          <li><a id=style-spheres href="#">Spheres</a></li>
+          <li><a id=style-balls-and-sticks href="#">Balls And Sticks</a></li>
+        </ul>
+      </li>
+      <li class="has-dropdown">
+        <a href="#">Color</a>
+        <ul class="dropdown">
+          <li><a id=color-uniform href="#">Uniform</a></li>
+          <li><a id=color-chain href="#">Chain</a></li>
+          <li><a id=color-element href="#">Element</a></li>
+          <li><a id=color-ss href="#">Secondary Structure</a></li>
+          <li><a id=color-ss-succ href="#">Secondary Structure Succession</a></li>
+          <li><a id=color-rainbow href="#">Rainbow</a></li>
+        </ul>
+      </li>
+      <li class="has-dropdown">
+      	<a href="#">View</a>
+        <ul class="dropdown">
+          <li><a id=view-pca href="#">PCA</a></li>
+          <li><a id=view-entropy href="#">Entropy</a></li>
+        </ul>
+      </li>
     </ul>
-    <ul id=viewTab>
-      <h1></h1>
-       <li id=original>Original</li>
-       <li id=pca>PCA</li>
-       <li id=entropy>Entropy</li>
-    </ul>
-     <ul>
-      <h1></h1>
-      <li><div id="slider" class="sl"></div></li>
-      <li><input type="checkbox" name="outline" 
-                 value="yes" id=showOutline autocomplete=off>Show Outline</li>
-      <li><input type="checkbox" name="fog" 
-                 value="yes" checked=true id=fog autocomplete=off>Fog</li>
-      <li id=save>Export As Image</li>
-    </ul>
-     <ul>
-      <h1></h1>
-       <li id=1r6a>Methyl transferase</li>
-       <li id=1ake>Adenylate kinase</li>
-       <li id=1crn>Crambin</li>
-       <li id=2por>Porin</li>
-       <li id=2f8v>Telethonin</li>
-       <li id=4c46>Long Helices</li>
-       <li id=1rb8>Capsid</li>
-       <li id=4ubb>DNA Polymerase</li>
-    </ul>
-  </div>
-  <div id=gl>
-  </div>
-  <div id=copyright>Copyright (2014) Marco Biasini</div>
- </body>
-  <script>
-    var activeTab = 'styleTab';
-    $('#colorTab').hide();
-    var pv = pv.Viewer(document.getElementById('gl'), 
-                       { quality : 'medium', width: 500, height : 500,
-                         antialias : true, outline : false,
-                         background : 'white',
-                        slabMode : 'auto'});
-    var structure;
-    function lines() {
-      pv.clear();
-      pv.lines('structure', structure, { 
-                 color: color.byResidueProp('num'),
-                 showRelated : '1' });
-    }
-    function cartoon() {
-      pv.clear();
-      pv.cartoon('structure', structure, { 
-                 color : color.ssSuccession(), showRelated : '1', 
+  </section>
+</nav>
+</div>
+    <script>
+      $(document).foundation();
+      $('#1r6a').click(transferase);
+      $('#1crn').click(crambin);
+      $('#1ake').click(kinase);
+      $('#4ubb').click(polymerase);
+      $('#4c46').click(longHelices);
+      $('#2f8v').click(telethonin);
+      $('#style-cartoon').click(cartoon);
+      $('#style-tube').click(tube);
+      $('#style-line-trace').click(lineTrace);
+      $('#style-sline').click(sline);
+      $('#style-trace').click(trace);
+      $('#style-lines').click(lines);
+      $('#style-balls-and-sticks').click(ballsAndSticks);
+      $('#style-spheres').click(spheres);
+      $('#color-uniform').click(uniform);
+      $('#color-element').click(byElement);
+      $('#color-chain').click(byChain);
+      $('#color-ss-succ').click(ssSuccession);
+      $('#color-ss').click(ss);
+      $('#color-rainbow').click(rainbow);
+      $('#view-entropy').click(entropy);
+      $('#view-pca').click(pca);
+      $('#load-from-pdb').change(function() {
+        var pdbId = this.value;
+        this.value = '';
+        this.blur();
+        $.ajax('http://pdb.org/pdb/files/'+pdbId+'.pdb')
+          .done(function(data) {
+            structure = io.pdb(data);
+            cartoon();
+            viewer.autoZoom();
+          })
       });
-    }
-    function lineTrace() {
-      pv.clear();
-      pv.lineTrace('structure', structure, { showRelated : '1' });
-    }
-
-    function spheres() {
-      pv.clear();
-      pv.spheres('structure', structure, { showRelated : '1' });
-    }
-
-    function sline() {
-      pv.clear();
-      pv.sline('structure', structure, 
-              { color : color.uniform('red'), showRelated : '1'});
-    }
-
-    function tube() {
-      pv.clear();
-      pv.tube('structure', structure);
-      pv.lines('structure.ca', structure.select({aname :'CA'}), 
-               { color: color.uniform('blue'), lineWidth : 1,
-                 showRelated : '1' });
-    }
-
-    function trace() {
-      pv.clear();
-      pv.trace('structure', structure, { showRelated : '1' });
-    }
-    function ballsAndSticks() {
-      pv.clear();
-      pv.ballsAndSticks('structure', structure, { showRelated : '1' });
-    }
-
-    function preset() {
-      pv.clear();
-      var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
-      pv.ballsAndSticks('structure.ligand', ligand, { 
+      var viewer = pv.Viewer(document.getElementById('viewer'), { 
+          width : 'auto', height: 'auto', antialias : false, outline : true, quality : 'medium'
       });
-      pv.cartoon('structure.protein', structure, { boundingSpheres: false });
-    }
-
-    function load(pdb_id) {
-      $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
-        structure = io.pdb(data);
-        //mol.assignHelixSheet(structure);
-        cartoon();
-        pv.autoZoom();
-      }});
-    }
-    function kinase() {
-      load('1ake');
-    }
-
-    $(function() {
-      $( "#slider" ).slider({
-        slide: function(event, ui) {
-
-          pv.forEach(function(go) {
-            go.setOpacity(1.0 - ui.value/100. , go);
-          });
-          pv.requestRedraw();
-        }
-      })
-    });
-
-    function showTab(tabName) {
-      $('#'+activeTab).hide();
-      $('#'+tabName).show();
-      activeTab = tabName;
-    }
-    function crambin() {
-      load('1crn');
-    }
-
-    function transferase() {
-      load('1r6a');
-    }
-
-    function telethonin() { load('2f8v'); }
-
-    function porin() { 
-      load('2por'); 
-    }
-    function longHelices() {
-      load('4c46');
-    }
-
-    function ssSuccession() {
-      pv.forEach(function(go) {
-        go.colorBy(color.ssSuccession());
+      document.addEventListener('DOMContentLoaded', crambin);
+      
+      window.addEventListener('resize', function() {
+        viewer.fitParent();
       });
-      pv.requestRedraw();
-    }
-
-    function uniform() {
-      pv.forEach(function(go) {
-        go.colorBy(color.uniform([0,1,0]));
-      });
-      pv.requestRedraw();
-    }
-    function byElement() {
-      pv.forEach(function(go) {
-        go.colorBy(color.byElement());
-      });
-      pv.requestRedraw();
-    }
-
-    function ss() {
-      pv.forEach(function(go) {
-        go.colorBy(color.bySS());
-      });
-      pv.requestRedraw();
-    }
-
-    function proInRed() {
-      pv.forEach(function(go) {
-        go.colorBy(color.uniform('red'), go.select({rname : 'PRO'}));
-      });
-      pv.requestRedraw();
-    }
-    function rainbow() {
-      pv.forEach(function(go) {
-        go.colorBy(color.rainbow());
-      });
-      pv.requestRedraw();
-    }
-
-    function byChain() {
-      pv.forEach(function(go) {
-        go.colorBy(color.byChain());
-      });
-      pv.requestRedraw();
-    }
-    function polymerase() { 
-      load('4ubb'); 
-    };
-    
-    function originalView() {
-    	pv.viewMode('original');
-    	pv.requestRedraw();
-    };
-    function entropyView() {
-    	viewMode('entropy');
-    	pv.requestRedraw();
-    };
-    function pcaView() {
-    	viewMode('pca');
-    	pv.requestRedraw();
-    };
-    function viewMode(mode, options) {
-	  options = options || {};
-	  options.samples = options.samples || 32;
-	  var rotation = mat4.create();
-	  
-	  if (mode === 'entropy') {
-	    
-	    rotation = computePCA();
-	    var maxI = pv.computeEntropy(rotation);
-	    
-	    for (var i = 0; i < options.samples; ++i) {
-	      var phi = Math.random() * 2 * Math.PI;
-	      var theta = Math.random() * 2 * Math.PI;
-	      var u = Math.cos(phi);
-	      var x = Math.sqrt(1 - u*u) * Math.cos(theta);
-	      var y = Math.sqrt(1 - u*u) * Math.sin(theta);
-	      var q = quat.fromValues(0, x, y, u);
-	      var auxRotation = mat4.create();
-	      mat4.fromQuat(auxRotation, q);
-	
-	      var auxI = pv.computeEntropy(auxRotation);
-	      if (auxI > maxI) {
-	        rotation = auxRotation;
-	        maxI = auxI;
-	      }
-	    }
-	  
-	  } else if (mode === 'pca') {
-	    
-	    rotation = computePCA();
-	    
-	  }
-	  
-	  pv.setRotation(rotation, 200);
-	  
-	};
-    function computePCA() {
-      var X = [];
-  
-	  pv.forEach(function(obj) {
-	    obj.structure().eachAtom(function(atom) {
-	      if (atom.name() !== 'CA') {
-	        return;
-	      } else if (!atom.residue().isAminoacid()) {
-	        return;
-	      }
-	      var pos = atom.pos();
-	      X.push([pos[0], pos[1], pos[2]]);
-	    });
-	  });
-	      
-	  if (!X.length) {
-	    return(mat4.create());
-	  }
-	  
-	  // compute and subtract column means
-	  var XT = numeric.transpose(X);
-	  var mean = XT.map(function(row) {return numeric.sum(row) / row.length;});
-	  X = numeric.transpose(XT.map(function(row, i) {return numeric.sub(row, mean[i]);}));
-	  
-	  var sigma = numeric.dot(numeric.transpose(X), X);
-	  var svd = numeric.svd(sigma);
-	  var V = svd.V;
-	  var right = V[0];
-	  var up = V[1];
-	  var view = V[2];
-	  var m = mat4.fromValues(right[0], right[1], right[2], 0,
-	                          up[0], up[1], up[2], 0,
-	                          view[0], view[1], view[2], 0,
-	                          0, 0, 0, 1);
-	  
-	  var r = mat3.create();
-	  mat3.fromMat4(r, m);
-	  if (mat3.determinant(r) < 0) {
-	      m = mat4.fromValues(right[0], right[1], right[2], 0,
-	                          up[0], up[1], up[2], 0,
-	                          -view[0], -view[1], -view[2], 0,
-	                          0, 0, 0, 1);
-	  }
-	  return(m);
-    }
-    $('#cartoon').click(cartoon);
-    $('#line-trace').click(lineTrace);
-    $('#preset').click(preset);
-    $('#lines').click(lines);
-    $('#trace').click(trace);
-    $('#sline').click(sline);
-    $('#spheres').click(spheres);
-    $('#balls-and-sticks').click(ballsAndSticks);
-    $('#4ubb').click(polymerase);
-    $('#tube').click(tube);
-    $('#1ake').click(kinase);
-    $('#1r6a').click(transferase);
-    $('#1crn').click(crambin);
-    $('#2por').click(porin);
-    $('#1rb8').click(function() { load('1rb8'); });
-    $('#2f8v').click(telethonin);
-    $('#4c46').click(longHelices);
-    $('#rainbow').click(rainbow);
-    $('#ss').click(ss);
-    $('#uniform').click(uniform);
-    $('#by-ele').click(byElement);
-    $('#ss-suc').click(ssSuccession);
-    $('#by-chain').click(byChain);
-    $('#pro-in-red').click(proInRed);
-    $('#pdbid').change(function() {
-      var st = $('#status')
-      st.show();
-      var pdbId = this.value;
-      this.value = '';
-      this.blur();
-      st.text('retrieving file from pdb.org. This may take a while');
-      $.ajax('http://pdb.org/pdb/files/'+pdbId+'.pdb')
-        .done(function(data) {
-          st.text('loaded');
-          structure = io.pdb(data);
-          cartoon();
-          pv.autoZoom();
-          st.fadeOut(2000);
-        })
-        .fail(function() {
-          st.text('could not load '+pdbId+' from PDB.org');
-          st.fadeOut(2000);
-        });
-    });
-    $('#save').click(function() {
-      var imgDataURL = pv.imageData();
-      window.open(imgDataURL);
-    });
-    $('#showOutline').change(function() {
-      pv.options('outline', this.checked);
-      pv.requestRedraw();
-    });
-    $('#fog').change(function() {
-      pv.options('fog', this.checked);
-      pv.requestRedraw();
-    });
-    $('#original').click(originalView);
-    $('#entropy').click(entropyView);
-	$('#pca').click(pcaView);
-	
-    document.addEventListener('DOMContentLoaded', polymerase);
-    /*
-    window.addEventListener('resize', function() {
-      pv.fitParent();
-    });
-    */
-  </script>
+      
+    </script>
+    </body>
 </html>
+

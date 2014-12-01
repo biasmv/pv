@@ -542,6 +542,8 @@ var _cartoonNumVerts = function(traces, vertsPerSlice, splineDetail) {
   var numVerts = 0;
   for (var i = 0; i < traces.length; ++i) {
     numVerts += ((traces[i].length() - 1) * splineDetail + 1) * vertsPerSlice;
+    // triangles for capping the tube
+    numVerts += 2;
   }
   return numVerts;
 };
@@ -550,6 +552,8 @@ var _cartoonNumIndices = function(traces, vertsPerSlice, splineDetail) {
   var numIndices = 0;
   for (var i = 0; i < traces.length; ++i) {
     numIndices += (traces[i].length() * splineDetail - 1) * vertsPerSlice * 6;
+    // triangles for capping the tube
+    numIndices += 2 * 3 * vertsPerSlice;
   }
   return numIndices;
 };
@@ -790,6 +794,21 @@ var _colorPosNormalsFromTrace = (function() {
 })();
 
 
+function capTubeStart(va, baseIndex, numTubeVerts) {
+  for (var i = 0; i < numTubeVerts - 1; ++i) {
+    va.addTriangle(baseIndex, baseIndex + 1 + i, baseIndex + 2 + i);
+  }
+  va.addTriangle(baseIndex, baseIndex + numTubeVerts, baseIndex + 1);
+}
+
+function capTubeEnd(va, baseIndex, numTubeVerts) {
+  var center = baseIndex + numTubeVerts;
+  for (var i = 0; i < numTubeVerts - 1; ++i) {
+    va.addTriangle(center, baseIndex + i + 1, baseIndex + i);
+  }
+  va.addTriangle(center, baseIndex, baseIndex + numTubeVerts - 1);
+}
+
 // constructs a cartoon representation for a single consecutive backbone
 // trace.
 var _cartoonForSingleTrace = (function() {
@@ -834,11 +853,15 @@ var _cartoonForSingleTrace = (function() {
               normalSdiv[2] - sdiv[2]);
     vec3.normalize(tangent, tangent);
     vec3.normalize(normal, normal);
-    vec4.set(color, interpColors[0], interpColors[1], interpColors[2], interpColors[3] );
+    vec4.set(color, interpColors[0], interpColors[1], interpColors[2], 
+             interpColors[3] );
 
     var vertStart = vertArray.numVerts();
+    vertArray.addVertex(pos, [-tangent[0], -tangent[1], -tangent[2]], 
+                        color, objIds[0]);
     _cartoonAddTube(vertArray, pos, normal, trace.residueAt(0), tangent,
                     color, radius, true, options, 0, objIds[0]);
+    capTubeStart(vertArray, vertStart, options.arcDetail * 4);
     var vertEnd = vertArray.numVerts();
     var slice = 0;
     vertAssoc.addAssoc(traceIndex, vertArray, slice, vertStart, vertEnd);
@@ -940,12 +963,17 @@ var _cartoonForSingleTrace = (function() {
         i += options.arrowSkip;
       }
       vertEnd = vertArray.numVerts();
+      if (i === e -1) {
+        vertEnd += 1;
+      }
       vertAssoc.addAssoc(traceIndex, vertArray, slice, vertStart, vertEnd);
       slice += 1;
       if (drawArrow) {
         slice += options.arrowSkip;
       }
     }
+    vertArray.addVertex(pos, tangent, color, objIds[objIds.length -1]);
+    capTubeEnd(vertArray, vertStart, options.arcDetail * 4);
     options.float32Allocator.release(normals);
     options.float32Allocator.release(positions);
   };
@@ -957,7 +985,8 @@ var _renderSingleTrace = (function() {
   var dir = vec3.create(), left = vec3.create(), up = vec3.create(),
       midPoint = vec3.create(), caPrevPos = vec3.create(),
       caThisPos = vec3.create();
-  var colorOne = vec4.fromValues(0.0, 0.0, 0.0, 1.0), colorTwo = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
+  var colorOne = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
+  var colorTwo = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
 
   return function(meshGeom, vertAssoc, trace, traceIndex, options) {
     if (trace.length() === 0) {
