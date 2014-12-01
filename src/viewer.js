@@ -76,6 +76,7 @@ function PV(domElement, opts) {
     background : opts.background ? forceRGB(opts.background) : vec3.fromValues(1,1,1),
     slabMode : slabModeToStrategy(opts.slabMode),
     atomClick: opts.atomClick || null,
+    fog : true,
     atomDoubleClick : 'center', // option is handled below
   };
   this._objects = [];
@@ -107,6 +108,9 @@ function PV(domElement, opts) {
   }
   if ('atomDoubleClicked' in opts) {
     this._options.atomDoubleClick = opts.atomDoubleClick;
+  }
+  if ('fog' in opts) {
+    this._options.fog = opts.fog;
   }
   this._ok = false;
   this._camAnim = { 
@@ -197,6 +201,7 @@ PV.prototype.options = function(optName, value) {
   if (value !== undefined) {
     if (optName === 'fog') {
       this._cam.fog(value);
+      this._options.fog = value;
       this.requestRedraw();
     } else {
       this._options[optName] = value;
@@ -383,6 +388,7 @@ PV.prototype._initPV = function() {
   this._float32Allocator = new PoolAllocator(Float32Array);
   this._uint16Allocator = new PoolAllocator(Uint16Array);
   this._cam = new Cam(this._gl);
+  this._cam.fog(this._options.fog);
   this._shaderCatalog = {
     hemilight : this._initShader(shaders.HEMILIGHT_VS, shaders.HEMILIGHT_FS),
     outline : this._initShader(shaders.OUTLINE_VS, shaders.OUTLINE_FS),
