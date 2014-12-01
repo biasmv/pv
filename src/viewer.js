@@ -513,6 +513,17 @@ PV.prototype.setCenter = function(center, ms) {
   this.requestRedraw();
 };
 
+PV.prototype.setRotation = function(rotation, ms) {
+  ms |= 0;
+  if (ms === 0) {
+    this._cam.setRotation(rotation);
+    return;
+  }
+  this._camAnim.rotation = new Rotate(this._cam.rotation(), 
+      mat4.clone(rotation), ms);
+  this.requestRedraw();
+};
+
 PV.prototype.centerOn = function(what, ms) {
   this.setCenter(what.center(), ms);
 };
@@ -876,13 +887,13 @@ PV.prototype.slabMode = function(mode, options) {
 
 PV.prototype.computeEntropy = function(rotation) {
   var currentRotation = this._cam.rotation();
-  rotation = rotation | currentRotation;
+  rotation = rotation || currentRotation;
   this._cam.setRotation(rotation);
   this._pickBuffer.bind();
   this._drawPickingScene();
-  var size = this._entropyBuffer.width() * this._entropyBuffer.height();
+  var size = this._pickBuffer.width() * this._pickBuffer.height();
   var pixels = new Uint8Array(size * 4);
-  this._gl.readPixels(0, 0, this._entropyBuffer.width(), this._entropyBuffer.height(),
+  this._gl.readPixels(0, 0, this._pickBuffer.width(), this._pickBuffer.height(),
       this._gl.RGBA, this._gl.UNSIGNED_BYTE, pixels);
   this._pickBuffer.release();
   if (pixels.data) {
