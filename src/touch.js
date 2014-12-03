@@ -37,6 +37,10 @@ function TouchHandler(element, viewer, cam) {
   this._cam = cam;
 }
 
+// calculates the relevant touch/gesture properties based on previous touch 
+// state and the new event. It returns the new state with deltaScale, 
+// deltaRotation and deltaCenter attached than can be used to control the 
+// camera.
 TouchHandler.prototype._extractEventAttributes = function(previousState, event) {
   var state = {}
   state.center = getCenter(event.targetTouches);
@@ -83,6 +87,8 @@ TouchHandler.prototype._touchMove = function(event) {
     this._cam.zoom(deltaScale);
   }
   if (newState.numTouches === 2 && this._touchState.numTouches === 2) {
+    // scale pan amount by current zoom value. This increases the camera
+    // shift when far away from the image center. 
     this._cam.panXY(newState.deltaCenter.x * 0.001 * this._cam.zoom(),
                     newState.deltaCenter.y * 0.001 * this._cam.zoom())
   }
