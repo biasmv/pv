@@ -897,6 +897,7 @@ PV.prototype.computeEntropy = function(rotation) {
   this._cam.setRotation(rotation);
   this._pickBuffer.bind();
   this._drawPickingScene();
+  // TODO: try using a smaller buffer to decrease computation time
   var size = this._pickBuffer.width() * this._pickBuffer.height();
   var pixels = new Uint8Array(size * 4);
   this._gl.readPixels(0, 0, this._pickBuffer.width(), this._pickBuffer.height(),
@@ -908,7 +909,6 @@ PV.prototype.computeEntropy = function(rotation) {
 
   var e = 0;
   var npix = [];
-  var total = 0;
   for (var p = 0; p < size; ++p) {
     var i = p * 4;
     if (pixels[i + 3] === 0) {
@@ -923,12 +923,11 @@ PV.prototype.computeEntropy = function(rotation) {
       } else {
         npix[objId]++;
       }
-      total++;
     }
   }
 
   npix.forEach(function(N) {
-    var tmp = N/total;
+    var tmp = N/size;
     e += tmp * Math.log(tmp);
   });
 
