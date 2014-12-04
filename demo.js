@@ -1,4 +1,6 @@
 var structure;
+var cameraSamples = hammersleySequence(16);
+
 function lines() {
   viewer.clear();
   viewer.lines('structure', structure, {
@@ -141,32 +143,60 @@ function pca() {
   viewMode('pca');
   viewer.requestRedraw();
 };
-function viewMode(mode, options) {
-  options = options || {};
-  options.samples = options.samples || 32;
+function hammersleySequence(n) {
+  var points = [];
+  var t;
+  for (var k = 0; k < n; ++k) {
+    t = 0;
+    var kk;
+    for (var p = 0.5, kk=k; kk; p*=0.5, kk>>=1) {
+      if (kk & 1) {
+        t += p;
+      }
+    }
+    t = 2 * t - 1;
+    var theta = (k + 0.5) / n;  // theta in [0,1]
+    theta *= 2 * Math.PI;
+    var phi = Math.acos(t);
+            
+    points.push({'theta': theta, 'phi':phi});
+    
+  }
+  return points;
+}
+function viewMode(mode) {
+  
   var rotation = mat4.create();
   
   if (mode === 'entropy') {
-    
+       
     rotation = computePCA();
     var maxI = viewer.computeEntropy(rotation);
     
-    for (var i = 0; i < options.samples; ++i) {
-      var phi = Math.random() * 2 * Math.PI;
-      var theta = Math.random() * 2 * Math.PI;
-      var u = Math.cos(phi);
-      var x = Math.sqrt(1 - u*u) * Math.cos(theta);
-      var y = Math.sqrt(1 - u*u) * Math.sin(theta);
-      var q = quat.fromValues(0, x, y, u);
+    for (var k = 0; k < cameraSamples.length; ++k) {
+       
+      var pos = cameraSamples[k];
+      
+      // create auxiliary rotation for the new camera position
       var auxRotation = mat4.create();
-      mat4.fromQuat(auxRotation, q);
-
+      mat4.rotateY(auxRotation, auxRotation, pos.theta);
+      mat4.rotateZ(auxRotation, auxRotation, pos.phi);
+      
       var auxI = viewer.computeEntropy(auxRotation);
       if (auxI > maxI) {
         rotation = auxRotation;
         maxI = auxI;
       }
     }
+    
+//  uncomment this to see the sampling positions
+//  var u = Math.cos(pos.phi);
+//  var st = Math.sqrt(1 - u * u);
+//  var x = st * Math.cos(pos.theta); 
+//  var y = st * Math.sin(pos.theta); 
+//  var center = viewer._cam.center();
+//  var zoom = viewer._cam.zoom();
+//  viewer.label(x, 'X', [zoom*x+center[0],zoom*y+center[1],zoom*u+center[2]]);
   
   } else if (mode === 'pca') {
     
@@ -178,16 +208,15 @@ function viewMode(mode, options) {
     
   };
 function computePCA() {
-var X = [];
+  var X = [];
 
   viewer.forEach(function(obj) {
-    obj.structure().eachAtom(function(atom) {
-      if (atom.name() !== 'CA') {
+    obj.structure().eachResidue(function(residue) {
+      var centralAtom = residue.centralAtom();
+      if (centralAtom === null) {
         return;
-      } else if (!atom.residue().isAminoacid()) {
-        return;
-      }
-      var pos = atom.pos();
+      } 
+      var pos = centralAtom.pos();
       X.push([pos[0], pos[1], pos[2]]);
     });
   });
