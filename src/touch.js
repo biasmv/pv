@@ -42,7 +42,7 @@ function TouchHandler(element, viewer, cam) {
 // deltaRotation and deltaCenter attached than can be used to control the 
 // camera.
 TouchHandler.prototype._extractEventAttributes = function(previousState, event) {
-  var state = {}
+  var state = {};
   state.center = getCenter(event.targetTouches);
   state.pointers = [];
   for (var i = 0; i < event.targetTouches.length; ++i) {
@@ -90,7 +90,7 @@ TouchHandler.prototype._touchMove = function(event) {
     // scale pan amount by current zoom value. This increases the camera
     // shift when far away from the image center. 
     this._cam.panXY(newState.deltaCenter.x * 0.001 * this._cam.zoom(),
-                    newState.deltaCenter.y * 0.001 * this._cam.zoom())
+                    newState.deltaCenter.y * 0.001 * this._cam.zoom());
   }
   var deltaZRotation =  - newState.deltaRotation;
   this._cam.rotateZ(deltaZRotation);
