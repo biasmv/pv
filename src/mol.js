@@ -418,6 +418,25 @@ MolBase.prototype.assembly = function(id) {
   return null;
 };
 
+MolBase.prototype.chainsByName = function(chainNames) {
+  // build a map to avoid O(n^2) behavior. That's overkill when the list 
+  // of names is short but should give better performance when requesting
+  // multiple chains.
+  var chainMap = { };
+  var chains = this.chains();
+  for (var i = 0; i < chains.length; ++i) {
+    chainMap[chains[i].name()] = chains[i];
+  }
+  var filteredChains = [];
+  for (var j = 0; j < chainNames.length; ++j) {
+    var filteredChain = chainMap[chainNames[j]];
+    if (filteredChain !== undefined) {
+      filteredChains.push(filteredChain);
+    }
+  }
+  return filteredChains;
+};
+
 
 function ChainBase() {
 
@@ -433,6 +452,7 @@ ChainBase.prototype.eachAtom = function(callback, index) {
   }
   return index;
 };
+
 
 ChainBase.prototype.atomCount = function() {
   var count = 0;
@@ -618,7 +638,7 @@ Mol.prototype.containsResidue = function(residue) {
   return residue.full().structure() === this;
 };
 
-Mol.prototype.chain = function(name) { 
+Mol.prototype.chainByName = function(name) { 
   for (var i = 0; i < this._chains.length; ++i) {
     if (this._chains[i].name() === name) {
       return this._chains[i];
@@ -626,6 +646,9 @@ Mol.prototype.chain = function(name) {
   }
   return null;
 };
+
+// for backwards compatibility
+Mol.prototype.chain = Mol.prototype.chainByName;
 
 Mol.prototype.nextAtomIndex = function() {
   var nextIndex = this._nextAtomIndex; 

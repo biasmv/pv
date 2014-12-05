@@ -36,3 +36,23 @@ The displaying of molecules is handled by :class:`BaseGeom`, and subclasses. The
       with a :class:`~mol.Mol`, or :class:`~mol.MolView`
   :param color: array of length 4 into which the color is placed
   :returns: the array holding the color, or null if the atom is not part of the rendered geometry
+
+.. function:: BaseGeom.eachCentralAtom(callback) 
+  
+  Helper function for looping over all visible central atoms, including symmetry related ones
+
+  This function invokes the callback function for all symmetry copies of every visible central atom contained in this object. The callback takes two arguments, the first being the central atom, the second the atom position with the symmetry-operator's transformation matrix applied. Note that the transformed atom position is only to be used inside the callback. If you want to store the transformed position, or modify it, a copy must be obtained first.
+
+  **Example:**
+
+  .. code-block:: javascript
+
+    var obj = viewer.get('my.object');
+    var sum = vec3.create();
+    var count = 0;
+    obj.eachCentralAtom(function(atom, transformedPos) {
+      count += 1;
+      vec3.add(sum, sum, transformedPos);
+    });
+    var center = vec3.scale(sum, sum, 1.0/count);
+    viewer.setCenter(center);
