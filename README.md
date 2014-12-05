@@ -67,6 +67,7 @@ Changelog
 ### New Since latest Release
 
 - Basic support RNA/DNA rendering for all render modes
+- Multi-touch support for iOS and Android (with contributions by @kozmad, @lordvlad)
 
 ### New in Version 1.3.1
 

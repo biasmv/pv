@@ -19,16 +19,17 @@
 // DEALINGS IN THE SOFTWARE.
 
 var pv = (function(){
-  "use strict";
 
-  // FIXME: Browser vendors tend to block quite a few graphic cards. Instead
-  //   of showing this very generic message, implement a per-browser
-  //   diagnostic. For example, when we detect that we are running a recent
-  //   Chrome and Webgl is not available, we should say that the user is
-  //   supposed to check chrome://gpu for details on why WebGL is not
-  //   available. Similar troubleshooting pages are available for other
-  //   browsers.
-  var WEBGL_NOT_SUPPORTED = '\
+"use strict";
+
+// FIXME: Browser vendors tend to block quite a few graphic cards. Instead
+//   of showing this very generic message, implement a per-browser
+//   diagnostic. For example, when we detect that we are running a recent
+//   Chrome and Webgl is not available, we should say that the user is
+//   supposed to check chrome://gpu for details on why WebGL is not
+//   available. Similar troubleshooting pages are available for other
+//   browsers.
+var WEBGL_NOT_SUPPORTED = '\
 <div style="vertical-align:middle; text-align:center;">\
 <h1>Oink</h1><p>Your browser does not support WebGL. \
 You might want to try Chrome, Firefox, IE 11, or newer versions of Safari\
@@ -38,11 +39,6 @@ graphic card might be blocked. Check the browser documentation for details\
 </p>\
 </div>';
 
-  function bind(obj, fn) {
-    return function() {
-      return fn.apply(obj, arguments);
-  };
-}
 
 
 var requestAnimFrame = (function(){
@@ -50,7 +46,7 @@ var requestAnimFrame = (function(){
          window.mozRequestAnimationFrame ||
          function(callback) {
            window.setTimeout(callback, 1000 / 60);
-          };
+         };
 })();
 
 function slabModeToStrategy(mode, options) {
@@ -417,6 +413,7 @@ PV.prototype._initPV = function() {
                             false);
   this._canvas.addEventListener('mousedown', bind(this, this._mouseDown),
                             false);
+  this._touchHandler = new TouchHandler(this._canvas, this, this._cam);
 
   return true;
 };
