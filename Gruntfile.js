@@ -20,6 +20,7 @@ SOURCE_FILES = [
   'src/framebuffer.js',
   'src/slab.js',
   'src/animation.js',
+  'src/touch.js',
   'src/viewer.js'
 ];
 

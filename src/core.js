@@ -27,6 +27,12 @@ exports.derive = function(subclass, baseclass) {
   }
 };
 
+exports.bind = function (obj, fn) {
+    return function() {
+      return fn.apply(obj, arguments);
+  };
+};
+
 exports.copy = function(src) {
   src = src || {};
   var cloned = {};

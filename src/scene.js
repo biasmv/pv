@@ -181,6 +181,51 @@ BaseGeom.prototype.destroy = function() {
   }
 };
 
+function eachCentralAtomAsym(structure, callback) {
+  structure.eachResidue(function(residue) {
+    var centralAtom = residue.centralAtom();
+    if (centralAtom === null) {
+      return;
+    }
+    callback(centralAtom, centralAtom.pos());
+  });
+}
+
+var eachCentralAtomSym = (function() {
+  var transformedPos = vec3.create();
+  return function(structure, gens, callback) {
+    for (var i = 0; i < gens.length; ++i) {
+      var gen = gens[i];
+      var chains = structure.chainsByName(gen.chains());
+      for (var j = 0; j < gen.matrices().length; ++j) {
+        var matrix = gen.matrix(j);
+        for (var k = 0; k < chains.length; ++k) {
+          var chain = chains[k];
+          for (var l = 0; l < chain.residues().length; ++l) {
+            var centralAtom = chain.residues()[l].centralAtom();
+            if (centralAtom === null) {
+              continue;
+            }
+            vec3.transformMat4(transformedPos, centralAtom.pos(), matrix);
+            callback(centralAtom, transformedPos);
+          }
+        }
+      }
+    }
+  };
+})();
+
+BaseGeom.prototype.eachCentralAtom = function(callback) {
+  var go = this;
+  var structure = go.structure();
+  var assembly = structure.assembly(go.showRelated());
+  // in case there is no assembly, just loop over all the atoms contained
+  // in the structure and invoke the callback as is
+  if (assembly === null) {
+    return eachCentralAtomAsym(structure, callback);
+  }
+  return eachCentralAtomSym(structure, assembly.generators(), callback);
+};
 
 BaseGeom.prototype.addVertAssoc = function(assoc) {
   this._vertAssocs.push(assoc);

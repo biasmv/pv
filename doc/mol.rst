@@ -188,6 +188,22 @@ The Mol (and MolView) API
 
   :returns: the newly created :class:`mol.ChainView` instance
 
+
+.. function:: mol.Mol.chain(name)
+.. function:: mol.MolView.chain(name)
+
+  Alias for :func:`mol.Mol.chainByName`
+
+.. function:: mol.Mol.chainByName(name)
+.. function:: mol.MolView.chainByName(name)
+
+  Returns the chain with the given name. If no such chain exists, null is returned.
+
+.. function:: mol.Mol.chainsByName(names)
+.. function:: mol.MolView.chainsByName(names)
+
+  Returns the list of chains matching the specified names. In case a chain does not exist (or is not part of the view), the chain name is ignored, as if it were not specified.
+
 .. function:: io.pdb(pdbData)
 
   Loads a structure from the *pdbData* string and returns it. In case multiple models are present in the file (as designated by MODEL/ENDMDL), only the first is read. The following record types are handled:
