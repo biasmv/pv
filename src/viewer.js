@@ -307,7 +307,7 @@ PV.prototype._initGL = function() {
 function shouldUseHighPrecision() {
   // high precision for shaders is only required on iOS, all the other browsers 
   // are doing just fine with mediump.
-  return /(iPad|iPhone|iPod)/g.test( navigator.userAgent );
+  return (/(iPad|iPhone|iPod)/g).test( navigator.userAgent );
 }
 
 PV.prototype._shaderFromString = function(shader_code, type) {
