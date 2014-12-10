@@ -24,9 +24,15 @@
 
 exports.shaders = {};
 
+// NOTE: The shader code below use the placeholder ${PRECISION} variable 
+// for the shader precision. This values is replaced before compiling 
+// the shader program with highp on iOS and mediump on all other devices. 
+// This is required, because the outline shaders do not work well on iOS 
+// with mediump, but some android devices do not support highp.
+
 // line fragment shader, essentially uses the vertColor and adds some fog.
 exports.shaders.LINES_FS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 \n\
 varying vec4 vertColor;\n\
 varying vec3 vertNormal;\n\
@@ -48,7 +54,7 @@ void main(void) {\n\
 
 // hemilight fragment shader
 exports.shaders.HEMILIGHT_FS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 \n\
 varying vec4 vertColor;\n\
 varying vec3 vertNormal;\n\
@@ -90,7 +96,7 @@ void main(void) {\n\
 
 // outline shader. mixes outlineColor with fogColor
 exports.shaders.OUTLINE_FS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 varying float vertAlpha;\n\
 \n\
 uniform vec3 outlineColor;\n\
@@ -113,7 +119,7 @@ void main() {\n\
 // outline vertex shader. Expands vertices along the (in-screen) xy
 // components of the normals.
 exports.shaders.OUTLINE_VS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 \n\
 attribute vec3 attrPos;\n\
 attribute vec3 attrNormal;\n\
@@ -132,7 +138,7 @@ void main(void) {\n\
 }';
 
 exports.shaders.TEXT_VS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 \n\
 attribute vec3 attrCenter;\n\
 attribute vec2 attrCorner;\n\
@@ -148,7 +154,7 @@ void main() { \n\
 }';
 
 exports.shaders.TEXT_FS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 \n\
 uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
@@ -161,7 +167,7 @@ void main() { \n\
 }';
 
 exports.shaders.SELECT_VS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
 attribute vec3 attrPos;\n\
@@ -175,7 +181,7 @@ void main(void) {\n\
 }';
 
 exports.shaders.SELECT_FS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 \n\
 varying float objId;\n\
 uniform int symId;\n\

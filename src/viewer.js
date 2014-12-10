@@ -304,6 +304,12 @@ PV.prototype._initGL = function() {
   return true;
 };
 
+function shouldUseHighPrecision() {
+  // high precision for shaders is only required on iOS, all the other browsers 
+  // are doing just fine with mediump.
+  return /(iPad|iPhone|iPod)/g.test( navigator.userAgent );
+}
+
 PV.prototype._shaderFromString = function(shader_code, type) {
   var shader;
   if (type === 'fragment') {
@@ -314,7 +320,12 @@ PV.prototype._shaderFromString = function(shader_code, type) {
     console.error('could not determine type for shader');
     return null;
   }
-  this._gl.shaderSource(shader, shader_code);
+  
+  // replace the precision placeholder in shader source code with appropriate
+  // value. See comment on top of shaders.js for details.
+  var prec = shouldUseHighPrecision() ? 'highp' : 'mediump';
+  var code = shader_code.replace('${PRECISION}', prec);
+  this._gl.shaderSource(shader, code);
   this._gl.compileShader(shader);
   if (!this._gl.getShaderParameter(shader, this._gl.COMPILE_STATUS)) {
     console.error(this._gl.getShaderInfoLog(shader));
