@@ -1,5 +1,6 @@
 var structure;
-var cameraSamples = hammersleySequence(16);
+//var cameraSamples = hammersleySequence(16);
+var rotationSamples = createRandomRotations(4); 
 
 function lines() {
   viewer.clear();
@@ -157,46 +158,77 @@ function hammersleySequence(n) {
     t = 2 * t - 1;
     var theta = (k + 0.5) / n;  // theta in [0,1]
     theta *= 2 * Math.PI;
-    var phi = Math.acos(t);
-            
-    points.push({'theta': theta, 'phi':phi});
+    var st = Math.sqrt(1 - t*t);
+    //var phi = Math.acos(t);
+    var vec = vec3.fromValues(st * Math.cos(theta), st*Math.sin(theta), t);
+    points.push(vec);
     
   }
   return points;
 }
+function createRandomRotations(n) {
+  var twoPI = 2 * Math.PI;
+  var ret = [];
+  for (var i = 0; i < n; ++i) {
+    var u1 = Math.random();
+    var u2 = Math.random();
+    var u3 = Math.random();
+    var st = Math.sqrt(1-u1);
+    
+    var q = quat.fromValues(st*Math.sin(twoPI*u2),st*Math.cos(twoPI*u2), Math.sqrt(u1)*Math.sin(twoPI*u3), Math.sqrt(u1)*Math.cos(twoPI*u3));
+    var auxRotation = mat4.create();
+    mat4.fromQuat(auxRotation,q);
+    ret.push(auxRotation);
+  }
+  return(ret);
+}
+
 function viewMode(mode) {
   
-  var rotation = mat4.create();
+  var rotation = mat4.clone(viewer._cam.rotation());
+  var center = vec3.clone(viewer._cam.center());
+  var zoom = viewer._cam.zoom();
+  
+  var cameraPosition = function(rotation, center, zoom) {
+    var currentCameraPosition = vec3.fromValues(rotation[2], rotation[6], rotation[10]);
+    vec3.normalize(currentCameraPosition, currentCameraPosition);
+    vec3.scaleAndAdd(currentCameraPosition, center, currentCameraPosition, zoom);
+    return(currentCameraPosition);
+  }
+  
+  var spherical = function(point) {
+    var r = vec3.length(point);
+    var theta = Math.atan(point[1]/point[2]);
+    var phi = Math.acos(point[2]/r);
+    return([r, theta, phi]);
+  }
   
   if (mode === 'entropy') {
-       
-    rotation = computePCA();
-    var maxI = viewer.computeEntropy(rotation);
     
-    for (var k = 0; k < cameraSamples.length; ++k) {
+    var samples = rotationSamples.slice(0);
+    
+    var rotation = computePCA();
+    samples.push(rotation);
+    
+    // rotate by 180 degrees around the vertical axes
+    var auxRotation = mat4.create();
+    mat4.rotate(auxRotation, rotation, Math.PI, [rotation[1], rotation[5], rotation[9]]);
+    samples.push(auxRotation);
+    
+    // now sample all rotations
+    var maxI = 0;
+    for (var k = 0; k < samples.length; ++k) {
        
-      var pos = cameraSamples[k];
-      
-      // create auxiliary rotation for the new camera position
-      var auxRotation = mat4.create();
-      mat4.rotateY(auxRotation, auxRotation, pos.theta);
-      mat4.rotateZ(auxRotation, auxRotation, pos.phi);
+      auxRotation = samples[k];
       
       var auxI = viewer.computeEntropy(auxRotation);
       if (auxI > maxI) {
         rotation = auxRotation;
         maxI = auxI;
+        console.log(k);
       }
+      
     }
-    
-//  uncomment this to see the sampling positions
-//  var u = Math.cos(pos.phi);
-//  var st = Math.sqrt(1 - u * u);
-//  var x = st * Math.cos(pos.theta); 
-//  var y = st * Math.sin(pos.theta); 
-//  var center = viewer._cam.center();
-//  var zoom = viewer._cam.zoom();
-//  viewer.label(x, 'X', [zoom*x+center[0],zoom*y+center[1],zoom*u+center[2]]);
   
   } else if (mode === 'pca') {
     
@@ -211,12 +243,7 @@ function computePCA() {
   var X = [];
 
   viewer.forEach(function(obj) {
-    obj.structure().eachResidue(function(residue) {
-      var centralAtom = residue.centralAtom();
-      if (centralAtom === null) {
-        return;
-      } 
-      var pos = centralAtom.pos();
+    obj.eachCentralAtom(function(atom, pos) {
       X.push([pos[0], pos[1], pos[2]]);
     });
   });
@@ -236,6 +263,7 @@ function computePCA() {
   var right = V[0];
   var up = V[1];
   var view = V[2];
+  
   var m = mat4.fromValues(right[0], right[1], right[2], 0,
                           up[0], up[1], up[2], 0,
                           view[0], view[1], view[2], 0,
