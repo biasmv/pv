@@ -272,8 +272,8 @@ function computePCA() {
   var r = mat3.create();
   mat3.fromMat4(r, m);
   if (mat3.determinant(r) < 0) {
-      m = mat4.fromValues(right[0], right[1], right[2], 0,
-                          up[0], up[1], up[2], 0,
+      m = mat4.fromValues(-right[0], -right[1], -right[2], 0,
+                          -up[0], -up[1], -up[2], 0,
                           -view[0], -view[1], -view[2], 0,
                           0, 0, 0, 1);
   }
