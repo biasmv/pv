@@ -21,11 +21,18 @@
 (function(exports) {
 "use strict";
 
-exports.derive = function(subclass, baseclass) {
+exports.derive = function(subclass, baseclass, extensions) {
   for (var prop in baseclass.prototype) {
     subclass.prototype[prop] = baseclass.prototype[prop];
   }
+  if (extensions === undefined) {
+    return;
+  }
+  for (var ext in extensions) {
+    subclass.prototype[ext] = extensions[ext];
+  }
 };
+
 
 exports.bind = function (obj, fn) {
     return function() {

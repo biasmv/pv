@@ -116,29 +116,32 @@ function Gradient(colors, stops) {
   this._stops = stops;
 }
 
-Gradient.prototype.colorAt = function(out, value) {
-  if (value <= this._stops[0]) {
-    return vec4.copy(out, this._colors[0]);
-  }
-  if (value >= this._stops[this._stops.length-1]) {
-    return vec4.copy(out, this._colors[this._stops.length-1]);
-  }
-  // could use a binary search here, but since most gradients
-  // have a really small number of stops, that's not going to
-  // help much.
-  var lowerIndex = 0;
-  for (var i = 0; i < this._stops.length; ++i) {
-    if (this._stops[i] > value) {
-      break;
+Gradient.prototype = {
+  colorAt : function(out, value) {
+    if (value <= this._stops[0]) {
+      return vec4.copy(out, this._colors[0]);
     }
-    lowerIndex = i;
+    if (value >= this._stops[this._stops.length-1]) {
+      return vec4.copy(out, this._colors[this._stops.length-1]);
+    }
+    // could use a binary search here, but since most gradients
+    // have a really small number of stops, that's not going to
+    // help much.
+    var lowerIndex = 0;
+    for (var i = 0; i < this._stops.length; ++i) {
+      if (this._stops[i] > value) {
+        break;
+      }
+      lowerIndex = i;
+    }
+    var upperIndex = lowerIndex+1;
+    var lowerStop = this._stops[lowerIndex];
+    var upperStop = this._stops[upperIndex];
+    var t = (value - lowerStop)/ (upperStop - lowerStop);
+    return rgb.mix(out, this._colors[upperIndex], this._colors[lowerIndex], t);
   }
-  var upperIndex = lowerIndex+1;
-  var lowerStop = this._stops[lowerIndex];
-  var upperStop = this._stops[upperIndex];
-  var t = (value - lowerStop)/ (upperStop - lowerStop);
-  return rgb.mix(out, this._colors[upperIndex], this._colors[lowerIndex], t);
 };
+
 var GRADIENTS = { };
 // creates a new gradient from the given set of colors. 
 // 
@@ -176,16 +179,17 @@ function ColorOp(colorFunc, beginFunc, endFunc) {
   this._endFunc = endFunc;
 }
 
-ColorOp.prototype.begin = function(obj) {
-  if (this._beginFunc) {
-    this._beginFunc(obj);
-  }
-};
+ColorOp.prototype = {
+  begin : function(obj) {
+    if (this._beginFunc) {
+      this._beginFunc(obj);
+    }
+  },
 
-
-ColorOp.prototype.end = function(obj) {
-  if (this._endFunc) {
-    this._endFunc(obj);
+  end : function(obj) {
+    if (this._endFunc) {
+      this._endFunc(obj);
+    }
   }
 };
 

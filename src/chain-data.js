@@ -25,38 +25,38 @@
 // specific attributes and functionality to the IndexedVertexArray and 
 // VertexArray classes.
 function LineChainData(chain, gl, numVerts, float32Allocator) {
-  VertexArray.prototype.constructor.call(this, gl, numVerts, float32Allocator);
+  VertexArray.call(this, gl, numVerts, float32Allocator);
   this._chain = chain;
 }
 
-derive(LineChainData, VertexArray);
+derive(LineChainData, VertexArray, {
+  chain : function() { return this._chain; },
 
-LineChainData.prototype.chain = function() { return this._chain; };
-
+  drawSymmetryRelated : function(cam, shader, transforms) {
+    this.bind(shader);
+    for (var i = 0; i < transforms.length; ++i) {
+      cam.bind(shader, transforms[i]);
+      this._gl.uniform1i(shader.symId, i);
+      this.draw();
+    }
+    this.releaseAttribs(shader);
+  }
+});
 
 function MeshChainData(chain, gl, numVerts, numIndices, float32Allocator, 
                        uint16Allocator) {
-  IndexedVertexArray.prototype.constructor.call(this, gl, numVerts, numIndices, 
-                                                float32Allocator, 
-                                                uint16Allocator);
+  IndexedVertexArray.call(this, gl, numVerts, numIndices, 
+                          float32Allocator, uint16Allocator);
   this._chain = chain;
 }
 
-MeshChainData.prototype.chain = function() { return this._chain; };
-
-LineChainData.prototype.drawSymmetryRelated = function(cam, shader, transforms) {
-  this.bind(shader);
-  for (var i = 0; i < transforms.length; ++i) {
-    cam.bind(shader, transforms[i]);
-    this._gl.uniform1i(shader.symId, i);
-    this.draw();
-  }
-  this.releaseAttribs(shader);
-};
-
-derive(MeshChainData, IndexedVertexArray);
+derive(MeshChainData, IndexedVertexArray, {
+  chain : function() { return this._chain; }
+});
 
 MeshChainData.prototype.drawSymmetryRelated = LineChainData.prototype.drawSymmetryRelated;
+
+
 exports.LineChainData = LineChainData;
 exports.MeshChainData = MeshChainData;
 

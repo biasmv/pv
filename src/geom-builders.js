@@ -59,34 +59,36 @@ function ProtoSphere(stacks, arcs) {
   }
 }
 
-ProtoSphere.prototype.addTransformed = (function() {
+ProtoSphere.prototype = {
+  addTransformed : (function() {
 
-    var pos = vec3.create(), normal = vec3.create();
+      var pos = vec3.create(), normal = vec3.create();
 
-    return function(va, center, radius, color, objId) {
-      var baseIndex = va.numVerts();
-      for (var i = 0; i < this._stacks * this._arcs; ++i) {
-        vec3.set(normal, this._verts[3 * i], this._verts[3 * i + 1],
-                this._verts[3 * i + 2]);
-        vec3.copy(pos, normal);
-        vec3.scale(pos, pos, radius);
-        vec3.add(pos, pos, center);
-        va.addVertex(pos, normal, color, objId);
-      }
-      for (i = 0; i < this._indices.length / 3; ++i) {
-        va.addTriangle(baseIndex + this._indices[i * 3],
-                       baseIndex + this._indices[i * 3 + 1],
-                       baseIndex + this._indices[i * 3 + 2]);
-      }
-  };
-})();
+      return function(va, center, radius, color, objId) {
+        var baseIndex = va.numVerts();
+        for (var i = 0; i < this._stacks * this._arcs; ++i) {
+          vec3.set(normal, this._verts[3 * i], this._verts[3 * i + 1],
+                  this._verts[3 * i + 2]);
+          vec3.copy(pos, normal);
+          vec3.scale(pos, pos, radius);
+          vec3.add(pos, pos, center);
+          va.addVertex(pos, normal, color, objId);
+        }
+        for (i = 0; i < this._indices.length / 3; ++i) {
+          va.addTriangle(baseIndex + this._indices[i * 3],
+                        baseIndex + this._indices[i * 3 + 1],
+                        baseIndex + this._indices[i * 3 + 2]);
+        }
+    };
+  })(),
 
-ProtoSphere.prototype.numIndices = function() {
-  return this._indices.length;
-};
+  numIndices : function() {
+    return this._indices.length;
+  },
 
-ProtoSphere.prototype.numVerts = function() {
-  return this._verts.length / 3;
+  numVerts : function() {
+    return this._verts.length / 3;
+  }
 };
 
 // A tube profile is a cross-section of a tube, e.g. a circle or a 'flat'
@@ -125,42 +127,44 @@ function TubeProfile(points, num, strength) {
   }
 }
 
-TubeProfile.prototype.addTransformed = (function() {
-  var pos = vec3.create(), normal = vec3.create();
-  return function(vertArray, center, radius, rotation, color, first, offset, objId) {
-    var baseIndex = vertArray.numVerts() - this._arcs;
-    for (var i = 0; i < this._arcs; ++i) {
-      vec3.set(pos, radius * this._verts[3 * i], 
-               radius * this._verts[3 * i + 1], 0.0);
-      vec3.transformMat3(pos, pos, rotation);
-      vec3.add(pos, pos, center);
-      vec3.set(normal, this._normals[3 * i], this._normals[3 * i + 1], 0.0);
-      vec3.transformMat3(normal, normal, rotation);
-      vertArray.addVertex(pos, normal, color, objId);
-    }
-    if (first) {
-      return;
-    }
-    if (offset === 0) {
-      // that's what happens most of the time, thus is has been optimized.
-      for (i = 0; i < this._indices.length / 3; ++i) {
-        vertArray.addTriangle(baseIndex + this._indices[i * 3],
-                              baseIndex + this._indices[i * 3 + 1],
-                              baseIndex + this._indices[i * 3 + 2]);
+TubeProfile.prototype = {
+  addTransformed : (function() {
+    var pos = vec3.create(), normal = vec3.create();
+    return function(vertArray, center, radius, rotation, color, first, offset, objId) {
+      var baseIndex = vertArray.numVerts() - this._arcs;
+      for (var i = 0; i < this._arcs; ++i) {
+        vec3.set(pos, radius * this._verts[3 * i], 
+                radius * this._verts[3 * i + 1], 0.0);
+        vec3.transformMat3(pos, pos, rotation);
+        vec3.add(pos, pos, center);
+        vec3.set(normal, this._normals[3 * i], this._normals[3 * i + 1], 0.0);
+        vec3.transformMat3(normal, normal, rotation);
+        vertArray.addVertex(pos, normal, color, objId);
       }
-      return;
-    }
-    for (i = 0; i < this._arcs; ++i) {
-      vertArray.addTriangle(baseIndex + ((i + offset) % this._arcs),
-                            baseIndex + i + this._arcs,
-                            baseIndex + ((i + 1) % this._arcs) + this._arcs);
-      vertArray.addTriangle(baseIndex + (i + offset) % this._arcs,
-                            baseIndex + ((i + 1) % this._arcs) + this._arcs,
-                            baseIndex + ((i + 1 + offset) % this._arcs));
-    }
+      if (first) {
+        return;
+      }
+      if (offset === 0) {
+        // that's what happens most of the time, thus is has been optimized.
+        for (i = 0; i < this._indices.length / 3; ++i) {
+          vertArray.addTriangle(baseIndex + this._indices[i * 3],
+                                baseIndex + this._indices[i * 3 + 1],
+                                baseIndex + this._indices[i * 3 + 2]);
+        }
+        return;
+      }
+      for (i = 0; i < this._arcs; ++i) {
+        vertArray.addTriangle(baseIndex + ((i + offset) % this._arcs),
+                              baseIndex + i + this._arcs,
+                              baseIndex + ((i + 1) % this._arcs) + this._arcs);
+        vertArray.addTriangle(baseIndex + (i + offset) % this._arcs,
+                              baseIndex + ((i + 1) % this._arcs) + this._arcs,
+                              baseIndex + ((i + 1 + offset) % this._arcs));
+      }
 
-  };
-})();
+    };
+  })()
+};
 
 function ProtoCylinder(arcs) {
   this._arcs = arcs;
@@ -193,37 +197,39 @@ function ProtoCylinder(arcs) {
   }
 }
 
-ProtoCylinder.prototype.numVerts = function() {
-  return this._verts.length / 3;
-};
+ProtoCylinder.prototype = {
+  numVerts : function() {
+    return this._verts.length / 3;
+  },
 
-ProtoCylinder.prototype.numIndices = function() {
-  return this._indices.length;
-};
+  numIndices : function() {
+    return this._indices.length;
+  },
 
-ProtoCylinder.prototype.addTransformed = (function() {
-  var pos = vec3.create(), normal = vec3.create();
-  return function(va, center, length, radius, rotation, colorOne, colorTwo,
-                  idOne, idTwo) {
-    var baseIndex = va.numVerts();
-    for (var i = 0; i < 2 * this._arcs; ++i) {
-      vec3.set(pos, radius * this._verts[3 * i], radius * this._verts[3 * i + 1],
-              length * this._verts[3 * i + 2]);
-      vec3.transformMat3(pos, pos, rotation);
-      vec3.add(pos, pos, center);
-      vec3.set(normal, this._normals[3 * i], this._normals[3 * i + 1],
-              this._normals[3 * i + 2]);
-      vec3.transformMat3(normal, normal, rotation);
-      var objId = i < this._arcs ? idOne : idTwo;
-      va.addVertex(pos, normal, i < this._arcs ? colorOne : colorTwo, objId);
-    }
-    for (i = 0; i < this._indices.length / 3; ++i) {
-      va.addTriangle(baseIndex + this._indices[i * 3],
-                     baseIndex + this._indices[i * 3 + 1],
-                     baseIndex + this._indices[i * 3 + 2]);
-    }
-  };
-})();
+  addTransformed : (function() {
+    var pos = vec3.create(), normal = vec3.create();
+    return function(va, center, length, radius, rotation, colorOne, colorTwo,
+                    idOne, idTwo) {
+      var baseIndex = va.numVerts();
+      for (var i = 0; i < 2 * this._arcs; ++i) {
+        vec3.set(pos, radius * this._verts[3 * i], radius * this._verts[3 * i + 1],
+                length * this._verts[3 * i + 2]);
+        vec3.transformMat3(pos, pos, rotation);
+        vec3.add(pos, pos, center);
+        vec3.set(normal, this._normals[3 * i], this._normals[3 * i + 1],
+                this._normals[3 * i + 2]);
+        vec3.transformMat3(normal, normal, rotation);
+        var objId = i < this._arcs ? idOne : idTwo;
+        va.addVertex(pos, normal, i < this._arcs ? colorOne : colorTwo, objId);
+      }
+      for (i = 0; i < this._indices.length / 3; ++i) {
+        va.addTriangle(baseIndex + this._indices[i * 3],
+                      baseIndex + this._indices[i * 3 + 1],
+                      baseIndex + this._indices[i * 3 + 2]);
+      }
+    };
+  })()
+};
 
 exports.TubeProfile = TubeProfile;
 exports.ProtoSphere = ProtoSphere;
