@@ -1,6 +1,5 @@
 var structure;
-//var cameraSamples = hammersleySequence(16);
-var rotationSamples = createRandomRotations(4); 
+var rotationSamples = createRandomRotations(16); 
 
 function lines() {
   viewer.clear();
@@ -144,28 +143,6 @@ function pca() {
   viewMode('pca');
   viewer.requestRedraw();
 };
-function hammersleySequence(n) {
-  var points = [];
-  var t;
-  for (var k = 0; k < n; ++k) {
-    t = 0;
-    var kk;
-    for (var p = 0.5, kk=k; kk; p*=0.5, kk>>=1) {
-      if (kk & 1) {
-        t += p;
-      }
-    }
-    t = 2 * t - 1;
-    var theta = (k + 0.5) / n;  // theta in [0,1]
-    theta *= 2 * Math.PI;
-    var st = Math.sqrt(1 - t*t);
-    //var phi = Math.acos(t);
-    var vec = vec3.fromValues(st * Math.cos(theta), st*Math.sin(theta), t);
-    points.push(vec);
-    
-  }
-  return points;
-}
 function createRandomRotations(n) {
   var twoPI = 2 * Math.PI;
   var ret = [];
