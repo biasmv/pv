@@ -904,8 +904,8 @@ PV.prototype.computeEntropy = function(rotation) {
     pixels = pixels.data;
   }
 
-  var e = 0;
-  var npix = [];
+  
+  var npix = {};
   for (var p = 0; p < size; ++p) {
     var i = p * 4;
     if (pixels[i + 3] === 0) {
@@ -922,11 +922,14 @@ PV.prototype.computeEntropy = function(rotation) {
       }
     }
   }
-
-  npix.forEach(function(N) {
-    var tmp = N/size;
-    e += tmp * Math.log(tmp);
-  });
+  
+  var e = 0;
+  for (var property in npix) {
+    if (npix.hasOwnProperty(property)) {
+      var tmp = npix[property]/size;
+      e += tmp * Math.log(tmp);
+    } 
+  }
 
   this._cam.setRotation(currentRotation);
   return -e;
