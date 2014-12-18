@@ -1149,9 +1149,17 @@ derive(ResidueView, ResidueBase, {
 
   containsResidue : function(residue) {
     return this._residue.full() === residue.full();
+  },
+  isAminoacid : function() { 
+    return this._residue.isAminoacid(); 
+  },
+  isNucleotide : function() { 
+    return this._residue.isNucleotide(); 
+  },
+  isWater : function() { 
+    return this._residue.isWater(); 
   }
 });
-
 
 
 function AtomView(resView, atom) {
