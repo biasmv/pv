@@ -908,9 +908,9 @@ PV.prototype = {
     this.requestRedraw();
   },
 
-  label : function(name, text, pos) {
+  label : function(name, text, pos, options) {
     var label = new TextLabel(this._gl, this._textureCanvas, 
-                              this._2dcontext, pos, text);
+                              this._2dcontext, pos, text, options);
     this.add(name, label);
     return label;
   },
