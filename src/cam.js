@@ -119,6 +119,14 @@ Cam.prototype = {
     this._height = height;
   },
 
+  viewportWidth : function() {
+    return this._width;
+  },
+  viewportHeight : function() {
+    return this._height;
+  },
+
+
   setCenter : function(point) {
     this._updateMat = true;
     vec3.copy(this._center, point);

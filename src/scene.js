@@ -612,8 +612,16 @@ derive(MeshGeom, BaseGeom, {
 
 });
 
-function TextLabel(gl, canvas, context, pos, text) {
+function TextLabel(gl, canvas, context, pos, text, options) {
   SceneNode.call(this, gl);
+  var opts = options || {};
+  this._options = {}
+  this._options.fillStyle = opts.fillStyle || '#000';
+  this._options.backgroundAlpha = opts.backgroundAlpha || 0.0;
+  this._options.fontSize = opts.fontSize || 24;
+  this._options.font = opts.font || 'Verdana';
+  this._options.fontStyle = opts.fontStyle || 'normal';
+  this._options.fontColor = opts.fontColor || '#000'
   this._order = 100;
   this._pos = pos;
   this._interleavedBuffer = this._gl.createBuffer();
@@ -621,8 +629,8 @@ function TextLabel(gl, canvas, context, pos, text) {
 
   this._prepareText(canvas, context, text);
 
-  var halfWidth = this._width / 2;
-  var halfHeight = this._height / 2;
+  var halfWidth = 0.5;
+  var halfHeight = 0.5;
   this._interleavedData[0] = pos[0];
   this._interleavedData[1] = pos[1];
   this._interleavedData[2] = pos[2];
@@ -679,10 +687,12 @@ derive(TextLabel, SceneNode, {
 
 
   _setupTextParameters : function(ctx) {
-    ctx.fillStyle = 'black';
+    ctx.fillStyle = this._options.fontColor;
     ctx.textAlign = 'left';
     ctx.textBaseline = 'bottom';
-    ctx.font = '24px Verdana';
+    ctx.font = this._options.fontStyle + ' ' + 
+               this._options.fontSize + 'px '+
+               this._options.font;
   },
 
   _prepareText : function(canvas, ctx, text) {
@@ -691,21 +701,33 @@ derive(TextLabel, SceneNode, {
     var estimatedHeight = 24;
     canvas.width = smallestPowerOfTwo(estimatedWidth);
     canvas.height = smallestPowerOfTwo(estimatedHeight);
-    this._setupTextParameters(ctx);
-    ctx.fillStyle = '#666';
-    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = this._options.fillStyle;
+    ctx.globalAlpha = this._options.backgroundAlpha;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+    this._setupTextParameters(ctx);
     ctx.globalAlpha = 1.0;
-    ctx.fillStyle = 'black';
     ctx.lineWidth = 0.5;
+    ctx.lineStyle = 'none';
     ctx.fillText(text, 0, canvas.height);
     ctx.strokeText(text, 0, canvas.height);
+    /*
+    // use the following code for testing purposes. for optimal visual
+    // results, the pixels of the canvas must match one to one to pixels
+    // in the canvas.
+    ctx.fillStyle='black';
+    for (var i = 0; i < canvas.width; i+=2) {
+      for (var j = 0; j < canvas.height; j+=2) {
+        ctx.fillRect(i + j%2, j, 1, 1);
+      }
+    }
+    */
     this._texture = this._gl.createTexture();
     this._textureFromCanvas(this._texture, canvas);
+    // these two variables give us the use portion of the canvas.
     this._xScale = estimatedWidth / canvas.width;
     this._yScale = estimatedHeight / canvas.height;
-    this._width = estimatedWidth * 0.002;
-    this._height = estimatedHeight * 0.002;
+    this._width = estimatedWidth;
+    this._height = estimatedHeight;
   },
 
   _textureFromCanvas : function(targetTexture, srcCanvas) {
@@ -714,9 +736,9 @@ derive(TextLabel, SceneNode, {
     this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._gl.RGBA,
                         this._gl.UNSIGNED_BYTE, srcCanvas);
     this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER,
-                          this._gl.LINEAR);
+                          this._gl.NEAREST);
     this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER,
-                          this._gl.LINEAR_MIPMAP_LINEAR);
+                          this._gl.NEAREST);
     this._gl.generateMipmap(this._gl.TEXTURE_2D);
     this._gl.bindTexture(this._gl.TEXTURE_2D, null);
   },
@@ -744,10 +766,16 @@ derive(TextLabel, SceneNode, {
     var shader = shaderCatalog.text;
     cam.bind(shader);
     this.bind();
+    var xScale = 2*this._xScale/cam.viewportWidth()
+    var yScale = 2*this._xScale/cam.viewportHeight()
     this._gl.uniform1f(this._gl.getUniformLocation(shader, 'xScale'),
                       this._xScale);
     this._gl.uniform1f(this._gl.getUniformLocation(shader, 'yScale'),
                       this._yScale);
+    this._gl.uniform1f(this._gl.getUniformLocation(shader, 'width'),
+                      2.0*this._width/cam.viewportWidth());
+    this._gl.uniform1f(this._gl.getUniformLocation(shader, 'height'),
+                      2.0*this._height/cam.viewportHeight());
     this._gl.uniform1i(this._gl.getUniformLocation(shader, 'sampler'), 0);
     var vertAttrib = this._gl.getAttribLocation(shader, 'attrCenter');
     this._gl.enableVertexAttribArray(vertAttrib);
