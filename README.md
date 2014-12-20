@@ -68,6 +68,10 @@ Changelog
 
 - Basic support RNA/DNA rendering for all render modes
 - Multi-touch support for iOS and Android (with contributions by @kozmad, @lordvlad)
+- improved visual clarity of text labels
+- use correct line width when manual anti-aliasing is enabled.
+- text labels can now be styled (color, font-family, font-weight, size)
+- reduced file size of minified JavaScript file by a little more than 10%
 
 ### New in Version 1.3.1
 
