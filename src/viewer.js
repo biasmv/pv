@@ -415,6 +415,7 @@ PV.prototype = {
     this._float32Allocator = new PoolAllocator(Float32Array);
     this._uint16Allocator = new PoolAllocator(Uint16Array);
     this._cam = new Cam(this._gl);
+    this._cam.setUpsamplingFactor(this._options.samples);
     this._cam.fog(this._options.fog);
     this._shaderCatalog = {
       hemilight : this._initShader(shaders.HEMILIGHT_VS, shaders.HEMILIGHT_FS),

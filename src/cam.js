@@ -43,6 +43,7 @@ function Cam(gl) {
   this._center = vec3.create();
   this._zoom = 50;
   this._updateMat = true;
+  this._upsamplingFactor = 1;
   this._gl = gl;
   this._currentShader = null;
   this.setViewportSize(gl.viewportWidth, gl.viewportHeight);
@@ -72,6 +73,12 @@ Cam.prototype = {
       this._rotation[15] = 1.0;
     }
     this._updateMat = true;
+  },
+  upsamplingFactor : function() {
+    return this._upsamplingFactor;
+  },
+  setUpsamplingFactor : function(val) {
+    this._upsamplingFactor = val;
   },
 
   // returns the 3 main axes of the current camera rotation

@@ -766,16 +766,15 @@ derive(TextLabel, SceneNode, {
     var shader = shaderCatalog.text;
     cam.bind(shader);
     this.bind();
-    var xScale = 2*this._xScale/cam.viewportWidth()
-    var yScale = 2*this._xScale/cam.viewportHeight()
+    var factor = cam.upsamplingFactor();
     this._gl.uniform1f(this._gl.getUniformLocation(shader, 'xScale'),
                       this._xScale);
     this._gl.uniform1f(this._gl.getUniformLocation(shader, 'yScale'),
                       this._yScale);
     this._gl.uniform1f(this._gl.getUniformLocation(shader, 'width'),
-                      2.0*this._width/cam.viewportWidth());
+                       factor * 2.0*this._width/cam.viewportWidth());
     this._gl.uniform1f(this._gl.getUniformLocation(shader, 'height'),
-                      2.0*this._height/cam.viewportHeight());
+                      factor * 2.0*this._height/cam.viewportHeight());
     this._gl.uniform1i(this._gl.getUniformLocation(shader, 'sampler'), 0);
     var vertAttrib = this._gl.getAttribLocation(shader, 'attrCenter');
     this._gl.enableVertexAttribArray(vertAttrib);
