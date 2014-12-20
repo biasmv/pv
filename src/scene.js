@@ -445,7 +445,7 @@ derive(LineGeom, BaseGeom, {
 
   _drawVertArrays : function(cam, shader, vertArrays, 
                                                 additionalTransforms) {
-    this._gl.lineWidth(this._lineWidth);
+    this._gl.lineWidth(this._lineWidth * cam.upsamplingFactor());
     var i;
     if (additionalTransforms) {
       for (i = 0; i < vertArrays.length; ++i) {
