@@ -524,16 +524,15 @@ PV.prototype = {
 
     this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
     this._gl.viewport(0, 0, this._options.realWidth, this._options.realHeight);
-    this._gl.cullFace(this._gl.FRONT);
     this._gl.enable(this._gl.CULL_FACE);
+    if (this._options.outline) {
+      this._gl.cullFace(this._gl.BACK);
+      this._gl.enable(this._gl.CULL_FACE);
+      this._drawWithPass('outline');
+    }
+    this._gl.cullFace(this._gl.FRONT);
     this._gl.enable(this._gl.BLEND);
     this._drawWithPass('normal');
-    if (!this._options.outline) {
-      return;
-    }
-    this._gl.cullFace(this._gl.BACK);
-    this._gl.enable(this._gl.CULL_FACE);
-    this._drawWithPass('outline');
   },
 
   setCenter : function(center, ms) {
