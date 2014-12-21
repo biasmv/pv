@@ -167,6 +167,7 @@ uniform float yScale;\n\
 varying vec2 vertTex;\n\
 void main() { \n\
   gl_FragColor = texture2D(sampler, vec2(vertTex.x*xScale, vertTex.y*yScale));\n\
+  if (gl_FragColor.a == 0.0) { discard; }\n\
 }';
 
 exports.shaders.SELECT_VS = '\n\
