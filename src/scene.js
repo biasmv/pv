@@ -713,7 +713,7 @@ derive(TextLabel, SceneNode, {
     /*
     // use the following code for testing purposes. for optimal visual
     // results, the pixels of the canvas must match one to one to pixels
-    // in the canvas.
+    // in the 3D scene.
     ctx.fillStyle='black';
     for (var i = 0; i < canvas.width; i+=2) {
       for (var j = 0; j < canvas.height; j+=2) {
@@ -731,27 +731,26 @@ derive(TextLabel, SceneNode, {
   },
 
   _textureFromCanvas : function(targetTexture, srcCanvas) {
-    this._gl.pixelStorei(this._gl.UNPACK_FLIP_Y_WEBGL, true);
-    this._gl.bindTexture(this._gl.TEXTURE_2D, targetTexture);
-    this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._gl.RGBA,
-                        this._gl.UNSIGNED_BYTE, srcCanvas);
-    this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MAG_FILTER,
-                          this._gl.NEAREST);
-    this._gl.texParameteri(this._gl.TEXTURE_2D, this._gl.TEXTURE_MIN_FILTER,
-                          this._gl.NEAREST);
-    this._gl.generateMipmap(this._gl.TEXTURE_2D);
-    this._gl.bindTexture(this._gl.TEXTURE_2D, null);
+    var gl = this._gl;
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.bindTexture(gl.TEXTURE_2D, targetTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, 
+                  gl.UNSIGNED_BYTE, srcCanvas);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.generateMipmap(gl.TEXTURE_2D);
+    gl.bindTexture(gl.TEXTURE_2D, null);
   },
 
   bind : function() {
-    this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this._interleavedBuffer);
-    this._gl.activeTexture(this._gl.TEXTURE0);
-    this._gl.bindTexture(this._gl.TEXTURE_2D, this._texture);
+    var gl = this._gl;
+    gl.bindBuffer(gl.ARRAY_BUFFER, this._interleavedBuffer);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, this._texture);
     if (this._ready) {
       return;
     }
-    this._gl.bufferData(this._gl.ARRAY_BUFFER, this._interleavedData,
-                        this._gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, this._interleavedData, gl.STATIC_DRAW);
     this._ready = true;
   },
 
@@ -766,30 +765,27 @@ derive(TextLabel, SceneNode, {
     var shader = shaderCatalog.text;
     cam.bind(shader);
     this.bind();
+    var gl = this._gl;
     var factor = cam.upsamplingFactor();
-    this._gl.uniform1f(this._gl.getUniformLocation(shader, 'xScale'),
-                      this._xScale);
-    this._gl.uniform1f(this._gl.getUniformLocation(shader, 'yScale'),
-                      this._yScale);
-    this._gl.uniform1f(this._gl.getUniformLocation(shader, 'width'),
-                       factor * 2.0*this._width/cam.viewportWidth());
-    this._gl.uniform1f(this._gl.getUniformLocation(shader, 'height'),
-                      factor * 2.0*this._height/cam.viewportHeight());
-    this._gl.uniform1i(this._gl.getUniformLocation(shader, 'sampler'), 0);
-    var vertAttrib = this._gl.getAttribLocation(shader, 'attrCenter');
-    this._gl.enableVertexAttribArray(vertAttrib);
-    this._gl.vertexAttribPointer(vertAttrib, 3, this._gl.FLOAT, false, 5 * 4,
-                                0 * 4);
-    var texAttrib = this._gl.getAttribLocation(shader, 'attrCorner');
-    this._gl.vertexAttribPointer(texAttrib, 2, this._gl.FLOAT, false, 5 * 4,
-                                3 * 4);
-    this._gl.enableVertexAttribArray(texAttrib);
-    this._gl.enable(this._gl.BLEND);
-    this._gl.blendFunc(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA);
-    this._gl.drawArrays(this._gl.TRIANGLES, 0, 6);
-    this._gl.disableVertexAttribArray(vertAttrib);
-    this._gl.disableVertexAttribArray(texAttrib);
-    this._gl.disable(this._gl.BLEND);
+    gl.uniform1f(gl.getUniformLocation(shader, 'xScale'), this._xScale);
+    gl.uniform1f(gl.getUniformLocation(shader, 'yScale'), this._yScale);
+    gl.uniform1f(gl.getUniformLocation(shader, 'width'),
+                 factor * 2.0*this._width/cam.viewportWidth());
+    gl.uniform1f(gl.getUniformLocation(shader, 'height'),
+                 factor * 2.0*this._height/cam.viewportHeight());
+    gl.uniform1i(gl.getUniformLocation(shader, 'sampler'), 0);
+    var vertAttrib = gl.getAttribLocation(shader, 'attrCenter');
+    gl.enableVertexAttribArray(vertAttrib);
+    gl.vertexAttribPointer(vertAttrib, 3, gl.FLOAT, false, 5 * 4, 0 * 4);
+    var texAttrib = gl.getAttribLocation(shader, 'attrCorner');
+    gl.vertexAttribPointer(texAttrib, 2, gl.FLOAT, false, 5 * 4, 3 * 4);
+    gl.enableVertexAttribArray(texAttrib);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    gl.disableVertexAttribArray(vertAttrib);
+    gl.disableVertexAttribArray(texAttrib);
+    gl.disable(gl.BLEND);
   }
 });
 
