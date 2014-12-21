@@ -615,13 +615,13 @@ derive(MeshGeom, BaseGeom, {
 function TextLabel(gl, canvas, context, pos, text, options) {
   SceneNode.call(this, gl);
   var opts = options || {};
-  this._options = {}
+  this._options = {};
   this._options.fillStyle = opts.fillStyle || '#000';
   this._options.backgroundAlpha = opts.backgroundAlpha || 0.0;
   this._options.fontSize = opts.fontSize || 24;
   this._options.font = opts.font || 'Verdana';
   this._options.fontStyle = opts.fontStyle || 'normal';
-  this._options.fontColor = opts.fontColor || '#000'
+  this._options.fontColor = opts.fontColor || '#000';
   this._order = 100;
   this._pos = pos;
   this._interleavedBuffer = this._gl.createBuffer();
