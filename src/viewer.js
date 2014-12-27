@@ -673,7 +673,8 @@ PV.prototype = {
   },
 
   RENDER_MODES : [ 
-    'sline', 'line', 'trace', 'lineTrace', 'cartoon', 'tube', 'spheres' 
+    'sline', 'lines', 'trace', 'lineTrace', 'cartoon', 'tube', 'spheres', 
+    'ballsAndSticks',
   ],
 
   /// simple dispatcher which allows to render using a certain style.
