@@ -139,6 +139,15 @@ These methods will automatically add the object to the viewer, there is not need
   * *strength*: influences the magnitude of the tangents for the Catmull-Rom spline. Defaults to 1.0. Meaningful values are between 0 and 1.
   * *splineDetail* number of subdivisions per Carbon-alpha atom. The default is termined by :func:`pv.Viewer.quality`.
 
+.. function:: pv.Viewer.renderAs(name, structure, mode[,options])
+
+  Function to render the structure in any of the supported render styles. This essentially makes it possible to write code that is independent of the particular chosen render style.
+
+  :param mode: One of 'sline', 'lines', 'trace', 'lineTrace', 'cartoon', 'tube', 'spheres', ballsAndSticks'
+  :param options: options dictionary passed to the chosen render mode. Refer to the documentation for the specific mode for a list of supported options.
+  :returns: The created geometry object.
+
+
 .. function:: pv.Viewer.label(name, text, pos[, options])
 
   Places a label with *text* at the given position in the scene
