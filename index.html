@@ -31,6 +31,7 @@
     <script src='src/animation.js'></script>
     <script src='src/touch.js'></script>
     <script src='src/viewer.js'></script>
+    <script src='src/viewpoint.js'></script>
     <script src='demo.js'></script>
     <link rel='stylesheet' href='css/foundation.css'>
     <style>
@@ -148,9 +149,11 @@
           })
       });
       var viewer = pv.Viewer(document.getElementById('viewer'), { 
-          width : 'auto', height: 'auto', antialias : false, outline : true, quality : 'medium'
+          width : 'auto', height: 'auto', antialias : true, 
+          outline : true, quality : 'medium',
+          background : '#333'
       });
-      document.addEventListener('DOMContentLoaded', crambin);
+      document.addEventListener('DOMContentLoaded', longHelices);
       
       window.addEventListener('resize', function() {
         viewer.fitParent();

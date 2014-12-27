@@ -21,7 +21,8 @@ SOURCE_FILES = [
   'src/slab.js',
   'src/animation.js',
   'src/touch.js',
-  'src/viewer.js'
+  'src/viewer.js',
+  'src/viewpoint.js'
 ];
 
 ALL_FILES = ['src/gl-matrix.js'];

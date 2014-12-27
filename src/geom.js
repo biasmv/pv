@@ -194,7 +194,7 @@ var diagonalizer = (function() {
   var tmp2 = mat3.create();
   var jr = quat.create();
   var offDiag = vec3.create();
-  var magnitudeOffDiag = vec3.create();
+  var magOffDiag = vec3.create();
   return function(a) {
     var maxsteps = 24;  // certainly wont need that many.
     var q = quat.fromValues(0,0,0,1);
@@ -203,16 +203,15 @@ var diagonalizer = (function() {
       var transQ = mat3.transpose(tmp1, Q);
       mat3.mul(D, Q, mat3.mul(tmp2, a, transQ));
       vec3.set(offDiag, D[5], D[2], D[1]);
-      vec3.set(magnitudeOffDiag, Math.abs(offDiag[0]), Math.abs(offDiag[1]), 
+      vec3.set(magOffDiag, Math.abs(offDiag[0]), Math.abs(offDiag[1]), 
                Math.abs(offDiag[2]));
       // get index of largest element off-diagonal element
-      var k = (magnitudeOffDiag[0] > magnitudeOffDiag[1] &&
-               magnitudeOffDiag[0] > magnitudeOffDiag[2]) 
-              ? 0 
-              : (magnitudeOffDiag[1] > magnitudeOffDiag[2]) ? 1 : 2;
+      var k = (magOffDiag[0] > magOffDiag[1] &&
+               magOffDiag[0] > magOffDiag[2]) ? 0 : 
+              (magOffDiag[1] > magOffDiag[2]) ? 1 : 2;
       var k1 = (k + 1) % 3;
       var k2 = (k + 2) % 3;
-      if (offDiag[k] == 0.0)  {
+      if (offDiag[k] === 0.0)  {
         break;  // diagonal already
       }
       var thet = (D[k2 * 3 + k2] - D[k1 * 3 + k1]) / (2.0 * offDiag[k]);

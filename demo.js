@@ -1,15 +1,20 @@
 var structure;
+
+
 function lines() {
   viewer.clear();
   viewer.lines('structure', structure, {
               color: color.byResidueProp('num'),
               showRelated : '1' });
 }
+
 function cartoon() {
   viewer.clear();
-  viewer.cartoon('structure', structure, {
-              color : color.ssSuccession(), showRelated : '1',
+  var go = viewer.cartoon('structure', structure, {
+      color : color.ssSuccession(), showRelated : '1',
   });
+  var rotation = principalAxes(go);
+  viewer.setRotation(rotation)
 }
 
 function lineTrace() {

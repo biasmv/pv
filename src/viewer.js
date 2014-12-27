@@ -417,6 +417,7 @@ PV.prototype = {
     this._cam = new Cam(this._gl);
     this._cam.setUpsamplingFactor(this._options.samples);
     this._cam.fog(this._options.fog);
+    this._cam.setFogColor(this._options.background);
     this._shaderCatalog = {
       hemilight : this._initShader(shaders.HEMILIGHT_VS, shaders.HEMILIGHT_FS),
       outline : this._initShader(shaders.OUTLINE_VS, shaders.OUTLINE_FS),
@@ -463,6 +464,18 @@ PV.prototype = {
       this._objects[i]
           .draw(this._cam, this._shaderCatalog, this._options.style, pass);
     }
+  },
+
+  setRotation : function(rotation, ms) {
+    ms |= 0;
+    if (ms === 0) {
+      this._cam.setRotation(rotation);
+      this.requestRedraw();
+      return;
+    }
+    this._camAnim.rotation = new Rotate(this._cam.rotation(), 
+        mat4.clone(rotation), ms);
+      this.requestRedraw();
   },
 
   setCamera : function(rotation, center, zoom, ms) {

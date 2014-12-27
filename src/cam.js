@@ -237,6 +237,10 @@ Cam.prototype = {
     return this._center;
   },
 
+  setFogColor : function(color) {
+    this._fogColor = color;
+  },
+
   currentShader : function() {
     return this._currentShader;
   },
@@ -284,6 +288,7 @@ Cam.prototype = {
     var nearOffset =   this._zoom ;
     this._gl.uniform1f(shader.fogFar, this._fogFar + nearOffset);
     this._gl.uniform1f(shader.fogNear, this._fogNear + nearOffset);
+    console.log(vec3.str(this._fogColor));
     this._gl.uniform3fv(shader.fogColor, this._fogColor);
     this._gl.uniform3fv(shader.outlineColor, this._outlineColor);
   }
