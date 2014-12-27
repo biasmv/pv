@@ -207,7 +207,7 @@ derive(BaseGeom, SceneNode, {
 
   getColorForAtom : function(atom, color) {
     // FIXME: what to do in case there are multiple assocs?
-    return this._vertAssoc[0].getColorForAtom(atom, color);
+    return this._vertAssocs[0].getColorForAtom(atom, color);
   },
 
   addIdRange : function(range) {
