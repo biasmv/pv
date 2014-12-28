@@ -308,7 +308,8 @@ PV.prototype = {
       return false;
     }
 
-    if (!this._gl.getContextAttributes().antialias && this._options.antialias) {
+    var gl = this._gl;
+    if (!gl.getContextAttributes().antialias && this._options.antialias) {
       samples = 2;
     }
     this._options.realWidth = this._options.width * samples;
@@ -317,14 +318,15 @@ PV.prototype = {
     if (samples > 1) {
       this._initManualAntialiasing(samples);
     }
-    this._gl.viewportWidth = this._options.realWidth;
-    this._gl.viewportHeight = this._options.realHeight;
+    gl.viewportWidth = this._options.realWidth;
+    gl.viewportHeight = this._options.realHeight;
 
-    this._gl.clearColor(this._options.background[0], this._options.background[1], this._options.background[2], 1.0);
-    this._gl.lineWidth(2.0);
-    this._gl.cullFace(this._gl.FRONT);
-    this._gl.enable(this._gl.CULL_FACE);
-    this._gl.enable(this._gl.DEPTH_TEST);
+    gl.clearColor(this._options.background[0], this._options.background[1], 
+                  this._options.background[2], 1.0);
+    gl.lineWidth(2.0);
+    gl.cullFace(gl.FRONT);
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
     this._initPickBuffer();
     return true;
   },
@@ -332,10 +334,11 @@ PV.prototype = {
 
   _shaderFromString : function(shader_code, type) {
     var shader;
+    var gl = this._gl;
     if (type === 'fragment') {
-      shader = this._gl.createShader(this._gl.FRAGMENT_SHADER);
+      shader = gl.createShader(gl.FRAGMENT_SHADER);
     } else if (type === 'vertex') {
-      shader = this._gl.createShader(this._gl.VERTEX_SHADER);
+      shader = gl.createShader(gl.VERTEX_SHADER);
     } else {
       console.error('could not determine type for shader');
       return null;
@@ -345,37 +348,38 @@ PV.prototype = {
     // value. See comment on top of shaders.js for details.
     var prec = shouldUseHighPrecision() ? 'highp' : 'mediump';
     var code = shader_code.replace('${PRECISION}', prec);
-    this._gl.shaderSource(shader, code);
-    this._gl.compileShader(shader);
-    if (!this._gl.getShaderParameter(shader, this._gl.COMPILE_STATUS)) {
-      console.error(this._gl.getShaderInfoLog(shader));
+    gl.shaderSource(shader, code);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+      console.error(gl.getShaderInfoLog(shader));
       return null;
     }
     return shader;
   },
 
   _initShader : function(vert_shader, frag_shader) {
+    var gl = this._gl;
     var fs = this._shaderFromString(frag_shader, 'fragment');
     var vs = this._shaderFromString(vert_shader, 'vertex');
-    var shaderProgram = this._gl.createProgram();
-    this._gl.attachShader(shaderProgram, vs);
-    this._gl.attachShader(shaderProgram, fs);
-    this._gl.linkProgram(shaderProgram);
-    if (!this._gl.getProgramParameter(shaderProgram, this._gl.LINK_STATUS)) {
+    var shaderProgram = gl.createProgram();
+    gl.attachShader(shaderProgram, vs);
+    gl.attachShader(shaderProgram, fs);
+    gl.linkProgram(shaderProgram);
+    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
       console.error('could not initialise shaders');
-      console.error(this._gl.getShaderInfoLog(shaderProgram));
+      console.error(gl.getShaderInfoLog(shaderProgram));
       return null;
     }
-    this._gl.clearColor(this._options.background[0], this._options.background[1], this._options.background[2], 1.0);
-    this._gl.enable(this._gl.BLEND);
-    this._gl.blendFunc(this._gl.SRC_ALPHA, this._gl.ONE_MINUS_SRC_ALPHA);
-    this._gl.enable(this._gl.CULL_FACE);
-    this._gl.enable(this._gl.DEPTH_TEST);
+    gl.clearColor(this._options.background[0], this._options.background[1], this._options.background[2], 1.0);
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+    gl.enable(gl.CULL_FACE);
+    gl.enable(gl.DEPTH_TEST);
 
     // get vertex attribute location for the shader once to
     // avoid repeated calls to getAttribLocation/getUniformLocation
-    var getAttribLoc = bind(this._gl, this._gl.getAttribLocation);
-    var getUniformLoc = bind(this._gl, this._gl.getUniformLocation);
+    var getAttribLoc = bind(gl, gl.getAttribLocation);
+    var getUniformLoc = bind(gl, gl.getUniformLocation);
     shaderProgram.posAttrib = getAttribLoc(shaderProgram, 'attrPos');
     shaderProgram.colorAttrib = getAttribLoc(shaderProgram, 'attrColor');
     shaderProgram.normalAttrib = getAttribLoc(shaderProgram, 'attrNormal');
@@ -933,22 +937,24 @@ PV.prototype = {
   // INTERNAL: draws scene into offscreen pick buffer with the "select"
   // shader.
   _drawPickingScene : function() {
-    this._gl.clearColor(0.0, 0.0, 0.0, 0.0);
-    this._gl.disable(this._gl.BLEND);
-    this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
-    this._gl.clearColor(this._options.background[0], this._options.background[1], this._options.background[2], 1.0);
-    this._gl.cullFace(this._gl.FRONT);
-    this._gl.enable(this._gl.CULL_FACE);
+    var gl = this._gl;
+    gl.clearColor(0.0, 0.0, 0.0, 0.0);
+    gl.disable(gl.BLEND);
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+    gl.clearColor(this._options.background[0], this._options.background[1], 
+                  this._options.background[2], 1.0);
+    gl.cullFace(gl.FRONT);
+    gl.enable(gl.CULL_FACE);
     this._drawWithPass('select');
   },
-
 
   pick : function(pos) {
     this._pickBuffer.bind();
     this._drawPickingScene();
     var pixels = new Uint8Array(4);
-    this._gl.readPixels(pos.x, this._options.height - pos.y, 1, 1,
-                        this._gl.RGBA, this._gl.UNSIGNED_BYTE, pixels);
+    var gl = this._gl;
+    gl.readPixels(pos.x, this._options.height - pos.y, 1, 1,
+                  gl.RGBA, gl.UNSIGNED_BYTE, pixels);
     this._pickBuffer.release();
     if (pixels.data) {
       pixels = pixels.data;
