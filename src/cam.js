@@ -238,7 +238,7 @@ Cam.prototype = {
   },
 
   setFogColor : function(color) {
-    this._fogColor = color;
+    this._fogColor = vec3.clone(color);
   },
 
   currentShader : function() {
