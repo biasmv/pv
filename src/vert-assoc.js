@@ -96,10 +96,18 @@ AtomVertexAssoc.prototype = {
     return null;
   },
 
-  setOpacity : function( val, view) {
+  setOpacity : function(val, view) {
+    var atomMap = {};
+    view.eachAtom(function(atom, index) {
+      atomMap[atom.index()] = true;
+    });
     // apply the color to the actual interleaved vertex array.
     for (var i = 0; i < this._assocs.length; ++i) {
       var assoc = this._assocs[i];
+      var ai = atomMap[assoc.atom.index()];
+      if (ai !== true) {
+        continue;
+      }
       var va = assoc.vertexArray;
       for (var j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
         va.setOpacity(j, val);
@@ -207,13 +215,39 @@ TraceVertexAssoc.prototype = {
     return null;
   },
 
-  setOpacity : function( val, view) {
+  setOpacity : function(val, view) {
+    var colorData = [];
+    var i, j;
+    var traces = this._structure.backboneTraces();
+    for (i = 0; i < traces.length; ++i) {
+      // get current residue colors
+      var data = this._perResidueColors[i];
+      var index = 0;
+      var trace = traces[i];
+      for (j = 0; j < trace.length(); ++j) {
+        if (!view.containsResidue(trace.residueAt(j))) {
+          index+=4;
+          continue;
+        }
+        data[index + 3] = val;
+        index+=4;
+      }
+      if (this._interpolation > 1) {
+        colorData.push(interpolateColor(data, this._interpolation));
+      } else {
+        colorData.push(data);
+      }
+    }
+
     // store the color in the actual interleaved vertex array.
     for (i = 0; i < this._assocs.length; ++i) {
       var assoc = this._assocs[i];
+      var ai = assoc.slice;
+      var newColors = colorData[assoc.traceIndex];
+      var a = newColors[ai*4+3];
       var va = assoc.vertexArray;
       for (j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
-        va.setOpacity(j, val);
+        va.setOpacity(j, a);
       }
     }
   }
