@@ -28,16 +28,16 @@ function FrameBuffer(gl, options) {
   this._colorBufferWidth = this._width;
   this._colorBufferHeight = this._height;
   this._gl = gl;
-  this._colorHandle = this._gl.createFramebuffer();
-  this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._colorHandle);
-  this._depthHandle = this._gl.createRenderbuffer();
-  this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._depthHandle);
-  this._gl.renderbufferStorage(this._gl.RENDERBUFFER, this._gl.DEPTH_COMPONENT16,
+  this._colorHandle = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, this._colorHandle);
+  this._depthHandle = gl.createRenderbuffer();
+  gl.bindRenderbuffer(gl.RENDERBUFFER, this._depthHandle);
+  gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16,
                                this._width, this._height);
-  this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER,
-                                     this._gl.DEPTH_ATTACHMENT,
-                                     this._gl.RENDERBUFFER, this._depthHandle);
-  this._colorTexture = this._gl.createTexture();
+  gl.framebufferRenderbuffer(gl.FRAMEBUFFER,
+                             gl.DEPTH_ATTACHMENT,
+                             gl.RENDERBUFFER, this._depthHandle);
+  this._colorTexture = gl.createTexture();
   this._initColorBuffer();
 }
 
@@ -46,13 +46,18 @@ FrameBuffer.prototype = {
   height : function() { return this._height; },
 
   bind : function() {
-    this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, this._colorHandle);
-    this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._depthHandle);
+    var gl = this._gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, this._colorHandle);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, this._depthHandle);
     if (this._colorBufferWidth !== this._width ||
         this._colorBufferHeight !== this._height) {
       this._resizeBuffers();
     }
-    this._gl.viewport(0, 0, this._width, this._height);
+    gl.viewport(0, 0, this._width, this._height);
+  },
+
+  colorTexture : function() {
+    return this._colorTexture;
   },
 
   _initColorBuffer : function() {
@@ -73,19 +78,20 @@ FrameBuffer.prototype = {
   },
 
   _resizeBuffers : function() {
-    this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, this._depthHandle);
-    this._gl.renderbufferStorage(this._gl.RENDERBUFFER, this._gl.DEPTH_COMPONENT16,
+    var gl = this._gl;
+    gl.bindRenderbuffer(gl.RENDERBUFFER, this._depthHandle);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT16,
                                 this._width, this._height);
-    this._gl.bindTexture(this._gl.TEXTURE_2D, this._colorTexture);
-    this._gl.texImage2D(this._gl.TEXTURE_2D, 0, this._gl.RGBA, this._width,
-                        this._height, 0, this._gl.RGBA, this._gl.UNSIGNED_BYTE, 
+    gl.bindTexture(gl.TEXTURE_2D, this._colorTexture);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, this._width,
+                        this._height, 0, gl.RGBA, gl.UNSIGNED_BYTE, 
                         null);
-    this._gl.framebufferTexture2D(this._gl.FRAMEBUFFER, this._gl.COLOR_ATTACHMENT0,
-                                  this._gl.TEXTURE_2D, this._colorTexture, 0);
-    this._gl.framebufferRenderbuffer(this._gl.FRAMEBUFFER,
-                                      this._gl.DEPTH_ATTACHMENT,
-                                      this._gl.RENDERBUFFER, this._depthHandle);
-    this._gl.bindTexture(this._gl.TEXTURE_2D, null);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0,
+                                  gl.TEXTURE_2D, this._colorTexture, 0);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER,
+                                      gl.DEPTH_ATTACHMENT,
+                                      gl.RENDERBUFFER, this._depthHandle);
+    gl.bindTexture(gl.TEXTURE_2D, null);
     this._colorBufferWidth = this._width;
     this._colorBufferHeight = this._height;
   },
@@ -95,8 +101,9 @@ FrameBuffer.prototype = {
     this._height = height;
   },
   release : function() {
-    this._gl.bindFramebuffer(this._gl.FRAMEBUFFER, null);
-    this._gl.bindRenderbuffer(this._gl.RENDERBUFFER, null);
+    var gl = this._gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
   }
 };
 
