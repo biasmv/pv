@@ -258,9 +258,10 @@ Cam.prototype = {
   // - outlineColor    - color to be used for the outline shader
   bind : function(shader, additionalTransform) {
     var shaderChanged = false;
+    var gl = this._gl;
     if (this._currentShader !== shader) {
       this._currentShader = shader;
-      this._gl.useProgram(shader);
+      gl.useProgram(shader);
       shaderChanged = true;
     }
     shaderChanged = this._updateIfRequired() || shaderChanged;
@@ -269,9 +270,9 @@ Cam.prototype = {
     // with the matrix and use the product as the model view matrix. 
     if (additionalTransform) {
       mat4.mul(this._modelView, this._camModelView, additionalTransform);
-      this._gl.uniformMatrix4fv(shader.modelview, false, this._modelView);
+      gl.uniformMatrix4fv(shader.modelview, false, this._modelView);
     } else {
-      this._gl.uniformMatrix4fv(shader.modelview, false, this._camModelView);
+      gl.uniformMatrix4fv(shader.modelview, false, this._camModelView);
     }
 
     // in case nothing changed, there is no need for us to set any other
@@ -280,17 +281,16 @@ Cam.prototype = {
       return;
     }
     this._paramsChanged = false;
-    this._gl.uniformMatrix4fv(shader.projection, false, this._projection);
+    gl.uniformMatrix4fv(shader.projection, false, this._projection);
     if (shader.rotation) {
-      this._gl.uniformMatrix4fv(shader.rotation, false, this._rotation);
+      gl.uniformMatrix4fv(shader.rotation, false, this._rotation);
     }
-    this._gl.uniform1i(shader.fog, this._fog);
+    gl.uniform1i(shader.fog, this._fog);
     var nearOffset =   this._zoom ;
-    this._gl.uniform1f(shader.fogFar, this._fogFar + nearOffset);
-    this._gl.uniform1f(shader.fogNear, this._fogNear + nearOffset);
-    console.log(vec3.str(this._fogColor));
-    this._gl.uniform3fv(shader.fogColor, this._fogColor);
-    this._gl.uniform3fv(shader.outlineColor, this._outlineColor);
+    gl.uniform1f(shader.fogFar, this._fogFar + nearOffset);
+    gl.uniform1f(shader.fogNear, this._fogNear + nearOffset);
+    gl.uniform3fv(shader.fogColor, this._fogColor);
+    gl.uniform3fv(shader.outlineColor, this._outlineColor);
   }
 };
 
