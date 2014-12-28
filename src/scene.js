@@ -432,6 +432,8 @@ derive(LineGeom, BaseGeom, {
     if (pass === 'select') {
       return shaderCatalog.select;
     }
+    if (pass === 'glow') {
+    }
     return shaderCatalog.lines;
   },
 
@@ -568,13 +570,16 @@ derive(MeshGeom, BaseGeom, {
 
   shaderForStyleAndPass :
       function(shaderCatalog, style, pass) {
-    if (pass === 'outline') {
-      return shaderCatalog.outline;
+    if (pass === 'normal') {
+      return shaderCatalog.hemilight;
     }
     if (pass === 'select') {
       return shaderCatalog.select;
     }
-    var shader = shaderCatalog[style];
+    if (pass === 'outline') {
+      return shaderCatalog.outline;
+    }
+    var shader = shaderCatalog[pass];
     return shader !== undefined ? shader : null;
   },
 
