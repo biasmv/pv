@@ -55,22 +55,7 @@ Cam.prototype = {
     if (rot.length === 16) {
       mat4.copy(this._rotation, rot);
     } else {
-      this._rotation[0] = rot[0];
-      this._rotation[1] = rot[1];
-      this._rotation[2] = rot[2];
-      this._rotation[3] = 0.0;
-      this._rotation[4] = rot[3];
-      this._rotation[5] = rot[4];
-      this._rotation[6] = rot[5];
-      this._rotation[7] = 0.0;
-      this._rotation[8] = rot[6];
-      this._rotation[9] = rot[7];
-      this._rotation[10] = rot[8];
-      this._rotation[11] = 0.0;
-      this._rotation[12] = 0.0;
-      this._rotation[13] = 0.0;
-      this._rotation[14] = 0.0;
-      this._rotation[15] = 1.0;
+      mat4.fromMat3(this._rotation, rot);
     }
     this._updateMat = true;
   },

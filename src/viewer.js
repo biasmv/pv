@@ -477,9 +477,17 @@ PV.prototype = {
       this.requestRedraw();
       return;
     }
+    // in case it's a mat3, convert to mat4
+    var rotation4;  
+    if (rotation.length === 9) {
+      rotation4 = mat4.create();
+      mat4.fromMat3(rotation4, rotation);
+    } else {
+      rotation4 = mat4.clone(rotation);
+    }
     this._camAnim.rotation = new Rotate(this._cam.rotation(), 
-        mat4.clone(rotation), ms);
-      this.requestRedraw();
+                                        rotation4, ms);
+    this.requestRedraw();
   },
 
   setCamera : function(rotation, center, zoom, ms) {

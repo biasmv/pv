@@ -1944,6 +1944,26 @@ mat4.multiply = function (out, a, b) {
     return out;
 };
 
+mat4.fromMat3 = function(out, a) {
+  out[ 0] = a[0];
+  out[ 1] = a[1];
+  out[ 2] = a[2];
+  out[ 3] = 0.0;
+  out[ 4] = a[3];
+  out[ 5] = a[4];
+  out[ 6] = a[5];
+  out[ 7] = 0.0;
+  out[ 8] = a[6];
+  out[ 9] = a[7];
+  out[10] = a[8];
+  out[11] = 0.0;
+  out[12] = 0.0;
+  out[13] = 0.0;
+  out[14] = 0.0;
+  out[15] = 1.0;
+  return out;
+};
+
 /**
  * Alias for {@link mat4.multiply}
  * @function
