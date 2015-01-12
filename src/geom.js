@@ -242,6 +242,37 @@ var diagonalizer = (function() {
 Sphere.prototype.center = function() { return this._center; };
 Sphere.prototype.radius = function() { return this._radius; };
 
+// derive a rotation matrix which rotates the z-axis onto tangent. when
+// left is given and use_hint is true, x-axis is chosen to be as close
+// as possible to left.
+//
+// upon returning, left will be modified to contain the updated left
+// direction.
+var buildRotation = (function() {
+  return function(rotation, tangent, left, up, use_left_hint) {
+    if (use_left_hint) { vec3.cross(up, tangent, left);
+    } else {
+  geom.ortho(up, tangent);
+    }
+
+    vec3.cross(left, up, tangent);
+    vec3.normalize(up, up);
+    vec3.normalize(left, left);
+    rotation[0] = left[0];
+    rotation[1] = left[1];
+    rotation[2] = left[2];
+
+    rotation[3] = up[0];
+    rotation[4] = up[1];
+    rotation[5] = up[2];
+
+    rotation[6] = tangent[0];
+    rotation[7] = tangent[1];
+    rotation[8] = tangent[2];
+}
+;
+})();
+
 return {
   signedAngle : signedAngle,
   axisRotation : axisRotation,
@@ -250,7 +281,8 @@ return {
   catmullRomSpline : catmullRomSpline,
   cubicHermiteInterpolate : cubicHermiteInterpolate,
   catmullRomSplineNumPoints : catmullRomSplineNumPoints,
-  Sphere : Sphere
+  Sphere : Sphere,
+  buildRotation : buildRotation
 };
 
 })();

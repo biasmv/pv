@@ -21,6 +21,7 @@ SOURCE_FILES = [
   'src/slab.js',
   'src/animation.js',
   'src/touch.js',
+  'src/custom-mesh.js',
   'src/viewer.js',
   'src/viewpoint.js'
 ];

@@ -941,6 +941,15 @@ PV.prototype = {
     this.add(name, label);
     return label;
   },
+  customMesh : function(name, opts) {
+    var options = this._handleStandardOptions(opts);
+    
+    var mesh = new CustomMesh(name, this._gl, 
+                              options.float32Allocator, 
+                              options.uint16Allocator);
+    this.add(name, mesh);
+    return mesh;
+  },
 
   // INTERNAL: draws scene into offscreen pick buffer with the "select"
   // shader.

@@ -40,6 +40,21 @@ derive(IndexedVertexArray, VertexArrayBase, {
     this._gl.deleteBuffer(this._indexBuffer);
     this._uint16Allocator.release(this._indexData);
   },
+  setIndexData : function(data) {
+    this._ready = false;
+    this._numTriangles = data.length/3;
+    for (var i = 0; i < data.length; ++i) {
+      this._indexData[i] = data[i];
+    }
+  },
+
+  setVertData : function(data) {
+    this._ready = false;
+    this._numVerts = data.length/this._FLOATS_PER_VERT;
+    for (var i = 0; i < data.length; ++i) {
+      this._vertData[i] = data[i];
+    }
+  },
 
   numVerts : function() { return this._numVerts; },
   maxVerts : function() { return this._maxVerts; },

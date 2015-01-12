@@ -76,36 +76,6 @@ var inplaceStrandSmoothing = (function() {
   };
 })();
 
-// derive a rotation matrix which rotates the z-axis onto tangent. when
-// left is given and use_hint is true, x-axis is chosen to be as close
-// as possible to left.
-//
-// upon returning, left will be modified to contain the updated left
-// direction.
-var buildRotation = (function() {
-  return function(rotation, tangent, left, up, use_left_hint) {
-    if (use_left_hint) { vec3.cross(up, tangent, left);
-    } else {
-  geom.ortho(up, tangent);
-    }
-
-    vec3.cross(left, up, tangent);
-    vec3.normalize(up, up);
-    vec3.normalize(left, left);
-    rotation[0] = left[0];
-    rotation[1] = left[1];
-    rotation[2] = left[2];
-
-    rotation[3] = up[0];
-    rotation[4] = up[1];
-    rotation[5] = up[2];
-
-    rotation[6] = tangent[0];
-    rotation[7] = tangent[1];
-    rotation[8] = tangent[2];
-}
-;
-})();
 
 var spheresForChain = (function() {
   var color = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
@@ -184,7 +154,7 @@ var ballsAndSticksForChain = (function() {
 
         vec3.scale(dir, dir, 1.0/length);
 
-        buildRotation(rotation, dir, left, up, false);
+        geom.buildRotation(rotation, dir, left, up, false);
 
         vec3.add(midPoint, midPoint, atom.pos());
         vec3.scale(midPoint, midPoint, 0.5);
@@ -593,7 +563,7 @@ var _addNucleotideSticks = (function() {
         vec3.sub(dir, endAtom.pos(), startAtom.pos());
         var length = vec3.length(dir);
         vec3.scale(dir, dir, 1.0/length);
-        buildRotation(rotation, dir, left, up, false);
+        geom.buildRotation(rotation, dir, left, up, false);
 
         options.protoCyl.addTransformed(va, center, length, radius, 
                                         rotation, color, color, objId, objId);
@@ -740,7 +710,7 @@ var _cartoonAddTube = (function() {
       }
     }
 
-    buildRotation(rotation, tangent, left, up, true);
+    geom.buildRotation(rotation, tangent, left, up, true);
     prof.addTransformed(vertArray, pos, radius, rotation, color, first,
                         offset, objId);
   };
@@ -1031,7 +1001,7 @@ var _renderSingleTrace = (function() {
 
       vec3.scale(dir, dir, 1.0 / length);
 
-      buildRotation(rotation, dir, left, up, false);
+      geom.buildRotation(rotation, dir, left, up, false);
 
       vec3.copy(midPoint, caPrevPos);
       vec3.add(midPoint, midPoint, caThisPos);
