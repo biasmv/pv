@@ -76,8 +76,8 @@ ProtoSphere.prototype = {
         }
         for (i = 0; i < this._indices.length / 3; ++i) {
           va.addTriangle(baseIndex + this._indices[i * 3],
-                        baseIndex + this._indices[i * 3 + 1],
-                        baseIndex + this._indices[i * 3 + 2]);
+                         baseIndex + this._indices[i * 3 + 1],
+                         baseIndex + this._indices[i * 3 + 2]);
         }
     };
   })(),
