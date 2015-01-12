@@ -139,13 +139,31 @@ These methods will automatically add the object to the viewer, there is not need
   * *strength*: influences the magnitude of the tangents for the Catmull-Rom spline. Defaults to 1.0. Meaningful values are between 0 and 1.
   * *splineDetail* number of subdivisions per Carbon-alpha atom. The default is termined by :func:`pv.Viewer.quality`.
 
-.. function:: pv.Viewer.label(name, text, pos)
+.. function:: pv.Viewer.renderAs(name, structure, mode[,options])
 
-  Places a label with *text* at the given position. At the moment, there is no way to control the size and color of the text.
+  Function to render the structure in any of the supported render styles. This essentially makes it possible to write code that is independent of the particular chosen render style.
+
+  :param mode: One of 'sline', 'lines', 'trace', 'lineTrace', 'cartoon', 'tube', 'spheres', ballsAndSticks'
+  :param options: options dictionary passed to the chosen render mode. Refer to the documentation for the specific mode for a list of supported options.
+  :returns: The created geometry object.
+
+
+.. function:: pv.Viewer.label(name, text, pos[, options])
+
+  Places a label with *text* at the given position in the scene
 
   :param name: Uniquely identifies the label
   :param text: The text to be shown
   :param pos: A :class:`vec3`, or array of length 3 holding the x, y, and z coordinate of the label's center.
+  :param options: Optional dictionary to control the font, text style and size of the label (see below)
+
+  Accepted *options* are:
+
+  * *font*: name of the font. Accepted values are all HTML/CSS font families. Default is 'Verdana'.
+  * *fontSize*: the size of the font in pixels. Default is 24.
+  * *fontColor*: the CSS color to be used for rendering the text. Default is black.
+  * *fontStyle* the font style. Can by any combination of 'italic', 'bold'. Default is 'normal'. 
+
   :returns: the created label. 
 
 .. _pv.viewer.camera:

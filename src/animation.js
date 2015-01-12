@@ -31,55 +31,54 @@ function Animation(from, to, duration) {
   this._looping = false;
   this._finished = false;
 }
-
-Animation.prototype.setLooping = function(looping) {
-  this._looping = looping;
-};
-
-Animation.prototype.step = function() {
-  var now = Date.now();
-  var elapsed = now - this._start;
-  var t;
-  if (this._duration === 0) {
-    t = 1.0;
-  } else {
-    if (this._looping) {
-      var times = Math.floor(elapsed/this._duration);
-      t = (elapsed - times * this._duration)/this._duration;
+Animation.prototype = {
+  setLooping : function(looping) {
+    this._looping = looping;
+  },
+  step : function() {
+    var now = Date.now();
+    var elapsed = now - this._start;
+    var t;
+    if (this._duration === 0) {
+      t = 1.0;
     } else {
-      elapsed = Math.min(this._duration, elapsed);
-      t = elapsed/this._duration;
-      this._finished = t === 1.0;
+      if (this._looping) {
+        var times = Math.floor(elapsed/this._duration);
+        t = (elapsed - times * this._duration)/this._duration;
+      } else {
+        elapsed = Math.min(this._duration, elapsed);
+        t = elapsed/this._duration;
+        this._finished = t === 1.0;
+      }
     }
+    return this._setTo(t);
+  },
+
+  _setTo : function(t) {
+    var smoothInterval = (1 - Math.cos(t * Math.PI ) ) / 2;
+    this._current = this._from * (1-smoothInterval) + this._to * smoothInterval;
+    return this._current;
+  },
+
+  finished : function() {
+    return this._finished;
   }
-  return this._setTo(t);
-};
-
-Animation.prototype._setTo = function(t) {
-  var smoothInterval = (1 - Math.cos(t * Math.PI ) ) / 2;
-  this._current = this._from * (1-smoothInterval) + this._to * smoothInterval;
-  return this._current;
-};
-
-Animation.prototype.finished = function() {
-  return this._finished;
 };
 
 
 
 function Move(from, to, duration) {
-  Animation.prototype.constructor.call(this, vec3.clone(from), 
-                                       vec3.clone(to), duration);
+  Animation.call(this, vec3.clone(from), vec3.clone(to), duration);
   this._current = vec3.clone(from);
 }
 
-derive(Move, Animation);
-
-Move.prototype._setTo = function(t) {
-  var smoothInterval = (1 - Math.cos(t * Math.PI ) ) / 2;
-  vec3.lerp(this._current, this._from, this._to, smoothInterval);
-  return this._current;
-};
+derive(Move, Animation, {
+  _setTo : function(t) {
+    var smoothInterval = (1 - Math.cos(t * Math.PI ) ) / 2;
+    vec3.lerp(this._current, this._from, this._to, smoothInterval);
+    return this._current;
+  }
+});
 
 function Rotate(initialRotation, destinationRotation, duration) {
   var initial = mat3.create();
@@ -91,41 +90,42 @@ function Rotate(initialRotation, destinationRotation, duration) {
   quat.fromMat3(initialQuat, initial);
   quat.fromMat3(toQuat, to);
   this._current = mat3.create();
-  Animation.prototype.constructor.call(this, initialQuat, toQuat, duration);
+  Animation.call(this, initialQuat, toQuat, duration);
 }
 
-derive(Rotate, Animation);
+derive(Rotate, Animation, {
 
-Rotate.prototype._setTo = (function() {
-  var quatRot = quat.create();
-  
-  return function(t) {
-    quat.slerp(quatRot, this._from, this._to, t);
-    mat3.fromQuat(this._current, quatRot);
-    return this._current;
-  };
-})();
+  _setTo : (function() {
+    var quatRot = quat.create();
+    
+    return function(t) {
+      quat.slerp(quatRot, this._from, this._to, t);
+      mat3.fromQuat(this._current, quatRot);
+      return this._current;
+    };
+  })()
+});
 
 function RockAndRoll(rotation, axis, duration) {
   var initial = mat3.create();
   mat3.fromMat4(initial, rotation);
-  Animation.prototype.constructor.call(this, initial, null, duration);
+  Animation.call(this, initial, null, duration);
   this._axis = vec3.clone(axis);
   this.setLooping(true);
   this._current = mat3.create();
 }
 
-derive(RockAndRoll, Animation);
-
-RockAndRoll.prototype._setTo = (function() {
-  var axisRot = mat3.create();
-  return function(t) {
-    var angle = 0.2 * Math.sin(2 * t * Math.PI);
-    geom.axisRotation(axisRot, this._axis, angle);
-    mat3.mul(this._current, this._from, axisRot);
-    return this._current;
-  };
-})();
+derive(RockAndRoll, Animation, {
+  _setTo : (function() {
+    var axisRot = mat3.create();
+    return function(t) {
+      var angle = 0.2 * Math.sin(2 * t * Math.PI);
+      geom.axisRotation(axisRot, this._axis, angle);
+      mat3.mul(this._current, this._from, axisRot);
+      return this._current;
+    };
+  })()
+});
 
 exports.Move = Move;
 exports.Rotate = Rotate;

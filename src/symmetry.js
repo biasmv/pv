@@ -28,18 +28,21 @@ function SymGenerator(chains, matrices) {
   this._matrices = matrices || [];
 }
 
-SymGenerator.prototype.addChain = function(name) {
-  this._chains.push(name);
+SymGenerator.prototype = {
+
+  addChain : function(name) {
+    this._chains.push(name);
+  },
+
+  chains : function() { return this._chains; },
+
+  addMatrix : function(matrix) {
+    this._matrices.push(matrix);
+  },
+
+  matrices : function() { return this._matrices; },
+  matrix : function(index) { return this._matrices[index]; }
 };
-
-SymGenerator.prototype.chains = function() { return this._chains; };
-
-SymGenerator.prototype.addMatrix = function(matrix) {
-  this._matrices.push(matrix);
-};
-
-SymGenerator.prototype.matrices = function() { return this._matrices; };
-SymGenerator.prototype.matrix = function(index) { return this._matrices[index]; };
 
 // contains the definition for how to construct a biological assembly from
 // an asymmetric unit. Essentially a list of rotation/translation operators
@@ -49,12 +52,15 @@ function Assembly(name) {
   this._generators = [];
 }
 
-Assembly.prototype.name = function() { return this._name; };
 
-Assembly.prototype.generators = function() { return this._generators; };
-Assembly.prototype.generator = function(index) { return this._generators[index]; };
-Assembly.prototype.addGenerator = function(gen) { 
-  this._generators.push(gen); 
+Assembly.prototype = {
+  name : function() { return this._name; },
+
+  generators : function() { return this._generators; },
+  generator : function(index) { return this._generators[index]; },
+  addGenerator : function(gen) { 
+    this._generators.push(gen); 
+  }
 };
 
 exports.SymGenerator = SymGenerator;

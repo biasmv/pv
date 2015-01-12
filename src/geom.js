@@ -182,6 +182,63 @@ function Sphere(center, radius) {
   this._radius = radius || 1.0;
 }
 
+
+// returns a quaternion which, when converted to matrix form, contains the 
+// eigen-vectors of the symmetric matrix "a".
+// 
+// Code adapted from http://www.melax.com/diag/
+var diagonalizer = (function() { 
+  var Q = mat3.create();
+  var D = mat3.create();
+  var tmp1 = mat3.create();
+  var tmp2 = mat3.create();
+  var jr = quat.create();
+  var offDiag = vec3.create();
+  var magOffDiag = vec3.create();
+  return function(a) {
+    var maxsteps = 24;  // certainly wont need that many.
+    var q = quat.fromValues(0,0,0,1);
+    for(var i = 0; i < maxsteps; ++i) {
+      mat3.fromQuat(Q, q); // v*Q == q*v*conj(q)
+      var transQ = mat3.transpose(tmp1, Q);
+      mat3.mul(D, Q, mat3.mul(tmp2, a, transQ));
+      vec3.set(offDiag, D[5], D[2], D[1]);
+      vec3.set(magOffDiag, Math.abs(offDiag[0]), Math.abs(offDiag[1]), 
+               Math.abs(offDiag[2]));
+      // get index of largest element off-diagonal element
+      var k = (magOffDiag[0] > magOffDiag[1] &&
+               magOffDiag[0] > magOffDiag[2]) ? 0 : 
+              (magOffDiag[1] > magOffDiag[2]) ? 1 : 2;
+      var k1 = (k + 1) % 3;
+      var k2 = (k + 2) % 3;
+      if (offDiag[k] === 0.0)  {
+        break;  // diagonal already
+      }
+      var thet = (D[k2 * 3 + k2] - D[k1 * 3 + k1]) / (2.0 * offDiag[k]);
+      var sgn = (thet > 0.0) ? 1.0 : -1.0;
+      thet *= sgn; // make it positive
+      var t = sgn / (thet + ((thet < 1.E6) ? Math.sqrt(thet * thet + 1.0) : thet)); 
+      var c = 1.0 / Math.sqrt(t * t + 1.0); 
+      if(c === 1.0) {
+        // no room for improvement - reached machine precision.
+        break;
+      }  
+      vec3.set(jr, 0, 0, 0, 0); // jacobi rotation for this iteration.
+      // using 1/2 angle identity sin(a/2) = sqrt((1-cos(a))/2)  
+      jr[k] = sgn * Math.sqrt((1.0 - c) / 2.0);  
+      // since our quat-to-matrix convention was for v*M instead of M*v
+      jr[k] *= -1.0; 
+      jr[3]  = Math.sqrt(1.0 - jr[k] * jr[k]);
+      if (jr[3] === 1.0)  { 
+        break; // reached limits of floating point precision
+      }
+      q =  quat.mul(q, q, jr);
+      quat.normalize(q, q);
+    } 
+    return q;
+  };
+})();
+
 Sphere.prototype.center = function() { return this._center; };
 Sphere.prototype.radius = function() { return this._radius; };
 
@@ -189,6 +246,7 @@ return {
   signedAngle : signedAngle,
   axisRotation : axisRotation,
   ortho : ortho,
+  diagonalizer : diagonalizer,
   catmullRomSpline : catmullRomSpline,
   cubicHermiteInterpolate : cubicHermiteInterpolate,
   catmullRomSplineNumPoints : catmullRomSplineNumPoints,

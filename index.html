@@ -5,7 +5,6 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
     <script src='js/jquery-2.0.2.min.js'></script>
-    <script src='js/numeric-1.2.6.min.js'></script>
     <script src='js/modernizr.js'></script>
     <script src="js/foundation-5.4.7.min.js"></script>
     <script src='src/gl-matrix.js'></script>
@@ -32,6 +31,7 @@
     <script src='src/animation.js'></script>
     <script src='src/touch.js'></script>
     <script src='src/viewer.js'></script>
+    <script src='src/viewpoint.js'></script>
     <script src='demo.js'></script>
     <link rel='stylesheet' href='css/foundation.css'>
     <style>
@@ -111,13 +111,6 @@
           <li><a id=color-rainbow href="#">Rainbow</a></li>
         </ul>
       </li>
-      <li class="has-dropdown">
-      	<a href="#">View</a>
-        <ul class="dropdown">
-          <li><a id=view-pca href="#">PCA</a></li>
-          <li><a id=view-entropy href="#">Entropy</a></li>
-        </ul>
-      </li>
     </ul>
   </section>
 </nav>
@@ -144,8 +137,6 @@
       $('#color-ss-succ').click(ssSuccession);
       $('#color-ss').click(ss);
       $('#color-rainbow').click(rainbow);
-      $('#view-entropy').click(entropy);
-      $('#view-pca').click(pca);
       $('#load-from-pdb').change(function() {
         var pdbId = this.value;
         this.value = '';
@@ -158,14 +149,16 @@
           })
       });
       var viewer = pv.Viewer(document.getElementById('viewer'), { 
-          width : 'auto', height: 'auto', antialias : false, outline : true, quality : 'low'
+          width : 'auto', height: 'auto', antialias : true, 
+          outline : true, quality : 'medium',
+          background : '#333'
       });
-      document.addEventListener('DOMContentLoaded', crambin);
+      document.addEventListener('DOMContentLoaded', longHelices);
       
       window.addEventListener('resize', function() {
         viewer.fitParent();
       });
-      
+
     </script>
     </body>
 </html>

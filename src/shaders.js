@@ -24,9 +24,15 @@
 
 exports.shaders = {};
 
+// NOTE: The shader code below use the placeholder ${PRECISION} variable 
+// for the shader precision. This values is replaced before compiling 
+// the shader program with highp on iOS and mediump on all other devices. 
+// This is required, because the outline shaders do not work well on iOS 
+// with mediump, but some android devices do not support highp.
+
 // line fragment shader, essentially uses the vertColor and adds some fog.
 exports.shaders.LINES_FS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 \n\
 varying vec4 vertColor;\n\
 varying vec3 vertNormal;\n\
@@ -48,7 +54,7 @@ void main(void) {\n\
 
 // hemilight fragment shader
 exports.shaders.HEMILIGHT_FS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 \n\
 varying vec4 vertColor;\n\
 varying vec3 vertNormal;\n\
@@ -90,7 +96,7 @@ void main(void) {\n\
 
 // outline shader. mixes outlineColor with fogColor
 exports.shaders.OUTLINE_FS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 varying float vertAlpha;\n\
 \n\
 uniform vec3 outlineColor;\n\
@@ -113,7 +119,7 @@ void main() {\n\
 // outline vertex shader. Expands vertices along the (in-screen) xy
 // components of the normals.
 exports.shaders.OUTLINE_VS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 \n\
 attribute vec3 attrPos;\n\
 attribute vec3 attrNormal;\n\
@@ -132,7 +138,7 @@ void main(void) {\n\
 }';
 
 exports.shaders.TEXT_VS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 \n\
 attribute vec3 attrCenter;\n\
 attribute vec2 attrCorner;\n\
@@ -140,15 +146,18 @@ uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
 uniform mat4 rotationMat;\n\
 varying vec2 vertTex;\n\
+uniform float width;\n\
+uniform float height;\n\
 void main() { \n\
-  gl_Position = projectionMat* modelviewMat* vec4(attrCenter, 1.0);\n\
-  gl_Position.xy += attrCorner*gl_Position.w; \n\
-  gl_Position.z -= gl_Position.w*0.0005;\n\
+  vec4 pos = modelviewMat* vec4(attrCenter, 1.0);\n\
+  pos.z += 4.0;\n\
+  gl_Position = projectionMat * pos;\n\
+  gl_Position.xy += vec2(width,height)*attrCorner*gl_Position.w; \n\
   vertTex = (attrCorner+abs(attrCorner))/(2.0*abs(attrCorner)); \n\
 }';
 
 exports.shaders.TEXT_FS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 \n\
 uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
@@ -158,10 +167,11 @@ uniform float yScale;\n\
 varying vec2 vertTex;\n\
 void main() { \n\
   gl_FragColor = texture2D(sampler, vec2(vertTex.x*xScale, vertTex.y*yScale));\n\
+  if (gl_FragColor.a == 0.0) { discard; }\n\
 }';
 
 exports.shaders.SELECT_VS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
 attribute vec3 attrPos;\n\
@@ -175,7 +185,7 @@ void main(void) {\n\
 }';
 
 exports.shaders.SELECT_FS = '\n\
-precision highp float;\n\
+precision ${PRECISION} float;\n\
 \n\
 varying float objId;\n\
 uniform int symId;\n\

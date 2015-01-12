@@ -997,7 +997,9 @@ var _renderSingleTrace = (function() {
     options.color.colorFor(trace.centralAtomAt(0), colorOne, 0);
     var numVerts = _traceNumVerts([trace], options.protoSphere.numVerts(), 
                                   options.protoCyl.numVerts());
+    var remainingVerts = numVerts;
     var va = meshGeom.vertArrayWithSpaceFor(numVerts);
+    var maxVerts = va.maxVerts();
     var vertStart = va.numVerts();
     trace.posAt(caPrevPos, 0);
     var idStart = idRange.nextId({ geom : meshGeom, 
@@ -1012,6 +1014,8 @@ var _renderSingleTrace = (function() {
     colors[1] = colorOne[1];
     colors[2] = colorOne[2];
     colors[3] = colorOne[3];
+    var vertsPerIteration = options.protoCyl.numVerts() + 
+                            options.protoSphere.numVerts();
     for (var i = 1; i < trace.length(); ++i) {
       idEnd = idRange.nextId({ geom : meshGeom, atom : trace.centralAtomAt(i)});
       trace.posAt(caPrevPos, i - 1);
@@ -1032,6 +1036,12 @@ var _renderSingleTrace = (function() {
       vec3.copy(midPoint, caPrevPos);
       vec3.add(midPoint, midPoint, caThisPos);
       vec3.scale(midPoint, midPoint, 0.5);
+      // make sure there is enough space in the vertex array, if not request a 
+      // new one.
+      if (vertsPerIteration > (maxVerts - va.numVerts())) {
+        va = meshGeom.vertArrayWithSpaceFor(remainingVerts);
+      }
+      remainingVerts -= vertsPerIteration;
       var endSphere = va.numVerts();
       options.protoCyl.addTransformed(va, midPoint, length,
                                       options.radius, rotation, colorOne,
