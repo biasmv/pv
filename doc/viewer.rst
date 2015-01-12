@@ -166,6 +166,14 @@ These methods will automatically add the object to the viewer, there is not need
 
   :returns: the created label. 
 
+.. function:: pv.Viewer.customMesh(name)
+
+  Creates a new object to hold user-defined collection of geometric shapes. For details on how to add shapes, see :ref:`pv.scene.geometric-shapes`
+
+  :param name: uniquely identifies the custom mesh.
+
+  :returns: A new :class:`CustomMesh` instance.
+
 .. _pv.viewer.camera:
 
 Camera Positioning/Orientation

@@ -56,3 +56,45 @@ The displaying of molecules is handled by :class:`BaseGeom`, and subclasses. The
     });
     var center = vec3.scale(sum, sum, 1.0/count);
     viewer.setCenter(center);
+
+
+.. _pv.scene.geometric-shapes: 
+
+Drawing Geometric Shapes
+=========================================================================================
+
+Geometric shapes can be added to the 3D scene through :class:`CustomMesh`. At the moment, only two shapes are supported: tubes and spheres. More can be added on request. A new :class:`CustomMesh` instance can be obtained by calling :func:`pv.Viewer.customMesh`.
+
+**Example**
+
+
+.. code-block:: javascript
+
+  var cm = viewer.customMesh('cross');
+  cm.addTube([-50,0,0], [50,0,0], 1, { cap : true, color : 'red' });
+  cm.addTube([0,-50,0], [0,50,0], 1, { cap : true, color : 'green' });
+  cm.addTube([0,0, -50], [0,0,50], 1, { cap : true, color : 'blue' });
+  cm.addSphere([0, 0, 0], 3, { color : 'yellow' });
+
+.. class:: CustomMesh
+
+  Holds a collection of user-defined geometric shapes
+
+
+.. function:: CustomMesh.addTube(start, end, radius[, options])
+
+  Adds a tube (open or capped) to the custom mesh container
+
+  :param start: 3-dimensional start coordinate of the tube
+  :param end: 3-dimensional end coordinate of the tube
+  :param radius: radius in Angstrom
+  :param options: a dictionary with the following keys. *color*: when provided, used as the color for the tube, *cap* when set to false, the tube is left open ,meaning the ends are not capped.
+
+.. function:: CustomMesh.addSphere(center, radius[, options])
+
+  Adds a sphere to the custom mesh container
+
+  :param center: 3-dimensional center coordinate for the sphere
+  :param radius: radius in Angstrom
+  :param options: a dictionary with the following keys. *color*: when provided, used as the color for the tube.
+
