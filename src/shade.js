@@ -507,6 +507,8 @@ exports.interpolateColor = function(colors, num) {
 };
 
 
+// initialize gradients with default colors
+initGradients();
 
 return true;
 })(this);
