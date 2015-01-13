@@ -168,7 +168,7 @@ Custom Color Palettes
 The default color palette can be replaced with custom color definitions. This is useful to match the colors to the stylesheet on your website, or to provide more color-blind frienly color palettes.
 
 
-.. function :: rgb.setColors(palette)
+.. function :: rgb.setColorPalette(palette)
 
   Replaces the current color palette with the specified palette. This will replace the color definitions itself as well as use the newly provided color definitions for the default gradients. All functions that accept color names will from now on us the new color definitions. 
 
@@ -214,4 +214,4 @@ The following code block replaces the default palette with color-blind friendly 
     brown :        rgb.hex2rgb("#A66A00"),
     purple :       rgb.hex2rgb("#D435CD")
   };
-  rgb.setColors(MY_COLOR_PALETTE);
+  rgb.setColorPalette(MY_COLOR_PALETTE);

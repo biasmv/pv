@@ -98,7 +98,7 @@ exports.rgb.hex2rgb = function(color){
   
 
   // provide an override of the default color setting.
-exports.rgb.setColors = function(customColors){
+exports.rgb.setColorPalette = function(customColors){
   console.log("setting colors");
     COLORS = customColors;
   exports.initGradients();
