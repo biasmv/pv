@@ -67,8 +67,44 @@ var COLORS = {
   lightorange :  rgb.fromValues(1.0,0.75,0.5,1.0)
 };
 
-// converts color strings to RGB. for now only supports color names. 
-// hex triples will need to be added.
+
+exports.rgb.hex2rgb = function(color){
+  var r, g, b, a;
+  if (color.length === 4 || color.length === 5 ) {
+    r = parseInt(color[1], 16);
+    g = parseInt(color[2], 16);
+    b = parseInt(color[3], 16);
+    a = 15;
+    if(color.length===5) {
+      a = parseInt(color[4], 16);
+    }
+    var oneOver15 = 1/15.0;
+    return rgb.fromValues(oneOver15 * r, oneOver15 * g, 
+                          oneOver15 * b, oneOver15 * a);
+  }
+  if (color.length === 7 || color.length === 9) {
+    r = parseInt(color.substr(1, 2), 16);
+    g = parseInt(color.substr(3, 2), 16);
+    b = parseInt(color.substr(5, 2), 16);
+    a = 255;
+    if(color.length===9) {
+      a = parseInt(color.substr(7, 2), 16);
+    }
+    var oneOver255 = 1/255.0;
+    return rgb.fromValues(oneOver255 * r, oneOver255 * g, 
+                          oneOver255 * b, oneOver255 * a);
+  }
+};
+  
+
+  // provide an override of the default color setting.
+exports.rgb.setColorPalette = function(customColors){
+  console.log("setting colors");
+    COLORS = customColors;
+  exports.initGradients();
+};
+
+// internal function to force various types into an RGBA quadruplet 
 exports.forceRGB = function(color) {
   if (typeof color === 'string') {
     var lookup = COLORS[color];
@@ -76,29 +112,7 @@ exports.forceRGB = function(color) {
       return lookup;
     }
     if (color.length > 0 && color[0] === '#') {
-      var r, g, b, a;
-      if (color.length === 4 || color.length === 5 ) {
-        r = parseInt(color[1], 16);
-        g = parseInt(color[2], 16);
-        b = parseInt(color[3], 16);
-        a = 15;
-        if(color.length===5) {
-          a = parseInt(color[4], 16);
-        }
-        var oneOver15 = 1/15.0;
-        return rgb.fromValues(oneOver15 * r, oneOver15 * g, oneOver15 * b, oneOver15 * a);
-      }
-      if (color.length === 7 || color.length === 9) {
-        r = parseInt(color.substr(1, 2), 16);
-        g = parseInt(color.substr(3, 2), 16);
-        b = parseInt(color.substr(5, 2), 16);
-        a = 255;
-        if(color.length===9) {
-          a = parseInt(color.substr(7, 2), 16);
-        }
-        var oneOver255 = 1/255.0;
-        return rgb.fromValues(oneOver255 * r, oneOver255 * g, oneOver255 * b, oneOver255 * a);
-      }
+     return rgb.hex2rgb(color);
     }
   }
   // in case no alpha component is provided, default alpha to 1.0
@@ -147,10 +161,10 @@ var GRADIENTS = { };
 // 
 // colors must be a valid list of colors.
 //
-// when stops is set to 'equal', then the color stops are
-// assumed to be equi distant on the interval 0,1. otherwise,
-// stops must be  a list of floating point numbers with the 
-// same length than colors.
+// when stops is set to 'equal' or ommitted, then the color stops are
+// assumed to be equi distant on the interval 0,1. otherwise, stops 
+// must be  a list of floating point numbers with the same length 
+// than colors.
 exports.gradient = function(colors, stops) {
   if (typeof colors === 'string') {
     return GRADIENTS[colors];
@@ -166,12 +180,14 @@ exports.gradient = function(colors, stops) {
 };
 var gradient = exports.gradient;
 
-GRADIENTS.rainbow =gradient(['red', 'yellow', 'green', 'blue']);
-GRADIENTS.reds = gradient(['lightred', 'darkred']);
-GRADIENTS.greens = gradient(['lightgreen', 'darkgreen']);
-GRADIENTS.blues = gradient(['lightblue', 'darkblue']);
-GRADIENTS.trafficlight = gradient(['green', 'yellow', 'red']);
-GRADIENTS.heatmap = gradient(['red', 'white', 'blue']);
+exports.initGradients = function() {
+  GRADIENTS.rainbow = gradient(['red', 'yellow', 'green', 'blue']);
+  GRADIENTS.reds = gradient(['lightred', 'darkred']);
+  GRADIENTS.greens = gradient(['lightgreen', 'darkgreen']);
+  GRADIENTS.blues = gradient(['lightblue', 'darkblue']);
+  GRADIENTS.trafficlight = gradient(['green', 'yellow', 'red']);
+  GRADIENTS.heatmap = gradient(['red', 'white', 'blue']);
+};
 
 function ColorOp(colorFunc, beginFunc, endFunc) {
   this.colorFor = colorFunc;
@@ -491,6 +507,8 @@ exports.interpolateColor = function(colors, num) {
 };
 
 
+// initialize gradients with default colors
+initGradients();
 
 return true;
 })(this);
