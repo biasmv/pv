@@ -104,8 +104,7 @@ exports.rgb.setColors = function(customColors){
   exports.initGradients();
 };
 
-// converts color strings to RGB. for now only supports color names. 
-// hex triples will need to be added.
+// internal function to force various types into an RGBA quadruplet 
 exports.forceRGB = function(color) {
   if (typeof color === 'string') {
     var lookup = COLORS[color];
@@ -162,10 +161,10 @@ var GRADIENTS = { };
 // 
 // colors must be a valid list of colors.
 //
-// when stops is set to 'equal', then the color stops are
-// assumed to be equi distant on the interval 0,1. otherwise,
-// stops must be  a list of floating point numbers with the 
-// same length than colors.
+// when stops is set to 'equal' or ommitted, then the color stops are
+// assumed to be equi distant on the interval 0,1. otherwise, stops 
+// must be  a list of floating point numbers with the same length 
+// than colors.
 exports.gradient = function(colors, stops) {
   if (typeof colors === 'string') {
     return GRADIENTS[colors];
