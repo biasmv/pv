@@ -187,7 +187,7 @@ exports.initGradients = function() {
   GRADIENTS.blues = gradient(['lightblue', 'darkblue']);
   GRADIENTS.trafficlight = gradient(['green', 'yellow', 'red']);
   GRADIENTS.heatmap = gradient(['red', 'white', 'blue']);
-}
+};
 
 function ColorOp(colorFunc, beginFunc, endFunc) {
   this.colorFor = colorFunc;
