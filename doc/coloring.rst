@@ -110,6 +110,9 @@ The following will add a new color operation which colors atoms based on their i
     });
   }
 
+
+
+
 .. _pv.color.notation:
 
 Color Notations
@@ -157,3 +160,58 @@ Examples
   var color7 = '#f00f'; 
 
 
+.. _pv.color.custom-colors
+
+Custom Color Palettes
+--------------------------------------------------------------------------
+
+The default color palette can be replaced with custom color definitions. This is useful to match the colors to the stylesheet on your website, or to provide more color-blind frienly color palettes.
+
+
+.. function :: rgb.setColors(palette)
+
+  Replaces the current color palette with the specified palette. This will replace the color definitions itself as well as use the newly provided color definitions for the default gradients. All functions that accept color names will from now on us the new color definitions. 
+
+  In case you want to change the color palette, it's best to do so before initializing the viewer component as it will make sure that all the code sees the new palette. Some of the methods translate the color names to RGB triplets and as such will not adjust to the new palette.
+
+  :param palette: a dictionary of color names (see example below).
+
+
+Example
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The following code block replaces the default palette with color-blind friendly colors.
+
+.. code-block:: javascript
+
+  var MY_COLOR_PALETTE = {
+    white :        rgb.fromValues(1.0,1.0 ,1.0,1.0),
+    black :        rgb.fromValues(0.0,0.0 ,0.0,1.0),
+    grey :         rgb.fromValues(0.5,0.5 ,0.5,1.0),
+    lightgrey :    rgb.fromValues(0.8,0.8 ,0.8,1.0),
+    darkgrey :     rgb.fromValues(0.3,0.3 ,0.3,1.0),
+    red :          rgb.hex2rgb("#AA00A2"),
+    darkred :      rgb.hex2rgb("#7F207B"),
+    lightred :     rgb.fromValues(1.0,0.5 ,0.5,1.0),
+    green :        rgb.hex2rgb("#C9F600"),
+    darkgreen :    rgb.hex2rgb("#9FB82E"),
+    lightgreen :   rgb.hex2rgb("#E1FA71"), // or D8FA3F
+    blue :         rgb.hex2rgb("#6A93D4"), // or 6A93D4
+    darkblue :     rgb.hex2rgb("#284A7E"), // or 104BA9
+    lightblue :    rgb.fromValues(0.5,0.5 ,1.0,1.0),
+    yellow :       rgb.hex2rgb("#FFCC73"),
+    darkyellow :   rgb.fromValues(0.5,0.5 ,0.0,1.0),
+    lightyellow :  rgb.fromValues(1.0,1.0 ,0.5,1.0),
+    cyan :         rgb.fromValues(0.0,1.0 ,1.0,1.0),
+    darkcyan :     rgb.fromValues(0.0,0.5 ,0.5,1.0),
+    lightcyan :    rgb.fromValues(0.5,1.0 ,1.0,1.0),
+    magenta :      rgb.fromValues(1.0,0.0 ,1.0,1.0),
+    darkmagenta :  rgb.fromValues(0.5,0.0 ,0.5,1.0),
+    lightmagenta : rgb.fromValues(1.0,0.5 ,1.0,1.0),
+    orange :       rgb.hex2rgb("#FFA200"), // or FFBA40
+    darkorange :   rgb.fromValues(0.5,0.25,0.0,1.0),
+    lightorange :  rgb.fromValues(1.0,0.75,0.5,1.0),
+    brown :        rgb.hex2rgb("#A66A00"),
+    purple :       rgb.hex2rgb("#D435CD")
+  };
+  rgb.setColors(MY_COLOR_PALETTE);
