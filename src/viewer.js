@@ -85,6 +85,19 @@ PickingResult.prototype = {
   }
 };
 
+function isWebGLSupported() {
+  if (document.readyState !== "complete" &&
+      document.readyState !== "loaded" &&
+      document.readyState !== "interactive") {
+    console.error('pv.isWebGLSupported only works after DOMContentLoaded has fired');
+    return false;
+  }
+  var canvas = document.createElement('canvas');
+  var gl = canvas.getContext('experimental-webgl');
+  // force to bool
+  return !!gl;
+}
+
 function PV(domElement, opts) {
   opts = opts || {};
   this._options = {
@@ -1067,7 +1080,8 @@ PV.prototype = {
 return { 
   Viewer : function(elem, options) { 
     return new PV(elem, options); 
-  }
+  },
+  isWebGLSupported : isWebGLSupported
 };
 
 })();
