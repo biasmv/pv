@@ -56,6 +56,21 @@ var requestAnimFrame = (function(){
          };
 })();
 
+function isWebGLSupported(gl) {
+  if (document.readyState !== "complete" &&
+      document.readyState !== "loaded" &&
+      document.readyState !== "interactive") {
+    console.error('isWebGLSupported only works after DOMContentLoaded has fired');
+    return false;
+  }
+  if (gl === undefined) {
+    var canvas = document.createElement('canvas');
+    gl = canvas.getContext('experimental-webgl');
+  }
+  // force to bool
+  return !!gl;
+}
+
 function slabModeToStrategy(mode, options) {
   mode = mode || 'auto';
   if (mode === 'fixed') {
@@ -85,18 +100,6 @@ PickingResult.prototype = {
   }
 };
 
-function isWebGLSupported() {
-  if (document.readyState !== "complete" &&
-      document.readyState !== "loaded" &&
-      document.readyState !== "interactive") {
-    console.error('pv.isWebGLSupported only works after DOMContentLoaded has fired');
-    return false;
-  }
-  var canvas = document.createElement('canvas');
-  var gl = canvas.getContext('experimental-webgl');
-  // force to bool
-  return !!gl;
-}
 
 function PV(domElement, opts) {
   opts = opts || {};
@@ -1075,6 +1078,9 @@ PV.prototype = {
   all : function() {
     return this._objects;
   },
+  isWebGLSupported : function() {
+    return isWebGLSupported(this._gl);
+  }
 };
 
 return { 
