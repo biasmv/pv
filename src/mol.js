@@ -704,7 +704,7 @@ derive(Mol, MolBase, {
 
 
   // determine connectivity structure. for simplicity only connects atoms of the
-  // same residue and peptide bonds
+  // same residue, peptide bonds and nucleotides
   deriveConnectivity : function() {
     console.time('Mol.deriveConnectivity');
     var this_structure = this;
