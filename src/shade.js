@@ -223,41 +223,46 @@ exports.color.uniform = function(color) {
   }, null, null);
 };
 
+var CPK_TABLE = {
+ H : [1.00, 1.00, 1.00],
+ C : [0.83, 0.83, 0.83],
+ N : [0.13, 0.20, 1.00],
+ O : [1.00, 0.13, 0.00],
+ F : [0.12, 0.94, 0.12],
+ CL : [0.12, 0.94, 0.12],
+ BR : [0.60, 0.13, 0.00],
+ I : [0.40, 0.00, 0.73],
+ HE : [0.00, 1.00, 1.00],
+ NE : [0.00, 1.00, 1.00],
+ AR : [0.00, 1.00, 1.00],
+ XE : [0.00, 1.00, 1.00],
+ KR : [0.00, 1.00, 1.00],
+ P : [1.00, 0.60, 0.00],
+ S : [0.87, 0.87, 0.00],
+ B : [1.00, 0.67, 0.47],
+ LI : [0.47, 0.00, 1.00],
+ NA : [0.47, 0.00, 1.00],
+ K : [0.47, 0.00, 1.00],
+ RB : [0.47, 0.00, 1.00],
+ CS : [0.47, 0.00, 1.00],
+ FR : [0.47, 0.00, 1.00],
+ BE : [0.00, 0.47, 0.00],
+ MG : [0.00, 0.47, 0.00],
+ SR : [0.00, 0.47, 0.00],
+ BA : [0.00, 0.47, 0.00],
+ RA : [0.00, 0.47, 0.00],
+ TI : [0.60, 0.60, 0.60],
+ FE : [0.87, 0.47, 0.00]
+};
+
 exports.color.byElement = function() {
   return new ColorOp(function(atom, out, index) {
     var ele = atom.element();
-    if (ele === 'C') {
-      out[index] = 0.8; 
-      out[index+1] = 0.8; 
-      out[index+2] = 0.8; 
-      out[index+3] = 1.0;
-      return out;
-    }
-    if (ele === 'N') {
-      out[index] = 0; 
-      out[index+1] = 0; 
-      out[index+2] = 1;
-      out[index+3] = 1.0;
-      return out;
-    }
-    if (ele === 'O') {
-      out[index] = 1; 
-      out[index+1] = 0; 
-      out[index+2] = 0;
-      out[index+3] = 1.0;
-      return out;
-    }
-    if (ele === 'S') {
-      out[index] = 0.8; 
-      out[index+1] = 0.8; 
-      out[index+2] = 0;
-      out[index+3] = 1.0;
-      return out;
-    }
-    if (ele === 'CA') {
-      out[index] = 0.533; 
-      out[index+1] = 0.533; 
-      out[index+2] = 0.666;
+    var color = CPK_TABLE[ele];
+    if (color !== undefined) {
+      out[index] = color[0]; 
+      out[index+1] = color[1]; 
+      out[index+2] = color[2]; 
       out[index+3] = 1.0;
       return out;
     }
