@@ -64,10 +64,14 @@ function isWebGLSupported(gl) {
     return false;
   }
   if (gl === undefined) {
-    var canvas = document.createElement('canvas');
-    gl = canvas.getContext('experimental-webgl');
+    try {
+      var canvas = document.createElement("canvas");
+      return !!  (window.WebGLRenderingContext &&
+          canvas.getContext("experimental-webgl"));
+    } catch(e) {
+      return false;
+    }
   }
-  // force to bool
   return !!gl;
 }
 
