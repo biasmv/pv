@@ -93,6 +93,32 @@ Remark350Reader.prototype = {
   }
 };
 
+// Very simple heuristic to determine the element from the atom name.
+// This at the very least assume that people have the decency to follow 
+// the standard naming conventions for atom names when they are too 
+// lazy to write down elements
+function guessAtomElementFromName(fourLetterName) {
+  if (fourLetterName[0] !== ' ') {
+    var trimmed = fourLetterName.trim();
+    if (trimmed.length === 4) {
+      // look for first character in range A-Z or a-z and use that 
+      // for the element. 
+      var i = 0;
+      var charCode = trimmed.charCodeAt(i);
+      while (i < 4 && (charCode < 65 || charCode > 122 ||
+             (charCode > 90 && charCode < 97))) {
+        ++i;
+        charCode = trimmed.charCodeAt(i);
+      }
+    }
+    // when first character is not empty and length is smaller than 4,
+    // assume it's a "heavy" atom and use the first two letters as the 
+    // atom name. That's not always correct
+    return trimmed.substr(0, 2);
+  }
+  return fourLetterName[1];
+}
+
 function PDBReader() {
   this._helices = [];
   this._sheets = [];
@@ -138,8 +164,13 @@ PDBReader.prototype = {
     }
     var chainName = line[21];
     var resName = line.substr(17, 3).trim();
-    var atomName = line.substr(12, 4).trim();
+    var fullAtomName = line.substr(12, 4);
+    var atomName = fullAtomName.trim();
     var rnumNum = parseInt(line.substr(22, 4), 10);
+    // check for NaN
+    if (rnumNum !== rnumNum) {
+      rnumNum = 1;
+    }
     var insCode = line[26] === ' ' ? '\0' : line[26];
     var updateResidue = false;
     var updateChain = false;
@@ -164,7 +195,11 @@ PDBReader.prototype = {
     for (var i=0;i<3;++i) {
       pos[i] = (parseFloat(line.substr(30+i*8, 8)));
     }
-    this._currRes.addAtom(atomName, pos, line.substr(76, 2).trim());
+    var element = line.substr(76,2).trim();
+    if (element === '') {
+      element = guessAtomElementFromName(fullAtomName);
+    }
+    this._currRes.addAtom(atomName, pos, element);
     return true;
   },
 

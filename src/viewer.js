@@ -25,17 +25,18 @@ var pv = (function(){
 // FIXME: Browser vendors tend to block quite a few graphic cards. Instead
 //   of showing this very generic message, implement a per-browser
 //   diagnostic. For example, when we detect that we are running a recent
-//   Chrome and Webgl is not available, we should say that the user is
+//   Chrome and WebGL is not available, we should say that the user is
 //   supposed to check chrome://gpu for details on why WebGL is not
 //   available. Similar troubleshooting pages are available for other
 //   browsers.
 var WEBGL_NOT_SUPPORTED = '\
 <div style="vertical-align:middle; text-align:center;">\
-<h1>Oink</h1><p>Your browser does not support WebGL. \
+<h1>WebGL not supported</h1><p>Your browser does not support WebGL. \
 You might want to try Chrome, Firefox, IE 11, or newer versions of Safari\
 </p>\
 <p>If you are using a recent version of one of the above browsers, your \
-graphic card might be blocked. Check the browser documentation for details\
+graphic card might be blocked. Check the browser documentation for details \
+on how to unblock it.\
 </p>\
 </div>';
 
@@ -54,6 +55,25 @@ var requestAnimFrame = (function(){
            window.setTimeout(callback, 1000 / 60);
          };
 })();
+
+function isWebGLSupported(gl) {
+  if (document.readyState !== "complete" &&
+      document.readyState !== "loaded" &&
+      document.readyState !== "interactive") {
+    console.error('isWebGLSupported only works after DOMContentLoaded has fired');
+    return false;
+  }
+  if (gl === undefined) {
+    try {
+      var canvas = document.createElement("canvas");
+      return !!  (window.WebGLRenderingContext &&
+          canvas.getContext("experimental-webgl"));
+    } catch(e) {
+      return false;
+    }
+  }
+  return !!gl;
+}
 
 function slabModeToStrategy(mode, options) {
   mode = mode || 'auto';
@@ -83,6 +103,7 @@ PickingResult.prototype = {
     return this._transform; 
   }
 };
+
 
 function PV(domElement, opts) {
   opts = opts || {};
@@ -1083,12 +1104,16 @@ PV.prototype = {
   all : function() {
     return this._objects;
   },
+  isWebGLSupported : function() {
+    return isWebGLSupported(this._gl);
+  }
 };
 
 return { 
   Viewer : function(elem, options) { 
     return new PV(elem, options); 
-  }
+  },
+  isWebGLSupported : isWebGLSupported
 };
 
 })();
