@@ -97,8 +97,10 @@ function PV(domElement, opts) {
     slabMode : slabModeToStrategy(opts.slabMode),
     atomClick: opts.atomClick || null,
     fog : true,
-    atomDoubleClick : 'center', // option is handled below
+    atomDoubleClick : 'center' // option is handled below
   };
+
+  this._firstDraw = true;
   this._objects = [];
   this._domElement = domElement;
   this._redrawRequested = false;
@@ -407,6 +409,9 @@ PV.prototype = {
   },
 
   _initPV : function() {
+
+
+
     if (!this._initGL()) {
       this._domElement.removeChild(this._canvas);
       this._domElement.innerHTML = WEBGL_NOT_SUPPORTED;
@@ -451,6 +456,7 @@ PV.prototype = {
     this._canvas.addEventListener('mousedown', bind(this, this._mouseDown),
                               false);
     this._touchHandler = new TouchHandler(this._canvas, this, this._cam);
+
 
     return true;
   },
@@ -559,6 +565,12 @@ PV.prototype = {
     this._gl.cullFace(this._gl.FRONT);
     this._gl.enable(this._gl.BLEND);
     this._drawWithPass('normal');
+
+    if ( this._firstDraw){
+      this._firstDraw = false;
+      this._dispatchViewerReadyEvent({'name':'viewerReadyEvent'},'viewerReady',this);
+    }
+
   },
 
   setCenter : function(center, ms) {
@@ -626,6 +638,15 @@ PV.prototype = {
       
       callbacks.forEach(function (callback) {
         callback(picked, event);
+      });
+    }
+  },
+  _dispatchViewerReadyEvent : function(event, newEventName, viewer) {
+    var callbacks = this.listenerMap[newEventName];
+    if (callbacks) {
+
+      callbacks.forEach(function (callback) {
+        callback( viewer, event);
       });
     }
   },
@@ -703,6 +724,7 @@ PV.prototype = {
       console.error('render mode', mode, 'not supported');
       return;
     }
+
     return this[mode](name, structure, opts);
   },
 
