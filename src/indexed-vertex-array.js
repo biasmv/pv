@@ -116,14 +116,14 @@ derive(IndexedVertexArray, VertexArrayBase, {
     if (shader.normalAttrib !== -1) {
       gl.enableVertexAttribArray(shader.normalAttrib);
       gl.vertexAttribPointer(shader.normalAttrib, 3, gl.FLOAT, false,
-                                  this._FLOATS_PER_VERT * 4,
-                                  this._NORMAL_OFFSET * 4);
+                             this._FLOATS_PER_VERT * 4,
+                             this._NORMAL_OFFSET * 4);
     }
 
     if (shader.colorAttrib !== -1) {
       gl.vertexAttribPointer(shader.colorAttrib, 4, gl.FLOAT, false,
-                                  this._FLOATS_PER_VERT * 4,
-                                  this._COLOR_OFFSET * 4);
+                             this._FLOATS_PER_VERT * 4,
+                             this._COLOR_OFFSET * 4);
       gl.enableVertexAttribArray(shader.colorAttrib);
     }
     if (shader.objIdAttrib !== -1) {
