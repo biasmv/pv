@@ -95,8 +95,8 @@ derive(VertexArray, VertexArrayBase, {
     this.bindAttribs(shader);
   },
 
-  // draws all triangles contained in the indexed vertex array using the provided
-  // shader.
+  // draws all triangles contained in the indexed vertex array using the 
+  // provided shader.
   draw : function() {
     this._gl.drawArrays(this._gl.LINES, 0, this._numLines * 2);
   }

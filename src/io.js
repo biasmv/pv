@@ -32,7 +32,8 @@ Remark350Reader.prototype = {
     var assemblies = [];
     for (var c in this._assemblies) {
       if (this._assemblies.hasOwnProperty(c)) {
-        // We are sure that obj[key] belongs to the object and was not inherited.
+        // We are sure that obj[key] belongs to the object and was not 
+        // inherited.
         assemblies.push(this._assemblies[c]);
       }
     }
@@ -231,8 +232,11 @@ PDBReader.prototype = {
     return true;
   },
 
-  // assigns the secondary structure information found in the helix sheet records, 
-  // derives connectivity and assigns assembly information.
+  // called after parsing to perform any work that requires the complete 
+  // structure to be present:
+  // (a) assigns the secondary structure information found in the helix 
+  // sheet records, (b) derives connectivity and (c) assigns assembly 
+  // information.
   finish : function() {
     var chain = null;
     for (i = 0; i < this._sheets.length; ++i) {

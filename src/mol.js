@@ -928,7 +928,8 @@ derive(Residue, ResidueBase, {
   full : function() { return this; },
 
   addAtom : function(name, pos, element) {
-    var atom = new Atom(this, name, pos, element, this.structure().nextAtomIndex());
+    var atom = new Atom(this, name, pos, element, 
+                        this.structure().nextAtomIndex());
     this._atoms.push(atom);
     return atom;
   },

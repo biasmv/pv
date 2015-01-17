@@ -36,8 +36,10 @@ DynamicIndexedVertexArray.prototype = {
   },
   addVertex : function(pos, normal, color, objId) {
     this._numVerts += 1;
-    this._vertData.push(pos[0], pos[1], pos[2], normal[0], normal[1], normal[2], 
-                        color[0], color[1], color[2], color[3], objId);
+    this._vertData.push(pos[0], pos[1], pos[2], 
+                        normal[0], normal[1], normal[2], 
+                        color[0], color[1], color[2], color[3], 
+                        objId);
   },
   addTriangle : function(indexOne, indexTwo, indexThree) {
     this._indexData.push(indexOne, indexTwo, indexThree);
@@ -133,8 +135,10 @@ derive(CustomMesh, SceneNode, {
     if (this._va !== null) {
       this._va.destroy();
     }
-    this._va = new IndexedVertexArray(this._gl, this._data.numVerts(), this._data.numIndices(),
-                                      this._float32Allocator, this._uint16Allocator);
+    this._va = new IndexedVertexArray(this._gl, this._data.numVerts(), 
+                                      this._data.numIndices(), 
+                                      this._float32Allocator, 
+                                      this._uint16Allocator);
     // FIXME: find a better way to do this
     this._va.setIndexData(this._data.indexData());
     this._va.setVertData(this._data.vertData());

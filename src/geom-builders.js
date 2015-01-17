@@ -129,14 +129,17 @@ function TubeProfile(points, num, strength) {
 TubeProfile.prototype = {
   addTransformed : (function() {
     var pos = vec3.create(), normal = vec3.create();
-    return function(vertArray, center, radius, rotation, color, first, offset, objId) {
-      var baseIndex = vertArray.numVerts() - this._arcs;
-      for (var i = 0; i < this._arcs; ++i) {
-        vec3.set(pos, radius * this._verts[3 * i], 
-                radius * this._verts[3 * i + 1], 0.0);
+    return function(vertArray, center, radius, rotation, color, 
+                    first, offset, objId) {
+      var arcs = this._arcs;
+      var norms = this._normals;
+      var verts = this._verts;
+      var baseIndex = vertArray.numVerts() - arcs;
+      for (var i = 0; i < arcs; ++i) {
+        vec3.set(pos, radius * verts[3 * i], radius * verts[3 * i + 1], 0.0);
         vec3.transformMat3(pos, pos, rotation);
         vec3.add(pos, pos, center);
-        vec3.set(normal, this._normals[3 * i], this._normals[3 * i + 1], 0.0);
+        vec3.set(normal, norms[3 * i], norms[3 * i + 1], 0.0);
         vec3.transformMat3(normal, normal, rotation);
         vertArray.addVertex(pos, normal, color, objId);
       }
@@ -152,13 +155,13 @@ TubeProfile.prototype = {
         }
         return;
       }
-      for (i = 0; i < this._arcs; ++i) {
-        vertArray.addTriangle(baseIndex + ((i + offset) % this._arcs),
-                              baseIndex + i + this._arcs,
-                              baseIndex + ((i + 1) % this._arcs) + this._arcs);
-        vertArray.addTriangle(baseIndex + (i + offset) % this._arcs,
-                              baseIndex + ((i + 1) % this._arcs) + this._arcs,
-                              baseIndex + ((i + 1 + offset) % this._arcs));
+      for (i = 0; i < arcs; ++i) {
+        vertArray.addTriangle(baseIndex + ((i + offset) % arcs),
+                              baseIndex + i + arcs,
+                              baseIndex + ((i + 1) % arcs) + arcs);
+        vertArray.addTriangle(baseIndex + (i + offset) % arcs,
+                              baseIndex + ((i + 1) % arcs) + arcs,
+                              baseIndex + ((i + 1 + offset) % arcs));
       }
 
     };
@@ -210,21 +213,24 @@ ProtoCylinder.prototype = {
     return function(va, center, length, radius, rotation, colorOne, colorTwo,
                     idOne, idTwo) {
       var baseIndex = va.numVerts();
-      for (var i = 0; i < 2 * this._arcs; ++i) {
-        vec3.set(pos, radius * this._verts[3 * i], radius * this._verts[3 * i + 1],
-                length * this._verts[3 * i + 2]);
+      var verts = this._verts;
+      var norms = this._normals;
+      var arcs = this._arcs;
+      for (var i = 0; i < 2 * arcs; ++i) {
+        vec3.set(pos, radius * verts[3 * i], radius * verts[3 * i + 1],
+                length * verts[3 * i + 2]);
         vec3.transformMat3(pos, pos, rotation);
         vec3.add(pos, pos, center);
-        vec3.set(normal, this._normals[3 * i], this._normals[3 * i + 1],
-                this._normals[3 * i + 2]);
+        vec3.set(normal, norms[3 * i], norms[3 * i + 1], norms[3 * i + 2]);
         vec3.transformMat3(normal, normal, rotation);
-        var objId = i < this._arcs ? idOne : idTwo;
-        va.addVertex(pos, normal, i < this._arcs ? colorOne : colorTwo, objId);
+        var objId = i < arcs ? idOne : idTwo;
+        va.addVertex(pos, normal, i < arcs ? colorOne : colorTwo, objId);
       }
-      for (i = 0; i < this._indices.length / 3; ++i) {
-        va.addTriangle(baseIndex + this._indices[i * 3],
-                      baseIndex + this._indices[i * 3 + 1],
-                      baseIndex + this._indices[i * 3 + 2]);
+      var indices = this._indices;
+      for (i = 0; i < indices.length / 3; ++i) {
+        va.addTriangle(baseIndex + indices[i * 3], 
+                       baseIndex + indices[i * 3 + 1],
+                       baseIndex + indices[i * 3 + 2]);
       }
     };
   })()

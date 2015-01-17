@@ -141,9 +141,9 @@ TraceVertexAssoc.prototype = {
                           vertexArray : vertexArray});
   },
   recolor : function(colorOp, view) {
-    // FIXME: this function might create quite a few temporary buffers. Implement
-    // a buffer pool to avoid hitting the GC and having to go through the slow
-    // creation of typed arrays.
+    // FIXME: this function might create quite a few temporary buffers. 
+    // use buffer pool to avoid hitting the GC and having to go through 
+    // the slow creation of typed arrays.
     if (this._callBeginEnd) {
       // FIXME: does this need to be called on the complete structure?
       colorOp.begin(this._structure);

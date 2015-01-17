@@ -217,7 +217,8 @@ var diagonalizer = (function() {
       var thet = (D[k2 * 3 + k2] - D[k1 * 3 + k1]) / (2.0 * offDiag[k]);
       var sgn = (thet > 0.0) ? 1.0 : -1.0;
       thet *= sgn; // make it positive
-      var t = sgn / (thet + ((thet < 1.E6) ? Math.sqrt(thet * thet + 1.0) : thet)); 
+      var div = (thet + ((thet < 1.E6) ? Math.sqrt(thet * thet + 1.0) : thet));
+      var t = sgn / div;
       var c = 1.0 / Math.sqrt(t * t + 1.0); 
       if(c === 1.0) {
         // no room for improvement - reached machine precision.

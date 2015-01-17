@@ -105,8 +105,8 @@ VertexArrayBase.prototype = {
     this._ready = true;
   },
 
-  // Helper method to calculate the squared bounding sphere radius of the sphere 
-  // centered on "sphereCenter" over multiple vertex arrays. 
+  // Helper method to calculate the squared bounding sphere radius of the 
+  // sphere centered on "sphereCenter" over multiple vertex arrays. 
   updateSquaredSphereRadius :  (function() {
 
     var transformedCenter = vec3.create();
@@ -123,7 +123,9 @@ VertexArrayBase.prototype = {
       } 
 
       var sphereRadSquare = bounds.radius() * bounds.radius();
-      return Math.max(vec3.sqrDist(bounds.center(), sphereCenter) + sphereRadSquare, radius);
+      return Math.max(vec3.sqrDist(bounds.center(), 
+                                   sphereCenter) + sphereRadSquare, 
+                      radius);
     };
   })(),
 

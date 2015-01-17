@@ -107,41 +107,44 @@ derive(IndexedVertexArray, VertexArrayBase, {
   },
 
   bindAttribs : function(shader) {
-    this._gl.enableVertexAttribArray(shader.posAttrib);
-    this._gl.vertexAttribPointer(shader.posAttrib, 3, this._gl.FLOAT, false,
-                                this._FLOATS_PER_VERT * 4, this._POS_OFFSET * 4);
+    var gl = this._gl;
+    gl.enableVertexAttribArray(shader.posAttrib);
+    gl.vertexAttribPointer(shader.posAttrib, 3, gl.FLOAT, false,
+                           this._FLOATS_PER_VERT * 4, 
+                           this._POS_OFFSET * 4);
 
     if (shader.normalAttrib !== -1) {
-      this._gl.enableVertexAttribArray(shader.normalAttrib);
-      this._gl.vertexAttribPointer(shader.normalAttrib, 3, this._gl.FLOAT, false,
+      gl.enableVertexAttribArray(shader.normalAttrib);
+      gl.vertexAttribPointer(shader.normalAttrib, 3, gl.FLOAT, false,
                                   this._FLOATS_PER_VERT * 4,
                                   this._NORMAL_OFFSET * 4);
     }
 
     if (shader.colorAttrib !== -1) {
-      this._gl.vertexAttribPointer(shader.colorAttrib, 4, this._gl.FLOAT, false,
+      gl.vertexAttribPointer(shader.colorAttrib, 4, gl.FLOAT, false,
                                   this._FLOATS_PER_VERT * 4,
                                   this._COLOR_OFFSET * 4);
-      this._gl.enableVertexAttribArray(shader.colorAttrib);
+      gl.enableVertexAttribArray(shader.colorAttrib);
     }
     if (shader.objIdAttrib !== -1) {
-      this._gl.vertexAttribPointer(shader.objIdAttrib, 1, this._gl.FLOAT, false,
-                                  this._FLOATS_PER_VERT * 4, this._OBJID_OFFSET * 4);
-      this._gl.enableVertexAttribArray(shader.objIdAttrib);
+      gl.vertexAttribPointer(shader.objIdAttrib, 1, gl.FLOAT, false,
+                             this._FLOATS_PER_VERT * 4, 
+                             this._OBJID_OFFSET * 4);
+      gl.enableVertexAttribArray(shader.objIdAttrib);
     }
   },
 
   releaseAttribs : function(shader) {
-
-    this._gl.disableVertexAttribArray(shader.posAttrib);
+    var gl = this._gl;
+    gl.disableVertexAttribArray(shader.posAttrib);
     if (shader.colorAttrib !== -1) {
-      this._gl.disableVertexAttribArray(shader.colorAttrib);
+      gl.disableVertexAttribArray(shader.colorAttrib);
     }
     if (shader.normalAttrib !== -1) {
-      this._gl.disableVertexAttribArray(shader.normalAttrib);
+      gl.disableVertexAttribArray(shader.normalAttrib);
     }
     if (shader.objIdAttrib !== -1) {
-      this._gl.disableVertexAttribArray(shader.objIdAttrib);
+      gl.disableVertexAttribArray(shader.objIdAttrib);
     }
   },
 
@@ -150,8 +153,8 @@ derive(IndexedVertexArray, VertexArrayBase, {
     this.bindAttribs(shader);
   },
 
-  // draws all triangles contained in the indexed vertex array using the provided
-  // shader. requires a call to bind() first.
+  // draws all triangles contained in the indexed vertex array using the 
+  // provided shader. requires a call to bind() first.
   draw : function() {
     this._gl.drawElements(this._gl.TRIANGLES, this._numTriangles * 3,
                           this._gl.UNSIGNED_SHORT, 0);

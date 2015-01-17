@@ -54,7 +54,8 @@ derive(MeshChainData, IndexedVertexArray, {
   chain : function() { return this._chain; }
 });
 
-MeshChainData.prototype.drawSymmetryRelated = LineChainData.prototype.drawSymmetryRelated;
+MeshChainData.prototype.drawSymmetryRelated = 
+  LineChainData.prototype.drawSymmetryRelated;
 
 
 exports.LineChainData = LineChainData;

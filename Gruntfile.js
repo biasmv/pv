@@ -55,6 +55,7 @@ module.exports = function(grunt) {
         curly : true, 
         eqeqeq : true,
         forin : true,
+        maxlen: 80,
         /*freeze : true, */
         immed : true,
         latedef : true,

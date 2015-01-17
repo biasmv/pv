@@ -262,8 +262,8 @@ derive(BaseGeom, SceneNode, {
     var gens = assembly.generators();
     for (var i = 0; i < gens.length; ++i) {
       var gen = gens[i];
-      var affectedVertArrays = this._vertArraysInvolving(gen.chains());
-      this._drawVertArrays(cam, shader, affectedVertArrays, gen.matrices());
+      var affectedVAs = this._vertArraysInvolving(gen.chains());
+      this._drawVertArrays(cam, shader, affectedVAs, gen.matrices());
     }
   },
 
@@ -283,34 +283,36 @@ derive(BaseGeom, SceneNode, {
     }
     var showRelated = this.showRelated();
     if (showRelated === 'asym') {
-      return this._updateProjectionIntervalsAsym(xAxis, yAxis, zAxis, xInterval, 
-                                                yInterval, zInterval);
+      return this._updateProjectionIntervalsAsym(xAxis, yAxis, zAxis, 
+                                                 xInterval, yInterval, 
+                                                 zInterval);
     } 
     var assembly = this.structure().assembly(showRelated);
     // in case there is no assembly, fallback to asymmetric unit and bail out.
     if (!assembly) {
       console.error('no assembly', showRelated, 
                     'found. Falling back to asymmetric unit');
-      return this._updateProjectionIntervalsAsym(xAxis, yAxis, zAxis, xInterval, 
-                                                yInterval, zInterval);
+      return this._updateProjectionIntervalsAsym(xAxis, yAxis, zAxis, 
+                                                 xInterval, yInterval, 
+                                                 zInterval);
     }
     var gens = assembly.generators();
     for (var i = 0; i < gens.length; ++i) {
       var gen = gens[i];
-      var affectedVertArrays = this._vertArraysInvolving(gen.chains());
+      var affectedVAs = this._vertArraysInvolving(gen.chains());
       for (var j = 0; j < gen.matrices().length; ++j) {
-        for (var k = 0; k < affectedVertArrays.length; ++k) {
+        for (var k = 0; k < affectedVAs.length; ++k) {
           var transform = gen.matrix(j);
-          affectedVertArrays[k].updateProjectionIntervals(xAxis, yAxis, zAxis, 
-                                                          xInterval, yInterval, 
-                                                          zInterval, transform);
+          affectedVAs[k].updateProjectionIntervals(xAxis, yAxis, zAxis, 
+                                                   xInterval, yInterval, 
+                                                   zInterval, transform);
         }
       }
     }
   },
 
-  // FIXME: investigate the performance cost of sharing code between updateSquaredSphereRadius
-  // and updateProjectionIntervals 
+  // FIXME: investigate the performance cost of sharing code between 
+  // updateSquaredSphereRadius and updateProjectionIntervals 
   _updateSquaredSphereRadiusAsym : function(center, radius) {
       var vertArrays = this.vertArrays();
       for (var i = 0; i < vertArrays.length; ++i) {
@@ -337,12 +339,12 @@ derive(BaseGeom, SceneNode, {
     var gens = assembly.generators();
     for (var i = 0; i < gens.length; ++i) {
       var gen = gens[i];
-      var affectedVertArrays = this._vertArraysInvolving(gen.chains());
+      var affectedVAs = this._vertArraysInvolving(gen.chains());
       for (var j = 0; j < gen.matrices().length; ++j) {
-        for (var k = 0; k < affectedVertArrays.length; ++k) {
+        for (var k = 0; k < affectedVAs.length; ++k) {
           // FIXME: is this correct?
           // var transform = gen.matrix(j);
-          radius = affectedVertArrays[k].updateSquaredSphereRadius(center, radius);
+          radius = affectedVAs[k].updateSquaredSphereRadius(center, radius);
         }
       }
     }
@@ -493,7 +495,7 @@ derive(LineGeom, BaseGeom, {
 // render geometry across multiple indexed vertex arrays. 
 function MeshGeom(gl, float32Allocator, uint16Allocator) {
   BaseGeom.call(this, gl);
-  this._indexedVertArrays = [ ];
+  this._indexedVAs = [ ];
   this._float32Allocator = float32Allocator;
   this._uint16Allocator = uint16Allocator;
   this._remainingVerts = null;
@@ -513,7 +515,7 @@ derive(MeshGeom, BaseGeom, {
                                   numIndices,
                                   this._float32Allocator, 
                                   this._uint16Allocator);
-    this._indexedVertArrays.push(newVa);
+    this._indexedVAs.push(newVa);
     return newVa;
   },
 
@@ -524,12 +526,12 @@ derive(MeshGeom, BaseGeom, {
       this._gl, this._boundedVertArraySize(numVerts), numIndices,
       this._float32Allocator, this._uint16Allocator);
 
-    this._indexedVertArrays.push(newVa);
+    this._indexedVAs.push(newVa);
     return newVa;
   },
 
   vertArrayWithSpaceFor : function(numVerts) {
-    var currentVa = this._indexedVertArrays[this._indexedVertArrays.length - 1];
+    var currentVa = this._indexedVAs[this._indexedVAs.length - 1];
     var remaining = currentVa.maxVerts() - currentVa.numVerts();
     if (remaining >= numVerts) {
       return currentVa;
@@ -547,26 +549,26 @@ derive(MeshGeom, BaseGeom, {
       newVa = new IndexedVertexArray(this._gl, numVerts, this._remainingIndices,
         this._float32Allocator, this._uint16Allocator);
     } 
-    this._indexedVertArrays.push(newVa);
+    this._indexedVAs.push(newVa);
     return newVa;
   },
 
 
 
   vertArray : function(index) {
-    return this._indexedVertArrays[index];
+    return this._indexedVAs[index];
   },
 
   destroy : function() {
     BaseGeom.prototype.destroy.call(this);
-    for (var i = 0; i < this._indexedVertArrays.length; ++i) {
-      this._indexedVertArrays[i].destroy();
+    for (var i = 0; i < this._indexedVAs.length; ++i) {
+      this._indexedVAs[i].destroy();
     }
-    this._indexedVertArrays = [];
+    this._indexedVAs = [];
   },
 
   numVerts : function() {
-    return this._indexedVertArrays[0].numVerts();
+    return this._indexedVAs[0].numVerts();
   },
 
   shaderForStyleAndPass :
@@ -584,35 +586,35 @@ derive(MeshGeom, BaseGeom, {
     return shader !== undefined ? shader : null;
   },
 
-  _drawVertArrays : function(cam, shader, indexedVertArrays, 
-                                                additionalTransforms) {
+  _drawVertArrays : function(cam, shader, indexedVAs, additionalTransforms) {
     var i;
     if (additionalTransforms) {
-      for (i = 0; i < indexedVertArrays.length; ++i) {
-        indexedVertArrays[i].drawSymmetryRelated(cam, shader, additionalTransforms);
+      for (i = 0; i < indexedVAs.length; ++i) {
+        indexedVAs[i].drawSymmetryRelated(cam, shader, 
+                                                 additionalTransforms);
       }
     } else {
       cam.bind(shader);
       this._gl.uniform1i(shader.symId, 255);
-      for (i = 0; i < indexedVertArrays.length; ++i) {
-        indexedVertArrays[i].bind(shader);
-        indexedVertArrays[i].draw();
-        indexedVertArrays[i].releaseAttribs(shader);
+      for (i = 0; i < indexedVAs.length; ++i) {
+        indexedVAs[i].bind(shader);
+        indexedVAs[i].draw();
+        indexedVAs[i].releaseAttribs(shader);
       }
     }
   },
 
   vertArrays : function() {
-    return this._indexedVertArrays;
+    return this._indexedVAs;
   },
 
   addVertex : function(pos, normal, color, objId) {
-    var va = this._indexedVertArrays[0];
+    var va = this._indexedVAs[0];
     va.addVertex(pos, normal, color, objId);
   },
 
   addTriangle : function(idx1, idx2, idx3) {
-    var va = this._indexedVertArrays[0];
+    var va = this._indexedVAs[0];
     va.addTriangle(idx1, idx2, idx3);
   },
 

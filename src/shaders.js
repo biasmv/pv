@@ -166,7 +166,8 @@ uniform float xScale;\n\
 uniform float yScale;\n\
 varying vec2 vertTex;\n\
 void main() { \n\
-  gl_FragColor = texture2D(sampler, vec2(vertTex.x*xScale, vertTex.y*yScale));\n\
+  vec2 texCoord = vec2(vertTex.x*xScale, vertTex.y*yScale);\n\
+  gl_FragColor = texture2D(sampler, texCoord);\n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
 }';
 

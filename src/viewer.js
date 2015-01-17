@@ -60,7 +60,7 @@ function isWebGLSupported(gl) {
   if (document.readyState !== "complete" &&
       document.readyState !== "loaded" &&
       document.readyState !== "interactive") {
-    console.error('isWebGLSupported only works after DOMContentLoaded has fired');
+    console.error('isWebGLSupported only works after DOMContentLoaded');
     return false;
   }
   if (gl === undefined) {
@@ -114,7 +114,7 @@ function PV(domElement, opts) {
     antialias : opts.antialias,
     quality : opts.quality || 'low',
     style : opts.style || 'hemilight',
-    background : opts.background ? forceRGB(opts.background) : vec3.fromValues(1,1,1),
+    background : forceRGB(opts.background || 'white'),
     slabMode : slabModeToStrategy(opts.slabMode),
     atomClick: opts.atomClick || null,
     fog : true,
@@ -204,12 +204,14 @@ PV.prototype = {
       return;
     }
     this._resize = false;
-    this._options.realWidth = this._options.width * this._options.samples;
-    this._options.realHeight = this._options.height * this._options.samples;
-    this._gl.viewport(0, 0, this._options.realWidth, this._options._realHeight);
-    this._canvas.width = this._options.realWidth;
-    this._canvas.height = this._options.realHeight;
-    this._cam.setViewportSize(this._options.realWidth, this._options.realHeight);
+    var realWidth = this._options.width * this._options.samples;
+    var realHeight = this._options.height * this._options.samples;
+    this._options.realWidth = realWidth;
+    this._options.realHeight = realHeight;
+    this._gl.viewport(0, 0, realWidth, realHeight);
+    this._canvas.width = realWidth;
+    this._canvas.height = realHeight;
+    this._cam.setViewportSize(realWidth, realHeight);
     if (this._options.samples > 1) {
       this._initManualAntialiasing(this._options.samples);
     }
@@ -391,7 +393,8 @@ PV.prototype = {
       console.error(gl.getShaderInfoLog(shaderProgram));
       return null;
     }
-    gl.clearColor(this._options.background[0], this._options.background[1], this._options.background[2], 1.0);
+    gl.clearColor(this._options.background[0], this._options.background[1], 
+                  this._options.background[2], 1.0);
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     gl.enable(gl.CULL_FACE);
@@ -419,9 +422,10 @@ PV.prototype = {
   },
 
   _mouseUp : function() {
-    this._canvas.removeEventListener('mousemove', this._mouseRotateListener, false);
-    this._canvas.removeEventListener('mousemove', this._mousePanListener, false);
-    this._canvas.removeEventListener('mouseup', this._mouseUpListener, false);
+    var canvas = this._canvas;
+    canvas.removeEventListener('mousemove', this._mouseRotateListener, false);
+    canvas.removeEventListener('mousemove', this._mousePanListener, false);
+    canvas.removeEventListener('mouseup', this._mouseUpListener, false);
     document.removeEventListener('mouseup', this._mouseUpListener, false);
     document.removeEventListener('mousemove', this._mouseRotateListener);
     document.removeEventListener('mousemove', this._mousePanListener);
@@ -460,17 +464,14 @@ PV.prototype = {
     // Firefox responds to the wheel event, whereas other browsers listen to
     // the mousewheel event. Register different event handlers, depending on
     // what properties are available.
+    var addListener = bind(this._canvas, this._canvas.addEventListener);
     if ('onwheel' in this._canvas) {
-    this._canvas.addEventListener('wheel', bind(this, this._mouseWheelFF),
-                                false);
+      addListener('wheel', bind(this, this._mouseWheelFF), false);
     } else {
-    this._canvas.addEventListener('mousewheel', bind(this, this._mouseWheel),
-                                false);
+      addListener('mousewheel', bind(this, this._mouseWheel), false);
     }
-    this._canvas.addEventListener('dblclick', bind(this, this._mouseDoubleClick),
-                              false);
-    this._canvas.addEventListener('mousedown', bind(this, this._mouseDown),
-                              false);
+    addListener('dblclick', bind(this, this._mouseDoubleClick), false);
+    addListener('mousedown', bind(this, this._mouseDown), false);
     this._touchHandler = new TouchHandler(this._canvas, this, this._cam);
 
     return true;
@@ -657,7 +658,8 @@ PV.prototype = {
     }
     var currentTime = (new Date()).getTime();
     // make sure it isn't a double click
-    if (typeof this.lastClickTime === 'undefined' || (currentTime - this.lastClickTime > 300)) {
+    if (typeof this.lastClickTime === 'undefined' || 
+        (currentTime - this.lastClickTime > 300)) {
       this.lastClickTime = currentTime;
       var rect = this._canvas.getBoundingClientRect();
       var picked = this.pick(
@@ -903,7 +905,8 @@ PV.prototype = {
     var near = Math.max(distanceToFront - grace, 0.1);
     var far = 2 * grace + distanceToFront + intervals[2].length();
     this._cam.setNearFar(near,  far);
-    this.setCamera(this._cam.rotation(), center, newZoom, this._options.animateTime);
+    this.setCamera(this._cam.rotation(), center, newZoom, 
+                   this._options.animateTime);
     this.requestRedraw();
   },
 
@@ -1018,7 +1021,9 @@ PV.prototype = {
   add : function(name, obj) {
     obj.name(name);
     this._objects.push(obj);
-    this._objects.sort(function(lhs, rhs) { return lhs.order() - rhs.order(); });
+    this._objects.sort(function(lhs, rhs) { 
+      return lhs.order() - rhs.order(); 
+    });
     this.requestRedraw();
     return obj;
   },
