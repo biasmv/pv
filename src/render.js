@@ -239,10 +239,8 @@ exports.lines = function(structure, gl, options) {
   console.time('lines');
   var vertAssoc = new AtomVertexAssoc(structure, true);
   options.color.begin(structure);
-  var lineCount = 0;
   var lineGeom = new LineGeom(gl, options.float32Allocator);
   lineGeom.setLineWidth(options.lineWidth);
-  var va = lineGeom.vertArray();
   lineGeom.addVertAssoc(vertAssoc);
   lineGeom.setShowRelated(options.showRelated);
   structure.eachChain(function(chain) {
@@ -335,7 +333,6 @@ exports.lineTrace = function(structure, gl, options) {
   console.time('lineTrace');
   var vertAssoc = new TraceVertexAssoc(structure, 1, true);
   options.color.begin(structure);
-  var chains = structure.chains();
   var lineGeom = new LineGeom(gl, options.float32Allocator);
   lineGeom.setLineWidth(options.lineWidth);
   var traceIndex = 0;
@@ -358,15 +355,16 @@ var _slineNumVerts = function(traces, splineDetail) {
   return numVerts;
 };
 
-var slineMakeTrace = (function(trace) {
+var slineMakeTrace = (function() {
   var posOne = vec3.create(), posTwo = vec3.create();
-  var colorOne = vec4.fromValues(0.0, 0.0, 0.0, 1.0), colorTwo = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
+  var colorOne = vec4.fromValues(0.0, 0.0, 0.0, 1.0), 
+      colorTwo = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
   return function(lineGeom, vertAssoc, va, options, traceIndex, trace) {
     var firstSlice = trace.fullTraceIndex(0);
     var positions = options.float32Allocator.request(trace.length() * 3);
     var colors = options.float32Allocator.request(trace.length() * 4);
     var objIds = [];
-    var i, e;
+    var i;
     var idRange = options.idPool.getContinuousRange(trace.length());
     lineGeom.addIdRange(idRange);
     for (i = 0; i < trace.length(); ++i) {
@@ -654,7 +652,7 @@ exports.surface = (function() {
       color = vec4.fromValues(0.8, 0.8, 0.8, 1.0);
   return function(data, gl, options) {
     var offset = 0;
-    var version = data.getUint32(0);
+    /*var version = */data.getUint32(0);
     offset += 4;
     var numVerts = data.getUint32(offset);
     offset += 4;
@@ -783,10 +781,9 @@ function capTubeEnd(va, baseIndex, numTubeVerts) {
 // trace.
 var _cartoonForSingleTrace = (function() {
 
-  var tangent = vec3.create(), pos = vec3.create(), left = vec3.create(),
-      color = vec4.fromValues(0.0, 0.0, 0.0, 1.0), normal = vec3.create(), normal2 = vec3.create(),
-      rot = mat3.create();
-
+  var tangent = vec3.create(), pos = vec3.create(), 
+      color = vec4.fromValues(0.0, 0.0, 0.0, 1.0), 
+      normal = vec3.create(), normal2 = vec3.create();
   return function(meshGeom, vertAssoc, trace, traceIndex, options) {
     var numVerts =
         _cartoonNumVerts([trace], options.arcDetail * 4, options.splineDetail);

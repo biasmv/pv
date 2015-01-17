@@ -98,7 +98,7 @@ AtomVertexAssoc.prototype = {
 
   setOpacity : function(val, view) {
     var atomMap = {};
-    view.eachAtom(function(atom, index) {
+    view.eachAtom(function(atom) {
       atomMap[atom.index()] = true;
     });
     // apply the color to the actual interleaved vertex array.
@@ -117,8 +117,7 @@ AtomVertexAssoc.prototype = {
 };
 
 // handles the association between a trace element, and sets of vertices.
-function TraceVertexAssoc(structure, interpolation, callColoringBeginEnd,
-                          perResidueColors) {
+function TraceVertexAssoc(structure, interpolation, callColoringBeginEnd) {
   this._structure = structure;
   this._assocs = [];
   this._callBeginEnd = callColoringBeginEnd;

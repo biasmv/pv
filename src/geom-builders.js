@@ -104,8 +104,7 @@ function TubeProfile(points, num, strength) {
   this._normals = new Float32Array(interpolated.length);
   this._arcs = interpolated.length / 3;
 
-  var normal = vec3.create(), pos = vec3.create();
-
+  var normal = vec3.create();
   for (var i = 0; i < this._arcs; ++i) {
     var i_prev = i === 0 ? this._arcs - 1 : i - 1;
     var i_next = i === this._arcs - 1 ? 0 : i + 1;

@@ -89,7 +89,6 @@ var principalAxes = (function() {
     });
     var xIndex = axes[0][1];
     var yIndex = axes[1][1];
-    var zIndex = axes[2][1];
     vec3.set(x, diag[xIndex + 0], diag[xIndex + 3], diag[xIndex + 6]);
     vec3.set(y, diag[yIndex + 0], diag[yIndex + 3], diag[yIndex + 6]);
     vec3.cross(z, x, y);

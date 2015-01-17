@@ -31,7 +31,10 @@ Remark350Reader.prototype = {
   assemblies : function() { 
     var assemblies = [];
     for (var c in this._assemblies) {
-      assemblies.push(this._assemblies[c]);
+      if (this._assemblies.hasOwnProperty(c)) {
+        // We are sure that obj[key] belongs to the object and was not inherited.
+        assemblies.push(this._assemblies[c]);
+      }
     }
     return assemblies;
   },
@@ -79,7 +82,6 @@ Remark350Reader.prototype = {
       var y = parseFloat(line.substr(23 + offset, 9));
       var z = parseFloat(line.substr(33 + offset, 9));
       var w = parseFloat(line.substr(43 + offset, 14));
-      var l = x*x + y*y + z*z;
       this._currentMatrix[4*0+col] = x;
       this._currentMatrix[4*1+col] = y;
       this._currentMatrix[4*2+col] = z;
@@ -157,7 +159,7 @@ PDBReader.prototype = {
     return true;
   },
 
-  parseAndAddAtom : function(line, hetatm) {
+  parseAndAddAtom : function(line) {
     var alt_loc = line[16];
     if (alt_loc !== ' ' && alt_loc !== 'A') {
       return true;
@@ -205,11 +207,8 @@ PDBReader.prototype = {
 
   processLine : function(line) {
     var recordName = line.substr(0, 6);
-    if (recordName === 'ATOM  ') {
-      return this.parseAndAddAtom(line, false);
-    }
-    if (recordName === 'HETATM') {
-      return this.parseAndAddAtom(line, true);
+    if (recordName === 'ATOM  ' || recordName === 'HETATM') {
+      return this.parseAndAddAtom(line);
     }
     if (recordName === 'REMARK') {
       // for now we are only interested in the biological assembly information

@@ -340,7 +340,8 @@ derive(BaseGeom, SceneNode, {
       var affectedVertArrays = this._vertArraysInvolving(gen.chains());
       for (var j = 0; j < gen.matrices().length; ++j) {
         for (var k = 0; k < affectedVertArrays.length; ++k) {
-          var transform = gen.matrix(j);
+          // FIXME: is this correct?
+          // var transform = gen.matrix(j);
           radius = affectedVertArrays[k].updateSquaredSphereRadius(center, radius);
         }
       }

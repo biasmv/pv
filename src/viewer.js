@@ -181,7 +181,7 @@ function PV(domElement, opts) {
 
 PV.prototype = {
 
-  _centerOnClicked : function(picked, originalEvent) {
+  _centerOnClicked : function(picked) {
     if (picked === null) {
       return;
     }
@@ -418,7 +418,7 @@ PV.prototype = {
     return shaderProgram;
   },
 
-  _mouseUp : function(event) {
+  _mouseUp : function() {
     this._canvas.removeEventListener('mousemove', this._mouseRotateListener, false);
     this._canvas.removeEventListener('mousemove', this._mousePanListener, false);
     this._canvas.removeEventListener('mouseup', this._mouseUpListener, false);
@@ -997,7 +997,6 @@ PV.prototype = {
     if (pixels.data) {
       pixels = pixels.data;
     }
-    var pickedIds = {};
     if (pixels[3] === 0) {
       return null;
     }

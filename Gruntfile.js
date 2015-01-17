@@ -53,7 +53,15 @@ module.exports = function(grunt) {
       options: { 
         multistr :true, 
         curly : true, 
-        eqeqeq : true
+        eqeqeq : true,
+        forin : true,
+        /*freeze : true, */
+        immed : true,
+        latedef : true,
+        // would love to use, but current project structure does not allow 
+        // for it.
+        /* undef : true, */
+        unused : true
       },
       all : SOURCE_FILES
     },

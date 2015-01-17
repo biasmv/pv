@@ -299,10 +299,10 @@ exports.color.rainbow = function(grad) {
     grad = gradient('rainbow');
   }
   var colorFunc = new ColorOp(function(a, out, index) {
-    var idx = a.residue().index();
-    var limits = this.chainLimits[a.residue().chain().name()];
     var t = 0.0;
+    var limits = this.chainLimits[a.residue().chain().name()];
     if (limits !== undefined) {
+      var idx = a.residue().index();
       t =  (idx - limits[0])/(limits[1]-limits[0]);
     } 
     var x = [1,1,1,1];
@@ -328,7 +328,8 @@ exports.color.rainbow = function(grad) {
       }
       this.chainLimits[chains[i].name()] = [minIndex, maxIndex];
     }
-  },function(obj) {
+  },
+  function() {
     this.chainLimits = null;
   });
   return colorFunc;
@@ -391,7 +392,8 @@ exports.color.ssSuccession = function(grad, coilColor) {
         max: maxIndex
       };
     }
-  },function(obj) {
+  },
+  function() {
     this.chainLimits = null;
   });
   return colorFunc;
@@ -402,7 +404,6 @@ exports.color.byChain = function(grad) {
     grad = gradient('rainbow');
   }
   var colorFunc = new ColorOp(function(a, out, index) {
-    var idx = a.residue().index();
     var chainIndex = this.chainIndices[a.residue().chain().name()];
     var t =  chainIndex*this.scale;
     var x = [0,0,0,0];
@@ -418,7 +419,8 @@ exports.color.byChain = function(grad) {
       this.chainIndices[chains[i].name()] = i;
     }
     this.scale = chains.length > 1 ? 1.0/(chains.length-1) : 1.0;
-  },function(obj) {
+  },
+  function() {
     this.chainIndices = null;
   });
   return colorFunc;
@@ -471,7 +473,7 @@ function colorByItemProp(propName, grad, range, iter, item) {
       this._min = range.min;
       this._max = range.max;
     }, 
-    function(obj) { }
+    function() { }
   );
 }
 

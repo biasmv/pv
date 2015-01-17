@@ -18,10 +18,15 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
+
+(function(exports) {
+
+"use strict";
+
 function BackboneTrace() { this._trace = []; }
 
 if(typeof(exports) !== 'undefined') {
-  exports.backboneTrace = BackboneTrace;
+  exports.BackboneTrace = BackboneTrace;
 }
 
 BackboneTrace.prototype = {
@@ -125,6 +130,7 @@ BackboneTrace.prototype.smoothNormalAt = BackboneTrace.prototype.normalAt;
 // a trace subset, e.g. the part of a trace contained in a view. End regions
 // are handled automatically depending on whether the beginning/end of the
 // trace subset coincides with the C- and N-terminus of the full trace.
+
 function TraceSubset(fullTrace, fullTraceBegin, fullTraceEnd, trace) {
   this._fullTrace = fullTrace;
   this._fullTraceBegin = fullTraceBegin;
@@ -152,7 +158,6 @@ TraceSubset.prototype = {
     return this._fullTrace.residueAt(this._fullTraceBegin + index);
   },
   _interpolate : (function() {
-    var posOne = vec3.create();
     var tangentOne = vec3.create();
     var tangentTwo = vec3.create();
     return function(out, indexOne, indexTwo, strength) {
@@ -170,9 +175,6 @@ TraceSubset.prototype = {
   // like posAt, but interpolates the position for the ends with a Catmull-Rom
   // spline.
   smoothPosAt : (function() {
-    var posOne = vec3.create();
-    var tangentOne = vec3.create();
-    var tangentTwo = vec3.create();
     return function(out, index, strength) {
       if (index === 0 && !this._isNTerminal) {
         return this._interpolate(out, index, index + 1, strength);
@@ -188,7 +190,7 @@ TraceSubset.prototype = {
 
 
   smoothNormalAt : (function() {
-    return function(out, index, strength) {
+    return function(out, index) {
       this._fullTrace.normalAt(out, index + this._fullTraceBegin);
       return out;
     };
@@ -222,4 +224,8 @@ TraceSubset.prototype = {
     return this._fullTrace.tangentAt(out, index + this._fullTraceBegin);
   },
 };
+
+exports.TraceSubset = TraceSubset;
+
+})(this);
 

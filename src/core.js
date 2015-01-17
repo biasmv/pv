@@ -22,6 +22,7 @@
 "use strict";
 
 exports.derive = function(subclass, baseclass, extensions) {
+  // jshint forin:false
   for (var prop in baseclass.prototype) {
     subclass.prototype[prop] = baseclass.prototype[prop];
   }
@@ -117,7 +118,6 @@ exports.indexLastSmallerThan = function(values, value, comp) {
   }
   var low = 0, high = values.length;
   var mid = (low + high) >> 1;
-  var cnt = 0;
   while (true) {
     var midValue = values[mid];
     if (comp(value, midValue)) {
@@ -143,7 +143,6 @@ exports.indexLastSmallerEqualThan = function(values, value, comp) {
   }
   var low = 0, high = values.length;
   var mid = (low + high) >> 1;
-  var cnt = 0;
   while (true) {
     var midValue = values[mid];
     if (comp(value, midValue)) {

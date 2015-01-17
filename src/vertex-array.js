@@ -97,7 +97,7 @@ derive(VertexArray, VertexArrayBase, {
 
   // draws all triangles contained in the indexed vertex array using the provided
   // shader.
-  draw : function(symId) {
+  draw : function() {
     this._gl.drawArrays(this._gl.LINES, 0, this._numLines * 2);
   }
 });

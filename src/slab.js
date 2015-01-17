@@ -36,7 +36,7 @@ FixedSlab.prototype.update = function() {
   return new Slab(this._near, this._far);
 };
 
-function AutoSlab(options) {
+function AutoSlab() {
   this._far = 100.0;
 }
 

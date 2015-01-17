@@ -711,7 +711,6 @@ derive(Mol, MolBase, {
     var prevResidue = null;
     this.eachResidue(function(res) {
       var sqr_dist;
-      var d = vec3.create();
       for (var i = 0; i < res.atoms().length; i+=1) {
         var atomI = res.atom(i);
         var covalentI = covalentRadius(atomI.element());
@@ -1095,7 +1094,6 @@ derive(ChainView, ChainBase, {
     //    trace subset, the residues before and after must be taken
     //    into account.
     var fullTraces = this._chain.backboneTraces();
-    var traceSubsets = [];
     for (var i = 0; i < fullTraces.length; ++i) {
       var subsets = fullTraces[i].subsets(this._residues);
       for (var j = 0; j < subsets.length; ++j) {
