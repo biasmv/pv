@@ -160,7 +160,7 @@ Examples
   var color7 = '#f00f'; 
 
 
-.. _pv.color.custom-colors
+.. _pv.color.custom-colors:
 
 Custom Color Palettes
 --------------------------------------------------------------------------
