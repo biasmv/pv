@@ -46,6 +46,10 @@ The following code defines a new viewer. This can be done during page load time,
   // insert the viewer under the Dom element with id 'gl'.
   var viewer = pv.Viewer(document.getElementById('gl'), options);
 
+  viewer.on('viewerReady', function() {
+    // add structure here
+  });
+
 .. function:: pv.Viewer.quality([value])
 
   Gets (or sets) the default level of detail for the render geometry. This property sets the default parameters for constructing render geometry, for example the number of arcs that are used for tubes, or the number of triangles for one sphere. Accepted values are
@@ -243,16 +247,49 @@ Proteins come in all sizes and shapes. For optimal viewing, some camera paramete
 
 Viewer Events
 ---------------------------------------------------------------------------------
-Mouse selection events are fired when the user clicks or double clicks a residue/atom. 
+
+Custom viewer event handlers can be registered by calling :func:`pv.Viewer.addListener`. These callbacks have the following form.
 
 .. function:: pv.Viewer.addListener(type, callback)
+              pv.Viewer.on(type, callback)
 
-  Add a new listener for *atomClicked* or *atomDoubleClicked* events.
+  :param type: The type of event to listen to. Must be either 'atomClicked', 'atomDoubleClicked', or 'viewerReady'.
 
-  :param type: The type of event to listen to. Must be either 'atomClicked' or 'atomDoubleClicked' 
-  :param callback: The function to receive the callback. If the special value 'center' is passed to the callback, a event handler is installed that centers the viewer on the clicked atom/residue. 
+  When an event fires, callbacks registered for that event type are invoked with type-specific arguments. See documentation for the individual events for more details
 
-  The arguments of the callback function are *picked*, and *originalEvent* which is the original mouse event. Picked contains information about the scene nodes that was clicked/doubleClicked as well as the actual clicked atom. It also contains a transformation matrix, that if set needs to be applied to the atom's position to get the correct position in global coordinates. This is illustrated in the second example below.
+
+.. _pv.viewer.events.init:
+
+Initialization Event (viewerReady)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Invoked when the viewer is completely initialized and is ready for displaying of structures. It's recommended to put calls to any of the functions :ref:`described here <pv.viewer.rendering>` into a viewerReady callback as they expect a completely constructed viewer. It's however possible to start loading the structure data before 'viewerReady', as long as they are not added to the viewer.
+
+Callbacks receive the initialized viewer as the first argument. 
+
+When the 'viewerReady' callback is registered *after* the page has finished loading, the event callback is directly invoked from :func:`addListener/on<pv.Viewer.addListener>`.
+
+The following code example shows how to add a yellow sphere to the center of the scene:
+
+.. code-block:: javascript
+  
+  // insert the viewer under the Dom element with id 'gl'.
+  var viewer = pv.Viewer(document.getElementById('gl'), options);
+
+  viewer.on('viewerReady', function(viewer) {
+    var customMesh = viewer.customMesh('yellowSphere');
+    customMesh.addSphere([0,0,0], 5, { color : 'yellow' });
+  });
+
+
+.. _pv.viewer.events.mouse:
+
+Mouse Interaction Events (atomClicked, atomDoubleClicked)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Mouse selection events are fired when the user clicks or double clicks a residue/atom. 
+
+The arguments of the callback function are *picked*, and *originalEvent* which is the original mouse event. Picked contains information about the scene nodes that was clicked/doubleClicked as well as the actual clicked atom. It also contains a transformation matrix, that if set needs to be applied to the atom's position to get the correct position in global coordinates. This is illustrated in the second example below.
 
 The following code simply logs the clicked residue to the console when an atom is clicked.
 

@@ -118,8 +118,10 @@ function PV(domElement, opts) {
     slabMode : slabModeToStrategy(opts.slabMode),
     atomClick: opts.atomClick || null,
     fog : true,
-    atomDoubleClick : 'center', // option is handled below
+    atomDoubleClick : 'center' // option is handled below
   };
+
+  this._initialized = false;
   this._objects = [];
   this._domElement = domElement;
   this._redrawRequested = false;
@@ -432,6 +434,9 @@ PV.prototype = {
   },
 
   _initPV : function() {
+
+
+
     if (!this._initGL()) {
       this._domElement.removeChild(this._canvas);
       this._domElement.innerHTML = WEBGL_NOT_SUPPORTED;
@@ -474,6 +479,11 @@ PV.prototype = {
     addListener('mousedown', bind(this, this._mouseDown), false);
     this._touchHandler = new TouchHandler(this._canvas, this, this._cam);
 
+    if (!this._initialized) {
+      this._initialized = true;
+      this._dispatchEvent({'name':'viewerReadyEvent'},
+                                     'viewerReady',this);
+    }
     return true;
   },
 
@@ -581,6 +591,8 @@ PV.prototype = {
     this._gl.cullFace(this._gl.FRONT);
     this._gl.enable(this._gl.BLEND);
     this._drawWithPass('normal');
+
+
   },
 
   setCenter : function(center, ms) {
@@ -623,7 +635,7 @@ PV.prototype = {
       var rect = this._canvas.getBoundingClientRect();
       var picked = this.pick(
           { x : event.clientX - rect.left, y : event.clientY - rect.top });
-      this._dispatchPickedEvent(event, 'atomDoubleClicked', picked);
+      this._dispatchEvent(event, 'atomDoubleClicked', picked);
       this.requestRedraw();
     };
   })(),
@@ -640,14 +652,26 @@ PV.prototype = {
     } else {
       callbacks.push(callback);
     }
+    // in case viewer is already initialized, fire viewerReady immediately. 
+    // Otherwise, the callback would never be invoked in this case:
+    //  
+    // document.addEventListener('DOMContentLoaded', function() {
+    //    viewer = pv.Viewer(...);
+    //    viewer.on('viewerReady', function(viewer) {
+    //    });
+    // });
+    if (this._initialized && eventName === 'viewerReady') {
+      // don't use dispatch here, we only want this very callback to be 
+      // invoked.
+      callback(this, null);
+    }
   },
 
-  _dispatchPickedEvent : function(event, newEventName, picked) {
+  _dispatchEvent : function(event, newEventName, arg) {
     var callbacks = this.listenerMap[newEventName];
     if (callbacks) {
-      
       callbacks.forEach(function (callback) {
-        callback(picked, event);
+        callback(arg, event);
       });
     }
   },
@@ -664,7 +688,7 @@ PV.prototype = {
       var rect = this._canvas.getBoundingClientRect();
       var picked = this.pick(
           { x : event.clientX - rect.left, y : event.clientY - rect.top });
-      this._dispatchPickedEvent(event, 'atomClicked', picked);
+      this._dispatchEvent(event, 'atomClicked', picked);
     }
     event.preventDefault();
     if (event.shiftKey === true) {
@@ -726,6 +750,7 @@ PV.prototype = {
       console.error('render mode', mode, 'not supported');
       return;
     }
+
     return this[mode](name, structure, opts);
   },
 
@@ -1090,6 +1115,8 @@ PV.prototype = {
     return isWebGLSupported(this._gl);
   }
 };
+
+PV.prototype.on = PV.prototype.addListener;
 
 return { 
   Viewer : function(elem, options) { 

@@ -153,12 +153,11 @@
           outline : true, quality : 'medium',
           background : '#333'
       });
-      document.addEventListener('DOMContentLoaded', longHelices);
+      viewer.addListener('viewerReady', longHelices);
       
       window.addEventListener('resize', function() {
         viewer.fitParent();
       });
-
     </script>
     </body>
 </html>
