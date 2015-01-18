@@ -77,10 +77,19 @@ derive(IndexedVertexArray, VertexArrayBase, {
   },
 
   _FLOATS_PER_VERT : 11,
+  _BYTES_PER_VERT : 11 * 4,
+
   _OBJID_OFFSET : 10,
+  _OBJID_BYTE_OFFSET : 10 * 4,
+
   _COLOR_OFFSET : 6,
+  _COLOR_BYTE_OFFSET : 6 * 4,
+
   _NORMAL_OFFSET : 3,
+  _NORMAL_BYTE_OFFSET : 3 * 4,
+
   _POS_OFFSET : 0,
+  _POS_BYTE_OFFSET : 0 * 4,
 
   addTriangle : function(idx1, idx2, idx3) {
     var index = 3 * this._numTriangles;
@@ -96,44 +105,43 @@ derive(IndexedVertexArray, VertexArrayBase, {
 
   bindBuffers : function() {
     var ready = this._ready;
+    var gl = this._gl;
     VertexArrayBase.prototype.bindBuffers.call(this);
-    this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this._indexBuffer);
     if (ready) {
       return;
     }
-    this._gl.bufferData(this._gl.ELEMENT_ARRAY_BUFFER, this._indexData,
-                        this._gl.STATIC_DRAW);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this._indexData, gl.STATIC_DRAW);
   },
 
   bindAttribs : function(shader) {
     var gl = this._gl;
+    var byteStride = this._BYTES_PER_VERT;
     gl.enableVertexAttribArray(shader.posAttrib);
     gl.vertexAttribPointer(shader.posAttrib, 3, gl.FLOAT, false,
-                           this._FLOATS_PER_VERT * 4, 
-                           this._POS_OFFSET * 4);
-
+                           byteStride, this._POS_BYTE_OFFSET);
     if (shader.normalAttrib !== -1) {
       gl.enableVertexAttribArray(shader.normalAttrib);
       gl.vertexAttribPointer(shader.normalAttrib, 3, gl.FLOAT, false,
-                             this._FLOATS_PER_VERT * 4,
-                             this._NORMAL_OFFSET * 4);
+                             byteStride, this._NORMAL_BYTE_OFFSET);
     }
 
     if (shader.colorAttrib !== -1) {
       gl.vertexAttribPointer(shader.colorAttrib, 4, gl.FLOAT, false,
-                             this._FLOATS_PER_VERT * 4,
-                             this._COLOR_OFFSET * 4);
+                             byteStride, this._COLOR_BYTE_OFFSET);
       gl.enableVertexAttribArray(shader.colorAttrib);
     }
     if (shader.objIdAttrib !== -1) {
       gl.vertexAttribPointer(shader.objIdAttrib, 1, gl.FLOAT, false,
-                             this._FLOATS_PER_VERT * 4, 
-                             this._OBJID_OFFSET * 4);
+                             byteStride, this._OBJID_BYTE_OFFSET);
       gl.enableVertexAttribArray(shader.objIdAttrib);
     }
   },
 
-  releaseAttribs : function(shader) {
+  releaseAttribs : function(/*shader*/) {
+    // turns out this code is not required and, if removed gives 
+    // a tiny speed improvement
+    /*
     var gl = this._gl;
     gl.disableVertexAttribArray(shader.posAttrib);
     if (shader.colorAttrib !== -1) {
@@ -145,6 +153,7 @@ derive(IndexedVertexArray, VertexArrayBase, {
     if (shader.objIdAttrib !== -1) {
       gl.disableVertexAttribArray(shader.objIdAttrib);
     }
+    */
   },
 
   bind : function(shader) {
@@ -155,8 +164,8 @@ derive(IndexedVertexArray, VertexArrayBase, {
   // draws all triangles contained in the indexed vertex array using the 
   // provided shader. requires a call to bind() first.
   draw : function() {
-    this._gl.drawElements(this._gl.TRIANGLES, this._numTriangles * 3,
-                          this._gl.UNSIGNED_SHORT, 0);
+    var gl = this._gl;
+    gl.drawElements(gl.TRIANGLES, this._numTriangles * 3, gl.UNSIGNED_SHORT, 0);
   }
 });
 
