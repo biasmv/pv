@@ -707,31 +707,34 @@ derive(Mol, MolBase, {
   // same residue, peptide bonds and nucleotides
   deriveConnectivity : function() {
     console.time('Mol.deriveConnectivity');
-    var this_structure = this;
+    var thisStructure = this;
     var prevResidue = null;
     this.eachResidue(function(res) {
-      var sqr_dist;
-      for (var i = 0; i < res.atoms().length; i+=1) {
-        var atomI = res.atom(i);
+      var sqrDist;
+      var atoms = res.atoms();
+      var numAtoms = atoms.length;
+      for (var i = 0; i < numAtoms; i+=1) {
+        var atomI = atoms[i];
+        var posI = atomI.pos();
         var covalentI = covalentRadius(atomI.element());
         for (var j = 0; j < i; j+=1) {
-          var atomJ = res.atom(j);
+          var atomJ = atoms[j];
           var covalentJ = covalentRadius(atomJ.element());
-          sqr_dist = vec3.sqrDist(atomI.pos(), atomJ.pos());
+          sqrDist = vec3.sqrDist(posI, atomJ.pos());
           var lower = covalentI+covalentJ-0.30;
           var upper = covalentI+covalentJ+0.30;
-          if (sqr_dist < upper*upper && sqr_dist > lower*lower) {
-            this_structure.connect(res.atom(i), res.atom(j));
+          if (sqrDist < upper*upper && sqrDist > lower*lower) {
+            thisStructure.connect(atomI, atomJ);
           }
         }
       }
       res._deduceType();
       if (prevResidue !== null) {
         if (res.isAminoacid() && prevResidue.isAminoacid()) {
-          connectPeptides(this_structure, prevResidue, res);
+          connectPeptides(thisStructure, prevResidue, res);
         }
         if (res.isNucleotide() && prevResidue.isNucleotide()) {
-          connectNucleotides(this_structure, prevResidue, res);
+          connectNucleotides(thisStructure, prevResidue, res);
         }
       }
       prevResidue = res;
