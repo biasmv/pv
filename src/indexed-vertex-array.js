@@ -23,8 +23,7 @@
 
 function IndexedVertexArray(gl, numVerts, numIndices, 
                             float32Allocator, uint16Allocator) {
-  VertexArrayBase.call(this, gl, numVerts, 
-                                             float32Allocator);
+  VertexArrayBase.call(this, gl, numVerts, float32Allocator);
   this._indexBuffer = gl.createBuffer();
   this._uint16Allocator = uint16Allocator;
   this._numVerts = 0;
