@@ -170,6 +170,13 @@ function BaseGeom(gl) {
 
 derive(BaseGeom, SceneNode, {
   setShowRelated : function(rel) {
+    if (rel && rel !== 'asym') {
+      if (this.structure().assembly(rel) === null) {
+        console.error('no assembly with name', rel, 
+                      '. Falling back to asymmetric unit');
+        return;
+      }
+    }
     this._showRelated = rel;
     return rel;
   },
@@ -289,13 +296,6 @@ derive(BaseGeom, SceneNode, {
     } 
     var assembly = this.structure().assembly(showRelated);
     // in case there is no assembly, fallback to asymmetric unit and bail out.
-    if (!assembly) {
-      console.error('no assembly', showRelated, 
-                    'found. Falling back to asymmetric unit');
-      return this._updateProjectionIntervalsAsym(xAxis, yAxis, zAxis, 
-                                                 xInterval, yInterval, 
-                                                 zInterval);
-    }
     var gens = assembly.generators();
     for (var i = 0; i < gens.length; ++i) {
       var gen = gens[i];
@@ -330,12 +330,6 @@ derive(BaseGeom, SceneNode, {
       return this._updateSquaredSphereRadiusAsym(center, radius);
     } 
     var assembly = this.structure().assembly(showRelated);
-    // in case there is no assembly, fallback to asymmetric unit and bail out.
-    if (!assembly) {
-      console.error('no assembly', showRelated, 
-                    'found. Falling back to asymmetric unit');
-      return this._updateSquaredSphereRadiusAsym(center, radius);
-    }
     var gens = assembly.generators();
     for (var i = 0; i < gens.length; ++i) {
       var gen = gens[i];
@@ -368,12 +362,6 @@ derive(BaseGeom, SceneNode, {
     } 
 
     var assembly = this.structure().assembly(showRelated);
-    // in case there is no assembly, fallback to asymmetric unit and bail out.
-    if (!assembly) {
-      console.error('no assembly', showRelated, 
-                    'found. Falling back to asymmetric unit');
-      return this._drawVertArrays(cam, shader, this.vertArrays(), null);
-    }
     return this._drawSymmetryRelated(cam, shader, assembly);
   },
 

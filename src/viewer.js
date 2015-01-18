@@ -759,8 +759,15 @@ PV.prototype = {
     opts = copy(opts);
     opts.float32Allocator = this._float32Allocator;
     opts.uint16Allocator = this._uint16Allocator;
-    opts.idPool = this._objectIdManager;
+     opts.idPool = this._objectIdManager;
     opts.showRelated = opts.showRelated || 'asym';
+    if (opts.showRelated && opts.showRelated !== 'asym') {
+      if (structure.assembly(opts.showRelated) === null) {
+        console.error('no assembly with name', opts.showRelated,
+                      '. Falling back to asymmetric unit');
+        opts.showRelated = 'asym';
+      }
+    }
     return opts;
   },
 
