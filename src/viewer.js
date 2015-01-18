@@ -725,7 +725,9 @@ PV.prototype = {
       y : newMousePos.y - this._lastMousePos.y
     };
 
-    var speed = 0.05;
+    // adjust speed according to distance to camera center, it's not
+    // perfect but gives good enough results.
+    var speed = 0.001 * this._cam.zoom();
     this._cam.panXY(speed * delta.x, speed * delta.y);
     this._lastMousePos = newMousePos;
     this.requestRedraw();
