@@ -74,6 +74,7 @@ Changelog
 - reduced file size of minified JavaScript file by a little more than 10%
 - ability to add geometric shapes to the 3D scene through customMesh
 - ability to specify custom color palettes (@andreasprlic)
+- viewerReady event (@andreasprlic)
 
 ### New in Version 1.3.1
 
