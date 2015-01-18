@@ -28,7 +28,7 @@
 function Cam(gl) {
   this._projection = mat4.create();
   this._camModelView = mat4.create();
-    this._modelView = mat4.create();
+  this._modelView = mat4.create();
   this._rotation = mat4.create();
   this._translation = mat4.create();
   this._near = 0.10;
@@ -64,7 +64,7 @@ Cam.prototype = {
     } else {
       mat4.fromMat3(this._rotation, rot);
     }
-    this._updateMat = true;
+    this._updateProjectionMat = true;
   },
   upsamplingFactor : function() {
     return this._upsamplingFactor;
@@ -220,7 +220,7 @@ Cam.prototype = {
   },
 
   setZoom : function(zoom) {
-    this._updateMat = true;
+    this._updateModelViewMat = true;
     this._zoom = zoom;
     return this._zoom;
   },
@@ -229,7 +229,7 @@ Cam.prototype = {
     if (delta === undefined) {
       return this._zoom;
     }
-    this._updateProjectionMat = true;
+    this._updateModelViewMat = true;
     var factor = 1.0 + delta * 0.1;
     this._zoom = Math.min(1000.0, Math.max(2.0, factor * this._zoom));
     return this._zoom;
