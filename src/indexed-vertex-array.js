@@ -138,10 +138,7 @@ derive(IndexedVertexArray, VertexArrayBase, {
     }
   },
 
-  releaseAttribs : function(/*shader*/) {
-    // turns out this code is not required and, if removed gives 
-    // a tiny speed improvement
-    /*
+  releaseAttribs : function(shader) {
     var gl = this._gl;
     gl.disableVertexAttribArray(shader.posAttrib);
     if (shader.colorAttrib !== -1) {
@@ -153,7 +150,6 @@ derive(IndexedVertexArray, VertexArrayBase, {
     if (shader.objIdAttrib !== -1) {
       gl.disableVertexAttribArray(shader.objIdAttrib);
     }
-    */
   },
 
   bind : function(shader) {
