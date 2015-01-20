@@ -132,8 +132,8 @@ function PV(domElement, opts) {
 
   this.quality(this._options.quality);
 
-  if (this._options.atomDoubleClick !== null) {
-    this.addListener('atomDoubleClicked', this._options.atomDoubleClick);
+  if (this._options.atomDoubleClicked !== null) {
+    this.addListener('atomDoubleClicked', this._options.atomDoubleClicked);
   }
   if (this._options.atomClick !== null) {
     this.addListener('atomClicked', this._options.atomClick);
@@ -148,7 +148,7 @@ function PV(domElement, opts) {
   }
 }
 
-function getOptOrDefault(opts, name, defaultValue) {
+function optValue(opts, name, defaultValue) {
   if (name in opts) {
     return opts[name];
   }
@@ -164,15 +164,21 @@ PV.prototype = {
       height : (opts.height || 500),
       animateTime : (opts.animateTime || 0),
       antialias : opts.antialias,
-      quality : getOptOrDefault(opts, 'quality', 'low'),
-      style : getOptOrDefault(opts, 'style', 'hemilight'),
+      quality : optValue(opts, 'quality', 'low'),
+      style : optValue(opts, 'style', 'hemilight'),
       background : forceRGB(opts.background || 'white'),
       slabMode : slabModeToStrategy(opts.slabMode),
-      atomClick: opts.atomClick || null,
-      outline : getOptOrDefault(opts, 'outline', true),
-      atomDoubleClick : getOptOrDefault(opts, 'atomDoubleClick', 'center'),
-      fog : getOptOrDefault(opts, 'fog', true)
+      atomClick: opts.atomClicked || opts.atomClick || null,
+      outline : optValue(opts, 'outline', true),
+      // for backwards compatibility
+      atomDoubleClicked : optValue(opts, 'atomDoubleClicked', 
+                                   optValue(opts, 'atomDoubleClick', 'center')),
+      fog : optValue(opts, 'fog', true)
     };
+    if ('atomDoubleClick' in opts || 'atomClick' in opts) {
+      console.warn('use of atomDoubleClick/atomClick is deprecated. ',
+                   'use atomDoubleClicked/atomClicked instead');
+    }
     var parentRect = domElement.getBoundingClientRect();
     if (options.width === 'auto') {
       options.width = parentRect.width;
