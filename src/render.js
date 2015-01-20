@@ -435,13 +435,13 @@ exports.sline = function(structure, gl, opts) {
   var vertAssoc =
       new TraceVertexAssoc(structure, opts.splineDetail, 1, true);
   var lineGeom = new LineGeom(gl, opts.float32Allocator);
+  lineGeom.addVertAssoc(vertAssoc);
   lineGeom.setLineWidth(opts.lineWidth);
   lineGeom.setShowRelated(opts.showRelated);
   var traceIndex = 0;
   structure.eachChain(function(chain) {
     traceIndex = slineForChain(lineGeom, vertAssoc, opts, chain, traceIndex);
   });
-  lineGeom.addVertAssoc(vertAssoc);
   opts.color.end(structure);
   console.timeEnd('sline');
   return lineGeom;

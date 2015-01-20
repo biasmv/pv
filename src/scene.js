@@ -392,7 +392,6 @@ function LineGeom(gl, float32Allocator) {
   BaseGeom.call(this, gl);
   this._vertArrays = [];
   this._float32Allocator = float32Allocator;
-  this._vertAssocs = [];
   this._lineWidth = 1.0;
 }
 
