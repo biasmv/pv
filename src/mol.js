@@ -153,6 +153,35 @@ function _chainPredicates(dict) {
 }
 
 
+// handles all residue predicates that can be done through either index-
+// based lookups, or optimized searches of some sorts.
+function _filterResidues(chain, dict) {
+  var residues = chain.residues();
+  if (dict.rnumRange) {
+    residues =
+        chain.residuesInRnumRange(dict.rnumRange[0], dict.rnumRange[1]);
+  }
+  var selResidues = [], i, e;
+  if (dict.rindexRange !== undefined) {
+    for (i = dict.rindexRange[0],
+        e = Math.min(residues.length, dict.rindexRange[1]);
+        i < e; ++i) {
+      selResidues.push(residues[i]);
+    }
+    return selResidues;
+  } 
+  if (dict.rindices) {
+    if (dict.rindices.length !== undefined) {
+      selResidues = [];
+      for (i = 0; i < dict.rindices.length; ++i) {
+        selResidues.push(residues[dict.rindices[i]]);
+      }
+      return selResidues;
+    }
+  }
+  return residues;
+}
+
 // helper function to perform selection by predicates
 function _dictSelect(structure, dict) {
   var view = new MolView(structure);
@@ -160,37 +189,16 @@ function _dictSelect(structure, dict) {
   var atomPredicates = _atomPredicates(dict);
   var chainPredicates = _chainPredicates(dict);
 
+  if (dict.rindex) {
+    dict.rindices = [dict.rindex];
+  }
   for (var ci = 0; ci < structure._chains.length; ++ci) {
     var chain = structure._chains[ci];
     if (!fulfillsPredicates(chain, chainPredicates)) {
       continue;
     }
+    var residues = _filterResidues(chain, dict);
     var chainView = null;
-    var residues = chain.residues();
-    if (dict.rindex) {
-      dict.rindices = [dict.rindex];
-    }
-    if (dict.rnumRange) {
-      residues =
-          chain.residuesInRnumRange(dict.rnumRange[0], dict.rnumRange[1]);
-    }
-    var selResidues = [], i, e;
-    if (dict.rindexRange !== undefined) {
-      for (i = dict.rindexRange[0],
-          e = Math.min(residues.length, dict.rindexRange[1]);
-          i < e; ++i) {
-        selResidues.push(residues[i]);
-      }
-      residues = selResidues;
-    } else if (dict.rindices) {
-      if (dict.rindices.length !== undefined) {
-        selResidues = [];
-        for (i = 0; i < dict.rindices.length; ++i) {
-          selResidues.push(residues[dict.rindices[i]]);
-        }
-        residues = selResidues;
-      }
-    }
     for (var ri = 0; ri < residues.length; ++ri) {
       if (!fulfillsPredicates(residues[ri], residuePredicates)) {
         continue;
@@ -342,7 +350,7 @@ MolBase.prototype = {
       console.time('Mol.selectWithin');
       options = options || {};
       var radius = options.radius || 4.0;
-      var radiusSqr = radius*radius;
+      var radiusSqr = radius * radius;
       var matchResidues = !!options.matchResidues;
       var targetAtoms = [];
       mol.eachAtom(function(a) { targetAtoms.push(a); });
@@ -362,6 +370,7 @@ MolBase.prototype = {
             if (skipResidue) {
               break;
             }
+            skipResidue = addAtomsWithin(view, tagetAtoms, radiusSqr);
             for (var wi = 0; wi < targetAtoms.length; ++wi) {
               vec3.sub(dist, atoms[ai].pos(), targetAtoms[wi].pos());
               if (vec3.sqrLen(dist) > radiusSqr) {
@@ -755,6 +764,35 @@ function Chain(structure, name) {
   this._rnumsOrdered = true;
 }
 
+// helper function to determine whether a trace break should be introduced 
+// between two residues of the same type (amino acid, or nucleotides).
+//
+// aaStretch: indicates whether the residues are to be treated as amino 
+//   acids
+function shouldIntroduceTraceBreak(aaStretch, prevResidue, thisResidue) {
+  // these checks are on purpose more relaxed than the checks we use in 
+  // deriveConnectivity(). We don't really care about correctness of bond 
+  // lengths here. The only thing that matters is that the residues are 
+  // more or less close so that they could potentially/ be connected.
+  var prevAtom, thisAtom;
+  if (aaStretch) {
+    prevAtom = prevResidue.atom('C');
+    thisAtom = thisResidue.atom('N');
+  } else {
+    prevAtom = prevResidue.atom('O3\'');
+    thisAtom = thisResidue.atom('P');
+  }
+  var sqrDist = vec3.sqrDist(prevAtom.pos(), thisAtom.pos());
+  return (Math.abs(sqrDist - 1.5*1.5) > 1);
+}
+
+function addNonEmptyTrace(traces, trace) {
+  if (trace.length() === 0) {
+    return;
+  }
+  traces.push(trace);
+}
+
 derive(Chain, ChainBase, {
 
   name : function() { return this._name; },
@@ -842,7 +880,7 @@ derive(Chain, ChainBase, {
     }
     var stretch = new BackboneTrace();
     // true when the stretch consists of amino acid residues, false
-    // if the stretch consists of nucleotides. 
+    // if the stretch consists of nucleotides, null otherwise.
     var aaStretch = null;
     for (var i = 0; i < this._residues.length; i+=1) {
       var residue = this._residues[i];
@@ -853,9 +891,7 @@ derive(Chain, ChainBase, {
           (aaStretch === null && !isNucleotide && !isAminoacid)) {
         // a break in the trace: push stretch if there were enough residues
         // in it and create new backbone trace.
-        if (stretch.length() > 1) {
-          this._cachedTraces.push(stretch);
-        }
+        addNonEmptyTrace(this._cachedTraces, stretch);
         aaStretch = null;
         stretch = new BackboneTrace();
         continue;
@@ -865,31 +901,14 @@ derive(Chain, ChainBase, {
         aaStretch = residue.isAminoacid();
         continue;
       }
-      // these checks are on purpose more relaxed than the checks we use in 
-      // deriveConnectivity(). We don't really care about correctness of bond 
-      // lengths here. The only thing that matters is that the residues are 
-      // more or less close so that they could potentially/ be connected.
-      var prevAtom, thisAtom;
-      if (aaStretch) {
-        prevAtom = this._residues[i-1].atom('C');
-        thisAtom = residue.atom('N');
-      } else {
-        prevAtom = this._residues[i-1].atom('O3\'');
-        thisAtom = residue.atom('P');
-      }
-      var sqrDist = vec3.sqrDist(prevAtom.pos(), thisAtom.pos());
-      if (Math.abs(sqrDist - 1.5*1.5) < 1) {
-        stretch.push(residue);
-      } else {
-        if (stretch.length() > 1) {
-          this._cachedTraces.push(stretch);
-          stretch = new BackboneTrace();
-        }
-      }
+      var prevResidue = this._residues[i-1];
+      if (shouldIntroduceTraceBreak(aaStretch, prevResidue, residue)) {
+        addNonEmptyTrace(this._cachedTraces, stretch);
+        stretch = new BackboneTrace();
+      } 
+      stretch.push(residue);
     }
-    if (stretch.length() > 1) {
-      this._cachedTraces.push(stretch);
-    }
+    addNonEmptyTrace(this._cachedTraces, stretch);
   },
 
 

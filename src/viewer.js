@@ -106,20 +106,7 @@ PickingResult.prototype = {
 
 
 function PV(domElement, opts) {
-  opts = opts || {};
-  this._options = {
-    width : (opts.width || 500),
-    height : (opts.height || 500),
-    animateTime : (opts.animateTime || 0),
-    antialias : opts.antialias,
-    quality : opts.quality || 'low',
-    style : opts.style || 'hemilight',
-    background : forceRGB(opts.background || 'white'),
-    slabMode : slabModeToStrategy(opts.slabMode),
-    atomClick: opts.atomClick || null,
-    fog : true,
-    atomDoubleClick : 'center' // option is handled below
-  };
+  this._options = this._initOptions(opts, domElement);
 
   this._initialized = false;
   this._objects = [];
@@ -127,44 +114,30 @@ function PV(domElement, opts) {
   this._redrawRequested = false;
   this._resize = false;
   this._lastTimestamp = null;
+  this._objectIdManager = new UniqueObjectIdPool();
+
   this.listenerMap = {};
+
+  this._camAnim = { 
+      center : null, zoom : null, 
+      rotation : null 
+  };
+
   // NOTE: make sure to only request features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
   // detection only happens in PV._initGL. Once this happened, we are
   // save to use whatever feature pleases us, e.g. typed arrays, 2D 
   // contexts etc.
-  this._canvas = document.createElement('canvas');
-  this._textureCanvas = document.createElement('canvas');
-  this._textureCanvas.style.display = 'none';
-  this._objectIdManager = new UniqueObjectIdPool();
-  var parentRect = domElement.getBoundingClientRect();
-  if (this._options.width === 'auto') {
-    this._options.width = parentRect.width;
-  }
-  if (this._options.height === 'auto') {
-    this._options.height = parentRect.height;
-  }
-  if ('outline' in opts) {
-    this._options.outline = opts.outline;
-  } else {
-    this._options.outline = true;
-  }
-  if ('atomDoubleClicked' in opts) {
-    this._options.atomDoubleClick = opts.atomDoubleClick;
-  }
-  if ('fog' in opts) {
-    this._options.fog = opts.fog;
-  }
-  this._ok = false;
-  this._camAnim = { 
-      center : null, zoom : null, 
-      rotation : null 
-  };
+  this._initCanvas();
+
   this.quality(this._options.quality);
-  this._canvas.width = this._options.width;
-  this._canvas.height = this._options.height;
-  this._domElement.appendChild(this._canvas);
-  this._domElement.appendChild(this._textureCanvas);
+
+  if (this._options.atomDoubleClick !== null) {
+    this.addListener('atomDoubleClicked', this._options.atomDoubleClick);
+  }
+  if (this._options.atomClick !== null) {
+    this.addListener('atomClicked', this._options.atomClick);
+  }
 
   if (document.readyState === "complete" ||  
     document.readyState === "loaded" ||  
@@ -173,15 +146,42 @@ function PV(domElement, opts) {
   } else {
     document.addEventListener('DOMContentLoaded', bind(this, this._initPV));
   }
-  if (this._options.atomDoubleClick !== null) {
-    this.addListener('atomDoubleClicked', this._options.atomDoubleClick);
+}
+
+function getOptOrDefault(opts, name, defaultValue) {
+  if (name in opts) {
+    return opts[name];
   }
-  if (this._options.atomClick !== null) {
-    this.addListener('atomClicked', this._options.atomClick);
-  }
+  return defaultValue;
 }
 
 PV.prototype = {
+
+  _initOptions : function(opts, domElement) {
+    opts = opts || {};
+    var options = {
+      width : (opts.width || 500),
+      height : (opts.height || 500),
+      animateTime : (opts.animateTime || 0),
+      antialias : opts.antialias,
+      quality : getOptOrDefault(opts, 'quality', 'low'),
+      style : getOptOrDefault(opts, 'style', 'hemilight'),
+      background : forceRGB(opts.background || 'white'),
+      slabMode : slabModeToStrategy(opts.slabMode),
+      atomClick: opts.atomClick || null,
+      outline : getOptOrDefault(opts, 'outline', true),
+      atomDoubleClick : getOptOrDefault(opts, 'atomDoubleClick', 'center'),
+      fog : getOptOrDefault(opts, 'fog', true)
+    };
+    var parentRect = domElement.getBoundingClientRect();
+    if (options.width === 'auto') {
+      options.width = parentRect.width;
+    }
+    if (options.height === 'auto') {
+      options.height = parentRect.height;
+    }
+    return options;
+  },
 
   _centerOnClicked : function(picked) {
     if (picked === null) {
@@ -240,7 +240,7 @@ PV.prototype = {
   },
 
   ok : function() {
-    return this._ok;
+    return this._initialized;
   },
 
   options : function(optName, value) {
@@ -441,7 +441,6 @@ PV.prototype = {
       this._domElement.style.height = this._options.height + 'px';
       return false;
     }
-    this._ok = true;
     this._2dcontext = this._textureCanvas.getContext('2d');
     this._float32Allocator = new PoolAllocator(Float32Array);
     this._uint16Allocator = new PoolAllocator(Uint16Array);
@@ -497,6 +496,16 @@ PV.prototype = {
       this._objects[i]
           .draw(this._cam, this._shaderCatalog, this._options.style, pass);
     }
+  },
+
+  _initCanvas : function() {
+    this._canvas = document.createElement('canvas');
+    this._textureCanvas = document.createElement('canvas');
+    this._textureCanvas.style.display = 'none';
+    this._canvas.width = this._options.width;
+    this._canvas.height = this._options.height;
+    this._domElement.appendChild(this._canvas);
+    this._domElement.appendChild(this._textureCanvas);
   },
 
   setRotation : function(rotation, ms) {

@@ -195,8 +195,8 @@ PDBReader.prototype = {
       this._currRes = this._currChain.addResidue(resName, rnumNum, insCode);
     }
     var pos = vec3.create();
-    for (var i=0;i<3;++i) {
-      pos[i] = (parseFloat(line.substr(30+i*8, 8)));
+    for (var i = 0; i < 3; ++i) {
+      pos[i] = (parseFloat(line.substr(30 + i * 8, 8)));
     }
     var element = line.substr(76,2).trim();
     if (element === '') {
