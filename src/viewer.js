@@ -434,9 +434,6 @@ PV.prototype = {
   },
 
   _initPV : function() {
-
-
-
     if (!this._initGL()) {
       this._domElement.removeChild(this._canvas);
       this._domElement.innerHTML = WEBGL_NOT_SUPPORTED;
@@ -523,7 +520,6 @@ PV.prototype = {
   },
 
   setCamera : function(rotation, center, zoom, ms) {
-    
     ms |= 0;
     if (ms === 0) {
       this._cam.setCenter(center);
