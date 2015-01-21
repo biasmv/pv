@@ -64,7 +64,7 @@ Cam.prototype = {
     } else {
       mat4.fromMat3(this._rotation, rot);
     }
-    this._updateProjectionMat = true;
+    this._updateModelViewMat = true;
   },
   upsamplingFactor : function() {
     return this._upsamplingFactor;
