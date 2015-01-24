@@ -142,13 +142,13 @@ Gradient.prototype = {
     // have a really small number of stops, that's not going to
     // help much.
     var lowerIndex = 0;
-    for (var i = 0; i < this._stops.length; ++i) {
+    for (var i = 1; i < this._stops.length; ++i) {
       if (this._stops[i] > value) {
         break;
       }
       lowerIndex = i;
     }
-    var upperIndex = lowerIndex+1;
+    var upperIndex = lowerIndex + 1;
     var lowerStop = this._stops[lowerIndex];
     var upperStop = this._stops[upperIndex];
     var t = (value - lowerStop)/ (upperStop - lowerStop);
@@ -214,7 +214,7 @@ exports.color = {};
 exports.ColorOp = ColorOp;
 
 exports.color.uniform = function(color) {
-  color = exports.forceRGB(color);
+  color = exports.forceRGB(color || 'white');
   return new ColorOp(function(atom, out, index) {
     out[index+0] = color[0];
     out[index+1] = color[1];
@@ -326,7 +326,9 @@ exports.color.rainbow = function(grad) {
         minIndex = Math.min(minIndex, bbj.residueAt(0).index());
         maxIndex = Math.max(maxIndex, bbj.residueAt(bbj.length()-1).index());
       }
-      this.chainLimits[chains[i].name()] = [minIndex, maxIndex];
+      if (minIndex !== maxIndex) {
+        this.chainLimits[chains[i].name()] = [minIndex, maxIndex];
+      }
     }
   },
   function() {
