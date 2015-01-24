@@ -341,7 +341,7 @@ MolBase.prototype = {
     }
     // when what is not one of the simple strings above, we assume what
     // is a dictionary containing predicates which have to be fulfilled.
-    return _dictSelect(structure, what);
+    return _dictSelect(this, what);
   },
 
   selectWithin : (function() {

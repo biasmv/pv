@@ -20,6 +20,7 @@
 
 (function(exports) {
 
+"use strict";
 
 function Remark350Reader() {
   this._assemblies = {};
@@ -239,6 +240,7 @@ PDBReader.prototype = {
   // information.
   finish : function() {
     var chain = null;
+    var i;
     for (i = 0; i < this._sheets.length; ++i) {
       var sheet = this._sheets[i];
       chain = this._structure.chain(sheet.chainName);
@@ -287,10 +289,22 @@ function pdb(text) {
   return structure;
 }
 
+function fetchPdb(url, callback) {
+  var oReq = new XMLHttpRequest();
+  oReq.open("GET", url, true);
+  oReq.onload = function() {
+    if (oReq.response) {
+      var structure= io.pdb(oReq.response);
+      callback(structure);
+    }
+  };
+  oReq.send(null);
+}
 
 exports.io = {};
 exports.io.pdb = pdb;
 exports.io.Remark350Reader = Remark350Reader;
+exports.io.fetchPdb = fetchPdb;
 
 
 }(this));

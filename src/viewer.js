@@ -768,7 +768,7 @@ PV.prototype = {
   },
 
 
-  _handleStandardOptions : function(opts) {
+  _handleStandardOptions : function(opts, structure) {
     opts = copy(opts);
     opts.float32Allocator = this._float32Allocator;
     opts.uint16Allocator = this._uint16Allocator;
@@ -786,7 +786,7 @@ PV.prototype = {
 
 
   lineTrace : function(name, structure, opts) {
-    var options = this._handleStandardOptions(opts);
+    var options = this._handleStandardOptions(opts, structure);
     options.color = options.color || color.uniform([ 1, 0, 1 ]);
     options.lineWidth = options.lineWidth || 4.0;
 
@@ -795,7 +795,7 @@ PV.prototype = {
   },
 
   spheres : function(name, structure, opts) {
-    var options = this._handleStandardOptions(opts);
+    var options = this._handleStandardOptions(opts, structure);
     options.color = options.color || color.byElement();
     options.sphereDetail = this.options('sphereDetail');
     options.radiusMultiplier = options.radiusMultiplier || 1.0;
@@ -805,7 +805,7 @@ PV.prototype = {
   },
 
   sline : function(name, structure, opts) {
-    var options = this._handleStandardOptions(opts);
+    var options = this._handleStandardOptions(opts, structure);
     options.color = options.color || color.uniform([ 1, 0, 1 ]);
     options.splineDetail = options.splineDetail || this.options('splineDetail');
     options.strength = options.strength || 1.0;
@@ -841,7 +841,7 @@ PV.prototype = {
   },
 
   cartoon : function(name, structure, opts) {
-    var options = this._handleStandardOptions(opts);
+    var options = this._handleStandardOptions(opts, structure);
     options.color = options.color || color.bySS();
     options.strength = options.strength || 1.0;
     options.splineDetail = options.splineDetail || this.options('splineDetail');
@@ -859,7 +859,7 @@ PV.prototype = {
 
 
   surface : function(name, data, opts) {
-    var options = this._handleStandardOptions(opts);
+    var options = this._handleStandardOptions(opts, structure);
     var obj = render.surface(data, this._gl, options);
     return this.add(name, obj);
   },
@@ -874,7 +874,7 @@ PV.prototype = {
   },
 
   ballsAndSticks : function(name, structure, opts) {
-    var options = this._handleStandardOptions(opts);
+    var options = this._handleStandardOptions(opts, structure);
 
     options.color = options.color || color.byElement();
     options.radius = options.radius || 0.3;
@@ -886,7 +886,7 @@ PV.prototype = {
   },
 
   lines : function(name, structure, opts) {
-    var options = this._handleStandardOptions(opts);
+    var options = this._handleStandardOptions(opts, structure);
     options.color = options.color || color.byElement();
     options.lineWidth = options.lineWidth || 4.0;
     var obj = render.lines(structure, this._gl, options);
@@ -894,7 +894,7 @@ PV.prototype = {
   },
 
   trace : function(name, structure, opts) {
-    var options = this._handleStandardOptions(opts);
+    var options = this._handleStandardOptions(opts, structure);
     options.color = options.color || color.uniform([ 1, 0, 0 ]);
     options.radius = options.radius || 0.3;
     options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
@@ -1011,7 +1011,7 @@ PV.prototype = {
     return label;
   },
   customMesh : function(name, opts) {
-    var options = this._handleStandardOptions(opts);
+    var options = this._handleStandardOptions(opts, structure);
     
     var mesh = new CustomMesh(name, this._gl, 
                               options.float32Allocator, 
@@ -1133,7 +1133,13 @@ PV.prototype = {
   },
   isWebGLSupported : function() {
     return isWebGLSupported(this._gl);
-  }
+  },
+  destroy : function() {
+    this.clear();
+    this._canvas.width = 1;
+    this._canvas.height = 1;
+    this._canvas.remove();
+  },
 };
 
 PV.prototype.on = PV.prototype.addListener;

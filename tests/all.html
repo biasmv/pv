@@ -5,21 +5,58 @@
   <meta charset="utf-8">
   <title>pv unit tests</title>
   <link rel="stylesheet" href="/css/qunit.css">
+  <style>
+    #viewer {
+      width: 300px;
+      height: 300px;
+    }
+    #root {
+      width:100%;
+      padding:0px;
+      margin:0px;
+    }
+  </style>
 </head>
 <body>
+<table id=root><tr>
+<td>
   <div id="qunit"></div>
   <div id="qunit-fixture"></div>
+</td><td>
+  <div id="viewer"></div>
+</td>
+</tr></table>
   <script src="/js/qunit.js"></script>
   <script src="/tests/assertions.js"></script>
-  <script src="/src/core.js"></script>
-  <script src="/src/gl-matrix.js"></script>
-  <script src="/src/symmetry.js"></script>
-  <script src="/src/mol.js"></script>
-  <script src="/src/shade.js"></script>
-  <script src="/src/io.js"></script>
+  <script src='/src/gl-matrix.js'></script>
+  <script src='/src/core.js'></script>
+  <script src='/src/geom.js'></script>
+  <script src='/src/trace.js'></script>
+  <script src='/src/symmetry.js'></script>
+  <script src='/src/mol.js'></script>
+  <script src='/src/io.js'></script>
+  <script src='/src/vert-assoc.js'></script>
+  <script src='/src/buffer-allocators.js'></script>
+  <script src='/src/vertex-array-base.js'></script>
+  <script src='/src/indexed-vertex-array.js'></script>
+  <script src='/src/vertex-array.js'></script>
+  <script src='/src/chain-data.js'></script>
+  <script src='/src/geom-builders.js'></script>
+  <script src='/src/scene.js'></script>
+  <script src='/src/render.js'></script>
+  <script src='/src/shade.js'></script>
+  <script src='/src/cam.js'></script>
+  <script src='/src/shaders.js'></script>
+  <script src='/src/framebuffer.js'></script>
+  <script src='/src/slab.js'></script>
+  <script src='/src/animation.js'></script>
+  <script src='/src/touch.js'></script>
+  <script src='/src/viewer.js'></script>
+  <script src='/src/viewpoint.js'></script>
   <script src="/tests/binary-search.js"></script>
   <script src="/tests/mol-iterators.js"></script>
   <script src="/tests/colors.js"></script>
   <script src="/tests/pdb-io.js"></script>
+  <script src="/tests/viewer-render.js"></script>
 </body>
 </html
