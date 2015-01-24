@@ -845,7 +845,7 @@ PV.prototype = {
   },
 
   cartoon : function(name, structure, opts) {
-    var options = this._handleStandardOptions(opts, structure);
+    var options = this._handleStandardMolOptions(opts, structure);
     options.color = options.color || color.bySS();
     options.strength = options.strength || 1.0;
     options.splineDetail = options.splineDetail || this.options('splineDetail');

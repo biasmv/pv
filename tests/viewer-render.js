@@ -19,11 +19,13 @@ test('renders molecule asymmetric units in all styles', function(assert) {
     for (var i = 0; i < ALL_STYLES.length; ++i) {
       var obj = viewer.renderAs(ALL_STYLES[i], structure, ALL_STYLES[i]);
       assert.ok(!!obj);
-      viewer.clear();
     }
-    viewer.destroy();
-    
-    done();
+    // this make sure we get one draw before tearing everything down and
+    // increases code coverage.
+    setTimeout(function() {
+      viewer.destroy();
+      done();
+    }, 100);
   });
 });
 
@@ -35,10 +37,13 @@ test('renders molecule assembly 1 in all styles', function(assert) {
       var obj = viewer.renderAs(ALL_STYLES[i], structure, 
                                 ALL_STYLES[i], { showRelated : '1'});
       assert.ok(!!obj);
-      viewer.clear();
     }
-    viewer.destroy();
-    done();
+    // this make sure we get one draw before tearing everything down and
+    // increases code coverage.
+    setTimeout(function() {
+      viewer.destroy();
+      done();
+    }, 100);
   });
 });
 
