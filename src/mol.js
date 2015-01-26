@@ -649,11 +649,10 @@ function connectNucleotides(structure, left, right) {
   }
 }
 
-function Mol(pv) {
+function Mol() {
   MolBase.call(this);
   this._chains = [];
   this._assemblies = [];
-  this._pv = pv;
   this._nextAtomIndex = 0;
 }
 
