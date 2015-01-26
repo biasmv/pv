@@ -786,7 +786,7 @@ function shouldIntroduceTraceBreak(aaStretch, prevResidue, thisResidue) {
 }
 
 function addNonEmptyTrace(traces, trace) {
-  if (trace.length() === 0) {
+  if (trace.length() < 2) {
     return;
   }
   traces.push(trace);
