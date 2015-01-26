@@ -93,7 +93,7 @@ derive(IndexedVertexArray, VertexArrayBase, {
 
   addTriangle : function(idx1, idx2, idx3) {
     var index = 3 * this._numTriangles;
-    if (index >= this._indexData.length) {
+    if (index + 2 >= this._indexData.length) {
       return;
     }
     this._indexData[index++] = idx1;

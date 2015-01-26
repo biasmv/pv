@@ -830,7 +830,7 @@ var _cartoonForSingleTrace = (function() {
     var vertStart = vertArray.numVerts();
     vertArray.addVertex(pos, [-tangent[0], -tangent[1], -tangent[2]], 
                         color, objIds[0]);
-    _cartoonAddTube(vertArray, pos, normal, trace.residueAt(0), tangent,
+    _cartoonAddTube(vertArray, pos, normal, trace.residueAt(0).ss(), tangent,
                     color, radius, true, opts, 0, objIds[0]);
     capTubeStart(vertArray, vertStart, opts.arcDetail * 4);
     var vertEnd = vertArray.numVerts();
