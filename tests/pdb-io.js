@@ -56,5 +56,54 @@ test("parses remark 350 with multiple matrices", function(assert) {
 
 });
 
+// coordinates are set to zero to have a simple test case when conectRecords 
+// is set to false, because this prevents any bonds to be formed between 
+// atoms.
+var CONECT_RECORDS = '\
+HETATM    1  C                   0.000   0.000   0.000\n\
+HETATM    2  C                   0.000   0.000   0.000\n\
+HETATM    3  C                   0.000   0.000   0.000\n\
+HETATM    4  C                   0.000   0.000   0.000\n\
+HETATM    5  C                   0.000   0.000   0.000\n\
+HETATM    6  C                   0.000   0.000   0.000\n\
+HETATM    7  I                   0.000   0.000   0.000\n\
+HETATM    8  H                   0.000   0.000   0.000\n\
+HETATM    9  O                   0.000   0.000   0.000\n\
+CONECT    1    2    6    7\n\
+CONECT    2    1    3    8\n\
+CONECT    3    2    4    9\n\
+';
+
+test('uses conect records when conectRecords flag is set', function(assert) {
+  var structure = io.pdb(CONECT_RECORDS, { conectRecords : true });
+
+  var atoms = [];
+  structure.eachAtom(function(a) { atoms.push(a) });
+  assert.strictEqual(3, atoms[0].bonds().length);
+  assert.strictEqual(3, atoms[1].bonds().length);
+  assert.strictEqual(3, atoms[2].bonds().length);
+  assert.strictEqual(1, atoms[3].bonds().length);
+  assert.strictEqual(0, atoms[4].bonds().length);
+  assert.strictEqual(1, atoms[5].bonds().length);
+  assert.strictEqual(1, atoms[6].bonds().length);
+  assert.strictEqual(1, atoms[7].bonds().length);
+  assert.strictEqual(1, atoms[8].bonds().length);
+});
+
+test('ignores conect records when conectRecords flag is not set', function(assert) {
+  var structure = io.pdb(CONECT_RECORDS, { conectRecords : false });
+  var atoms = [];
+  structure.eachAtom(function(a) { atoms.push(a) });
+  assert.strictEqual(0, atoms[0].bonds().length);
+  assert.strictEqual(0, atoms[1].bonds().length);
+  assert.strictEqual(0, atoms[2].bonds().length);
+  assert.strictEqual(0, atoms[3].bonds().length);
+  assert.strictEqual(0, atoms[4].bonds().length);
+  assert.strictEqual(0, atoms[5].bonds().length);
+  assert.strictEqual(0, atoms[6].bonds().length);
+  assert.strictEqual(0, atoms[7].bonds().length);
+  assert.strictEqual(0, atoms[8].bonds().length);
+});
+
 
 

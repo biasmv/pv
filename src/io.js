@@ -123,14 +123,18 @@ function guessAtomElementFromName(fourLetterName) {
   return fourLetterName[1];
 }
 
-function PDBReader() {
+function PDBReader(options) {
   this._helices = [];
   this._sheets = [];
+  this._conect = [];
+  this._serialToAtomMap = {};
   this._structure = new mol.Mol();
   this._remark350Reader = new Remark350Reader();
   this._currChain =  null;
   this._currRes = null;
   this._currAtom = null;
+  this._options = {};
+  this._options.conectRecords = !!options.conectRecords;
 }
 
 PDBReader.prototype = {
@@ -203,7 +207,30 @@ PDBReader.prototype = {
     if (element === '') {
       element = guessAtomElementFromName(fullAtomName);
     }
-    this._currRes.addAtom(atomName, pos, element);
+    var atom = this._currRes.addAtom(atomName, pos, element);
+    // in case parseConect records is set to true, store away the atom serial
+    if (this._options.conectRecords) {
+      var serial = parseInt(line.substr(6,5).trim(), 10);
+      this._serialToAtomMap[serial] = atom;
+    }
+    return true;
+  },
+  parseConectRecord : function(line) {
+    var atomSerial = parseInt(line.substr(6,5).trim(), 10);
+    var bondPartnerIds = [];
+    for (var i = 0; i < 4; ++i) {
+      var partnerId = parseInt(line.substr(11 + i * 5, 6).trim(), 10);
+      if (isNaN(partnerId)) {
+        continue;
+      }
+      // bonds are listed twice, so to avoid duplicate bonds, only keep bonds 
+      // with the lower serials as the first atom.
+      if (partnerId > atomSerial) {
+        continue;
+      }
+      bondPartnerIds.push(partnerId);
+    }
+    this._conect.push( { from : atomSerial, to : bondPartnerIds });
     return true;
   },
 
@@ -226,6 +253,9 @@ PDBReader.prototype = {
     }
     if (recordName === 'SHEET ') {
       return this.parseSheetRecord(line);
+    }
+    if (this._options.conectRecords && recordName === 'CONECT') {
+      return this.parseConectRecord(line);
     }
     if (recordName === 'END   ' || recordName === 'ENDMDL') {
       return false;
@@ -256,11 +286,24 @@ PDBReader.prototype = {
       }
     }
     this._structure.setAssemblies(this._remark350Reader.assemblies());
+    if (this._options.conectRecords) {
+      this._assignBondsFromConectRecords(this._structure);
+    }
     this._structure.deriveConnectivity();
     console.log('imported', this._structure.chains().length, 'chain(s),',
                 this._structure.residueCount(), 'residue(s)');
     return this._structure;
-  }
+  },
+  _assignBondsFromConectRecords : function(structure) {
+    for (var i = 0; i < this._conect.length; ++i) {
+      var record = this._conect[i];
+      var fromAtom = this._serialToAtomMap[record.from];
+      for (var j = 0; j < record.to.length; ++j) {
+        var toAtom = this._serialToAtomMap[record.to[j]];
+        structure.connect(fromAtom, toAtom);
+      }
+    }
+  },
 };
 
 // a truly minimalistic PDB parser. It will die as soon as the input is 
@@ -274,9 +317,10 @@ PDBReader.prototype = {
 // that data for each atom position. since the atom's lifetime is bound to
 // the parent structure, the buffer could be managed on that level and
 // released once the structure is deleted.
-function pdb(text) {
+function pdb(text, options) {
   console.time('pdb'); 
-  var reader = new PDBReader();
+  var opts = options || {};
+  var reader = new PDBReader(opts);
   var lines = text.split(/\r\n|\r|\n/g);
   var i = 0;
   for (i = 0; i < lines.length; i++) {
@@ -289,12 +333,12 @@ function pdb(text) {
   return structure;
 }
 
-function fetchPdb(url, callback) {
+function fetchPdb(url, callback, options) {
   var oReq = new XMLHttpRequest();
   oReq.open("GET", url, true);
   oReq.onload = function() {
     if (oReq.response) {
-      var structure= io.pdb(oReq.response);
+      var structure= io.pdb(oReq.response, options);
       callback(structure);
     }
   };

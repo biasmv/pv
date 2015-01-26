@@ -1142,7 +1142,8 @@ PV.prototype = {
     this.clear();
     this._canvas.width = 1;
     this._canvas.height = 1;
-    this._canvas.remove();
+    this._canvas.parentElement.removeChild(this._canvas);
+    this._canvas = null;
   },
 };
 
