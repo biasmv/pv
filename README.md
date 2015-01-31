@@ -17,7 +17,7 @@ Clone this repository
 git clone https://github.com/biasmv/pv.git
 ```
 
-Change to the pv directory and serve the files using the serve script in the source directory. This will start a simple static-file server using Python SimpleHTTPServer module.
+Change to the pv directory and serve the files using the serve script in the source directory. This will start a simple static-file server using Python's SimpleHTTPServer module.
 
 ```bash
 cd pv
