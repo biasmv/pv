@@ -11,7 +11,45 @@ function createViewer() {
   return pv.Viewer(document.getElementById('viewer'), options);
 }
 
-test('renders molecule asymmetric units in all styles', function(assert) {
+test('renders structure subset asymmetric units in all styles', function(assert) {
+  var done = assert.async();
+
+  var viewer = createViewer();
+  io.fetchPdb('/pdbs/1r6a.pdb', function(structure) {
+    for (var i = 0; i < ALL_STYLES.length; ++i) {
+      var view = structure.select({ rnumRange : [40, 60] })
+      var obj = viewer.renderAs(ALL_STYLES[i], view, ALL_STYLES[i]);
+      assert.ok(!!obj);
+    }
+    // this make sure we get one draw before tearing everything down and
+    // increases code coverage.
+    setTimeout(function() {
+      viewer.destroy();
+      done();
+    }, 100);
+  });
+});
+
+test('renders structure subset assembly 1 in all styles', function(assert) {
+  var done = assert.async();
+  var viewer = createViewer();
+  io.fetchPdb('/pdbs/1r6a.pdb', function(structure) {
+    for (var i = 0; i < ALL_STYLES.length; ++i) {
+      var view = structure.select({ rnumRange : [40, 60] })
+      var obj = viewer.renderAs(ALL_STYLES[i], view, 
+                                ALL_STYLES[i], { showRelated : '1'});
+      assert.ok(!!obj);
+    }
+    // this make sure we get one draw before tearing everything down and
+    // increases code coverage.
+    setTimeout(function() {
+      viewer.destroy();
+      done();
+    }, 100);
+  });
+});
+
+test('renders full structure asymmetric units in all styles', function(assert) {
   var done = assert.async();
 
   var viewer = createViewer();
@@ -29,7 +67,7 @@ test('renders molecule asymmetric units in all styles', function(assert) {
   });
 });
 
-test('renders molecule assembly 1 in all styles', function(assert) {
+test('renders full structure assembly 1 in all styles', function(assert) {
   var done = assert.async();
   var viewer = createViewer();
   io.fetchPdb('/pdbs/1r6a.pdb', function(structure) {
