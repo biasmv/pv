@@ -82,6 +82,9 @@ function _atomPredicates(dict) {
   if (dict.aname !== undefined) {
     predicates.push(function(a) { return a.name() === dict.aname; });
   }
+  if (dict.hetatm !== undefined) {
+    predicates.push(function(a) { return a.isHetatm() === dict.hetatm; });
+  }
   if (dict.anames !== undefined) {
     predicates.push(function(a) { 
       var n = a.name();
@@ -341,7 +344,7 @@ MolBase.prototype = {
     }
     // when what is not one of the simple strings above, we assume what
     // is a dictionary containing predicates which have to be fulfilled.
-    return _dictSelect(this, what);
+    return _dictSelect(this, what || {});
   },
 
   selectWithin : (function() {
@@ -948,9 +951,10 @@ derive(Residue, ResidueBase, {
 
   full : function() { return this; },
 
-  addAtom : function(name, pos, element) {
+  addAtom : function(name, pos, element, isHetatm) {
     var atom = new Atom(this, name, pos, element, 
-                        this.structure().nextAtomIndex());
+                        this.structure().nextAtomIndex(), 
+                        isHetatm);
     this._atoms.push(atom);
     return atom;
   },
@@ -969,10 +973,11 @@ derive(Residue, ResidueBase, {
 
 });
 
-function Atom(residue, name, pos, element, index) {
+function Atom(residue, name, pos, element, index, isHetatm) {
   AtomBase.call(this);
   this._residue = residue;
   this._bonds = [];
+  this._isHetatm = !!isHetatm;
   this._name = name;
   this._pos = pos;
   this._index = index;
@@ -990,7 +995,10 @@ derive(Atom, AtomBase, {
   full : function() { return this; },
   qualifiedName : function() {
     return this.residue().qualifiedName()+'.'+this.name();
-  }
+  },
+  isHetatm : function() { 
+    return this._isHetatm; 
+  },
 });
 
 var Bond = function(atom_a, atom_b) {
@@ -1200,6 +1208,9 @@ derive(AtomView, AtomBase, {
   index : function() { return this._atom.index(); },
   qualifiedName : function() {
     return this._atom.qualifiedName();
+  },
+  isHetatm : function() {
+    return this._atom.isHetatm();
   }
 });
 

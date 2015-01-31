@@ -170,6 +170,7 @@ PDBReader.prototype = {
     if (alt_loc !== ' ' && alt_loc !== 'A') {
       return true;
     }
+    var isHetatm = line[0] === 'H';
     var chainName = line[21];
     var resName = line.substr(17, 3).trim();
     var fullAtomName = line.substr(12, 4);
@@ -207,7 +208,7 @@ PDBReader.prototype = {
     if (element === '') {
       element = guessAtomElementFromName(fullAtomName);
     }
-    var atom = this._currRes.addAtom(atomName, pos, element);
+    var atom = this._currRes.addAtom(atomName, pos, element, isHetatm);
     // in case parseConect records is set to true, store away the atom serial
     if (this._options.conectRecords) {
       var serial = parseInt(line.substr(6,5).trim(), 10);

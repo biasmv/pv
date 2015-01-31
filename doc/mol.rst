@@ -128,6 +128,7 @@ The Mol (and MolView) API
   **Available Atom Predicates:**
 
   * *aname* An atom is included iff the atom name it is equal to *aname*. To match against multiple atom names, use the plural forms cnames/chains.
+  * *hetatm* An atom is included iff the atom hetatm flag matches the provided value.
 
   **Examples:**
 
@@ -358,6 +359,11 @@ The Atom (and AtomView) API
               mol.AtomView.pos()
 
   The actual coordinates of the atom.
+
+.. function:: mol.Atom.isHetatm()
+              mol.AtomView.isHetatm()
+
+  Returns true when the atom was imported from a HETATM record, false if not. This flag is only meaningful for structures imported from PDB files and will return false for other file formats.
 
 
 The Bond API
