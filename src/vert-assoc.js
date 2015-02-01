@@ -18,6 +18,9 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
+define(['shade'], function(color) {
+
+"use strict";
 
 // During recoloring of a render style, most of the vertex attributes, e.g.
 // normals and positions do not change. Only the color information for each
@@ -36,10 +39,6 @@ function AtomVertexAssoc(structure, callColoringBeginEnd) {
   this._assocs = [];
   this._callBeginEnd = callColoringBeginEnd;
 
-}
-
-if(typeof(exports) !== 'undefined') {
-    exports.AtomVertexAssoc = AtomVertexAssoc;
 }
 
 AtomVertexAssoc.prototype = {
@@ -125,10 +124,6 @@ function TraceVertexAssoc(structure, interpolation, callColoringBeginEnd) {
   this._perResidueColors = {};
 }
 
-if(typeof(exports) !== 'undefined') {
-    exports.TraceVertexAssoc = TraceVertexAssoc;
-}
-
 TraceVertexAssoc.prototype = {
 
   setPerResidueColors : function(traceIndex, colors) {
@@ -168,7 +163,7 @@ TraceVertexAssoc.prototype = {
         index+=4;
       }
       if (this._interpolation > 1) {
-        colorData.push(interpolateColor(data, this._interpolation));
+        colorData.push(color.interpolateColor(data, this._interpolation));
       } else {
         colorData.push(data);
       }
@@ -232,7 +227,7 @@ TraceVertexAssoc.prototype = {
         index+=4;
       }
       if (this._interpolation > 1) {
-        colorData.push(interpolateColor(data, this._interpolation));
+        colorData.push(color.interpolateColor(data, this._interpolation));
       } else {
         colorData.push(data);
       }
@@ -252,3 +247,9 @@ TraceVertexAssoc.prototype = {
   }
 };
 
+return {
+  TraceVertexAssoc : TraceVertexAssoc,
+  AtomVertexAssoc : AtomVertexAssoc
+};
+
+});

@@ -18,8 +18,10 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-(function(exports) {
+define(function() {
 "use strict";
+
+var glMatrix = require('./gl-matrix');
 
 // base for all animations, e.g. position transitions, slerping etc.
 function Animation(from, to, duration) {
@@ -131,5 +133,4 @@ exports.Move = Move;
 exports.Rotate = Rotate;
 exports.RockAndRoll = RockAndRoll;
 exports.Animation = Animation;
-return true;
-})(this);
+});

@@ -18,8 +18,12 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-(function(exports) {
+define(['gl-matrix', 'geom'], function(glMatrix, geom) {
+
 "use strict";
+
+var vec3 = glMatrix.vec3;
+var mat3 = glMatrix.mat3;
 
 var calculateCovariance = (function() {
   var center = vec3.create();
@@ -100,8 +104,8 @@ var principalAxes = (function() {
   };
 })();
 
-exports.principalAxes = principalAxes;
+return {
+  principalAxes :principalAxes
+}
 
-return true;
-
-})(this);
+});

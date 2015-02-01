@@ -18,9 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-(function(exports) {
+define(['gl-matrix'], function(glMatrix) {
+
 "use strict";
 
+var vec4 = glMatrix.vec4;
+var vec3 = glMatrix.vec3;
+
+var exports = {};
 exports.rgb = {};
 var rgb = exports.rgb;
 
@@ -209,11 +214,10 @@ ColorOp.prototype = {
   }
 };
 
-exports.color = {};
 
 exports.ColorOp = ColorOp;
 
-exports.color.uniform = function(color) {
+exports.uniform = function(color) {
   color = exports.forceRGB(color || 'white');
   return new ColorOp(function(atom, out, index) {
     out[index+0] = color[0];
@@ -255,7 +259,7 @@ var CPK_TABLE = {
  FE : [0.87, 0.47, 0.00]
 };
 
-exports.color.byElement = function() {
+exports.byElement = function() {
   return new ColorOp(function(atom, out, index) {
     var ele = atom.element();
     var color = CPK_TABLE[ele];
@@ -274,7 +278,7 @@ exports.color.byElement = function() {
   }, null, null);
 };
 
-exports.color.bySS = function() {
+exports.bySS = function() {
 
   return new ColorOp(function(atom, out, index) {
     switch (atom.residue().ss()) {
@@ -294,7 +298,7 @@ exports.color.bySS = function() {
   }, null, null);
 };
 
-exports.color.rainbow = function(grad) {
+exports.rainbow = function(grad) {
   if (!grad) {
     grad = gradient('rainbow');
   }
@@ -337,12 +341,12 @@ exports.color.rainbow = function(grad) {
   return colorFunc;
 };
 
-exports.color.ssSuccession = function(grad, coilColor) {
+exports.ssSuccession = function(grad, coilColor) {
   if (!grad) {
     grad = gradient('rainbow');
   }
   if (!coilColor) {
-    coilColor = forceRGB('lightgrey');
+    coilColor = exports.forceRGB('lightgrey');
   }
   var colorFunc = new ColorOp(function(a, out, index) {
     var idx = a.residue().index();
@@ -401,7 +405,7 @@ exports.color.ssSuccession = function(grad, coilColor) {
   return colorFunc;
 };
 
-exports.color.byChain = function(grad) {
+exports.byChain = function(grad) {
   if (!grad) {
     grad = gradient('rainbow');
   }
@@ -479,12 +483,12 @@ function colorByItemProp(propName, grad, range, iter, item) {
   );
 }
 
-exports.color.byAtomProp = function(propName, grad, range) {
+exports.byAtomProp = function(propName, grad, range) {
   return colorByItemProp(propName, grad, range, 'eachAtom', 
                          function(a) {return a;});
 };
 
-exports.color.byResidueProp = function(propName, grad, range) {
+exports.byResidueProp = function(propName, grad, range) {
   return colorByItemProp(propName, grad, range, 'eachResidue', 
                          function(a) {return a.residue();});
 };
@@ -517,7 +521,7 @@ exports.interpolateColor = function(colors, num) {
 
 
 // initialize gradients with default colors
-initGradients();
+exports.initGradients();
 
-return true;
-})(this);
+return exports;
+});

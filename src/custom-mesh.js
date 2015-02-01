@@ -18,9 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-(function(exports) {
+define(['gl-matrix', 'core', 'shade', 'geom', 'geom-builders', 'indexed-vertex-array', 
+        'scene-node'], 
+       function(glMatrix, core, color, geom, gb, IndexedVertexArray, SceneNode) {
 
 "use strict";
+
+var vec3 = glMatrix.vec3;
+var mat3 = glMatrix.mat3;
+
+var forceRGB = color.forceRGB;
 
 // small helper with the same interface as IndexedVertexArray that can be used 
 // as a drop-in when the number of vertices/indices is not known in advance.
@@ -60,8 +67,8 @@ function CustomMesh(name, gl, float32Allocator, uint16Allocator) {
   this._float32Allocator = float32Allocator;
   this._uint16Allocator = uint16Allocator;
   this._data = new DynamicIndexedVertexArray();
-  this._protoSphere = new ProtoSphere(8, 8);
-  this._protoCyl = new ProtoCylinder(8);
+  this._protoSphere = new gb.ProtoSphere(8, 8);
+  this._protoCyl = new gb.ProtoCylinder(8);
   this._va = null;
   this._ready = false;
 }
@@ -83,7 +90,7 @@ function capTubeEnd(va, baseIndex, numTubeVerts) {
   va.addTriangle(center, baseIndex, baseIndex + numTubeVerts - 1);
 }
 
-derive(CustomMesh, SceneNode, {
+core.derive(CustomMesh, SceneNode, {
   updateProjectionIntervals : function() {},
   updateSquaredSphereRadius : function(center, radius) { 
     return radius;
@@ -177,6 +184,7 @@ derive(CustomMesh, SceneNode, {
   },
 });
 
-exports.CustomMesh = CustomMesh;
-})(this);
+return CustomMesh;
+
+});
 

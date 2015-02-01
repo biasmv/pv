@@ -807,51 +807,6 @@ ContinuousIdRange.prototype = {
   }
 };
 
-function UniqueObjectIdPool() {
-  this._objects = {};
-  this._unusedRangeStart = 0;
-  this._free = [];
-}
-
-UniqueObjectIdPool.prototype = {
-  getContinuousRange : function(num) {
-    // FIXME: keep the "free" list sorted, so we can binary search it
-    // for a good match
-    var bestIndex = -1;
-    var bestLength = null;
-    for (var i = 0; i < this._free.length; ++i) {
-      var free = this._free[i];
-      var length = free.length();
-      if (length >= num && (bestLength === null || length < bestLength)) {
-        bestLength = length;
-        bestIndex = i;
-      }
-    }
-    if (bestIndex !== -1) {
-      var result = this._free[bestIndex];
-      this._free.splice(bestIndex, 1);
-      return result;
-    }
-    var start = this._unusedRangeStart;
-    var end = start + num;
-    if (end > 65536) {
-      console.log('not enough free object ids.');
-      return null;
-    }
-    this._unusedRangeStart = end;
-    return new ContinuousIdRange(this, start, end);
-  },
-  recycle : function(range) {
-    for (var i = range._start; i < range._next; ++i) {
-      delete this._objects[i];
-    }
-    range._next = range._start;
-    this._free.push(range);
-  },
-  objectForId : function(id) {
-    return this._objects[id];
-  }
-};
 
 function OrientedBoundingBox(gl, center, halfExtents, 
                              float32Allocator, uint16Allocator) {

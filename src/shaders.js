@@ -18,12 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-(function(exports) {
-
-"use strict";
-
-exports.shaders = {};
-
+define({
 // NOTE: The shader code below use the placeholder ${PRECISION} variable 
 // for the shader precision. This values is replaced before compiling 
 // the shader program with highp on iOS and mediump on all other devices. 
@@ -31,7 +26,7 @@ exports.shaders = {};
 // with mediump, but some android devices do not support highp.
 
 // line fragment shader, essentially uses the vertColor and adds some fog.
-exports.shaders.LINES_FS = '\n\
+LINES_FS : '\n\
 precision ${PRECISION} float;\n\
 \n\
 varying vec4 vertColor;\n\
@@ -50,10 +45,10 @@ void main(void) {\n\
     gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
                         fog_factor);\n\
   }\n\
-}';
+}',
 
 // hemilight fragment shader
-exports.shaders.HEMILIGHT_FS = '\n\
+HEMILIGHT_FS : '\n\
 precision ${PRECISION} float;\n\
 \n\
 varying vec4 vertColor;\n\
@@ -75,10 +70,10 @@ void main(void) {\n\
     gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
                         fog_factor);\n\
   }\n\
-}';
+}',
 
 // hemilight vertex shader
-exports.shaders.HEMILIGHT_VS = '\n\
+HEMILIGHT_VS : '\n\
 attribute vec3 attrPos;\n\
 attribute vec4 attrColor;\n\
 attribute vec3 attrNormal;\n\
@@ -92,10 +87,10 @@ void main(void) {\n\
   vec4 n = (modelviewMat * vec4(attrNormal, 0.0));\n\
   vertNormal = n.xyz;\n\
   vertColor = attrColor;\n\
-}';
+}',
 
 // outline shader. mixes outlineColor with fogColor
-exports.shaders.OUTLINE_FS = '\n\
+OUTLINE_FS : '\n\
 precision ${PRECISION} float;\n\
 varying float vertAlpha;\n\
 \n\
@@ -114,11 +109,11 @@ void main() {\n\
     gl_FragColor = mix(gl_FragColor, vec4(fogColor, vertAlpha),\n\
                         fog_factor);\n\
   }\n\
-}';
+}',
 
 // outline vertex shader. Expands vertices along the (in-screen) xy
 // components of the normals.
-exports.shaders.OUTLINE_VS = '\n\
+OUTLINE_VS : '\n\
 precision ${PRECISION} float;\n\
 \n\
 attribute vec3 attrPos;\n\
@@ -135,9 +130,9 @@ void main(void) {\n\
   vec4 normal = modelviewMat * vec4(attrNormal, 0.0);\n\
   vertAlpha = attrColor.a;\n\
   gl_Position.xy += normal.xy*0.200;\n\
-}';
+}',
 
-exports.shaders.TEXT_VS = '\n\
+TEXT_VS : '\n\
 precision ${PRECISION} float;\n\
 \n\
 attribute vec3 attrCenter;\n\
@@ -154,9 +149,9 @@ void main() { \n\
   gl_Position = projectionMat * pos;\n\
   gl_Position.xy += vec2(width,height)*attrCorner*gl_Position.w; \n\
   vertTex = (attrCorner+abs(attrCorner))/(2.0*abs(attrCorner)); \n\
-}';
+}',
 
-exports.shaders.TEXT_FS = '\n\
+TEXT_FS : '\n\
 precision ${PRECISION} float;\n\
 \n\
 uniform mat4 projectionMat;\n\
@@ -169,9 +164,9 @@ void main() { \n\
   vec2 texCoord = vec2(vertTex.x*xScale, vertTex.y*yScale);\n\
   gl_FragColor = texture2D(sampler, texCoord);\n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
-}';
+}',
 
-exports.shaders.SELECT_VS = '\n\
+SELECT_VS : '\n\
 precision ${PRECISION} float;\n\
 uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
@@ -183,9 +178,9 @@ varying float objId;\n\
 void main(void) {\n\
   gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
   objId = attrObjId;\n\
-}';
+}',
 
-exports.shaders.SELECT_FS = '\n\
+SELECT_FS : '\n\
 precision ${PRECISION} float;\n\
 \n\
 varying float objId;\n\
@@ -204,5 +199,7 @@ void main(void) {\n\
   integralObjId/=256;\n\
   int blue = symId;\n\
   gl_FragColor = vec4(float(red), float(green), float(blue), 255.0)/255.0;\n\
-}';
-})(this);
+}'
+
+});
+

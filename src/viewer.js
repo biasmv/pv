@@ -18,7 +18,13 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-var pv = (function(){
+
+define(['gl-matrix', 'shade', 'slab', 'unique-object-id-pool', 'core', 'framebuffer', 
+        'buffer-allocators', 'cam', 'shaders', 'touch', 'render', 'label',
+        'custom-mesh'], 
+       function(glMatrix, color, slab, UniqueObjectIdPool, core, 
+                FrameBuffer, PoolAllocator, Cam, shaders, 
+                TouchHandler, render, TextLabel, CustomMesh) {
 
 "use strict";
 
@@ -41,6 +47,7 @@ on how to unblock it.\
 </div>';
 
 
+var vec3 = glMatrix.vec3;
 
 function shouldUseHighPrecision() {
   // high precision for shaders is only required on iOS, all the other browsers 
@@ -81,7 +88,7 @@ function slabModeToStrategy(mode, options) {
     return new FixedSlab(options);
   }
   if (mode === 'auto') {
-    return new AutoSlab(options);
+    return new slab.AutoSlab(options);
   }
   return null;
 }
@@ -144,7 +151,8 @@ function PV(domElement, opts) {
       document.readyState === "interactive") {
     this._initPV();
   } else {
-    document.addEventListener('DOMContentLoaded', bind(this, this._initPV));
+    document.addEventListener('DOMContentLoaded', 
+                              core.bind(this, this._initPV));
   }
 }
 
@@ -166,7 +174,7 @@ PV.prototype = {
       antialias : opts.antialias,
       quality : optValue(opts, 'quality', 'low'),
       style : optValue(opts, 'style', 'hemilight'),
-      background : forceRGB(opts.background || 'white'),
+      background : color.forceRGB(opts.background || 'white'),
       slabMode : slabModeToStrategy(opts.slabMode),
       atomClick: opts.atomClicked || opts.atomClick || null,
       outline : optValue(opts, 'outline', true),
@@ -410,8 +418,8 @@ PV.prototype = {
 
     // get vertex attribute location for the shader once to
     // avoid repeated calls to getAttribLocation/getUniformLocation
-    var getAttribLoc = bind(gl, gl.getAttribLocation);
-    var getUniformLoc = bind(gl, gl.getUniformLocation);
+    var getAttribLoc = core.bind(gl, gl.getAttribLocation);
+    var getUniformLoc = core.bind(gl, gl.getUniformLocation);
     shaderProgram.posAttrib = getAttribLoc(shaderProgram, 'attrPos');
     shaderProgram.colorAttrib = getAttribLoc(shaderProgram, 'attrColor');
     shaderProgram.normalAttrib = getAttribLoc(shaderProgram, 'attrNormal');
@@ -462,23 +470,23 @@ PV.prototype = {
       select : this._initShader(shaders.SELECT_VS, shaders.SELECT_FS)
     };
 
-    this._boundDraw = bind(this, this._draw);
+    this._boundDraw = core.bind(this, this._draw);
 
-    this._mousePanListener = bind(this, this._mousePan);
-    this._mouseRotateListener = bind(this, this._mouseRotate);
-    this._mouseUpListener = bind(this, this._mouseUp);
+    this._mousePanListener = core.bind(this, this._mousePan);
+    this._mouseRotateListener = core.bind(this, this._mouseRotate);
+    this._mouseUpListener = core.bind(this, this._mouseUp);
 
     // Firefox responds to the wheel event, whereas other browsers listen to
     // the mousewheel event. Register different event handlers, depending on
     // what properties are available.
-    var addListener = bind(this._canvas, this._canvas.addEventListener);
+    var addListener = core.bind(this._canvas, this._canvas.addEventListener);
     if ('onwheel' in this._canvas) {
-      addListener('wheel', bind(this, this._mouseWheelFF), false);
+      addListener('wheel', core.bind(this, this._mouseWheelFF), false);
     } else {
-      addListener('mousewheel', bind(this, this._mouseWheel), false);
+      addListener('mousewheel', core.bind(this, this._mouseWheel), false);
     }
-    addListener('dblclick', bind(this, this._mouseDoubleClick), false);
-    addListener('mousedown', bind(this, this._mouseDown), false);
+    addListener('dblclick', core.bind(this, this._mouseDoubleClick), false);
+    addListener('mousedown', core.bind(this, this._mouseDown), false);
     this._touchHandler = new TouchHandler(this._canvas, this, this._cam);
 
     if (!this._initialized) {
@@ -659,7 +667,7 @@ PV.prototype = {
       this.listenerMap[eventName] = callbacks;
     }
     if (callback === 'center') {
-      callbacks.push(bind(this, this._centerOnClicked));
+      callbacks.push(core.bind(this, this._centerOnClicked));
     } else {
       callbacks.push(callback);
     }
@@ -781,7 +789,7 @@ PV.prototype = {
   },
 
   _handleStandardOptions : function(opts) {
-    opts = copy(opts);
+    opts = core.copy(opts);
     opts.float32Allocator = this._float32Allocator;
     opts.uint16Allocator = this._uint16Allocator;
     opts.idPool = this._objectIdManager;
@@ -911,7 +919,7 @@ PV.prototype = {
   fitTo : function(what, slabMode) {
     var axes = this._cam.mainAxes();
     slabMode = slabMode || this._options.slabMode;
-    var intervals = [ new Range(), new Range(), new Range() ];
+    var intervals = [ new core.Range(), new core.Range(), new core.Range() ];
     if (what instanceof SceneNode) {
       what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                     intervals[1], intervals[2]);
@@ -962,7 +970,7 @@ PV.prototype = {
   // adapt the zoom level to fit the viewport to all visible objects.
   autoZoom : function() {
     var axes = this._cam.mainAxes();
-    var intervals = [ new Range(), new Range(), new Range() ];
+    var intervals = [ new core.Range(), new core.Range(), new core.Range() ];
     this.forEach(function(obj) {
       if (!obj.visible()) {
         return;
@@ -1156,8 +1164,4 @@ return {
   isWebGLSupported : isWebGLSupported
 };
 
-})();
-
-if(typeof(exports) !== 'undefined') {
-    module.exports = pv;
-}
+});

@@ -18,7 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-(function(exports) {
+define(['core', 'vertex-array', 'indexed-vertex-array'], 
+       function(core, VertexArray, IndexedVertexArray) {
+
 "use strict";
 
 // LineChainData and MeshChainData are two internal classes that add molecule-
@@ -29,7 +31,7 @@ function LineChainData(chain, gl, numVerts, float32Allocator) {
   this._chain = chain;
 }
 
-derive(LineChainData, VertexArray, {
+core.derive(LineChainData, VertexArray, {
   chain : function() { return this._chain; },
 
   drawSymmetryRelated : function(cam, shader, transforms) {
@@ -50,7 +52,7 @@ function MeshChainData(chain, gl, numVerts, numIndices, float32Allocator,
   this._chain = chain;
 }
 
-derive(MeshChainData, IndexedVertexArray, {
+core.derive(MeshChainData, IndexedVertexArray, {
   chain : function() { return this._chain; }
 });
 
@@ -58,8 +60,10 @@ MeshChainData.prototype.drawSymmetryRelated =
   LineChainData.prototype.drawSymmetryRelated;
 
 
-exports.LineChainData = LineChainData;
-exports.MeshChainData = MeshChainData;
+return {
+  LineChainData : LineChainData,
+  MeshChainData : MeshChainData
+};
 
-return true;
-})(this);
+});
+

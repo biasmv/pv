@@ -1,9 +1,14 @@
+define(['gl-matrix', 'io'], function(glMatrix, io) { return function() {
+
+
+var mat4 = glMatrix.mat4;
 var MULTI_LINE_MT = [
   'REMARK 350 BIOMOLECULE: 1                 \n',
   'REMARK 350 AUTHOR DETERMINED BIOLOGICAL UNIT: 55-MERIC       \n',
   'REMARK 350 APPLY THE FOLLOWING TO CHAINS: A, B, C, D, E, F, G, H, I, \n',
   'REMARK 350                    AND CHAINS: J, K, L, M, N, O, P, Q, R, \n',
 ];
+
 test("parses remark 350 with multi-line chain definitions", function() {
   var reader = new io.Remark350Reader();
   for (var i = 0; i < MULTI_LINE_MT.length; ++i) {
@@ -149,3 +154,4 @@ test('sets HETATM flag', function(assert) {
 
 });
 
+};});

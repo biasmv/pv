@@ -18,53 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-define(function() {
 
-"use strict";
-
-function Slab(near, far) {
-  this.near = near;
-  this.far = far;
-}
-
-function FixedSlab(options) {
-  options = options || {};
-  this._near = options.near || 0.1;
-  this._far = options.far || 400.0;
-}
-
-FixedSlab.prototype.update = function() {
-  return new Slab(this._near, this._far);
-};
-
-function AutoSlab() {
-  this._far = 100.0;
-}
-
-AutoSlab.prototype.update = function(objects, cam) {
-  var center = cam.center();
-  var radius = null;
-  for (var i = 0; i < objects.length; ++i) {
-    var obj = objects[i];
-    if (!obj.visible()) {
-      continue;
-    }
-    radius = obj.updateSquaredSphereRadius(center, radius);
-  }
-  if (radius === null) {
-    return null;
-  }
-  radius = Math.sqrt(radius);
-  var zoom = cam.zoom();
-  var newFar = (radius + zoom) * 1.05;
-  var newNear = 0.1;//Math.max(0.1, zoom - radius);
-  return new Slab(newNear, newFar);
-};
-
-return {
-  FixedSlab : FixedSlab,
-  AutoSlab : AutoSlab,
-  Slab : Slab
-};
-
+define(['viewer'], function(viewer) {
+  return viewer;
 });

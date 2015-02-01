@@ -18,9 +18,11 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-(function(exports) {
+define(function() {
+
 "use strict";
 
+var exports = {}
 exports.derive = function(subclass, baseclass, extensions) {
   // jshint forin:false
   for (var prop in baseclass.prototype) {
@@ -158,5 +160,56 @@ exports.indexLastSmallerEqualThan = function(values, value, comp) {
   }
 };
 
-return true;
-})(this);
+function Range(min, max) {
+  if (min === undefined || max === undefined) {
+    this._empty = true;
+    this._min = this._max = null;
+  } else {
+    this._empty = false;
+    this._min = min;
+    this._max = max;
+  }
+}
+
+Range.prototype = {
+  min : function() {
+    return this._min;
+  },
+  max : function() {
+    return this._max;
+  },
+  length : function() {
+    return this._max - this._min;
+  },
+  empty : function() {
+    return this._empty;
+  },
+  center : function() {
+    return (this._max + this._min) * 0.5;
+  },
+
+  extend : function(amount) {
+    this._min -= amount;
+    this._max += amount;
+  },
+
+  update : function(val) {
+    if (!this._empty) {
+      if (val < this._min) {
+        this._min = val;
+      } else if (val > this._max) {
+        this._max = val;
+      }
+      return;
+    }
+    this._min = this._max = val;
+    this._empty = false;
+  }
+};
+
+exports.Range = Range;
+
+return exports;
+
+});
+

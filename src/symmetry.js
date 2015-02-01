@@ -18,7 +18,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-(function(exports) {
+define(function() {
+
 "use strict";
 
 // a list of rotation/translation operators to be applied to certain chains,
@@ -63,10 +64,11 @@ Assembly.prototype = {
   }
 };
 
-exports.SymGenerator = SymGenerator;
-exports.Assembly = Assembly;
+return {
+  SymGenerator : SymGenerator,
+  Assembly : Assembly
+};
 
-return true;
-})(this);
+});
 
 

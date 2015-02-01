@@ -1,3 +1,5 @@
+define(['pv', 'io', 'shade'], function(pv, io, color) { return function() {
+
 var ALL_STYLES = [
   'cartoon', 'tube', 'lines', 'spheres', 'ballsAndSticks',
   'sline', 'trace', 'lineTrace'
@@ -148,6 +150,6 @@ test('renders custom meshes', function(assert) {
   viewer.destroy();
 });
 
-
+};});
 
 

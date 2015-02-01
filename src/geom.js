@@ -18,10 +18,15 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-var geom = (function() {
-  "use strict";
-  // calculates the signed angle of vectors a and b with respect to
-  // the reference normal c. 
+define(['gl-matrix'], function(glMatrix) {
+"use strict";
+
+var vec3 = glMatrix.vec3;
+var mat3 = glMatrix.mat3;
+var quat = glMatrix.quat;
+
+// calculates the signed angle of vectors a and b with respect to
+// the reference normal c. 
 var signedAngle = (function() {
     var tmp = vec3.create();
     return function(a, b, c) {
@@ -253,7 +258,7 @@ var buildRotation = (function() {
   return function(rotation, tangent, left, up, use_left_hint) {
     if (use_left_hint) { vec3.cross(up, tangent, left);
     } else {
-  geom.ortho(up, tangent);
+      ortho(up, tangent);
     }
 
     vec3.cross(left, up, tangent);
@@ -286,8 +291,5 @@ return {
   buildRotation : buildRotation
 };
 
-})();
+});
 
-if(typeof(exports) !== 'undefined') {
-  module.exports = geom;
-}

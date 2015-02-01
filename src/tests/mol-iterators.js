@@ -1,3 +1,6 @@
+define(['mol/all'], function(mol) {
+
+return function() {
 function makeSimpleMolecule() {
   var m = new mol.Mol();
   var chainA = m.addChain("A");
@@ -68,4 +71,7 @@ test("eachResidue breaks when returning false", function() {
     m.eachResidue(iter);
     strictEqual(counter, stopAt);
   }
+});
+
+};
 });

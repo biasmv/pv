@@ -18,9 +18,15 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-(function(exports) {
+define(['gl-matrix'], function(glMatrix) {
 
 "use strict";
+
+var vec3 = glMatrix.vec3;
+var vec4 = glMatrix.vec4;
+var mat3 = glMatrix.mat3;
+var mat4 = glMatrix.mat4;
+var quat = glMatrix.quat;
 
 // A camera, providing us with a view into the 3D worlds. Handles projection,
 // and modelview matrices and controls the global render parameters such as
@@ -296,6 +302,7 @@ Cam.prototype = {
   }
 };
 
-exports.Cam = Cam;
-})(this);
+return Cam;
+
+});
 

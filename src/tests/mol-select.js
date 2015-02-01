@@ -1,3 +1,5 @@
+define(['io'], function(io) { return function() {
+
 var SELECT_HETATM='\
 ATOM   3316  C   GLY B 214      24.173   7.911  -3.276  1.00 94.23           C\n\
 ATOM   3317  O   GLY B 214      24.730   8.496  -4.208  1.00 94.94           O\n\
@@ -11,11 +13,11 @@ END\n\
 '
 
 test('dict select select by hetatm flag', function(assert) {
-  var structure = io.pdb(HETATM);
+  var structure = io.pdb(SELECT_HETATM);
   var view = structure.select({ hetatm: true });
   assert.strictEqual(view.atomCount(), 3);
   view = structure.select({ hetatm: false });
   assert.strictEqual(view.atomCount(), 4);
 
+});};
 });
-

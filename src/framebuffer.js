@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-(function(exports) {
+define(function() {
 
 "use strict";
 
@@ -107,8 +107,7 @@ FrameBuffer.prototype = {
   }
 };
 
+return FrameBuffer;
 
-exports.FrameBuffer = FrameBuffer;
-
-})(this);
+});
 

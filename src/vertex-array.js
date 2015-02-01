@@ -18,7 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-(function(exports) {
+define(['core', 'vertex-array-base'], function(core, VertexArrayBase) {
+
 "use strict";
 
 // (unindexed) vertex array for line-based geometries
@@ -27,7 +28,7 @@ function VertexArray(gl, numVerts, float32Allocator)  {
   this._numLines = 0;
 }
 
-derive(VertexArray, VertexArrayBase, {
+core.derive(VertexArray, VertexArrayBase, {
 
   _FLOATS_PER_VERT : 8,
   _POS_OFFSET : 0,
@@ -36,8 +37,7 @@ derive(VertexArray, VertexArrayBase, {
 
   numVerts : function() { return this._numLines * 2; },
 
-  addLine : function(startPos, startColor, endPos, 
-                                          endColor, idOne, idTwo) {
+  addLine : function(startPos, startColor, endPos, endColor, idOne, idTwo) {
     var index = this._FLOATS_PER_VERT * this._numLines * 2;
     this._vertData[index++] = startPos[0];
     this._vertData[index++] = startPos[1];
@@ -102,9 +102,6 @@ derive(VertexArray, VertexArrayBase, {
   }
 });
 
+return VertexArray;
 
-
-exports.VertexArray = VertexArray;
-
-return true;
-})(this);
+});

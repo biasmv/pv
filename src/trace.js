@@ -19,15 +19,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-(function(exports) {
+define(['gl-matrix', 'geom'], function(glMatrix, geom) {
 
 "use strict";
 
-function BackboneTrace() { this._trace = []; }
+var vec3 = glMatrix.vec3;
 
-if(typeof(exports) !== 'undefined') {
-  exports.BackboneTrace = BackboneTrace;
-}
+function BackboneTrace() { this._trace = []; }
 
 BackboneTrace.prototype = {
   push : function(residue) {
@@ -225,7 +223,10 @@ TraceSubset.prototype = {
   },
 };
 
-exports.TraceSubset = TraceSubset;
+return {
+  TraceSubset : TraceSubset,
+  BackboneTrace : BackboneTrace
+};
 
-})(this);
+});
 

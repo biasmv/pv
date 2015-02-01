@@ -7,32 +7,7 @@
     <script src='js/jquery-2.0.2.min.js'></script>
     <script src='js/modernizr.js'></script>
     <script src="js/foundation-5.4.7.min.js"></script>
-    <script src='src/gl-matrix.js'></script>
-    <script src='src/core.js'></script>
-    <script src='src/geom.js'></script>
-    <script src='src/trace.js'></script>
-    <script src='src/symmetry.js'></script>
-    <script src='src/mol.js'></script>
-    <script src='src/io.js'></script>
-    <script src='src/vert-assoc.js'></script>
-    <script src='src/buffer-allocators.js'></script>
-    <script src='src/vertex-array-base.js'></script>
-    <script src='src/indexed-vertex-array.js'></script>
-    <script src='src/vertex-array.js'></script>
-    <script src='src/chain-data.js'></script>
-    <script src='src/geom-builders.js'></script>
-    <script src='src/scene.js'></script>
-    <script src='src/render.js'></script>
-    <script src='src/shade.js'></script>
-    <script src='src/cam.js'></script>
-    <script src='src/shaders.js'></script>
-    <script src='src/framebuffer.js'></script>
-    <script src='src/slab.js'></script>
-    <script src='src/animation.js'></script>
-    <script src='src/touch.js'></script>
-    <script src='src/viewer.js'></script>
-    <script src='src/viewpoint.js'></script>
-    <script src='demo.js'></script>
+    <script data-main='demo' src='js/require.js'></script>
     <link rel='stylesheet' href='css/foundation.css'>
     <style>
       body {
@@ -116,48 +91,6 @@
 </nav>
 </div>
     <script>
-      $(document).foundation();
-      $('#1r6a').click(transferase);
-      $('#1crn').click(crambin);
-      $('#1ake').click(kinase);
-      $('#4ubb').click(polymerase);
-      $('#4c46').click(longHelices);
-      $('#2f8v').click(telethonin);
-      $('#style-cartoon').click(cartoon);
-      $('#style-tube').click(tube);
-      $('#style-line-trace').click(lineTrace);
-      $('#style-sline').click(sline);
-      $('#style-trace').click(trace);
-      $('#style-lines').click(lines);
-      $('#style-balls-and-sticks').click(ballsAndSticks);
-      $('#style-spheres').click(spheres);
-      $('#color-uniform').click(uniform);
-      $('#color-element').click(byElement);
-      $('#color-chain').click(byChain);
-      $('#color-ss-succ').click(ssSuccession);
-      $('#color-ss').click(ss);
-      $('#color-rainbow').click(rainbow);
-      $('#load-from-pdb').change(function() {
-        var pdbId = this.value;
-        this.value = '';
-        this.blur();
-        $.ajax('http://pdb.org/pdb/files/'+pdbId+'.pdb')
-          .done(function(data) {
-            structure = io.pdb(data);
-            cartoon();
-            viewer.autoZoom();
-          })
-      });
-      var viewer = pv.Viewer(document.getElementById('viewer'), { 
-          width : 'auto', height: 'auto', antialias : true, 
-          outline : true, quality : 'medium',
-          background : '#333'
-      });
-      viewer.addListener('viewerReady', longHelices);
-      
-      window.addEventListener('resize', function() {
-        viewer.fitParent();
-      });
     </script>
     </body>
 </html>

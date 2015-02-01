@@ -18,42 +18,43 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-var render = (function() {
-  "use strict";
+define(['gl-matrix', 'geom', 'geom-builders', 'mesh-geom', 'line-geom', 
+        'vert-assoc', 'shade'], 
+       function(glMatrix, geom, geomBuilders, MeshGeom, LineGeom, 
+                vertAssoc, color) {
+"use strict";
 
-  var exports = {};
+var vec3 = glMatrix.vec3;
+var vec4 = glMatrix.vec4;
+var mat3 = glMatrix.mat3;
+var mat4 = glMatrix.mat4;
 
-  var R = 0.7071;
-  var COIL_POINTS = [ -R, -R, 0, R, -R, 0, R, R, 0, -R, R, 0 ];
+var TubeProfile = geomBuilders.TubeProfile;
+var ProtoSphere = geomBuilders.ProtoSphere;
+var ProtoCylinder = geomBuilders.ProtoCylinder;
 
-  var HELIX_POINTS = [
-    -6 * R,
-    -1.0 * R,
-    0,
-    6 * R,
-    -1.0 * R,
-    0,
-    6 * R,
-    1.0 * R,
-    0,
-    -6 * R,
-    1.0 * R,
-    0
-  ];
-  var ARROW_POINTS = [
-    -10 * R,
-    -1.0 * R,
-    0,
-    10 * R,
-    -1.0 * R,
-    0,
-    10 * R,
-    1.0 * R,
-    0,
-    -10 * R,
-    1.0 * R,
-    0
-  ];
+var TraceVertexAssoc = vertAssoc.TraceVertexAssoc;
+var AtomVertexAssoc = vertAssoc.AtomVertexAssoc;
+var interpolateColor = color.interpolateColor;
+
+var exports = {};
+
+var R = 0.7071;
+var COIL_POINTS = [ -R, -R, 0, R, -R, 0, R, R, 0, -R, R, 0 ];
+
+var HELIX_POINTS = [
+  -6 * R, -1.0 * R, 0,
+   6 * R, -1.0 * R, 0,
+   6 * R,  1.0 * R, 0,
+  -6 * R,  1.0 * R, 0
+];
+
+var ARROW_POINTS = [
+ -10 * R, -1.0 * R, 0,
+  10 * R, -1.0 * R, 0,
+  10 * R,  1.0 * R, 0,
+ -10 * R,  1.0 * R, 0
+];
 
 // performs an in-place smoothing over 3 consecutive positions.
 var smoothStrandInplace = (function() {
@@ -1036,8 +1037,4 @@ var _renderSingleTrace = (function() {
 
 
 return exports;
-})();
-
-if(typeof(exports) !== 'undefined') {
-  module.exports = render;
-}
+});
