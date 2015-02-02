@@ -22,7 +22,7 @@ define(function() {
 
 "use strict";
 
-var exports = {}
+var exports = {};
 exports.derive = function(subclass, baseclass, extensions) {
   // jshint forin:false
   for (var prop in baseclass.prototype) {

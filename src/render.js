@@ -27,7 +27,6 @@ define(['gl-matrix', 'geom', 'geom-builders', 'mesh-geom', 'line-geom',
 var vec3 = glMatrix.vec3;
 var vec4 = glMatrix.vec4;
 var mat3 = glMatrix.mat3;
-var mat4 = glMatrix.mat4;
 
 var TubeProfile = geomBuilders.TubeProfile;
 var ProtoSphere = geomBuilders.ProtoSphere;

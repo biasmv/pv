@@ -22,9 +22,6 @@ define(['gl-matrix', 'core'], function(glMatrix, core) {
 
 "use strict";
 
-var vec3 = glMatrix.vec3;
-var mat3 = glMatrix.mat3;
-
 function AtomBase() {
 }
 

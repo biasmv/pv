@@ -9,14 +9,6 @@ function fulfillsPredicates(obj, predicates) {
   return true;
 }
 
-function rnumComp(lhs, rhs) {
-  return lhs.num() < rhs.num();
-}
-
-function numify(val) {
-  return { num : function() { return val; }};
-}
-
 function _atomPredicates(dict) {
   var predicates = [];
   if (dict.aname !== undefined) {
@@ -166,6 +158,6 @@ function dictSelect(structure, view, dict) {
 
 return {
   dict : dictSelect
-}
+};
 
 });

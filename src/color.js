@@ -23,7 +23,6 @@ define(['gl-matrix'], function(glMatrix) {
 "use strict";
 
 var vec4 = glMatrix.vec4;
-var vec3 = glMatrix.vec3;
 
 var exports = {};
 exports.rgb = {};

@@ -24,7 +24,6 @@ define(['gl-matrix', 'core', './chain', './bond', './select'],
 "use strict";
 
 var vec3 = glMatrix.vec3;
-var mat3 = glMatrix.mat3;
 
 var Chain = chain.Chain;
 var ChainView = chain.ChainView;

@@ -24,7 +24,6 @@ define(['gl-matrix', 'core', './residue', 'trace'],
 "use strict";
 
 var vec3 = glMatrix.vec3;
-var mat3 = glMatrix.mat3;
 var Residue = residue.Residue;
 var ResidueView = residue.ResidueView;
 

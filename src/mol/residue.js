@@ -24,7 +24,6 @@ define(['gl-matrix', 'core', './atom'],
 "use strict";
 
 var vec3 = glMatrix.vec3;
-var mat3 = glMatrix.mat3;
 var Atom = atom.Atom;
 var AtomView = atom.AtomView;
 

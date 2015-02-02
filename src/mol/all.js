@@ -23,9 +23,6 @@ define(['gl-matrix', './mol'], function(glMatrix, mol) {
 "use strict";
 
 var vec3 = glMatrix.vec3;
-var mat3 = glMatrix.mat3;
-
-
 
 var zhangSkolnickSS = (function() {
   var posOne = vec3.create();

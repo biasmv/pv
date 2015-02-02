@@ -18,10 +18,12 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-define(function() {
+define(['gl-matrix'], function(glMatrix) {
 "use strict";
 
-var glMatrix = require('./gl-matrix');
+var vec3 = glMatrix.vec3;
+var quat = glMatrix.quat;
+var mat3 = glMatrix.mat3;
 
 // base for all animations, e.g. position transitions, slerping etc.
 function Animation(from, to, duration) {

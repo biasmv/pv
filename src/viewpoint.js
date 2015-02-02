@@ -106,6 +106,6 @@ var principalAxes = (function() {
 
 return {
   principalAxes :principalAxes
-}
+};
 
 });
