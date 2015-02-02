@@ -19,6 +19,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-define(['viewer'], function(viewer) {
-  return viewer;
+define(['./viewer', './io', './mol/all', './color'], 
+       function(viewer, io, mol, color) {
+  return {
+    Viewer : viewer.Viewer,
+    isWebGLSupported : viewer.isWebGLSupported,
+    io : io,
+    color : color,
+    mol : mol
+  };
 });
