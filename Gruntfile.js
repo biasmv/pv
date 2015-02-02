@@ -81,17 +81,30 @@ module.exports = function(grunt) {
       all : SOURCE_FILES
     },
 
-    concat: {
-      dist: {
-        src: ALL_FILES,
-        dest: 'js/pv.dbg.js'
-      }
-    },
     removelogging : {
       dist :  {
         src : 'js/pv.dbg.js',
         dest : 'js/pv.rel.js',
       }
+    },
+    requirejs: {
+      js : { options : {
+        findNestedDependencies : true,
+        baseUrl : 'src',
+        optimize: 'none',
+        skipModuleInsertion : true,
+        include: ['pv'],
+        out : 'js/pv.dbg.js',
+        onModuleBundleComplete : function(data) {
+          var fs = require('fs'),
+          amdclean = require('amdclean'),
+          outputFile = data.path;
+          fs.writeFileSync(outputFile, amdclean.clean({
+            'filePath': outputFile, transformAMDChecks : false,
+            aggressiveOptimizations : true,
+          }));
+        },
+      }}
     }
   });
 
@@ -100,43 +113,11 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-jshint');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-remove-logging');
+  grunt.loadNpmTasks('grunt-contrib-requirejs');
 
   // Default task(s).
   grunt.registerTask('default', [
-    'concat', 'jshint', 'removelogging', 'uglify', 
+    'jshint', 'requirejs:js', 'removelogging', 'uglify'
   ]);
 
-
-  grunt.registerTask('browserify', 'Browserifies the source', function(){
-    // task is async
-    var done = this.async();
-
-    // create tmp dir
-    mkdirp("build");
-
-    var ws = fs.createWriteStream('build/pv.js');
-    ws.on('finish', function () {
-      done();
-    });
-
-    // expose the pv viewer
-    var b = browserify({debug: true,hasExports: true});
-    exposeBundles(b);
-    b.bundle().pipe(ws);
-  });
-
-  // exposes the main package
-  // + checks the config whether it should expose other packages
-  function exposeBundles(b){
-    var packageConfig = require("./package.json");
-
-    b.add('./index.js', {expose: packageConfig.name });
-
-    // check for addition exposed packages (not needed here)
-    if(packageConfig.sniper !== undefined && packageConfig.sniper.exposed !== undefined){
-      for(var i=0; i<packageConfig.sniper.exposed.length; i++){
-        b.require(packageConfig.sniper.exposed[i]);
-      }
-    }
-  }
 };

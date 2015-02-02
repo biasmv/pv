@@ -1,6 +1,6 @@
 {
   "name": "bio-pv",
-  "version": "1.4-dev",
+  "version": "1.4.0dev",
   "description": "WebGL protein viewer ",
   "homepage": "https://github.com/biasmv/pv",
   "author": {
@@ -28,10 +28,14 @@
     "grunt-contrib-jshint": "~0.6.3",
     "grunt-contrib-uglify": "~0.2.2",
     "grunt-remove-logging": "~0.2.0",
-    "mkdirp": "^0.5.0"
+    "grunt-contrib-requirejs": "~0.4.4",
+    "mkdirp": "^0.5.0",
+    "amdclean": "~2.4.0"
   },
   "sniper": {
-    "js": ["/build/pv.js"],
+    "js": [
+      "/build/pv.js"
+    ],
     "first": "example"
   },
   "keywords": [
