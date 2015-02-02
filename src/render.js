@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 define(['gl-matrix', 'geom', 'geom-builders', 'mesh-geom', 'line-geom', 
-        'vert-assoc', 'shade'], 
+        'vert-assoc', 'color'], 
        function(glMatrix, geom, geomBuilders, MeshGeom, LineGeom, 
                 vertAssoc, color) {
 "use strict";

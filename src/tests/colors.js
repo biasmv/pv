@@ -1,5 +1,5 @@
 
-define(['shade'], function(color) { return function() {
+define(['color'], function(color) { return function() {
 
 function compareColor(lhs, rhs) {
   strictEqual(lhs[0], rhs[0]);

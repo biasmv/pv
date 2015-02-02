@@ -19,7 +19,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-define(['gl-matrix', 'shade', 'slab', 'unique-object-id-pool', 'core', 'framebuffer', 
+define(['gl-matrix', 'color', 'slab', 'unique-object-id-pool', 'core', 'framebuffer', 
         'buffer-allocators', 'cam', 'shaders', 'touch', 'render', 'label',
         'custom-mesh'], 
        function(glMatrix, color, slab, UniqueObjectIdPool, core, 

@@ -2,7 +2,7 @@ requirejs.config({
   'baseUrl' : 'src' 
 });
 
-require(['pv', 'mol/all', 'io', 'shade', 'viewpoint'], 
+require(['pv', 'mol/all', 'io', 'color', 'viewpoint'], 
         function(pv, mol, io, color, viewPoint) {
 
 var structure;

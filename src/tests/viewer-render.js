@@ -1,4 +1,4 @@
-define(['pv', 'io', 'shade'], function(pv, io, color) { return function() {
+define(['pv', 'io', 'color'], function(pv, io, color) { return function() {
 
 var ALL_STYLES = [
   'cartoon', 'tube', 'lines', 'spheres', 'ballsAndSticks',

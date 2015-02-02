@@ -14,7 +14,7 @@ SOURCE_FILES = [
   'src/geom-builders.js',
   'src/scene.js',
   'src/render.js',
-  'src/shade.js',
+  'src/color.js',
   'src/cam.js',
   'src/shaders.js',
   'src/framebuffer.js',

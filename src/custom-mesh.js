@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['gl-matrix', 'core', 'shade', 'geom', 'geom-builders', 'indexed-vertex-array', 
+define(['gl-matrix', 'core', 'color', 'geom', 'geom-builders', 'indexed-vertex-array', 
         'scene-node'], 
        function(glMatrix, core, color, geom, gb, IndexedVertexArray, SceneNode) {
 
