@@ -99,8 +99,8 @@ function _filterResidues(chain, dict) {
   var selResidues = [], i, e;
   if (dict.rindexRange !== undefined) {
     for (i = dict.rindexRange[0],
-        e = Math.min(residues.length, dict.rindexRange[1]);
-        i < e; ++i) {
+        e = Math.min(residues.length - 1, dict.rindexRange[1]);
+        i <= e; ++i) {
       selResidues.push(residues[i]);
     }
     return selResidues;

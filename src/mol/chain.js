@@ -35,6 +35,14 @@ function rnumInsCodeHash(num, insCode) {
   return num << 8 | insCode.charCodeAt(0);
 }
 
+function rnumComp(lhs, rhs) {
+  return lhs.num() < rhs.num();
+}
+
+function numify(val) {
+  return { num : function() { return val; }};
+}
+
 function ChainBase() {
 }
 
@@ -169,13 +177,13 @@ core.derive(Chain, ChainBase, {
     var i, e;
     if (this._rnumsOrdered === true) {
       // binary search our way to heaven
-      var startIdx = indexFirstLargerEqualThan(this._residues, numify(start), 
-                                              rnumComp);
+      var startIdx = 
+        core.indexFirstLargerEqualThan(this._residues, numify(start), rnumComp);
       if (startIdx === -1) {
         return matching;
       }
-      var endIdx = indexLastSmallerEqualThan(this._residues, numify(end), 
-                                            rnumComp);
+      var endIdx = 
+        core.indexLastSmallerEqualThan(this._residues, numify(end), rnumComp);
       if (endIdx === -1) {
         return matching;
       }

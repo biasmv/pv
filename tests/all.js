@@ -69,7 +69,6 @@ var ARGS = [
 // require the unit tests.
 require(ARGS, function(QUnit) {
     for (var i = 1; i < arguments.length; ++i) {
-      console.log(i);
       arguments[i]();
     }
     QUnit.load();

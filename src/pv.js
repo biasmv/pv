@@ -18,28 +18,26 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-require(['./viewer', './io', './mol/all', './color'], 
+define(['./viewer', './io', './mol/all', './color'], 
        function(viewer, io, mol, color) {
-  (function(root) {
-    'use strict';
-    var publicApi = {
-      Viewer : viewer.Viewer,
-      isWebGLSupported : viewer.isWebGLSupported,
-      io : io,
-      color : color,
-      mol : mol
-    };
-    // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, 
-    // and plain browser loading
-    if (typeof define === 'function' && define.amd) {
-      define(function() { return publicApi; });
-    } else if (typeof exports !== 'undefined') {
-      module.exports = publicApi;
-    } else {
-      root.pv = publicApi;
-      root.io = publicApi.io;
-      root.mol = publicApi.mol;
-      root.color = publicApi.color;
-    }
-  }(this));
+  'use strict';
+  var publicApi = {
+    Viewer : viewer.Viewer,
+    isWebGLSupported : viewer.isWebGLSupported,
+    io : io,
+    color : color,
+    mol : mol
+  };
+  // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, 
+  // and plain browser loading
+  if (typeof define === 'function' && define.amd) {
+    define( publicApi );
+  } else if (typeof exports !== 'undefined') {
+    module.exports = publicApi;
+  } else {
+    root.pv = publicApi;
+    root.io = publicApi.io;
+    root.mol = publicApi.mol;
+    root.color = publicApi.color;
+  }
 });
