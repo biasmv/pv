@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['core', 'scene-node'], function(core, SceneNode) {
+define(['utils', 'scene-node'], function(utils, SceneNode) {
 
 function TextLabel(gl, canvas, context, pos, text, options) {
   SceneNode.call(this, gl);
@@ -84,7 +84,7 @@ function smallestPowerOfTwo(size) {
   return s;
 }
 
-core.derive(TextLabel, SceneNode, {
+utils.derive(TextLabel, SceneNode, {
   updateProjectionIntervals : function() {
     // text labels don't affect the projection interval. Don't do anything.
   },

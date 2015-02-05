@@ -18,9 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['gl-matrix', 'core', 'color', 'geom', 'geom-builders', 
+define(['gl-matrix', 'utils', 'color', 'geom', 'geom-builders', 
         'indexed-vertex-array', 'scene-node'], 
-       function(glMatrix, core, color, geom, gb, IndexedVertexArray, 
+       function(glMatrix, utils, color, geom, gb, IndexedVertexArray, 
                 SceneNode) {
 
 "use strict";
@@ -91,7 +91,7 @@ function capTubeEnd(va, baseIndex, numTubeVerts) {
   va.addTriangle(center, baseIndex, baseIndex + numTubeVerts - 1);
 }
 
-core.derive(CustomMesh, SceneNode, {
+utils.derive(CustomMesh, SceneNode, {
   updateProjectionIntervals : function() {},
   updateSquaredSphereRadius : function(center, radius) { 
     return radius;

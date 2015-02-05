@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['core', 'base-geom', 'chain-data'], 
-       function(core, BaseGeom, chainData) {
+define(['utils', 'base-geom', 'chain-data'], 
+       function(utils, BaseGeom, chainData) {
 
 "use strict";
 
@@ -34,7 +34,7 @@ function LineGeom(gl, float32Allocator) {
   this._lineWidth = 1.0;
 }
 
-core.derive(LineGeom, BaseGeom, {
+utils.derive(LineGeom, BaseGeom, {
   addChainVertArray : function(chain, numVerts) {
     var va = new LineChainData(chain.name(), this._gl, numVerts, 
                               this._float32Allocator);

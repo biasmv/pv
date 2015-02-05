@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['core', 'base-geom', 'chain-data'], 
-       function(core, BaseGeom, cd) {
+define(['utils', 'base-geom', 'chain-data'], 
+       function(utils, BaseGeom, cd) {
 
 "use strict";
 
@@ -55,7 +55,7 @@ function MeshGeom(gl, float32Allocator, uint16Allocator) {
   this._remainingIndices = null;
 }
 
-core.derive(MeshGeom, BaseGeom, {
+utils.derive(MeshGeom, BaseGeom, {
   _boundedVertArraySize : function(size) {
     return Math.min(65536, size);
   },

@@ -18,8 +18,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-define(['gl-matrix', 'core', './chain', './bond', './select'], 
-       function(glMatrix, core, chain, bond, select) {
+define(['gl-matrix', 'utils', './chain', './bond', './select'], 
+       function(glMatrix, utils, chain, bond, select) {
 
 "use strict";
 
@@ -313,7 +313,7 @@ function Mol() {
   this._nextAtomIndex = 0;
 }
 
-core.derive(Mol, MolBase, {
+utils.derive(Mol, MolBase, {
   addAssembly : function(assembly) { 
     this._assemblies.push(assembly); 
   },
@@ -414,7 +414,7 @@ function MolView(mol) {
   this._chains = [];
 }
 
-core.derive(MolView, MolBase, {
+utils.derive(MolView, MolBase, {
 
   full : function() { return this._mol; },
 

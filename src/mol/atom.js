@@ -18,7 +18,7 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-define(['gl-matrix', 'core'], function(glMatrix, core) {
+define(['gl-matrix', 'utils'], function(glMatrix, utils) {
 
 "use strict";
 
@@ -57,7 +57,7 @@ function Atom(residue, name, pos, element, index, isHetatm) {
   this._element = element;
 }
 
-core.derive(Atom, AtomBase, {
+utils.derive(Atom, AtomBase, {
   addBond : function(bond) { 
     this._bonds.push(bond); 
   },
@@ -82,7 +82,7 @@ function AtomView(resView, atom) {
 }
 
 
-core.derive(AtomView, AtomBase, {
+utils.derive(AtomView, AtomBase, {
   full : function() { return this._atom; },
   name : function() { return this._atom.name(); },
   pos : function() { return this._atom.pos(); },

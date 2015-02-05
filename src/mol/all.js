@@ -75,7 +75,7 @@ function traceAssignHelixSheet(trace) {
 // algorithm published by Zhang and Skolnick in their TM-align paper. 
 // Reference:
 //
-// TM-align: a protein structure alignment algorithm based on the Tm-score 
+// TM-align: a protein structure alignment algorithm based on the Tm-sutils 
 // (2005) NAR, 33(7) 2302-2309
 function assignHelixSheet(structure) {
   console.time('mol.assignHelixSheet');

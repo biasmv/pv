@@ -19,10 +19,10 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-define(['gl-matrix', 'color', 'slab', 'unique-object-id-pool', 'core', 
+define(['gl-matrix', 'color', 'slab', 'unique-object-id-pool', 'utils', 
         'framebuffer', 'buffer-allocators', 'cam', 'shaders', 'touch', 
         'render', 'label', 'custom-mesh'], 
-       function(glMatrix, color, slab, UniqueObjectIdPool, core, 
+       function(glMatrix, color, slab, UniqueObjectIdPool, utils, 
                 FrameBuffer, PoolAllocator, Cam, shaders, 
                 TouchHandler, render, TextLabel, CustomMesh) {
 
@@ -152,7 +152,7 @@ function PV(domElement, opts) {
     this._initPV();
   } else {
     document.addEventListener('DOMContentLoaded', 
-                              core.bind(this, this._initPV));
+                              utils.bind(this, this._initPV));
   }
 }
 
@@ -418,8 +418,8 @@ PV.prototype = {
 
     // get vertex attribute location for the shader once to
     // avoid repeated calls to getAttribLocation/getUniformLocation
-    var getAttribLoc = core.bind(gl, gl.getAttribLocation);
-    var getUniformLoc = core.bind(gl, gl.getUniformLocation);
+    var getAttribLoc = utils.bind(gl, gl.getAttribLocation);
+    var getUniformLoc = utils.bind(gl, gl.getUniformLocation);
     shaderProgram.posAttrib = getAttribLoc(shaderProgram, 'attrPos');
     shaderProgram.colorAttrib = getAttribLoc(shaderProgram, 'attrColor');
     shaderProgram.normalAttrib = getAttribLoc(shaderProgram, 'attrNormal');
@@ -470,23 +470,23 @@ PV.prototype = {
       select : this._initShader(shaders.SELECT_VS, shaders.SELECT_FS)
     };
 
-    this._boundDraw = core.bind(this, this._draw);
+    this._boundDraw = utils.bind(this, this._draw);
 
-    this._mousePanListener = core.bind(this, this._mousePan);
-    this._mouseRotateListener = core.bind(this, this._mouseRotate);
-    this._mouseUpListener = core.bind(this, this._mouseUp);
+    this._mousePanListener = utils.bind(this, this._mousePan);
+    this._mouseRotateListener = utils.bind(this, this._mouseRotate);
+    this._mouseUpListener = utils.bind(this, this._mouseUp);
 
     // Firefox responds to the wheel event, whereas other browsers listen to
     // the mousewheel event. Register different event handlers, depending on
     // what properties are available.
-    var addListener = core.bind(this._canvas, this._canvas.addEventListener);
+    var addListener = utils.bind(this._canvas, this._canvas.addEventListener);
     if ('onwheel' in this._canvas) {
-      addListener('wheel', core.bind(this, this._mouseWheelFF), false);
+      addListener('wheel', utils.bind(this, this._mouseWheelFF), false);
     } else {
-      addListener('mousewheel', core.bind(this, this._mouseWheel), false);
+      addListener('mousewheel', utils.bind(this, this._mouseWheel), false);
     }
-    addListener('dblclick', core.bind(this, this._mouseDoubleClick), false);
-    addListener('mousedown', core.bind(this, this._mouseDown), false);
+    addListener('dblclick', utils.bind(this, this._mouseDoubleClick), false);
+    addListener('mousedown', utils.bind(this, this._mouseDown), false);
     this._touchHandler = new TouchHandler(this._canvas, this, this._cam);
 
     if (!this._initialized) {
@@ -667,7 +667,7 @@ PV.prototype = {
       this.listenerMap[eventName] = callbacks;
     }
     if (callback === 'center') {
-      callbacks.push(core.bind(this, this._centerOnClicked));
+      callbacks.push(utils.bind(this, this._centerOnClicked));
     } else {
       callbacks.push(callback);
     }
@@ -789,7 +789,7 @@ PV.prototype = {
   },
 
   _handleStandardOptions : function(opts) {
-    opts = core.copy(opts);
+    opts = utils.copy(opts);
     opts.float32Allocator = this._float32Allocator;
     opts.uint16Allocator = this._uint16Allocator;
     opts.idPool = this._objectIdManager;
@@ -919,7 +919,7 @@ PV.prototype = {
   fitTo : function(what, slabMode) {
     var axes = this._cam.mainAxes();
     slabMode = slabMode || this._options.slabMode;
-    var intervals = [ new core.Range(), new core.Range(), new core.Range() ];
+    var intervals = [ new utils.Range(), new utils.Range(), new utils.Range() ];
     if (what instanceof SceneNode) {
       what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                     intervals[1], intervals[2]);
@@ -970,7 +970,7 @@ PV.prototype = {
   // adapt the zoom level to fit the viewport to all visible objects.
   autoZoom : function() {
     var axes = this._cam.mainAxes();
-    var intervals = [ new core.Range(), new core.Range(), new core.Range() ];
+    var intervals = [ new utils.Range(), new utils.Range(), new utils.Range() ];
     this.forEach(function(obj) {
       if (!obj.visible()) {
         return;

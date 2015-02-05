@@ -18,8 +18,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-define(['gl-matrix', 'core', './residue', 'trace'], 
-       function(glMatrix, core, residue, trace) {
+define(['gl-matrix', 'utils', './residue', 'trace'], 
+       function(glMatrix, utils, residue, trace) {
 
 "use strict";
 
@@ -150,7 +150,7 @@ function addNonEmptyTrace(traces, trace) {
   traces.push(trace);
 }
 
-core.derive(Chain, ChainBase, {
+utils.derive(Chain, ChainBase, {
 
   name : function() { return this._name; },
 
@@ -175,15 +175,16 @@ core.derive(Chain, ChainBase, {
     // codes are not honoured.
     var matching = [];
     var i, e;
+    var residues = this._residues;
     if (this._rnumsOrdered === true) {
       // binary search our way to heaven
       var startIdx = 
-        core.indexFirstLargerEqualThan(this._residues, numify(start), rnumComp);
+        utils.indexFirstLargerEqualThan(residues, numify(start), rnumComp);
       if (startIdx === -1) {
         return matching;
       }
       var endIdx = 
-        core.indexLastSmallerEqualThan(this._residues, numify(end), rnumComp);
+        utils.indexLastSmallerEqualThan(residues, numify(end), rnumComp);
       if (endIdx === -1) {
         return matching;
       }
@@ -191,8 +192,8 @@ core.derive(Chain, ChainBase, {
         matching.push(this._residues[i]);
       }
     } else {
-      for (i = 0, e = this._residues.length; i !== e; ++i) {
-        var res = this._residues[i];
+      for (i = 0, e = residues.length; i !== e; ++i) {
+        var res = residues[i];
         if (res.num() >= start && res.num() <= end) {
           matching.push(res);
         }
@@ -288,7 +289,7 @@ function ChainView(molView, chain) {
 }
 
 
-core.derive(ChainView, ChainBase, {
+utils.derive(ChainView, ChainBase, {
 
   addResidue : function(residue, recurse) {
     var resView = new ResidueView(this, residue.full());

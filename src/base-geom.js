@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['core', 'gl-matrix', 'scene-node'], 
-       function(core, glMatrix, SceneNode) {
+define(['utils', 'gl-matrix', 'scene-node'], 
+       function(utils, glMatrix, SceneNode) {
 
 "use strict";
 
@@ -66,7 +66,7 @@ function BaseGeom(gl) {
   this._showRelated = null;
 }
 
-core.derive(BaseGeom, SceneNode, {
+utils.derive(BaseGeom, SceneNode, {
   setShowRelated : function(rel) {
     if (rel && rel !== 'asym') {
       if (this.structure().assembly(rel) === null) {

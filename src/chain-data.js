@@ -18,8 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['core', 'vertex-array', 'indexed-vertex-array'], 
-       function(core, VertexArray, IndexedVertexArray) {
+define(['utils', 'vertex-array', 'indexed-vertex-array'], 
+       function(utils, VertexArray, IndexedVertexArray) {
 
 "use strict";
 
@@ -31,7 +31,7 @@ function LineChainData(chain, gl, numVerts, float32Allocator) {
   this._chain = chain;
 }
 
-core.derive(LineChainData, VertexArray, {
+utils.derive(LineChainData, VertexArray, {
   chain : function() { return this._chain; },
 
   drawSymmetryRelated : function(cam, shader, transforms) {
@@ -52,7 +52,7 @@ function MeshChainData(chain, gl, numVerts, numIndices, float32Allocator,
   this._chain = chain;
 }
 
-core.derive(MeshChainData, IndexedVertexArray, {
+utils.derive(MeshChainData, IndexedVertexArray, {
   chain : function() { return this._chain; }
 });
 

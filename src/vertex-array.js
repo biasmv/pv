@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['core', 'vertex-array-base'], function(core, VertexArrayBase) {
+define(['utils', 'vertex-array-base'], function(utils, VertexArrayBase) {
 
 "use strict";
 
@@ -28,7 +28,7 @@ function VertexArray(gl, numVerts, float32Allocator)  {
   this._numLines = 0;
 }
 
-core.derive(VertexArray, VertexArrayBase, {
+utils.derive(VertexArray, VertexArrayBase, {
 
   _FLOATS_PER_VERT : 8,
   _POS_OFFSET : 0,

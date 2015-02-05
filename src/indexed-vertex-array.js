@@ -18,7 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['core', 'vertex-array-base'], function(core, VertexArrayBase) {
+define(['utils', 'vertex-array-base'], function(utils, VertexArrayBase) {
 "use strict";
 
 function IndexedVertexArray(gl, numVerts, numIndices, 
@@ -32,7 +32,7 @@ function IndexedVertexArray(gl, numVerts, numIndices,
   this._indexData = uint16Allocator.request(numIndices);
 }
 
-core.derive(IndexedVertexArray, VertexArrayBase, {
+utils.derive(IndexedVertexArray, VertexArrayBase, {
 
   destroy : function() {
     VertexArrayBase.prototype.destroy.call(this);

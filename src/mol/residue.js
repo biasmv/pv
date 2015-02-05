@@ -18,8 +18,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-define(['gl-matrix', 'core', './atom'], 
-       function(glMatrix, core, atom) {
+define(['gl-matrix', 'utils', './atom'], 
+       function(glMatrix, utils, atom) {
 
 "use strict";
 
@@ -118,7 +118,7 @@ function Residue(chain, name, num, insCode) {
   this._index = chain.residues().length;
 }
 
-core.derive(Residue, ResidueBase, {
+utils.derive(Residue, ResidueBase, {
   _deduceType : function() {
     this._isNucleotide = this.atom('P')!== null && this.atom('C3\'') !== null;
     this._isAminoacid = this.atom('N') !== null && this.atom('CA') !== null && 
@@ -162,7 +162,7 @@ function ResidueView(chainView, residue) {
 }
 
 
-core.derive(ResidueView, ResidueBase, {
+utils.derive(ResidueView, ResidueBase, {
   addAtom : function(atom) {
     var atomView = new AtomView(this, atom.full());
     this._atoms.push(atomView);
