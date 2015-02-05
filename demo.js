@@ -1,9 +1,15 @@
 requirejs.config({
-  'baseUrl' : 'src' 
+  'baseUrl' : '' ,
+  paths : {
+    pv : 'js/pv.dbg'
+  }
 });
 
-require(['pv', 'mol/all', 'io', 'color', 'viewpoint'], 
-        function(pv, mol, io, color, viewPoint) {
+require(['pv'], function(pv) {
+
+var io = pv.io;
+var viewpoint = pv.viewpoint;
+var color = pv.color;
 
 var structure;
 
@@ -19,7 +25,7 @@ function cartoon() {
   var go = viewer.cartoon('structure', structure, {
       color : color.ssSuccession(), showRelated : '1',
   });
-  var rotation = viewPoint.principalAxes(go);
+  var rotation = viewpoint.principalAxes(go);
   viewer.setRotation(rotation)
 }
 

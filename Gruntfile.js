@@ -47,6 +47,23 @@ var browserify = require("browserify");
 var fs = require("fs");
 var mkdirp = require("mkdirp");
 
+var START_SNIPPET="\n\
+(function (root, factory) {\n\
+    if (typeof define === 'function' && define.amd) {\n\
+        define([], factory);\n\
+    } else {\n\
+        root.pv = factory();\n\
+        root.io = root.pv.io;\n\
+        root.mol = root.pv.mol;\n\
+        root.color = root.pv.color;\n\
+        root.viewpoint = root.pv.viewpoint;\n\
+    }\n\
+}(this, function () {\n\
+    // modules will be inlined here\n\
+";
+
+var END_SNIPPET='return pv; }));';
+
 module.exports = function(grunt) {
 
   // Project configuration.
@@ -100,8 +117,15 @@ module.exports = function(grunt) {
           amdclean = require('amdclean'),
           outputFile = data.path;
           fs.writeFileSync(outputFile, amdclean.clean({
-            'filePath': outputFile, transformAMDChecks : false,
+            'filePath': outputFile, 
+            transformAMDChecks : false,
             aggressiveOptimizations : true,
+            createAnonymousAMDModule : true,
+            wrap : {
+              start : START_SNIPPET,
+              end : END_SNIPPET
+            }
+
           }));
         },
       }}

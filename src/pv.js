@@ -18,26 +18,15 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-define(['./viewer', './io', './mol/all', './color'], 
-       function(viewer, io, mol, color) {
+define(['./viewer', './io', './mol/all', './color', './viewpoint'], 
+       function(viewer, io, mol, color, viewpoint) {
   'use strict';
-  var publicApi = {
+  return {
     Viewer : viewer.Viewer,
     isWebGLSupported : viewer.isWebGLSupported,
     io : io,
     color : color,
-    mol : mol
+    mol : mol,
+    viewpoint : viewpoint
   };
-  // Universal Module Definition (UMD) to support AMD, CommonJS/Node.js, 
-  // and plain browser loading
-  if (typeof define === 'function' && define.amd) {
-    define( publicApi );
-  } else if (typeof exports !== 'undefined') {
-    module.exports = publicApi;
-  } else {
-    root.pv = publicApi;
-    root.io = publicApi.io;
-    root.mol = publicApi.mol;
-    root.color = publicApi.color;
-  }
 });
