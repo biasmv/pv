@@ -22,7 +22,6 @@
   "main": "index.js",
   "devDependencies": {
     "biojs-sniper": "0.0.6",
-    "browserify": "^6.2.0",
     "grunt": "~0.4.5",
     "grunt-contrib-concat": "~0.3.0",
     "grunt-contrib-jshint": "~0.6.3",
