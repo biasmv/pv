@@ -53,7 +53,11 @@ ResidueBase.prototype = {
   },
 
   qualifiedName : function() {
-    return this.chain().name()+'.'+this.name()+this.num();
+    var name =  this.chain().name() + '.' + this.name() + this.num();
+    if (this.insCode() === '\0') {
+      return name;
+    }
+    return name + this.insCode();
   },
 
   atom : function(index_or_name) { 
