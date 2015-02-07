@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8">
   <title>All PV Functional and Unit Tests</title>
-  <link rel="stylesheet" href="/css/qunit.css">
+  <link rel="stylesheet" href="css/qunit.css">
   <style>
     #viewer {
       width: 300px;
@@ -28,15 +28,15 @@
 </td>
 </tr></table>
 </body>
-  <script src='/js/require.js'></script>
-  <script src='/js/qunit.js'></script>
+  <script src='js/require.js'></script>
+  <script src='js/qunit.js'></script>
   <script>
     QUnit.config.autostart = false;
     QUnit.config.autoload = false;
   </script>
-  <script  data-cover-only="//src.*/" 
-           data-cover-never='//src/tests*/' 
-           src='/js/blanket.min.js'></script>
+  <script  data-cover-only='//src\/.*/'
+           data-cover-never='//tests\/.*/' 
+           src='js/blanket.min.js'></script>
 
-  <script src='/src/tests/all.js'></script>
+  <script src='src/tests/all.js'></script>
 </html

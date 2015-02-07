@@ -43,16 +43,16 @@ function addCustomAssertions(QUnit) {
 addCustomAssertions(QUnit);
 
 require.config({
-    baseUrl : '/src',
+    baseUrl : 'src',
 });
 
 var UNIT_TESTS = [
-  'tests/mol-iterators',
   'tests/binary-search',
+  'tests/mol-iterators',
   'tests/mol-select',
   'tests/viewer-render',
   'tests/pdb-io',
-  'tests/colors',
+  'tests/colors'
 ];
 
 // require the unit tests.
