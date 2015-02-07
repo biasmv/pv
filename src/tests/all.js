@@ -1,5 +1,6 @@
 "use strict";
 
+blanket.options('existingRequireJS', true);
 function addCustomAssertions(QUnit) {
   // contains a few assertions we use for testing
   QUnit.assert.almostEqual = function(actual, expected, epsilon, message) {
@@ -39,27 +40,15 @@ function addCustomAssertions(QUnit) {
   }
 }
 
+addCustomAssertions(QUnit);
+
 require.config({
-    baseUrl : '/src/',
-    paths: {
-        'QUnit': '/js/qunit'
-    },
-    shim: {
-       'QUnit': {
-           exports: 'QUnit',
-           init: function() {
-               QUnit.config.autoload = false;
-               QUnit.config.autostart = false;
-               addCustomAssertions(QUnit);
-           }
-       } 
-    }
+    baseUrl : '/src',
 });
 
-var ARGS = [
-  'QUnit',
-  'tests/binary-search',
+var UNIT_TESTS = [
   'tests/mol-iterators',
+  'tests/binary-search',
   'tests/mol-select',
   'tests/viewer-render',
   'tests/pdb-io',
@@ -67,11 +56,11 @@ var ARGS = [
 ];
 
 // require the unit tests.
-require(ARGS, function(QUnit) {
-    for (var i = 1; i < arguments.length; ++i) {
-      arguments[i]();
-    }
-    QUnit.load();
-    QUnit.start();
-  }
-);
+require(UNIT_TESTS, function() {
+  console.log('loaded unit tests', UNIT_TESTS);
+  // manually call setupCoverage to avoid "you must call setupCoverage" 
+  // errors.
+  blanket.noConflict().setupCoverage();
+  QUnit.load();
+  QUnit.start();
+});

@@ -1,7 +1,8 @@
-define(['gl-matrix', 'io'], function(glMatrix, io) { return function() {
+define(['gl-matrix', 'io'], function(glMatrix, io) {
 
 
 var mat4 = glMatrix.mat4;
+
 var MULTI_LINE_MT = [
   'REMARK 350 BIOMOLECULE: 1                 \n',
   'REMARK 350 AUTHOR DETERMINED BIOLOGICAL UNIT: 55-MERIC       \n',
@@ -154,4 +155,4 @@ test('sets HETATM flag', function(assert) {
 
 });
 
-};});
+});

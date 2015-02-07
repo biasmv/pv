@@ -1,4 +1,4 @@
-define(['io'], function(io) { return function() {
+define(['io'], function(io) { 
 
 var SELECT_HETATM='\
 ATOM   3316  C   GLY B 214      24.173   7.911  -3.276  1.00 94.23           C\n\
@@ -136,4 +136,4 @@ test('dict select by residue number', function(assert) {
   assert.strictEqual(residues[5].num(), 15);
 });
   
-}});
+});

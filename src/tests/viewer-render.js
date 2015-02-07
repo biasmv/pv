@@ -1,4 +1,4 @@
-define(['viewer', 'io', 'color'], function(pv, io, color) { return function() {
+require(['viewer', 'io', 'color'], function(pv, io, color) { 
 
 var ALL_STYLES = [
   'cartoon', 'tube', 'lines', 'spheres', 'ballsAndSticks',
@@ -7,7 +7,7 @@ var ALL_STYLES = [
 
 function createViewer() {
   var options =  {
-    width: 'auto', height : 'auto', 
+    width: '300', height : '300', 
     background : '#333'
   };
   return pv.Viewer(document.getElementById('viewer'), options);
@@ -150,6 +150,6 @@ test('renders custom meshes', function(assert) {
   viewer.destroy();
 });
 
-};});
+});
 
 

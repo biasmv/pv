@@ -3,12 +3,13 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <title>pv unit tests</title>
+  <title>All PV Functional and Unit Tests</title>
   <link rel="stylesheet" href="/css/qunit.css">
   <style>
     #viewer {
       width: 300px;
       height: 300px;
+      display:none;
     }
     #root {
       width:100%;
@@ -26,6 +27,16 @@
   <div id="viewer"></div>
 </td>
 </tr></table>
-  <script data-main='all' src='/js/require.js'></script>
 </body>
+  <script src='/js/require.js'></script>
+  <script src='/js/qunit.js'></script>
+  <script>
+    QUnit.config.autostart = false;
+    QUnit.config.autoload = false;
+  </script>
+  <script  data-cover-only="//src.*/" 
+           data-cover-never='//src/tests*/' 
+           src='/js/blanket.min.js'></script>
+
+  <script src='/src/tests/all.js'></script>
 </html
