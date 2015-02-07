@@ -1,3 +1,4 @@
+
 requirejs.config({
   'baseUrl' : 'src' ,
   // uncomment the following commented-out block to test the contatenated, 
@@ -8,6 +9,11 @@ requirejs.config({
   }
   */
 });
+
+
+// on purpose outside of the require block, so we can inspect the viewer object 
+// from the JavaScript console.
+var viewer;
 
 require(['pv'], function(pv) {
 
@@ -187,10 +193,10 @@ $('#load-from-pdb').change(function() {
       viewer.autoZoom();
     })
 });
-var viewer = pv.Viewer(document.getElementById('viewer'), { 
+viewer = pv.Viewer(document.getElementById('viewer'), { 
     width : 'auto', height: 'auto', antialias : true, 
     outline : true, quality : 'medium',
-    background : '#333'
+    background : '#333', animateTime: 500,
 });
 viewer.addListener('viewerReady', longHelices);
 
