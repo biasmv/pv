@@ -1,8 +1,12 @@
 requirejs.config({
-  'baseUrl' : '' ,
+  'baseUrl' : 'src' ,
+  // uncomment the following commented-out block to test the contatenated, 
+  // minified PV version. Grunt needs to be run before for this to work.
+  /*
   paths : {
-    pv : 'js/pv.dbg'
+    pv : '/js/pv.min'
   }
+  */
 });
 
 require(['pv'], function(pv) {
