@@ -23,6 +23,7 @@ test('renders structure subset asymmetric units in all styles', function(assert)
       var obj = viewer.renderAs(ALL_STYLES[i], view, ALL_STYLES[i]);
       assert.ok(!!obj);
     }
+    viewer.autoZoom();
     // this make sure we get one draw before tearing everything down and
     // increases code coverage.
     setTimeout(function() {
@@ -42,6 +43,7 @@ test('renders structure subset assembly 1 in all styles', function(assert) {
                                 ALL_STYLES[i], { showRelated : '1'});
       assert.ok(!!obj);
     }
+    viewer.autoZoom();
     // this make sure we get one draw before tearing everything down and
     // increases code coverage.
     setTimeout(function() {
@@ -60,6 +62,7 @@ test('renders full structure asymmetric units in all styles', function(assert) {
       var obj = viewer.renderAs(ALL_STYLES[i], structure, ALL_STYLES[i]);
       assert.ok(!!obj);
     }
+    viewer.autoZoom();
     // this make sure we get one draw before tearing everything down and
     // increases code coverage.
     setTimeout(function() {
@@ -78,6 +81,7 @@ test('renders full structure assembly 1 in all styles', function(assert) {
                                 ALL_STYLES[i], { showRelated : '1'});
       assert.ok(!!obj);
     }
+    viewer.autoZoom();
     // this make sure we get one draw before tearing everything down and
     // increases code coverage.
     setTimeout(function() {

@@ -916,9 +916,8 @@ PV.prototype = {
     return this.add(name, obj);
   },
 
-  fitTo : function(what, slabMode) {
+  fitTo : function(what) {
     var axes = this._cam.mainAxes();
-    slabMode = slabMode || this._options.slabMode;
     var intervals = [ new utils.Range(), new utils.Range(), new utils.Range() ];
     if (what instanceof SceneNode) {
       what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
@@ -934,7 +933,7 @@ PV.prototype = {
         intervals[i].extend(1.5);
       }
     }
-    this._fitToIntervals(axes, intervals, slabMode);
+    this._fitToIntervals(axes, intervals);
   },
 
   _fitToIntervals : function(axes, intervals) {
