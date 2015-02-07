@@ -827,31 +827,6 @@ PV.prototype = {
     return this.add(name, obj);
   },
 
-  // internal method for debugging the auto-slabbing code. 
-  // not meant to be used otherwise. Will probably be removed again.
-  boundingSpheres : function(gl, obj, options) {
-    var vertArrays = obj.vertArrays();
-    var mg = new MeshGeom(gl, options.float32Allocator, 
-                          options.uint16Allocator);
-    mg.order(100);
-    var protoSphere = new ProtoSphere(16, 16);
-    var vertsPerSphere = protoSphere.numVerts();
-    var indicesPerSphere = protoSphere.numIndices();
-    var vertAssoc = new AtomVertexAssoc(obj.structure());
-    mg.setVertAssoc(vertAssoc);
-    mg.addChainVertArray({ name : function() { return "a"; }}, 
-                        vertArrays.length * vertsPerSphere,
-                        indicesPerSphere * vertArrays.length);
-    mg.setShowRelated('asym');
-    var color = [0.5, 0.5, 0.5, 0.2];
-    var va = mg.vertArrayWithSpaceFor(vertsPerSphere * vertArrays.length);
-    for (var i = 0; i < vertArrays.length; ++i) {
-      var bs = vertArrays[i].boundingSphere();
-      protoSphere.addTransformed(va, bs.center(), bs.radius(), color, 0);
-    }
-    return mg;
-  },
-
   cartoon : function(name, structure, opts) {
     var options = this._handleStandardMolOptions(opts, structure);
     options.color = options.color || color.bySS();
@@ -862,10 +837,6 @@ PV.prototype = {
     options.forceTube = options.forceTube || false;
     var obj = render.cartoon(structure, this._gl, options);
     var added = this.add(name, obj);
-    if (options.boundingSpheres) {
-      var boundingSpheres = this.boundingSpheres(this._gl, obj, options);
-      this.add(name+'.bounds', boundingSpheres);
-    }
     return added;
   },
 
