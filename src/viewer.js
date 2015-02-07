@@ -546,20 +546,9 @@ PV.prototype = {
 
   setCamera : function(rotation, center, zoom, ms) {
     ms |= 0;
-    if (ms === 0) {
-      this._cam.setCenter(center);
-      this._cam.setRotation(rotation);
-      this._cam.setZoom(zoom);
-      this.requestRedraw();
-      return;
-    }
-    this._camAnim.center = 
-      new animation.Move(this._cam.center(), vec3.clone(center), ms);
-    this._camAnim.rotation = 
-      new animation.Rotate(this._cam.rotation(), mat4.clone(rotation), ms);
-    this._camAnim.zoom = 
-      new animation.Animation(this._cam.zoom(), zoom, ms);
-    this.requestRedraw();
+    this.setCenter(center, ms);
+    this.setRotation(rotation, ms);
+    this.setZoom(zoom, ms);
   },
 
   // performs interpolation of current camera position
@@ -623,6 +612,17 @@ PV.prototype = {
     }
     this._camAnim.center = 
       new animation.Move(this._cam.center(), vec3.clone(center), ms);
+    this.requestRedraw();
+  },
+
+  setZoom : function(zoom, ms) {
+    ms |= 0;
+    if (ms === 0) {
+      this._cam.setZoom(zoom);
+      return;
+    }
+    this._camAnim.zoom = 
+      new animation.Animation(this._cam.zoom(), zoom, ms);
     this.requestRedraw();
   },
 
