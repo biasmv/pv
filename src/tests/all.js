@@ -48,14 +48,12 @@ require.config({
 
 var UNIT_TESTS = [
   'tests/mol-basics',
-  /*
   'tests/binary-search',
   'tests/mol-iterators',
   'tests/mol-select',
   'tests/viewer-render',
   'tests/pdb-io',
   'tests/colors'
-  */
 ];
 
 // require the unit tests.

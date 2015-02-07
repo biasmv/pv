@@ -157,34 +157,123 @@ HETATM 2140  O   HOH A 915       8.497 -48.513   1.421  1.00 50.28           O  
 HETATM 2141  O   HOH A 916     -11.502 -50.640   0.340  1.00 50.23           O  \n\
 ";
 
-var structure = io.pdb(PDB_FRAGMENT);
+var FRAGMENT = io.pdb(PDB_FRAGMENT);
 
 test('get atom by name', function(assert) {
-  var oxygen = structure.atom('A.905.O1');
+  var oxygen = FRAGMENT.atom('A.905.O1');
   assert.strictEqual(oxygen.name(), 'O1');
   assert.strictEqual(oxygen.residue().num(), 905);
   assert.strictEqual(oxygen.residue().chain().name(), 'A');
 });
 
+test('get atom by name that does not exists', function(assert) {
+  assert.strictEqual(FRAGMENT.atom('A.905.OX'), null);
+  assert.strictEqual(FRAGMENT.atom('A.100000.CA'), null);
+  assert.strictEqual(FRAGMENT.atom('C.1.CA'), null);
+});
+
   
 test('convert chain to view', function(assert) {
-  var view = structure.chain('A').asView();
-  assert.strictEqual(structure.atomCount(), view.atomCount());
+  var view = FRAGMENT.chain('A').asView();
+  assert.strictEqual(FRAGMENT.atomCount(), view.atomCount());
 });
 
 test('calculate center of structure', function(assert) {
-  var center = structure.center();
+  var center = FRAGMENT.center();
   assert.vec3Equal(center, [9.3053045,  -47.354152679,  -5.1559925079]);
 });
 
 test('calculate center of complete view', function(assert) {
-  var center = structure.select().center();
+  var center = FRAGMENT.select().center();
   assert.vec3Equal(center, [9.3053045,  -47.354152679,  -5.1559925079]);
 });
 
 test('calculate center of selection', function(assert) {
-  var center = structure.select({rname : 'RVP'}).center();
+  var center = FRAGMENT.select({rname : 'RVP'}).center();
   assert.vec3Equal(center, [16.2359523,   -52.2526664,  16.711048126]);
+});
+
+test('calculate center of selection', function(assert) {
+  var center = FRAGMENT.select({rname : 'RVP'}).center();
+  assert.vec3Equal(center, [16.2359523,   -52.2526664,  16.711048126]);
+});
+
+test('calculate bounding sphere of view', function(assert) {
+  var sphere = FRAGMENT.select({rname : 'RVP'}).boundingSphere();
+  assert.vec3Equal(sphere.center(), [16.2359523,   -52.2526664,  16.711048126]);
+  assert.almostEqual(sphere.radius(), 5.7045096369);
+});
+
+test('calculate bounding sphere complete structure', function(assert) {
+  var sphere = FRAGMENT.boundingSphere();
+  assert.vec3Equal(sphere.center(), [9.3053045,  -47.354152679,  -5.1559925079]);
+  assert.almostEqual(sphere.radius(), 34.276445437978104);
+});
+
+test('chains by name', function(assert) {
+  var chains = FRAGMENT.chainsByName(['A', 'A']);
+  assert.strictEqual(chains.length, 2);
+  assert.strictEqual(chains[0].name(), 'A');
+  assert.strictEqual(chains[1].name(), 'A');
+});
+
+test('request chain by name that does not exist', function(assert) {
+  var chains = FRAGMENT.chainsByName(['C', 'B']);
+  assert.strictEqual(chains.length, 0);
+});
+
+test('request chain by name with empty list', function(assert) {
+  var chains = FRAGMENT.chainsByName([]);
+  assert.strictEqual(chains.length, 0);
+});
+
+test('residue select on structure', function(assert) {
+  var view = FRAGMENT.residueSelect(function(r) { return r.isAminoacid(); });
+  var count = 0;
+  view.eachResidue(function(r) {
+      assert.ok(r.isAminoacid());
+      count ++;
+  });
+  assert.strictEqual(count, 10);
+  assert.strictEqual(view.chains().length, 1);
+});
+
+test('atom select on structure', function(assert) {
+  var view = FRAGMENT.atomSelect(function(a) { return a.name() === 'CA'; });
+  var count = 0;
+  view.eachAtom(function(a) {
+      assert.strictEqual(a.name(), 'CA');
+      count ++;
+  });
+  assert.strictEqual(count, 11);
+  assert.strictEqual(view.residueCount(), 11);
+  assert.strictEqual(view.chains().length, 1);
+});
+
+test('residue select on view', function(assert) {
+  var firstView = FRAGMENT.select({rnums : [268,903,904,905] });
+  var view = firstView.residueSelect(function(r) { return r.isAminoacid(); });
+  var count = 0;
+  view.eachResidue(function(r) {
+      assert.ok(r.isAminoacid());
+      count ++;
+  });
+  assert.strictEqual(view.atomCount(), 5);
+  assert.strictEqual(count, 1);
+  assert.strictEqual(view.chains().length, 1);
+});
+
+test('atom select on view', function(assert) {
+  var firstView = FRAGMENT.select({rnums : [268,903,904,905] });
+  var view = firstView.atomSelect(function(a) { return a.name() === 'CA'; });
+  var count = 0;
+  view.eachAtom(function(a) {
+      assert.strictEqual(a.name(), 'CA');
+      count ++;
+  });
+  assert.strictEqual(count, 1);
+  assert.strictEqual(view.residueCount(), 1);
+  assert.strictEqual(view.chains().length, 1);
 });
 
 });

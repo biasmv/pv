@@ -18,8 +18,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-define(['gl-matrix', 'utils', './chain', './bond', './select'], 
-       function(glMatrix, utils, chain, bond, select) {
+define(['gl-matrix', 'utils', '../geom', './chain', './bond', './select'], 
+       function(glMatrix, utils, geom, chain, bond, select) {
 
 "use strict";
 
@@ -169,7 +169,7 @@ MolBase.prototype = {
     this.eachAtom(function(atom) {
       radiusSquare = Math.max(radiusSquare, vec3.sqrDist(center, atom.pos()));
     });
-    return new Sphere(center, radiusSquare);
+    return new geom.Sphere(center, Math.sqrt(radiusSquare));
   },
 
   // returns all backbone traces of all chains of this structure
@@ -219,6 +219,35 @@ MolBase.prototype = {
       }
     }
     console.timeEnd('Mol.residueSelect');
+    return view;
+  },
+
+  atomSelect : function(predicate) {
+    console.time('Mol.atomSelect');
+    var view = new MolView(this.full());
+    for (var ci = 0; ci < this._chains.length; ++ci) {
+      var chain = this._chains[ci];
+      var chainView = null;
+      var residues = chain.residues();
+      for (var ri = 0; ri < residues.length; ++ri) {
+        var residueView = null;
+        var residue = residues[ri];
+        var atoms = residue.atoms();
+        for (var ai = 0; ai < atoms.length; ++ai) {
+          if (!predicate(atoms[ai])) {
+            continue;
+          }
+          if (!chainView) {
+            chainView = view.addChain(chain, false);
+          }
+          if (!residueView) {
+            residueView = chainView.addResidue(residue, false);
+          }
+          residueView.addAtom(atoms[ai]);
+        }
+      }
+    }
+    console.timeEnd('Mol.atomSelect');
     return view;
   },
 
