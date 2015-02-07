@@ -135,5 +135,61 @@ test('dict select by residue number', function(assert) {
   assert.strictEqual(residues[4].num(), 14);
   assert.strictEqual(residues[5].num(), 15);
 });
+
+test('select within single atom small radius', function(assert) {
+  var structure = io.pdb(CRAMBIN);
+  var view = structure.select({ rnums : [12] });
+  var within = structure.selectWithin(view, { radius : 1.0 });
+  var atoms = within.atoms();
+  assert.strictEqual(atoms.length, 1);
+  assert.strictEqual(atoms[0].qualifiedName(), 'A.ASN12.CA');
+
+});
+
+test('select within single atom larger radius', function(assert) {
+  var structure = io.pdb(CRAMBIN);
+  var view = structure.select({ rnums : [12] });
+  var within = structure.selectWithin(view, { radius : 4.0 });
+  var atoms = within.atoms();
+  assert.strictEqual(atoms.length, 3);
+  assert.strictEqual(atoms[0].qualifiedName(), 'A.SER10B.CA');
+  assert.strictEqual(atoms[1].qualifiedName(), 'A.ASN12.CA');
+  assert.strictEqual(atoms[2].qualifiedName(), 'A.PHE13.CA');
+});
+
+test('select within two atoms small radius', function(assert) {
+  var structure = io.pdb(CRAMBIN);
+  var view = structure.select({ rnums : [12, 13] });
+  var within = structure.selectWithin(view, { radius : 1.0 });
+  var atoms = within.atoms();
+  assert.strictEqual(atoms.length, 2);
+  assert.strictEqual(atoms[0].qualifiedName(), 'A.ASN12.CA');
+  assert.strictEqual(atoms[1].qualifiedName(), 'A.PHE13.CA');
+});
+
+test('select within two atoms larger radius', function(assert) {
+  var structure = io.pdb(CRAMBIN);
+  var view = structure.select({ rnums : [12, 13] });
+  var within = structure.selectWithin(view, { radius : 4.0 });
+  var atoms = within.atoms();
+  assert.strictEqual(atoms.length, 4);
+  assert.strictEqual(atoms[0].qualifiedName(), 'A.SER10B.CA');
+  assert.strictEqual(atoms[1].qualifiedName(), 'A.ASN12.CA');
+  assert.strictEqual(atoms[2].qualifiedName(), 'A.PHE13.CA');
+  assert.strictEqual(atoms[3].qualifiedName(), 'A.ASN14.CA');
+});
+
+test('select within two atoms default radius', function(assert) {
+  var structure = io.pdb(CRAMBIN);
+  var view = structure.select({ rnums : [12, 13] });
+  var within = structure.selectWithin(view);
+  var atoms = within.atoms();
+  assert.strictEqual(atoms.length, 4);
+  assert.strictEqual(atoms[0].qualifiedName(), 'A.SER10B.CA');
+  assert.strictEqual(atoms[1].qualifiedName(), 'A.ASN12.CA');
+  assert.strictEqual(atoms[2].qualifiedName(), 'A.PHE13.CA');
+  assert.strictEqual(atoms[3].qualifiedName(), 'A.ASN14.CA');
+});
+
   
 });

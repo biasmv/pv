@@ -227,7 +227,6 @@ MolBase.prototype = {
             if (skipResidue) {
               break;
             }
-            skipResidue = addAtomsWithin(view, tagetAtoms, radiusSqr);
             for (var wi = 0; wi < targetAtoms.length; ++wi) {
               vec3.sub(dist, atoms[ai].pos(), targetAtoms[wi].pos());
               if (vec3.sqrLen(dist) > radiusSqr) {
@@ -245,6 +244,7 @@ MolBase.prototype = {
                 break;
               } 
               addedRes.addAtom(atoms[ai].full());
+              break;
             }
           }
         }
