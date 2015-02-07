@@ -25,7 +25,6 @@ SOURCE_FILES = [
   'src/pv.js',
   'src/render.js',
   'src/scene-node.js',
-  'src/scene.js',
   'src/shaders.js',
   'src/slab.js',
   'src/symmetry.js',
