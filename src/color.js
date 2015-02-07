@@ -72,7 +72,7 @@ var COLORS = {
 };
 
 
-exports.rgb.hex2rgb = function(color){
+exports.hex2rgb = function(color){
   var r, g, b, a;
   if (color.length === 4 || color.length === 5 ) {
     r = parseInt(color[1], 16);
@@ -102,7 +102,7 @@ exports.rgb.hex2rgb = function(color){
   
 
   // provide an override of the default color setting.
-exports.rgb.setColorPalette = function(customColors){
+exports.setColorPalette = function(customColors){
   console.log("setting colors");
     COLORS = customColors;
   exports.initGradients();
@@ -116,7 +116,7 @@ exports.forceRGB = function(color) {
       return lookup;
     }
     if (color.length > 0 && color[0] === '#') {
-     return rgb.hex2rgb(color);
+     return exports.hex2rgb(color);
     }
   }
   // in case no alpha component is provided, default alpha to 1.0

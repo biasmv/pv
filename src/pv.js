@@ -21,12 +21,18 @@
 define(['./viewer', './io', './mol/all', './color', './viewpoint'], 
        function(viewer, io, mol, color, viewpoint) {
   'use strict';
+  // export 
   return {
     Viewer : viewer.Viewer,
     isWebGLSupported : viewer.isWebGLSupported,
     io : io,
     color : color,
     mol : mol,
+    // for backward compatibility prior to 1.4
+    rgb : {
+      setColorPalette : color.setColorPalette,
+      hex2rgb : color.hex2rgb
+    },
     viewpoint : viewpoint
   };
 });
