@@ -202,19 +202,5 @@ test('select within applied to view returns only subset of view atoms',
   assert.strictEqual(atoms[1].qualifiedName(), 'A.PHE13.CA');
 });
 
-test('get atom by name', function(assert) {
-  var structure = io.pdb(SELECT_HETATM);
-  var oxygen = structure.atom('B.214.O');
-  assert.strictEqual(oxygen.name(), 'O');
-  assert.strictEqual(oxygen.residue().num(), 214);
-  assert.strictEqual(oxygen.residue().chain().name(), 'B');
-});
-
-  
-test('convert chain to view', function(assert) {
-  var structure = io.pdb(CRAMBIN_CALPHA);
-  var view = structure.chain('A').asView();
-  assert.strictEqual(structure.atomCount(), view.atomCount());
-});
 
 });
