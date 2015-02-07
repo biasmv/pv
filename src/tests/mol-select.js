@@ -211,4 +211,10 @@ test('get atom by name', function(assert) {
 });
 
   
+test('convert chain to view', function(assert) {
+  var structure = io.pdb(CRAMBIN_CALPHA);
+  var view = structure.chain('A').asView();
+  assert.strictEqual(structure.atomCount(), view.atomCount());
+});
+
 });

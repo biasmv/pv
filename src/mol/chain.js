@@ -82,10 +82,9 @@ ChainBase.prototype  = {
 
 
   asView : function() {
-    var view = new MolView(this.structure().full());
+    var view = this.structure().createEmptyView();
     view.addChain(this, true);
     return view;
-
   },
 
   residueByRnum : function(rnum) {

@@ -303,7 +303,10 @@ MolBase.prototype = {
       console.timeEnd('Mol.selectWithin');
       return view;
     };
-  })()
+  })(),
+  createEmptyView : function() {
+    return new MolView(this.full());
+  }
 };
 
 function Mol() {
