@@ -201,6 +201,57 @@ MolBase.prototype = {
     return select.dict(this, new MolView(this), what || {});
   },
 
+
+  residueSelect : function(predicate) {
+    console.time('Mol.residueSelect');
+    var view = new MolView(this.full());
+    for (var ci = 0; ci < this._chains.length; ++ci) {
+      var chain = this._chains[ci];
+      var chainView = null;
+      var residues = chain.residues();
+      for (var ri = 0; ri < residues.length; ++ri) {
+        if (predicate(residues[ri])) {
+          if (!chainView) {
+            chainView = view.addChain(chain, false);
+          }
+          chainView.addResidue(residues[ri], true);
+        }
+      }
+    }
+    console.timeEnd('Mol.residueSelect');
+    return view;
+  },
+
+
+
+  assembly : function(id) {
+    var assemblies = this.assemblies();
+    for (var i = 0; i < assemblies.length; ++i) {
+      if (assemblies[i].name() === id) {
+        return assemblies[i];
+      }
+    }
+    return null;
+  },
+
+  chainsByName : function(chainNames) {
+    // build a map to avoid O(n^2) behavior. That's overkill when the list 
+    // of names is short but should give better performance when requesting
+    // multiple chains.
+    var chainMap = { };
+    var chains = this.chains();
+    for (var i = 0; i < chains.length; ++i) {
+      chainMap[chains[i].name()] = chains[i];
+    }
+    var filteredChains = [];
+    for (var j = 0; j < chainNames.length; ++j) {
+      var filteredChain = chainMap[chainNames[j]];
+      if (filteredChain !== undefined) {
+        filteredChains.push(filteredChain);
+      }
+    }
+    return filteredChains;
+  },
   selectWithin : (function() {
     var dist = vec3.create();
     return function(mol, options) {
@@ -252,58 +303,7 @@ MolBase.prototype = {
       console.timeEnd('Mol.selectWithin');
       return view;
     };
-  })(),
-
-  residueSelect : function(predicate) {
-    console.time('Mol.residueSelect');
-    var view = new MolView(this.full());
-    for (var ci = 0; ci < this._chains.length; ++ci) {
-      var chain = this._chains[ci];
-      var chainView = null;
-      var residues = chain.residues();
-      for (var ri = 0; ri < residues.length; ++ri) {
-        if (predicate(residues[ri])) {
-          if (!chainView) {
-            chainView = view.addChain(chain, false);
-          }
-          chainView.addResidue(residues[ri], true);
-        }
-      }
-    }
-    console.timeEnd('Mol.residueSelect');
-    return view;
-  },
-
-
-
-  assembly : function(id) {
-    var assemblies = this.assemblies();
-    for (var i = 0; i < assemblies.length; ++i) {
-      if (assemblies[i].name() === id) {
-        return assemblies[i];
-      }
-    }
-    return null;
-  },
-
-  chainsByName : function(chainNames) {
-    // build a map to avoid O(n^2) behavior. That's overkill when the list 
-    // of names is short but should give better performance when requesting
-    // multiple chains.
-    var chainMap = { };
-    var chains = this.chains();
-    for (var i = 0; i < chains.length; ++i) {
-      chainMap[chains[i].name()] = chains[i];
-    }
-    var filteredChains = [];
-    for (var j = 0; j < chainNames.length; ++j) {
-      var filteredChain = chainMap[chainNames[j]];
-      if (filteredChain !== undefined) {
-        filteredChains.push(filteredChain);
-      }
-    }
-    return filteredChains;
-  }
+  })()
 };
 
 function Mol() {
@@ -405,7 +405,7 @@ utils.derive(Mol, MolBase, {
       prevResidue = res;
     });
     console.timeEnd('Mol.deriveConnectivity');
-  }
+  },
 });
 
 function MolView(mol) {

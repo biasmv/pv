@@ -91,7 +91,7 @@ ChainBase.prototype  = {
   residueByRnum : function(rnum) {
     var residues = this.residues();
     if (this._rnumsOrdered) {
-      var index = binarySearch(residues, numify(rnum), rnumComp);
+      var index = utils.binarySearch(residues, numify(rnum), rnumComp);
       if (index === -1) {
         return null;
       }
