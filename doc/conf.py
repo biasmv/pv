@@ -39,6 +39,8 @@ source_suffix = '.rst'
 # The master toctree document.
 master_doc = 'index'
 
+nitpicky = True
+
 # General information about the project.
 project = u'pv'
 copyright = u'2013-2015, Marco Biasini'

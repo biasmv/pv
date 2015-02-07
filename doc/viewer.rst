@@ -79,42 +79,42 @@ These methods will automatically add the object to the viewer, there is not need
 
 .. function:: pv.Viewer.lines(name, structure[, options])
 
-  Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) at full connectivity level, using lines for the bonds. Atoms with no bonds are represented as small crosses. Valid *options* are:
+  Renders the structure (:class:`~pv.mol.Mol`, or :class:`~pv.mol.MolView`) at full connectivity level, using lines for the bonds. Atoms with no bonds are represented as small crosses. Valid *options* are:
 
-  * *color*: the color operation to be used. Defaults to :func:`color.byElement`.
+  * *color*: the color operation to be used. Defaults to :func:`pv.color.byElement`.
   * *lineWidth*: The line width for bonds and atoms. Defaults to 4.0
 
   :returns: The geometry of the object. 
 
 .. function:: pv.Viewer.spheres(name, structure[, options])
 
-  Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) at full-atom level using a sphere for each atom. Valid *options* are:
+  Renders the structure (:class:`~pv.mol.Mol`, or :class:`~pv.mol.MolView`) at full-atom level using a sphere for each atom. Valid *options* are:
 
-  * *color*: the color operation to be used. Defaults to :func:`color.byElement`.
+  * *color*: the color operation to be used. Defaults to :func:`pv.color.byElement`.
   * *sphereDetail*: the number of horizontal and vertical arcs for the sphere. The default *sphereDetail* is determined by :func:`pv.Viewer.quality()`.
 
 
 .. function:: pv.Viewer.lineTrace(name, structure[, options])
 
-  Renders the protein part of the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a Carbon-alpha trace using lines. Consecutive carton alpha atoms are connected by a straight line. For a mesh-based version of the Carbon-alpha trace, see :func:`pv.Viewer.trace`.
+  Renders the protein part of the structure (:class:`~pv.mol.Mol`, or :class:`~pv.mol.MolView`) as a Carbon-alpha trace using lines. Consecutive carton alpha atoms are connected by a straight line. For a mesh-based version of the Carbon-alpha trace, see :func:`pv.Viewer.trace`.
 
-  * *color*: the color operation to be used. Defaults to :func:`color.uniform`.
+  * *color*: the color operation to be used. Defaults to :func:`~pv.color.uniform`.
   * *lineWidth*: The line width for bonds and atoms. Defaults to 4.0
 
 .. function:: pv.Viewer.sline(name, structure[, options])
 
-  Renders the protein part of the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a smooth line trace. The Carbon-alpha atoms are used as the control points for a Catmull-Rom spline. For a mesh-based version of the smooth line trace, see :func:`pv.Viewer.tube`.
+  Renders the protein part of the structure (:class:`~pv.mol.Mol`, or :class:`~pv.mol.MolView`) as a smooth line trace. The Carbon-alpha atoms are used as the control points for a Catmull-Rom spline. For a mesh-based version of the smooth line trace, see :func:`pv.Viewer.tube`.
 
-  * *color*: the color operation to be used. Defaults to :func:`color.uniform`.
+  * *color*: the color operation to be used. Defaults to :func:`~pv.color.uniform`.
   * *lineWidth*: The line width for bonds and atoms. Defaults to 4.0
   * *strength*: influences the magnitude of the tangents for the Catmull-Rom spline. Defaults to 0.5. Meaningful values are between 0 and 1.
   * *splineDetail*: Number of subdivision per Carbon alpha atom. The default value is is determined by :func:`pv.Viewer.quality`.
 
 .. function:: pv.Viewer.trace(name, structure[, options])
 
-  Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a carbon-alpha trace. Consecutive Carbon alpha atoms (CA) are connected by a cylinder. For a line-based version of the trace render style, see :func:`pv.viewer.lineTrace`. Accepted *options* are:
+  Renders the structure (:class:`~pv.mol.Mol`, or :class:`~pv.mol.MolView`) as a carbon-alpha trace. Consecutive Carbon alpha atoms (CA) are connected by a cylinder. For a line-based version of the trace render style, see :func:`pv.Viewer.lineTrace`. Accepted *options* are:
 
-  * *color*: the color operation to be used. Defaults to :func:`color.uniform`.
+  * *color*: the color operation to be used. Defaults to :func:`~pv.color.uniform`.
   * *radius*: Radius of the tube. Defaults to 0.3.
   * *arcDetail*: number of vertices on the tube. The default is determined by :func:`pv.Viewer.quality`.
   * *sphereDetail* number of vertical and horizontal arcs for the spheres.
@@ -124,9 +124,9 @@ These methods will automatically add the object to the viewer, there is not need
 
 .. function:: pv.Viewer.tube(name, structure[, options])
 
-  Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a smoothly interpolated tube. 
+  Renders the structure (:class:`~pv.mol.Mol`, or :class:`~pv.mol.MolView`) as a smoothly interpolated tube. 
 
-  * *color*: the color operation to be used. Defaults to :func:`color.bySS`.
+  * *color*: the color operation to be used. Defaults to :func:`pv.color.bySS`.
   * *radius*: Radius of the tube. Defaults to 0.3.
   * *arcDetail*: number of vertices on the tube. The default is determined by :func:`pv.Viewer.quality`.
   * *strength*: influences the magnitude of the tangents for the Catmull-Rom spline. Defaults to 1.0. Meaningful values are between 0 and 1.
@@ -134,10 +134,10 @@ These methods will automatically add the object to the viewer, there is not need
 
 .. function:: pv.Viewer.cartoon(name, structure[, options])
 
-  Renders the structure (:class:`~mol.Mol`, or :class:`~mol.MolView`) as a 
+  Renders the structure (:class:`~pv.mol.Mol`, or :class:`~pv.mol.MolView`) as a 
   helix, strand coil cartoon. Accepted *options* are:
 
-  * *color*: the color operation to be used. Defaults to :func:`color.bySS`.
+  * *color*: the color operation to be used. Defaults to :func:`pv.color.bySS`.
   * *radius*: Radius of the tube profile. Also influences the profile thickness for helix and strand profiles. Defaults to 0.3.
   * *arcDetail*: number of vertices on the tube. The default is determined by :func:`pv.Viewer.quality`.
   * *strength*: influences the magnitude of the tangents for the Catmull-Rom spline. Defaults to 1.0. Meaningful values are between 0 and 1.
@@ -158,7 +158,7 @@ These methods will automatically add the object to the viewer, there is not need
 
   :param name: Uniquely identifies the label
   :param text: The text to be shown
-  :param pos: A :class:`vec3`, or array of length 3 holding the x, y, and z coordinate of the label's center.
+  :param pos: An array of length 3 holding the x, y, and z coordinate of the label's center.
   :param options: Optional dictionary to control the font, text style and size of the label (see below)
 
   Accepted *options* are:
@@ -187,12 +187,13 @@ Camera Positioning/Orientation
 
   Center the camera on a given object, leaving the zoom level and orientation untouched.
 
-  :param obj: Must be an object implementing a *center* method returning the center of the object, e.g. an instance of :class:`mol.MolView`, :class:`mol.Mol`
+  :param obj: Must be an object implementing a *center* method returning the center of the object, e.g. an instance of :class:`pv.mol.MolView`, :class:`pv.mol.Mol`
 
   
 .. function:: pv.Viewer.autoZoom()
 
   Adjusts the zoom level such that all objects are visible on screen and occupy as much space as possible. The center and orientation of the camera are not modified.  
+
 .. function:: pv.Viewer.fitTo(obj)
 
   Adjust the zoom level and center of the camera to fit the viewport to a given object. The method supports fitting to selections, or arbitrary SceneNodes. To fit to a subset of atoms, pass the selection as the *obj* argument:
@@ -208,7 +209,7 @@ Camera Positioning/Orientation
     var obj = viewer.cartoon('obj', structure);
     viewer.fitTo(obj);
 
-  :param what: must be an object which implements updateProjectionInterval, e.g. a SceneNode, a :class:`mol.MolView`, or :class:`mol.Mol`.
+  :param what: must be an object which implements updateProjectionInterval, e.g. a SceneNode, a :class:`pv.mol.MolView`, or :class:`pv.mol.Mol`.
 
 .. function:: pv.Viewer.setCamera(rotation, center, zoom, ms)
 
@@ -217,7 +218,7 @@ Camera Positioning/Orientation
 
   The combined transformation matrix for the camera is calculated as follows: First the origin is shifted to the center, then the rotation is applied, and lastly the camera is translated away from the center by the negative zoom along the rotated Z-axis.
 
-  :param rotation: Either a 4x4 or 3x3 matrix, e.g. as returned by :func:`mat4.create` or :func:`mat3.create` that contains the rotation.
+  :param rotation: Either a 4x4 or 3x3 matrix in the form of a one-dimensional array of length 16 or 9.
   :param center: the new camera center.
   :param zoom: distance of the eye position from the viewing center
   :param ms: if provided and non-zero defines the animation time for moving/rotating/zooming the camera from the current position to the new rotation,center and zoom.

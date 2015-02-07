@@ -21,7 +21,7 @@ When you do this, you will need to compile the pv.dbg.js, pv.rel.js and pv.min.j
 .. code-block:: bash
  
   # setup dev environment for PV
-  npm install --save-dev
+  npm install --setup-dev
   # run grunt with the default tasks
   grunt
 
@@ -79,12 +79,7 @@ Most of the work happens in loadMethylTransferase. This function will be called 
   function loadMethylTransferase() {
     // asynchronously load the PDB file for the dengue methyl transferase
     // from the server and display it in the viewer.
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', '1r6a.pdb');
-    xhr.setRequestHeader('Content-type', 'application/x-pdb');
-    xhr.onreadystatechange = function() {
-      if (xhr.readyState == 4) {
-        var structure = mol.pdb(xhr.responseText);
+    pv.io.fetchPdb('1r6a.pdb', function(structure) {
         // display the protein as cartoon, coloring the secondary structure 
         // elements in a rainbow gradient.
         viewer.cartoon('protein', structure, { color : color.ssSuccession() });
@@ -95,9 +90,7 @@ Most of the work happens in loadMethylTransferase. This function will be called 
         var ligands = structure.select({ rnames : ['SAH', 'RVP'] });
         viewer.ballsAndSticks('ligands', ligands);
         viewer.centerOn(structure);
-      }
-    }
-    xhr.send();
+    });
   }
 
   // load the methyl transferase once the DOM has finished loading. That's
