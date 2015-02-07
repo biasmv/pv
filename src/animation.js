@@ -18,7 +18,8 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-define(['gl-matrix'], function(glMatrix) {
+define(['./gl-matrix', './utils', './geom'], 
+       function(glMatrix, utils, geom) {
 "use strict";
 
 var vec3 = glMatrix.vec3;
@@ -35,6 +36,7 @@ function Animation(from, to, duration) {
   this._looping = false;
   this._finished = false;
 }
+
 Animation.prototype = {
   setLooping : function(looping) {
     this._looping = looping;
@@ -76,7 +78,7 @@ function Move(from, to, duration) {
   this._current = vec3.clone(from);
 }
 
-derive(Move, Animation, {
+utils.derive(Move, Animation, {
   _setTo : function(t) {
     var smoothInterval = (1 - Math.cos(t * Math.PI ) ) / 2;
     vec3.lerp(this._current, this._from, this._to, smoothInterval);
@@ -97,7 +99,7 @@ function Rotate(initialRotation, destinationRotation, duration) {
   Animation.call(this, initialQuat, toQuat, duration);
 }
 
-derive(Rotate, Animation, {
+utils.derive(Rotate, Animation, {
 
   _setTo : (function() {
     var quatRot = quat.create();
@@ -119,7 +121,7 @@ function RockAndRoll(rotation, axis, duration) {
   this._current = mat3.create();
 }
 
-derive(RockAndRoll, Animation, {
+utils.derive(RockAndRoll, Animation, {
   _setTo : (function() {
     var axisRot = mat3.create();
     return function(t) {
@@ -131,8 +133,11 @@ derive(RockAndRoll, Animation, {
   })()
 });
 
-exports.Move = Move;
-exports.Rotate = Rotate;
-exports.RockAndRoll = RockAndRoll;
-exports.Animation = Animation;
+return {
+  Move : Move,
+  Rotate : Rotate,
+  RockAndRoll : RockAndRoll,
+  Animation : Animation
+};
+
 });

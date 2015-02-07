@@ -21,10 +21,11 @@
 
 define(['gl-matrix', 'color', 'slab', 'unique-object-id-pool', 'utils', 
         'framebuffer', 'buffer-allocators', 'cam', 'shaders', 'touch', 
-        'render', 'label', 'custom-mesh'], 
+        'render', 'label', 'custom-mesh', 'animation', 'scene-node'], 
        function(glMatrix, color, slab, UniqueObjectIdPool, utils, 
                 FrameBuffer, PoolAllocator, Cam, shaders, 
-                TouchHandler, render, TextLabel, CustomMesh) {
+                TouchHandler, render, TextLabel, CustomMesh, 
+                animation, SceneNode) {
 
 "use strict";
 
@@ -48,6 +49,7 @@ on how to unblock it.\
 
 
 var vec3 = glMatrix.vec3;
+var mat4 = glMatrix.mat4;
 
 function shouldUseHighPrecision() {
   // high precision for shaders is only required on iOS, all the other browsers 
@@ -85,7 +87,7 @@ function isWebGLSupported(gl) {
 function slabModeToStrategy(mode, options) {
   mode = mode || 'auto';
   if (mode === 'fixed') {
-    return new FixedSlab(options);
+    return new slab.FixedSlab(options);
   }
   if (mode === 'auto') {
     return new slab.AutoSlab(options);
@@ -537,8 +539,8 @@ PV.prototype = {
     } else {
       rotation4 = mat4.clone(rotation);
     }
-    this._camAnim.rotation = new Rotate(this._cam.rotation(), 
-                                        rotation4, ms);
+    this._camAnim.rotation = 
+      new animation.Rotate(this._cam.rotation(), rotation4, ms);
     this.requestRedraw();
   },
 
@@ -551,13 +553,12 @@ PV.prototype = {
       this.requestRedraw();
       return;
     }
-    this._camAnim.center = new Move(this._cam.center(), 
-                                    vec3.clone(center), ms);
-    this._camAnim.rotation = new Rotate(this._cam.rotation(), 
-        mat4.clone(rotation), ms);
-
-    this._camAnim.zoom = new Animation(this._cam.zoom(), 
-        zoom, ms);
+    this._camAnim.center = 
+      new animation.Move(this._cam.center(), vec3.clone(center), ms);
+    this._camAnim.rotation = 
+      new animation.Rotate(this._cam.rotation(), mat4.clone(rotation), ms);
+    this._camAnim.zoom = 
+      new animation.Animation(this._cam.zoom(), zoom, ms);
     this.requestRedraw();
   },
 
@@ -620,8 +621,8 @@ PV.prototype = {
       this._cam.setCenter(center);
       return;
     }
-    this._camAnim.center = new Move(this._cam.center(), 
-                                    vec3.clone(center), ms);
+    this._camAnim.center = 
+      new animation.Move(this._cam.center(), vec3.clone(center), ms);
     this.requestRedraw();
   },
 
@@ -965,8 +966,8 @@ PV.prototype = {
   // enable disable rock and rolling of camera
   rockAndRoll : function(enable) {
     if (enable === true) {
-      this._camAnim.rotation = new RockAndRoll(this._cam.rotation(), 
-                                              [0, 1, 0], 2000);
+      this._camAnim.rotation = 
+        new animation.RockAndRoll(this._cam.rotation(), [0, 1, 0], 2000);
       this.requestRedraw();
     } else if (enable === false) {
       this._camAnim.rotation = null;

@@ -97,7 +97,10 @@ module.exports = function(grunt) {
         latedef : true,
         // would love to use, but current project structure does not allow 
         // for it.
-        /* undef : true, */
+        undef : true,
+        browser : true,
+        devel : true,
+        predef : [ 'define' ],
         unused : true
       },
       all : SOURCE_FILES
