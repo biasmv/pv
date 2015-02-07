@@ -52,11 +52,17 @@ var START_SNIPPET="\n\
     if (typeof define === 'function' && define.amd) {\n\
         define([], factory);\n\
     } else {\n\
-        root.pv = factory();\n\
-        root.io = root.pv.io;\n\
-        root.mol = root.pv.mol;\n\
-        root.color = root.pv.color;\n\
-        root.viewpoint = root.pv.viewpoint;\n\
+        var pv = factory();\n\
+        root.pv = pv;\n\
+        root.io = pv.io;\n\
+        root.mol = pv.mol;\n\
+        root.color = pv.color;\n\
+        root.viewpoint = pv.viewpoint;\n\
+        root.vec3 = pv.vec3;\n\
+        root.vec4 = pv.vec4;\n\
+        root.mat3 = pv.mat3;\n\
+        root.mat4 = pv.mat4;\n\
+        root.quat = pv.quat;\n\
     }\n\
 }(this, function () {\n\
     // modules will be inlined here\n\
