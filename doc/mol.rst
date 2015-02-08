@@ -9,7 +9,7 @@ Tightly coupled to :class:`pv.mol.Mol` is the concept of structural subset, a :c
 Obtaining and Creating Molecular Structures
 -----------------------------------------------------------------------------------------
 
-The most common way to construct :class:`molecules <pv.mol.Mol>` is through one of the io functions. For example, to import the structure from a PDB file, use :func:`io.pdb`. The whole structure, or a subset thereof can then be displayed on the screen by using one of the :ref:`rendering functions<pv.viewer.rendering>`.
+The most common way to construct :class:`molecules <pv.mol.Mol>` is through one of the io functions. For example, to import the structure from a PDB file, use :func:`pv.io.pdb`. The whole structure, or a subset thereof can then be displayed on the screen by using one of the :ref:`rendering functions<pv.viewer.rendering>`.
 
 The following code example fetches a PDB file from PDB.org imports it and displays the chain with name 'A' on the screen. For more details on how to create subsets, see :ref:`pv.mol.creating-views`.
 
@@ -18,7 +18,7 @@ The following code example fetches a PDB file from PDB.org imports it and displa
   $.ajax('http://pdb.org/pdb/files/'+pdbId+'.pdb')
   .done(function(data) {
       // data contains the contents of the PDB file in text form
-      var structure = io.pdb(data);
+      var structure = pv.io.pdb(data);
       var firstChain = structure.select({chain: 'A'});
       viewer.cartoon('firstChain', firstChain);
   });
@@ -223,7 +223,7 @@ Mol (and MolView)
 
   Returns the list of chains matching the specified names. In case a chain does not exist (or is not part of the view), the chain name is ignored, as if it were not specified.
 
-.. function:: io.pdb(pdbData)
+.. function:: pv.io.pdb(pdbData)
 
   Loads a structure from the *pdbData* string and returns it. In case multiple models are present in the file (as designated by MODEL/ENDMDL), only the first is read. The following record types are handled:
 
@@ -388,7 +388,7 @@ Atom (and AtomView)
 .. function:: pv.mol.Atom.element()
               pv.mol.AtomView.element()
 
-  The element of the atom. When loading structures from PDB, the element column must be present for the element to be set properly. When the element column is not present, the element is set to an empty string, or to whatever characters are present in the element column.
+  The element of the atom. When loading structures from PDB, the atom element is taken *as is* from the element column if it is not empty. In case of an empty element column, the element is guessed from the atom name.
   
 
 .. function:: pv.mol.Atom.bonds()
