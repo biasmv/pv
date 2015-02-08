@@ -42,8 +42,8 @@ Creating Subsets of a Molecular Structure
 
 It is quite common to only apply operations (coloring, displaying) to subset of a molecular structure. These subsets are modelled as *views* and can be created in different ways.
 
- - The most convenient way to create views is by using :func:`pv.Mol.select`. Select accepts a set of predicates and returns a view containing only chains, residues and atoms that match the predicates. 
- - Alternatively for more complex selections, one can use :func:`pv.Mol.residueSelect`, which evaluates a function on each residue and includes residues for which the function returns true.
+ - The most convenient way to create views is by using :func:`pv.mol.Mol.select`. Select accepts a set of predicates and returns a view containing only chains, residues and atoms that match the predicates. 
+ - Alternatively for more complex selections, one can use :func:`pv.mol.Mol.residueSelect`, or :func:`pv.mol.Mol.atomSelect`, which evaluates a function on each residue/atom and includes residues/atoms for which the function returns true.
 
  - Selection by distance allows to select parts of a molecule that are within a certain radius of  another molecule.
  - Views can be assembled manually through :func:`pv.mol.MolView.addChain`, :func:`pv.mol.ChainView.addResidue`, :func:`pv.mol.ResidueView.addAtom`. This is the most flexible but also the most verbose way of creating views.
@@ -51,7 +51,7 @@ It is quite common to only apply operations (coloring, displaying) to subset of 
 
 
 
-The Mol (and MolView) API
+Mol (and MolView)
 -----------------------------------------------------------------------------------------
 
 .. class:: pv.mol.Mol()
@@ -62,7 +62,7 @@ The Mol (and MolView) API
 
   Represents a subset of a molecular structure, e.g. the result of a selection operation. Except for a few differences, it's API is identical to :class:`pv.mol.Mol`.
 
-.. function:: pv.Mol.eachAtom(callback)
+.. function:: pv.mol.Mol.eachAtom(callback)
               pv.mol.MolView.eachAtom(callback)
 
   Invoke callback for each atom in the structure. For example, the following code calculates the number of carbon alpha atoms.
@@ -79,32 +79,32 @@ The Mol (and MolView) API
     });
     console.log('number of carbon alpha atoms', carbonAlphaCount);
 
-.. function:: pv.Mol.eachResidue(callback)
+.. function:: pv.mol.Mol.eachResidue(callback)
               pv.mol.MolView.eachResidue(callback)
 
   Invoke callback for each residue in the structure or view.
 
-.. function:: pv.Mol.full()
+.. function:: pv.mol.Mol.full()
               pv.mol.MolView.full()
 
   Convenience function that always links back to :class:`pv.mol.Mol`. For instances of :class:`pv.mol.Mol`, returns this directly, for instances of :class:`pv.mol.MolView` returns a reference to the :class:`pv.mol.Mol` the subset was derived from. 
 
-.. function:: pv.Mol.atomCount()
+.. function:: pv.mol.Mol.atomCount()
               pv.mol.MolView.atomCount()
 
   Returns the number of atoms in the structure, subset of structure.
 
-.. function:: pv.Mol.center()
+.. function:: pv.mol.Mol.center()
               pv.mol.MolView.center()
 
   Returns the geometric center of all atoms in the structure.
 
-.. function:: pv.Mol.chains()
+.. function:: pv.mol.Mol.chains()
               pv.mol.MolView.chains()
 
   Returns an array of all chains in the structure. For :class:`pv.mol.Mol`, this returns a list of :class:`pv.mol.Chain` instances, for :class:`pv.mol.MolView` a list of :class:`pv.mol.ChainView` instances.
 
-.. function:: pv.Mol.select(what)
+.. function:: pv.mol.Mol.select(what)
               pv.mol.MolView.select(what)
 
   Returns a :class:`pv.mol.MolView` containing a filtered subset of chains, residues and atoms. *what* determines how the filtered subset is created. It can be set to a predefined string for commonly required selections, or be set to a dictionary of predicates that have to match for a chain, residue or atom to be included in the result. Currently, the following predefined selections are accepted:
@@ -121,13 +121,16 @@ The Mol (and MolView) API
 
   **Available Residue Predicates:**
 
-  * *rname*: A residue is included iff the residue name it is equal to *rname*/*chain*. To match against multiple residue names, use the plural form rnames.
-  * *rindexRange* include residues at position in a chain in the half-closed interval *rindexRange[0]* and *rindexRange[1]*. The residue at *rindexRange[1]* is not included. Indices are zero-based. 
+  * *rname*: A residue is included iff the residue name it is equal to *rname*. To match against multiple residue names, use the plural form rnames.
+  * *rindexRange* include residues at position in a chain in the interval *rindexRange[0]* and *rindexRange[1]*. The residue at *rindexRange[1]* is also included. Indices are zero-based. 
   * *rindices* includes residues at certain positions in the chain. Indices are zero based.
+
+  * *rnum* includes residues having the provided residue number value. Only the numeric part is honored, insertion codes are ignored. To match against multiple residue numbers, use the plural form *rnums*.
+  * *rnumRange* include residues with numbers between *rnumRange[0]* and *rnumRange[1]*. The residue with number *rnumRange[1]*  is also included.
 
   **Available Atom Predicates:**
 
-  * *aname* An atom is included iff the atom name it is equal to *aname*. To match against multiple atom names, use the plural forms cnames/chains.
+  * *aname* An atom is included iff the atom name it is equal to *aname*. To match against multiple atom names, use the plural form anames.
   * *hetatm* An atom is included iff the atom hetatm flag matches the provided value.
 
   **Examples:**
@@ -141,12 +144,12 @@ The Mol (and MolView) API
     // included in the result.
     var chainACarbonAlpha = myStructure.select({cname : 'A', aname : 'CA'});
 
-  When none of the above selection mechanisms is flexible enough, consider using :func:`pv.Mol.residueSelect`.
+  When none of the above selection mechanisms is flexible enough, consider using :func:`pv.mol.Mol.residueSelect`, or :func:`pv.mol.Mol.atomSelect`.
 
 
   :returns: :class:`pv.mol.MolView` containing the subset of chains, residues and atoms.
 
-.. function:: pv.Mol.selectWithin(structure[, options])
+.. function:: pv.mol.Mol.selectWithin(structure[, options])
               pv.mol.MolView.selectWithin(structure[, options])
 
   Returns an instance of :class:`pv.mol.MolView` containing chains, residues and atoms which are in spatial proximity to *structure*. 
@@ -161,7 +164,7 @@ The Mol (and MolView) API
   - **matchResidues** whether to use residue matching mode. When set to true, all atom of a residue are included in result as soon as one atom is in proximity.
 
 
-.. function:: pv.Mol.residueSelect(predicate)
+.. function:: pv.mol.Mol.residueSelect(predicate)
               pv.mol.MolView.residueSelect(predicate)
 
   Returns an instance of :class:`pv.mol.MolView` only containing residues which match the predicate function. The predicate must be a function which accepts a residue as its only argument and return true for residues to be included. For all other residues, the predicate must return false. All atoms of matching residues will be included in the view.
@@ -170,9 +173,24 @@ The Mol (and MolView) API
 
   .. code-block:: javascript
 
-    var oddResidues = structure.residueSelect(function(res) { return res.index() % 2; });
+    var oddResidues = structure.residueSelect(function(res) { 
+      return res.index() % 2; 
+    });
 
-.. function:: pv.Mol.addChain(name)
+.. function:: pv.mol.Mol.atomSelect(predicate)
+              pv.mol.MolView.atomSelect(predicate)
+
+  Returns an instance of :class:`pv.mol.MolView` only containing atoms which match the predicate function. The predicate must be a function which accepts an atom as its only argument and return true for atoms to be included. For all other atoms, the predicate must return false. 
+
+  **Example:**
+
+  .. code-block:: javascript
+
+    var carbonAlphas = structure.atomSelect(function(atom) { 
+      return res.name() === 'CA'; 
+    });
+
+.. function:: pv.mol.Mol.addChain(name)
 
   Adds a new chain with the given name to the  structure
 
@@ -190,18 +208,18 @@ The Mol (and MolView) API
   :returns: the newly created :class:`pv.mol.ChainView` instance
 
 
-.. function:: pv.Mol.chain(name)
-.. function:: pv.mol.MolView.chain(name)
+.. function:: pv.mol.Mol.chain(name)
+              pv.mol.MolView.chain(name)
 
-  Alias for :func:`pv.Mol.chainByName`
+  Alias for :func:`pv.mol.Mol.chainByName`
 
-.. function:: pv.Mol.chainByName(name)
-.. function:: pv.mol.MolView.chainByName(name)
+.. function:: pv.mol.Mol.chainByName(name)
+              pv.mol.MolView.chainByName(name)
 
   Returns the chain with the given name. If no such chain exists, null is returned.
 
-.. function:: pv.Mol.chainsByName(names)
-.. function:: pv.mol.MolView.chainsByName(names)
+.. function:: pv.mol.Mol.chainsByName(names)
+              pv.mol.MolView.chainsByName(names)
 
   Returns the list of chains matching the specified names. In case a chain does not exist (or is not part of the view), the chain name is ignored, as if it were not specified.
 
@@ -213,7 +231,7 @@ The Mol (and MolView) API
    * *HELIX/STRAND* for assignment of secondary structure information.
    * *REMARK 350* for handling of biological assemblies
 
-The Chain (and ChainView) API
+Chain (and ChainView)
 -----------------------------------------------------------------------------------------
 
 .. class:: pv.mol.Chain
@@ -243,14 +261,37 @@ The Chain (and ChainView) API
 
   Convenience function which returns all backbone traces of the chain as a list. See :func:`pv.mol.Chain.eachBackboneTrace`.
 
-.. function:: pv.mol.Chain.addResidue(name, number)
+.. function:: pv.mol.Chain.addResidue(name, number[, insCode])
 
   Appends a new residue at the end of the chain
 
   :param name: the name of the residue, for example 'GLY' for glycine.
-  :param number: the residue number
+  :param number: the numeric part of the residue number
+  :param insCode: the insertion code character. Defaults to '\\0'.
 
   :returns: the newly created :class:`pv.mol.Residue` instance
+
+
+.. function:: pv.mol.Chain.residueByRnum(rnum)
+              pv.mol.ChainView.residueByRnum(rnum)
+
+  Returns the first residue in the chain with the given numeric residue number. Insertion codes are ignored. In case no residue has the given residue number, null is returned. This function internally uses a binary search when the residue numbers of the chain are ordered, and falls back to a linear search in case the residue numbers are unordered.
+
+  :returns: if found, the residue instance, and null if no such residue exists.
+
+
+.. function:: pv.mol.Chain.residuesInRnumRange(start, end)
+              pv.mol.ChainView.residuesInRnumRange(start, end)
+
+  Returns the list of residues that have residue number in the range *start*, *end*. Insertion codes are ignored.  This function internally uses a binary search to quickly determine the residues included in the range when the residue numbers in the chain are ordered, and falls back to a linear search in case the residue numbers are unordered.
+  
+  **Example:**
+
+  .. code-block:: javascript
+
+    // will contain residues with numbers from 5 to 10.
+    var residues = structure.chain('A').residuesInRnumRange(5, 10);
+
 
 .. function:: pv.mol.ChainView.addResidue(residue, includeAllAtoms)
 
@@ -263,7 +304,7 @@ The Chain (and ChainView) API
 
 
 
-The Residue (and ResidueView) API
+Residue (and ResidueView)
 -----------------------------------------------------------------------------------------
 
 
@@ -330,7 +371,7 @@ The Residue (and ResidueView) API
   :returns: the newly created :class:`pv.mol.AtomView` instance
 
 
-The Atom (and AtomView) API
+Atom (and AtomView)
 -----------------------------------------------------------------------------------------
 
 .. class:: pv.mol.Atom
@@ -366,7 +407,7 @@ The Atom (and AtomView) API
   Returns true when the atom was imported from a HETATM record, false if not. This flag is only meaningful for structures imported from PDB files and will return false for other file formats.
 
 
-The Bond API
+Bond
 -----------------------------------------------------------------------------------------
 
 
