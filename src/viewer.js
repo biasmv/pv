@@ -18,7 +18,39 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-var pv = (function(){
+
+define([
+  './gl-matrix', 
+  './color', 
+  './slab', 
+  './unique-object-id-pool', 
+  './utils', 
+  './gfx/framebuffer', 
+  './buffer-allocators', 
+  './gfx/cam', 
+  './gfx/shaders', 
+  './touch', 
+  './gfx/render', 
+  './gfx/label', 
+  './gfx/custom-mesh', 
+  './gfx/animation', 
+  './gfx/scene-node'], 
+  function(
+    glMatrix, 
+    color, 
+    slab, 
+    UniqueObjectIdPool, 
+    utils, 
+    FrameBuffer, 
+    PoolAllocator, 
+    Cam, 
+    shaders, 
+    TouchHandler, 
+    render, 
+    TextLabel, 
+    CustomMesh, 
+    animation, 
+    SceneNode) {
 
 "use strict";
 
@@ -41,6 +73,8 @@ on how to unblock it.\
 </div>';
 
 
+var vec3 = glMatrix.vec3;
+var mat4 = glMatrix.mat4;
 
 function shouldUseHighPrecision() {
   // high precision for shaders is only required on iOS, all the other browsers 
@@ -78,10 +112,10 @@ function isWebGLSupported(gl) {
 function slabModeToStrategy(mode, options) {
   mode = mode || 'auto';
   if (mode === 'fixed') {
-    return new FixedSlab(options);
+    return new slab.FixedSlab(options);
   }
   if (mode === 'auto') {
-    return new AutoSlab(options);
+    return new slab.AutoSlab(options);
   }
   return null;
 }
@@ -144,7 +178,8 @@ function PV(domElement, opts) {
       document.readyState === "interactive") {
     this._initPV();
   } else {
-    document.addEventListener('DOMContentLoaded', bind(this, this._initPV));
+    document.addEventListener('DOMContentLoaded', 
+                              utils.bind(this, this._initPV));
   }
 }
 
@@ -166,7 +201,7 @@ PV.prototype = {
       antialias : opts.antialias,
       quality : optValue(opts, 'quality', 'low'),
       style : optValue(opts, 'style', 'hemilight'),
-      background : forceRGB(opts.background || 'white'),
+      background : color.forceRGB(opts.background || 'white'),
       slabMode : slabModeToStrategy(opts.slabMode),
       atomClick: opts.atomClicked || opts.atomClick || null,
       outline : optValue(opts, 'outline', true),
@@ -410,8 +445,8 @@ PV.prototype = {
 
     // get vertex attribute location for the shader once to
     // avoid repeated calls to getAttribLocation/getUniformLocation
-    var getAttribLoc = bind(gl, gl.getAttribLocation);
-    var getUniformLoc = bind(gl, gl.getUniformLocation);
+    var getAttribLoc = utils.bind(gl, gl.getAttribLocation);
+    var getUniformLoc = utils.bind(gl, gl.getUniformLocation);
     shaderProgram.posAttrib = getAttribLoc(shaderProgram, 'attrPos');
     shaderProgram.colorAttrib = getAttribLoc(shaderProgram, 'attrColor');
     shaderProgram.normalAttrib = getAttribLoc(shaderProgram, 'attrNormal');
@@ -462,23 +497,23 @@ PV.prototype = {
       select : this._initShader(shaders.SELECT_VS, shaders.SELECT_FS)
     };
 
-    this._boundDraw = bind(this, this._draw);
+    this._boundDraw = utils.bind(this, this._draw);
 
-    this._mousePanListener = bind(this, this._mousePan);
-    this._mouseRotateListener = bind(this, this._mouseRotate);
-    this._mouseUpListener = bind(this, this._mouseUp);
+    this._mousePanListener = utils.bind(this, this._mousePan);
+    this._mouseRotateListener = utils.bind(this, this._mouseRotate);
+    this._mouseUpListener = utils.bind(this, this._mouseUp);
 
     // Firefox responds to the wheel event, whereas other browsers listen to
     // the mousewheel event. Register different event handlers, depending on
     // what properties are available.
-    var addListener = bind(this._canvas, this._canvas.addEventListener);
+    var addListener = utils.bind(this._canvas, this._canvas.addEventListener);
     if ('onwheel' in this._canvas) {
-      addListener('wheel', bind(this, this._mouseWheelFF), false);
+      addListener('wheel', utils.bind(this, this._mouseWheelFF), false);
     } else {
-      addListener('mousewheel', bind(this, this._mouseWheel), false);
+      addListener('mousewheel', utils.bind(this, this._mouseWheel), false);
     }
-    addListener('dblclick', bind(this, this._mouseDoubleClick), false);
-    addListener('mousedown', bind(this, this._mouseDown), false);
+    addListener('dblclick', utils.bind(this, this._mouseDoubleClick), false);
+    addListener('mousedown', utils.bind(this, this._mouseDown), false);
     this._touchHandler = new TouchHandler(this._canvas, this, this._cam);
 
     if (!this._initialized) {
@@ -529,28 +564,16 @@ PV.prototype = {
     } else {
       rotation4 = mat4.clone(rotation);
     }
-    this._camAnim.rotation = new Rotate(this._cam.rotation(), 
-                                        rotation4, ms);
+    this._camAnim.rotation = 
+      new animation.Rotate(this._cam.rotation(), rotation4, ms);
     this.requestRedraw();
   },
 
   setCamera : function(rotation, center, zoom, ms) {
     ms |= 0;
-    if (ms === 0) {
-      this._cam.setCenter(center);
-      this._cam.setRotation(rotation);
-      this._cam.setZoom(zoom);
-      this.requestRedraw();
-      return;
-    }
-    this._camAnim.center = new Move(this._cam.center(), 
-                                    vec3.clone(center), ms);
-    this._camAnim.rotation = new Rotate(this._cam.rotation(), 
-        mat4.clone(rotation), ms);
-
-    this._camAnim.zoom = new Animation(this._cam.zoom(), 
-        zoom, ms);
-    this.requestRedraw();
+    this.setCenter(center, ms);
+    this.setRotation(rotation, ms);
+    this.setZoom(zoom, ms);
   },
 
   // performs interpolation of current camera position
@@ -612,8 +635,19 @@ PV.prototype = {
       this._cam.setCenter(center);
       return;
     }
-    this._camAnim.center = new Move(this._cam.center(), 
-                                    vec3.clone(center), ms);
+    this._camAnim.center = 
+      new animation.Move(this._cam.center(), vec3.clone(center), ms);
+    this.requestRedraw();
+  },
+
+  setZoom : function(zoom, ms) {
+    ms |= 0;
+    if (ms === 0) {
+      this._cam.setZoom(zoom);
+      return;
+    }
+    this._camAnim.zoom = 
+      new animation.Animation(this._cam.zoom(), zoom, ms);
     this.requestRedraw();
   },
 
@@ -659,7 +693,7 @@ PV.prototype = {
       this.listenerMap[eventName] = callbacks;
     }
     if (callback === 'center') {
-      callbacks.push(bind(this, this._centerOnClicked));
+      callbacks.push(utils.bind(this, this._centerOnClicked));
     } else {
       callbacks.push(callback);
     }
@@ -781,7 +815,7 @@ PV.prototype = {
   },
 
   _handleStandardOptions : function(opts) {
-    opts = copy(opts);
+    opts = utils.copy(opts);
     opts.float32Allocator = this._float32Allocator;
     opts.uint16Allocator = this._uint16Allocator;
     opts.idPool = this._objectIdManager;
@@ -819,31 +853,6 @@ PV.prototype = {
     return this.add(name, obj);
   },
 
-  // internal method for debugging the auto-slabbing code. 
-  // not meant to be used otherwise. Will probably be removed again.
-  boundingSpheres : function(gl, obj, options) {
-    var vertArrays = obj.vertArrays();
-    var mg = new MeshGeom(gl, options.float32Allocator, 
-                          options.uint16Allocator);
-    mg.order(100);
-    var protoSphere = new ProtoSphere(16, 16);
-    var vertsPerSphere = protoSphere.numVerts();
-    var indicesPerSphere = protoSphere.numIndices();
-    var vertAssoc = new AtomVertexAssoc(obj.structure());
-    mg.setVertAssoc(vertAssoc);
-    mg.addChainVertArray({ name : function() { return "a"; }}, 
-                        vertArrays.length * vertsPerSphere,
-                        indicesPerSphere * vertArrays.length);
-    mg.setShowRelated('asym');
-    var color = [0.5, 0.5, 0.5, 0.2];
-    var va = mg.vertArrayWithSpaceFor(vertsPerSphere * vertArrays.length);
-    for (var i = 0; i < vertArrays.length; ++i) {
-      var bs = vertArrays[i].boundingSphere();
-      protoSphere.addTransformed(va, bs.center(), bs.radius(), color, 0);
-    }
-    return mg;
-  },
-
   cartoon : function(name, structure, opts) {
     var options = this._handleStandardMolOptions(opts, structure);
     options.color = options.color || color.bySS();
@@ -854,10 +863,6 @@ PV.prototype = {
     options.forceTube = options.forceTube || false;
     var obj = render.cartoon(structure, this._gl, options);
     var added = this.add(name, obj);
-    if (options.boundingSpheres) {
-      var boundingSpheres = this.boundingSpheres(this._gl, obj, options);
-      this.add(name+'.bounds', boundingSpheres);
-    }
     return added;
   },
 
@@ -908,10 +913,9 @@ PV.prototype = {
     return this.add(name, obj);
   },
 
-  fitTo : function(what, slabMode) {
+  fitTo : function(what) {
     var axes = this._cam.mainAxes();
-    slabMode = slabMode || this._options.slabMode;
-    var intervals = [ new Range(), new Range(), new Range() ];
+    var intervals = [ new utils.Range(), new utils.Range(), new utils.Range() ];
     if (what instanceof SceneNode) {
       what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                     intervals[1], intervals[2]);
@@ -926,7 +930,7 @@ PV.prototype = {
         intervals[i].extend(1.5);
       }
     }
-    this._fitToIntervals(axes, intervals, slabMode);
+    this._fitToIntervals(axes, intervals);
   },
 
   _fitToIntervals : function(axes, intervals) {
@@ -962,7 +966,7 @@ PV.prototype = {
   // adapt the zoom level to fit the viewport to all visible objects.
   autoZoom : function() {
     var axes = this._cam.mainAxes();
-    var intervals = [ new Range(), new Range(), new Range() ];
+    var intervals = [ new utils.Range(), new utils.Range(), new utils.Range() ];
     this.forEach(function(obj) {
       if (!obj.visible()) {
         return;
@@ -987,8 +991,8 @@ PV.prototype = {
   // enable disable rock and rolling of camera
   rockAndRoll : function(enable) {
     if (enable === true) {
-      this._camAnim.rotation = new RockAndRoll(this._cam.rotation(), 
-                                              [0, 1, 0], 2000);
+      this._camAnim.rotation = 
+        new animation.RockAndRoll(this._cam.rotation(), [0, 1, 0], 2000);
       this.requestRedraw();
     } else if (enable === false) {
       this._camAnim.rotation = null;
@@ -1156,8 +1160,4 @@ return {
   isWebGLSupported : isWebGLSupported
 };
 
-})();
-
-if(typeof(exports) !== 'undefined') {
-    module.exports = pv;
-}
+});

@@ -1,5 +1,27 @@
-var structure;
 
+requirejs.config({
+  'baseUrl' : 'src' ,
+  // uncomment the following commented-out block to test the contatenated, 
+  // minified PV version. Grunt needs to be run before for this to work.
+  /*
+  paths : {
+    pv : '/js/pv.min'
+  }
+  */
+});
+
+
+// on purpose outside of the require block, so we can inspect the viewer object 
+// from the JavaScript console.
+var viewer;
+
+require(['pv'], function(pv) {
+
+var io = pv.io;
+var viewpoint = pv.viewpoint;
+var color = pv.color;
+
+var structure;
 
 function lines() {
   viewer.clear();
@@ -13,7 +35,7 @@ function cartoon() {
   var go = viewer.cartoon('structure', structure, {
       color : color.ssSuccession(), showRelated : '1',
   });
-  var rotation = principalAxes(go);
+  var rotation = viewpoint.principalAxes(go);
   viewer.setRotation(rotation)
 }
 
@@ -138,3 +160,48 @@ function byChain() {
 function polymerase() {
   load('4UBB');
 };
+
+$(document).foundation();
+$('#1r6a').click(transferase);
+$('#1crn').click(crambin);
+$('#1ake').click(kinase);
+$('#4ubb').click(polymerase);
+$('#4c46').click(longHelices);
+$('#2f8v').click(telethonin);
+$('#style-cartoon').click(cartoon);
+$('#style-tube').click(tube);
+$('#style-line-trace').click(lineTrace);
+$('#style-sline').click(sline);
+$('#style-trace').click(trace);
+$('#style-lines').click(lines);
+$('#style-balls-and-sticks').click(ballsAndSticks);
+$('#style-spheres').click(spheres);
+$('#color-uniform').click(uniform);
+$('#color-element').click(byElement);
+$('#color-chain').click(byChain);
+$('#color-ss-succ').click(ssSuccession);
+$('#color-ss').click(ss);
+$('#color-rainbow').click(rainbow);
+$('#load-from-pdb').change(function() {
+  var pdbId = this.value;
+  this.value = '';
+  this.blur();
+  $.ajax('http://pdb.org/pdb/files/'+pdbId+'.pdb')
+    .done(function(data) {
+      structure = io.pdb(data);
+      cartoon();
+      viewer.autoZoom();
+    })
+});
+viewer = pv.Viewer(document.getElementById('viewer'), { 
+    width : 'auto', height: 'auto', antialias : true, 
+    outline : true, quality : 'medium',
+    background : '#333', animateTime: 500,
+});
+viewer.addListener('viewerReady', longHelices);
+
+window.addEventListener('resize', function() {
+      viewer.fitParent();
+});
+
+});

@@ -18,9 +18,21 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-(function(exports) {
+define(
+  [
+    './gl-matrix', 
+    './mol/symmetry',
+    './mol/all',
+  ], 
+  function(
+    glMatrix, 
+    symmetry,
+    mol) {
 
 "use strict";
+
+var vec3 = glMatrix.vec3;
+var mat4 = glMatrix.mat4;
 
 function Remark350Reader() {
   this._assemblies = {};
@@ -50,7 +62,7 @@ Remark350Reader.prototype = {
     line = line.substr(11);
     if (line[0] === 'B' && line.substr(0, 12) === 'BIOMOLECULE:') {
       var name =  line.substr(13).trim();
-      this._currentAssembly = new Assembly(name); 
+      this._currentAssembly = new symmetry.Assembly(name); 
       this._assemblies[name] =  this._currentAssembly;
       return;
     }
@@ -58,7 +70,7 @@ Remark350Reader.prototype = {
         line.substr(0, 30) === '                   AND CHAINS:') {
       var chains = line.substr(30).split(',');
       if (line[0] === 'A') {
-        this._currentSymGen = new SymGenerator();
+        this._currentSymGen = new symmetry.SymGenerator();
         this._currentAssembly.addGenerator(this._currentSymGen);
       }
       this._currentMatrix = mat4.create();
@@ -339,20 +351,20 @@ function fetchPdb(url, callback, options) {
   oReq.open("GET", url, true);
   oReq.onload = function() {
     if (oReq.response) {
-      var structure= io.pdb(oReq.response, options);
+      var structure= pdb(oReq.response, options);
       callback(structure);
     }
   };
   oReq.send(null);
 }
 
-exports.io = {};
-exports.io.pdb = pdb;
-exports.io.Remark350Reader = Remark350Reader;
-exports.io.fetchPdb = fetchPdb;
+return {
+  pdb : pdb,
+  Remark350Reader : Remark350Reader,
+  fetchPdb : fetchPdb
+};
 
-
-}(this));
+});
 
 
 

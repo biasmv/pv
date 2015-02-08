@@ -18,13 +18,9 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-(function(exports) {
+define(function() {
 "use strict";
 
-// contains classes for two kinds of typed array allocation schemes. 
-// PoolAllocator stores every typed array allocation in a list and tries
-// to reuse unused buffers whenever possible. The NativeAllocator just
-// news the typed arrays every time they are used.
 function PoolAllocator(bufferType) {
   this._freeArrays = [];
   this._bufferType = bufferType;
@@ -55,7 +51,5 @@ PoolAllocator.prototype.release = function(buffer) {
   this._freeArrays.push(buffer);
 };
 
-exports.PoolAllocator = PoolAllocator;
-
-return true;
-})(this);
+return PoolAllocator;
+});

@@ -18,15 +18,19 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-(function(exports) {
+define(['utils'], function(utils) {
 "use strict";
 
 function TouchHandler(element, viewer, cam) {
   this._element = element;
-  this._element.addEventListener('touchmove', bind(this, this._touchMove));
-  this._element.addEventListener('touchstart', bind(this, this._touchStart));
-  this._element.addEventListener('touchend', bind(this, this._touchEnd));
-  this._element.addEventListener('touchcancel', bind(this, this._touchEnd));
+  this._element.addEventListener('touchmove', 
+                                 utils.bind(this, this._touchMove));
+  this._element.addEventListener('touchstart', 
+                                 utils.bind(this, this._touchStart));
+  this._element.addEventListener('touchend', 
+                                 utils.bind(this, this._touchEnd));
+  this._element.addEventListener('touchcancel', 
+                                 utils.bind(this, this._touchEnd));
   this._touchState = {
     scale : 1.0,
     rotation : 0.0,
@@ -170,5 +174,5 @@ TouchHandler.prototype = {
   },
 };
 
-exports.TouchHandler = TouchHandler;
-})(this);
+return TouchHandler;
+});
