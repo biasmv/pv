@@ -75,6 +75,8 @@ Changelog
 - ability to add geometric shapes to the 3D scene through customMesh
 - ability to specify custom color palettes (@andreasprlic)
 - viewerReady event (@andreasprlic)
+- PV can optionally be used as an AMD module without polluting the global namespace
+- added more unit and functional tests. The tests reach a coverage of 80% of the total number of exectuable lines of code.
 
 ### New in Version 1.3.1
 
