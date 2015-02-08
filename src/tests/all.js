@@ -47,12 +47,12 @@ require.config({
 });
 
 var UNIT_TESTS = [
-  'tests/mol-basics',
+  'tests/mol/basics',
   'tests/binary-search',
-  'tests/mol-iterators',
-  'tests/mol-select',
-  'tests/viewer-render',
-  'tests/pdb-io',
+  'tests/mol/iterators',
+  'tests/mol/select',
+  'tests/viewer/functional',
+  'tests/io/pdb',
   'tests/colors'
 ];
 
