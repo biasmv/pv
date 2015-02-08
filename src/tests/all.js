@@ -51,6 +51,7 @@ var UNIT_TESTS = [
   'tests/binary-search',
   'tests/mol/iterators',
   'tests/mol/select',
+  'tests/mol/assign-helix-sheet',
   'tests/viewer/functional',
   'tests/io/pdb',
   'tests/colors',
