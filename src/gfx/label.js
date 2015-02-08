@@ -18,7 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['utils', 'scene-node'], function(utils, SceneNode) {
+define(
+  [
+    '../utils', 
+    './scene-node'
+  ], 
+  function(
+    utils, 
+    SceneNode) {
 
 function TextLabel(gl, canvas, context, pos, text, options) {
   SceneNode.call(this, gl);

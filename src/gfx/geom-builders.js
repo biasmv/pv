@@ -19,7 +19,14 @@
 // SOFTWARE.
 
 // contains classes for constructing geometry for spheres, cylinders and tubes.
-define(['gl-matrix', 'geom'], function(glMatrix, geom) {
+define(
+  [
+    '../gl-matrix', 
+    '../geom'
+  ], 
+  function(
+    glMatrix, 
+    geom) {
 "use strict";
 
 var vec3 = glMatrix.vec3;

@@ -19,13 +19,38 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-define(['gl-matrix', 'color', 'slab', 'unique-object-id-pool', 'utils', 
-        'framebuffer', 'buffer-allocators', 'cam', 'shaders', 'touch', 
-        'render', 'label', 'custom-mesh', 'animation', 'scene-node'], 
-       function(glMatrix, color, slab, UniqueObjectIdPool, utils, 
-                FrameBuffer, PoolAllocator, Cam, shaders, 
-                TouchHandler, render, TextLabel, CustomMesh, 
-                animation, SceneNode) {
+define([
+  './gl-matrix', 
+  './color', 
+  './slab', 
+  './unique-object-id-pool', 
+  './utils', 
+  './gfx/framebuffer', 
+  './buffer-allocators', 
+  './gfx/cam', 
+  './gfx/shaders', 
+  './touch', 
+  './gfx/render', 
+  './gfx/label', 
+  './gfx/custom-mesh', 
+  './gfx/animation', 
+  './gfx/scene-node'], 
+  function(
+    glMatrix, 
+    color, 
+    slab, 
+    UniqueObjectIdPool, 
+    utils, 
+    FrameBuffer, 
+    PoolAllocator, 
+    Cam, 
+    shaders, 
+    TouchHandler, 
+    render, 
+    TextLabel, 
+    CustomMesh, 
+    animation, 
+    SceneNode) {
 
 "use strict";
 

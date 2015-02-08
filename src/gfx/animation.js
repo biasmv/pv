@@ -18,8 +18,16 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
-define(['./gl-matrix', './utils', './geom'], 
-       function(glMatrix, utils, geom) {
+define(
+  [
+    '../gl-matrix', 
+    '../utils', 
+    '../geom'
+  ], 
+  function(
+    glMatrix, 
+    utils, 
+    geom) {
 "use strict";
 
 var vec3 = glMatrix.vec3;

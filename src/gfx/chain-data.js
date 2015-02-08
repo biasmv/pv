@@ -18,8 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['utils', 'vertex-array', 'indexed-vertex-array'], 
-       function(utils, VertexArray, IndexedVertexArray) {
+define(
+  [
+    '../utils', 
+    './vertex-array', 
+    './indexed-vertex-array'
+  ], 
+  function(
+    utils, 
+    VertexArray, 
+    IndexedVertexArray) {
 
 "use strict";
 

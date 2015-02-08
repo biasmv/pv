@@ -18,7 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['utils', 'vertex-array-base'], function(utils, VertexArrayBase) {
+define(
+  [
+    '../utils', 
+    './vertex-array-base'
+  ], 
+  function(
+    utils, 
+    VertexArrayBase) {
 
 "use strict";
 

@@ -19,7 +19,13 @@
 // DEALINGS IN THE SOFTWARE.
 
 
-define(['gl-matrix', 'geom'], function(glMatrix, geom) {
+define(
+  [
+    '../gl-matrix', 
+    '../geom'
+  ], 
+  function(
+    glMatrix, geom) {
 
 "use strict";
 

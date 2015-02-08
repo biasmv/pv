@@ -18,7 +18,16 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-define(['gl-matrix', 'mol/all', 'symmetry'], function(glMatrix, mol, symmetry) {
+define(
+  [
+    './gl-matrix', 
+    './mol/all', 
+    './mol/symmetry'
+  ], 
+  function(
+    glMatrix, 
+    mol,
+    symmetry) {
 
 "use strict";
 

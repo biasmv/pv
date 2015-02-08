@@ -18,8 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['utils', 'gl-matrix', 'scene-node'], 
-       function(utils, glMatrix, SceneNode) {
+define(
+  [
+    '../utils', 
+    '../gl-matrix', 
+    './scene-node'
+  ], 
+  function(
+    utils, 
+    glMatrix, 
+    SceneNode) {
 
 "use strict";
 

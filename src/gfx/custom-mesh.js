@@ -18,10 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['gl-matrix', 'utils', 'color', 'geom', 'geom-builders', 
-        'indexed-vertex-array', 'scene-node'], 
-       function(glMatrix, utils, color, geom, gb, IndexedVertexArray, 
-                SceneNode) {
+define(
+  [
+    '../gl-matrix', 
+    '../utils', 
+    '../color', 
+    '../geom', 
+    './geom-builders', 
+    './indexed-vertex-array', 
+    './scene-node'
+  ], 
+  function(
+    glMatrix, 
+    utils, 
+    color, 
+    geom, 
+    gb, 
+    IndexedVertexArray, 
+    SceneNode) {
 
 "use strict";
 

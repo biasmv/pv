@@ -18,8 +18,16 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['utils', 'base-geom', 'chain-data'], 
-       function(utils, BaseGeom, chainData) {
+define(
+  [
+    '../utils', 
+    './base-geom', 
+    './chain-data'
+  ], 
+  function(
+    utils, 
+    BaseGeom, 
+    chainData) {
 
 "use strict";
 

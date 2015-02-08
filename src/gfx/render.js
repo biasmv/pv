@@ -18,10 +18,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-define(['gl-matrix', 'geom', 'geom-builders', 'mesh-geom', 'line-geom', 
-        'vert-assoc', 'color'], 
-       function(glMatrix, geom, geomBuilders, MeshGeom, LineGeom, 
-                vertAssoc, color) {
+define(
+  [
+    '../gl-matrix', 
+    '../geom', 
+    './geom-builders', 
+    './mesh-geom', 
+    './line-geom', 
+    './vert-assoc', 
+    '../color'
+  ], 
+  function(
+    glMatrix, 
+    geom, 
+    geomBuilders, 
+    MeshGeom, 
+    LineGeom, 
+    vertAssoc, 
+    color) {
 "use strict";
 
 var vec3 = glMatrix.vec3;
