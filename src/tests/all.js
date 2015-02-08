@@ -53,7 +53,8 @@ var UNIT_TESTS = [
   'tests/mol/select',
   'tests/viewer/functional',
   'tests/io/pdb',
-  'tests/colors'
+  'tests/colors',
+  'tests/gfx/base-geom',
 ];
 
 // require the unit tests.
