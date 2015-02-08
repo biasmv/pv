@@ -55,6 +55,7 @@ var START_SNIPPET="\n\
         root.io = pv.io;\n\
         root.mol = pv.mol;\n\
         root.color = pv.color;\n\
+        root.rgb = pv.rgb;\n\
         root.viewpoint = pv.viewpoint;\n\
         root.vec3 = pv.vec3;\n\
         root.vec4 = pv.vec4;\n\
@@ -124,7 +125,7 @@ module.exports = function(grunt) {
           amdclean = require('amdclean'),
           outputFile = data.path;
           fs.writeFileSync(outputFile, amdclean.clean({
-            'filePath': outputFile, 
+            filePath: outputFile, 
             transformAMDChecks : false,
             aggressiveOptimizations : true,
             createAnonymousAMDModule : true,

@@ -21,13 +21,13 @@
 define(
   [
     './gl-matrix', 
-    './mol/all', 
-    './mol/symmetry'
+    './mol/symmetry',
+    './mol/all',
   ], 
   function(
     glMatrix, 
-    mol,
-    symmetry) {
+    symmetry,
+    mol) {
 
 "use strict";
 
