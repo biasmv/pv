@@ -115,6 +115,39 @@ ChainBase.prototype  = {
     }
   },
 
+  residuesInRnumRange : function(start, end) {
+    // FIXME: this currently only works with the numeric part, insertion
+    // codes are not honoured.
+    var matching = [];
+    var i, e;
+    var residues = this.residues();
+    if (this._rnumsOrdered === true) {
+      // binary search our way to heaven
+      var startIdx = 
+        utils.indexFirstLargerEqualThan(residues, numify(start), rnumComp);
+      console.log(startIdx, start, residues[0].num());
+      if (startIdx === -1) {
+        return matching;
+      }
+      var endIdx = 
+        utils.indexLastSmallerEqualThan(residues, numify(end), rnumComp);
+      if (endIdx === -1) {
+        return matching;
+      }
+      for (i = startIdx; i <= endIdx; ++i) {
+        matching.push(this._residues[i]);
+      }
+    } else {
+      for (i = 0, e = residues.length; i !== e; ++i) {
+        var res = residues[i];
+        if (res.num() >= start && res.num() <= end) {
+          matching.push(res);
+        }
+      }
+    }
+    return matching;
+  },
+
 
   prop : function(propName) { 
     return this[propName]();
@@ -159,6 +192,21 @@ function addNonEmptyTrace(traces, trace) {
   traces.push(trace);
 }
 
+
+
+function checkRnumsOrdered(residues, orderedFlag, newResidue) {
+  if (residues.length === 0) {
+    return true;
+  }
+  if (!orderedFlag) {
+    return false;
+  }
+  var combinedRNum = rnumInsCodeHash(newResidue.num(), newResidue.insCode());
+  var last = residues[residues.length-1];
+  var lastCombinedRNum = rnumInsCodeHash(last.num(), last.insCode());
+  return lastCombinedRNum < combinedRNum;
+}
+
 utils.derive(Chain, ChainBase, {
 
   name : function() { return this._name; },
@@ -168,47 +216,11 @@ utils.derive(Chain, ChainBase, {
   addResidue : function(name, num, insCode) {
     insCode = insCode || '\0';
     var residue = new Residue(this, name, num, insCode);
-    if (this._residues.length > 0 && this._rnumsOrdered) {
-      var combinedRNum = rnumInsCodeHash(num, insCode);
-      var last = this._residues[this._residues.length-1];
-      var lastCombinedRNum = rnumInsCodeHash(last.num(),last.insCode());
-      this._rnumsOrdered = lastCombinedRNum < combinedRNum;
-    }
+    this._rnumsOrdered = checkRnumsOrdered(this._residues,
+                                           this._rnumsOrdered, 
+                                           residue);
     this._residues.push(residue);
     return residue;
-  },
-
-
-  residuesInRnumRange : function(start, end) {
-    // FIXME: this currently only works with the numeric part, insertion
-    // codes are not honoured.
-    var matching = [];
-    var i, e;
-    var residues = this._residues;
-    if (this._rnumsOrdered === true) {
-      // binary search our way to heaven
-      var startIdx = 
-        utils.indexFirstLargerEqualThan(residues, numify(start), rnumComp);
-      if (startIdx === -1) {
-        return matching;
-      }
-      var endIdx = 
-        utils.indexLastSmallerEqualThan(residues, numify(end), rnumComp);
-      if (endIdx === -1) {
-        return matching;
-      }
-      for (i = startIdx; i <= endIdx; ++i) {
-        matching.push(this._residues[i]);
-      }
-    } else {
-      for (i = 0, e = residues.length; i !== e; ++i) {
-        var res = residues[i];
-        if (res.num() >= start && res.num() <= end) {
-          matching.push(res);
-        }
-      }
-    }
-    return matching;
   },
 
   // assigns secondary structure to residues in range from_num to to_num.
@@ -295,6 +307,7 @@ function ChainView(molView, chain) {
   this._residues = [];
   this._molView = molView;
   this._residueMap = {};
+  this._rnumsOrdered = true;
 }
 
 
@@ -302,6 +315,9 @@ utils.derive(ChainView, ChainBase, {
 
   addResidue : function(residue, recurse) {
     var resView = new ResidueView(this, residue.full());
+    this._rnumsOrdered = checkRnumsOrdered(this._residues, 
+                                           this._rnumsOrdered, 
+                                           residue);
     this._residues.push(resView);
     this._residueMap[residue.full().index()] = resView;
     if (recurse) {

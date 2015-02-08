@@ -89,7 +89,7 @@ exports.binarySearch = function(values, value, comp) {
 // larger or equal than *value*.
 exports.indexFirstLargerEqualThan = function(values, value, comp) {
   comp = comp || defaultComp;
-  if (values.length === 0 || comp(value, values[0])) {
+  if (values.length === 0 || comp(values[values.length - 1], value)) {
     return -1;
   }
   var low = 0, high = values.length;
@@ -101,9 +101,9 @@ exports.indexFirstLargerEqualThan = function(values, value, comp) {
       // lower than mid.
       high = mid;
     } else if (comp(midValue, value)) {
-      low = mid;
+      low = mid + 1;
     } else {
-      high = mid+1;
+      high = mid;
     }
     var newMid  = (low + high) >> 1;
     if (newMid === mid) {
@@ -118,18 +118,21 @@ exports.indexLastSmallerThan = function(values, value, comp) {
   if (values.length === 0 || comp(values[values.length-1], value)) {
     return values.length-1;
   }
+  if (comp(value, values[0]) || !comp(values[0], value)) {
+    return -1;
+  }
   var low = 0, high = values.length;
   var mid = (low + high) >> 1;
   while (true) {
     var midValue = values[mid];
-    if (comp(value, midValue)) {
+    if (comp(value, midValue) || !comp(midValue, value)) {
       high = mid;
     } else {
       low = mid;
     }
     var newMid  = (low + high) >> 1;
     if (newMid === mid) {
-      return mid-1;
+      return mid;
     }
     mid = newMid;
   }

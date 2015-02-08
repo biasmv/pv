@@ -276,4 +276,51 @@ test('atom select on view', function(assert) {
   assert.strictEqual(view.chains().length, 1);
 });
 
+test('residue by rnum on structure', function(assert) {
+  var rnums = [268,903,904,905];
+  for (var i = 0; i < rnums.length; ++i) {
+    var res = FRAGMENT.chain('A').residueByRnum(rnums[i]);
+    assert.strictEqual(res.num(), rnums[i]);
+  }
+  assert.strictEqual(FRAGMENT.chain('A').residueByRnum(100), null);
+  assert.strictEqual(FRAGMENT.chain('A').residueByRnum(900), null);
+  assert.strictEqual(FRAGMENT.chain('A').residueByRnum(1000), null);
+});
+
+test('residue by rnum on view', function(assert) {
+  var rnums = [268,903,904,905];
+  var firstView = FRAGMENT.select({rnums : rnums });
+  assert.ok(firstView.chain('A')._rnumsOrdered === true);
+  for (var i = 0; i < rnums.length; ++i) {
+    var res = firstView.chain('A').residueByRnum(rnums[i]);
+    assert.strictEqual(res.num(), rnums[i]);
+  }
+  assert.strictEqual(firstView.chain('A').residueByRnum(100), null);
+  assert.strictEqual(firstView.chain('A').residueByRnum(902), null);
+  assert.strictEqual(firstView.chain('A').residueByRnum(1000), null);
+});
+
+test('residues in rnum range on structure', function(assert) {
+  assert.ok(FRAGMENT.chain('A')._rnumsOrdered === false);
+  var residues = FRAGMENT.chain('A').residuesInRnumRange(902, 906);
+  assert.strictEqual(residues.length, 5);
+  assert.strictEqual(residues[0].num(), 902);
+  assert.strictEqual(residues[1].num(), 903);
+  assert.strictEqual(residues[2].num(), 904);
+  assert.strictEqual(residues[3].num(), 905);
+  assert.strictEqual(residues[4].num(), 906);
+});
+
+test('residues in rnum range on view', function(assert) {
+  var rnums = [268,903,904,905];
+  var firstView = FRAGMENT.select({rnums : rnums });
+  assert.ok(firstView.chain('A')._rnumsOrdered === true);
+  var residues = firstView.chain('A').residuesInRnumRange(902, 906);
+  assert.strictEqual(residues.length, 3);
+  assert.strictEqual(residues[0].num(), 903);
+  assert.strictEqual(residues[1].num(), 904);
+  assert.strictEqual(residues[2].num(), 905);
+});
+
+
 });
