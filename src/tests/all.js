@@ -56,6 +56,7 @@ var UNIT_TESTS = [
   'tests/io/pdb',
   'tests/colors',
   'tests/gfx/base-geom',
+  'tests/io/sdf',
 ];
 
 // require the unit tests.

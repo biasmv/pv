@@ -319,6 +319,10 @@ PDBReader.prototype = {
   },
 };
 
+function getLines(data) {
+  return data.split(/\r\n|\r|\n/g);
+}
+
 // a truly minimalistic PDB parser. It will die as soon as the input is 
 // not well-formed. it only reads ATOM, HETATM, HELIX, SHEET and REMARK 
 // 350 records, everything else is ignored. in case of multi-model 
@@ -333,10 +337,9 @@ PDBReader.prototype = {
 function pdb(text, options) {
   console.time('pdb'); 
   var opts = options || {};
+  var lines = getLines(text);
   var reader = new PDBReader(opts);
-  var lines = text.split(/\r\n|\r|\n/g);
-  var i = 0;
-  for (i = 0; i < lines.length; i++) {
+  for (var i = 0; i < lines.length; i++) {
     if (!reader.processLine(lines[i])) {
       break;
     }
@@ -346,22 +349,147 @@ function pdb(text, options) {
   return structure;
 }
 
-function fetchPdb(url, callback, options) {
+
+function SDFReader() {
+  this._structure = new mol.Mol();
+  this._reset();
+  this._sawEnd = false;
+}
+
+SDFReader.prototype = {
+  processLine : function(line) {
+    var state = this._state;
+    if (state < 3) {
+      if (state === 0) {
+        var trimmed = line.trim();
+        if (trimmed.length === 0) {
+          return false;
+        }
+        this._title = trimmed;
+      }
+      this._sawEnd = false;
+      // header line
+      this._state++;
+      return true;
+    }
+    if (state === 3) {
+      // atom/bond count
+      this._expectedAtomCount = parseInt(line.substr(0, 3).trim(), 10);
+      this._expectedBondCount = parseInt(line.substr(3, 3).trim(), 10);
+      if (isNaN(this._expectedAtomCount) || isNaN(this._expectedBondCount)) {
+        console.error('invalid bond definition');
+        return false;
+      }
+      this._state++;
+      // is there a better way to convert an int to a string?
+      var chainName = '' + (this._structure.chains().length + 1);
+      this._currentChain = this._structure.addChain(chainName);
+      this._currentResidue = this._currentChain.addResidue(this._title, 1);
+    }
+    if (state === 4) {
+      var pos = [0, 0, 0];
+      for (var i = 0; i < 3; ++i) {
+        pos[i] = parseFloat(line.substr(i*10, 10).trim());
+        if (isNaN(pos[i])) {
+          console.error('invalid atom position');
+          return false;
+        }
+      }
+      var element = line.substr(31, 3).trim();
+      this._currentResidue.addAtom(element, pos, element, false);
+      this._atomCount++;
+      if (this._atomCount === this._expectedAtomCount) {
+        this._state++;
+      }
+    }
+    if (state === 5) {
+      var firstAtomIndex = parseInt(line.substr(0, 3).trim(), 10) - 1;
+      var secondAtomIndex = parseInt(line.substr(3, 3).trim(), 10) - 1;
+      if (isNaN(firstAtomIndex) || isNaN(secondAtomIndex)) {
+        console.error('invalid bond definition');
+        return false;
+      }
+      var atoms = this._currentResidue.atoms();
+      this._structure.connect(atoms[firstAtomIndex], atoms[secondAtomIndex]);
+      this._bondCount++;
+      if (this._bondCount === this._expectedBondCount) {
+        this._state++;
+      }
+    }
+    if (line.substr(0, 6) === 'M  END') {
+      this._sawEnd = true;
+      this._state++;
+    }
+    if (line.substr(0, 4) === '$$$$') {
+      this._reset();
+    }
+    return true;
+  },
+  _reset : function() {
+    this._state = 0;
+    this._currentResidue = null;
+    this._currentChain = null;
+    this._expectedAtomCount = null;
+    this._expectedBondount = null;
+    this._atomCount = 0;
+    this._bondCount = 0;
+    this._title = '';
+  },
+  finish : function() {
+    if (!this._sawEnd) {
+      console.error('truncated SDF file');
+      return null;
+    }
+    return this._structure;
+  }
+};
+
+function sdf(text) {
+  console.time('sdf'); 
+  var reader = new SDFReader();
+  var lines = getLines(text);
+  for (var i = 0; i < lines.length; i++) {
+    if (!reader.processLine(lines[i])) {
+      break;
+    }
+  }
+  var structure = reader.finish();
+  console.timeEnd('sdf');
+  return structure;
+}
+
+
+function fetch(url, callback) {
   var oReq = new XMLHttpRequest();
   oReq.open("GET", url, true);
   oReq.onload = function() {
     if (oReq.response) {
-      var structure= pdb(oReq.response, options);
-      callback(structure);
+      callback(oReq.response);
     }
   };
   oReq.send(null);
 }
 
+function fetchPdb(url, callback, options) {
+  fetch(url, function(data) {
+    var structure = pdb(data, options);
+    callback(structure);
+  });
+}
+
+function fetchSdf(url, callback) {
+  fetch(url, function(data) {
+    var structure = sdf(data);
+    callback(structure);
+  });
+}
+
 return {
   pdb : pdb,
+  sdf : sdf,
   Remark350Reader : Remark350Reader,
-  fetchPdb : fetchPdb
+  fetchPdb : fetchPdb,
+  fetchSdf : fetchSdf
 };
 
 });
