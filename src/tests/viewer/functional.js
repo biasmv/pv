@@ -105,6 +105,8 @@ test('apply coloring full', function(assert) {
       obj.colorBy(color.ssSuccession());
       obj.colorBy(color.rainbow());
       obj.colorBy(color.byElement());
+      obj.colorBy(color.byResidueProp('num'));
+      obj.colorBy(color.byAtomProp('index'));
       viewer.clear();
     }
     viewer.destroy();
@@ -127,6 +129,8 @@ test('apply coloring partial', function(assert) {
       obj.colorBy(color.ssSuccession(), view);
       obj.colorBy(color.rainbow(), view);
       obj.colorBy(color.byElement(), view);
+      obj.colorBy(color.byResidueProp('num'));
+      obj.colorBy(color.byAtomProp('index'));
       viewer.clear();
     }
     viewer.destroy();

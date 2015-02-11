@@ -14,6 +14,13 @@ test("force rgb from hex triplet", function() {
   compareColor([1.0, 1.0, 0.0], color.forceRGB('#ffff00'));
 });
 
+test("force rgb from hex quadruplet", function() {
+  compareColor([1.0, 0.0, 0.0, 1.0], color.forceRGB('#f00f'));
+  compareColor([1.0, 0.0, 0.0, 0.0], color.forceRGB('#f000'));
+  compareColor([1.0, 0.0, 0.0, 1.0], color.forceRGB('#ff0000ff'));
+  compareColor([1.0, 0.0, 0.0, 0.0], color.forceRGB('#ff000000'));
+});
+
 test("force rgb from rgb", function() {
   var red = [1.0, 0.0, 0.0];
   compareColor([1.0, 0.0, 0.0], color.forceRGB([1.0, 0.0, 0.0]));
