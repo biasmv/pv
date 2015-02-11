@@ -140,14 +140,19 @@ test('apply coloring partial', function(assert) {
 
 
 test('renders labels', function(assert) {
+  var done = assert.async();
   var viewer = createViewer();
   var label = viewer.label('my.label', 
                           'somewhere over the rainbow', [0,0,0]);
   assert.ok(!!label);
-  viewer.destroy();
+  setTimeout(function() {
+    viewer.destroy();
+    done();
+  }, 100);
 });
 
 test('renders custom meshes', function(assert) {
+  var done = assert.async();
   var viewer = createViewer();
   var mesh = viewer.customMesh('my.label');
   mesh.addTube([0,0,0], [50,0,0], 3, { color : 'red', cap : true });
@@ -155,7 +160,10 @@ test('renders custom meshes', function(assert) {
   mesh.addTube([0,0,0], [0,0,50], 3, { color : 'blue', cap : true });
   mesh.addSphere([0,0,0], 5, {color:'yellow'});
   assert.ok(!!mesh);
-  viewer.destroy();
+  setTimeout(function() {
+    viewer.destroy();
+    done();
+  }, 100);
 });
 
 });
