@@ -95,8 +95,6 @@ module.exports = function(grunt) {
         /*freeze : true, */
         immed : true,
         latedef : true,
-        // would love to use, but current project structure does not allow 
-        // for it.
         undef : true,
         browser : true,
         devel : true,
