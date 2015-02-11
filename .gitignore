@@ -1,7 +1,9 @@
 .DS_Store
-/js/pv.min.js
-/js/pv.dbg.js
-/js/pv.rel.js
+/js/bio-pv.min.js
+/js/bio-pv.dbg.js
+/js/bio-pv.rel.js
+/bio-pv.min.js
+/bio-pv.js
 /node_modules
 /doc/_build
 build

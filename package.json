@@ -19,7 +19,7 @@
       "url": "https://github.com/biasmv/pv/blob/master/LICENSE.txt"
     }
   ],
-  "main": "index.js",
+  "main": "bio-pv.min.js",
   "devDependencies": {
     "biojs-sniper": "0.0.6",
     "grunt": "~0.4.5",
@@ -33,10 +33,25 @@
   },
   "sniper": {
     "js": [
-      "/build/pv.js"
+      "/bio-pv.min.js"
     ],
-    "first": "example"
+    "first": "example",
+    "snippets" : ["snippets"]
   },
+  "scripts" : {
+    "prepublish": "scripts/make.sh"
+  },
+  "files" : [
+    "README.md",
+    "bio-pv.js",
+    "bio-pv.min.js",
+    "LICENSE.txt",
+    "snippets",
+    "pdbs",
+    "js/jquery-2.0.2.min.js",
+    "js/jquery-ui.min.js",
+    "package.json"
+  ],
   "keywords": [
     "protein",
     "3d",

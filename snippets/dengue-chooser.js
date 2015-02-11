@@ -1,56 +1,64 @@
-var app = require("bio-pv");
-var pv = app.Viewer(document.getElementById('gl'), 
+var viewer = pv.Viewer(document.getElementById('gl'), 
     { quality : 'high', width: 'auto', height : 'auto',
       antialias : true, outline : true});
+
 var structure;
+
 function lines() {
-  pv.clear();
-  pv.lines('structure', structure);
+  viewer.clear();
+  viewer.lines('structure', structure);
 }
+
 function cartoon() {
-  pv.clear();
-  pv.cartoon('structure', structure, { color: color.ssSuccession() });
+  viewer.clear();
+  viewer.cartoon('structure', structure, { color: color.ssSuccession() });
 }
+
 function lineTrace() {
-  pv.clear();
-  pv.lineTrace('structure', structure);
+  viewer.clear();
+  viewer.lineTrace('structure', structure);
 }
+
 function sline() {
-  pv.clear();
-  pv.sline('structure', structure);
+  viewer.clear();
+  viewer.sline('structure', structure);
 }
+
 function tube() {
-  pv.clear();
-  pv.tube('structure', structure);
+  viewer.clear();
+  viewer.tube('structure', structure);
 }
+
 function trace() {
-  pv.clear();
-  pv.trace('structure', structure);
+  viewer.clear();
+  viewer.trace('structure', structure);
 }
+
 function preset() {
-  pv.clear();
+  viewer.clear();
   var ligand = structure.select({rnames : ['RVP', 'SAH']});
-  pv.ballsAndSticks('ligand', ligand);
-  pv.cartoon('protein', structure);
+  viewer.ballsAndSticks('ligand', ligand);
+  viewer.cartoon('protein', structure);
 }
-function load(pdb_id) {
-  document.getElementById('status').innerHTML ='loading '+pdb_id;
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', '../pdbs/'+pdb_id+'.pdb');
-  xhr.setRequestHeader('Content-type', 'application/x-pdb');
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState == 4) {
-      structure = io.pdb(xhr.responseText);
-      preset();
-      pv.centerOn(structure);
-    }
-    document.getElementById('status').innerHTML = '';
-  }
-  xhr.send();
+
+function loadTransferase() {
+  document.getElementById('status').innerHTML ='loading transferase';
+  pv.io.fetchPdb('../pdbs/1r6a.pdb', function(molecule) {
+    structure = molecule;
+    preset();
+    // set camera orientation to pre-determined rotation, zoom and 
+    // center values that are optimal for this very molecule
+    var rotation = [ 
+       0.1728139370679855, 0.1443438231945038,  0.974320650100708, 
+       0.0990324765443802, 0.9816440939903259, -0.162993982434272, 
+      -0.9799638390541077, 0.1246569454669952,  0.155347332358360
+    ];
+    var center = [6.514, -45.571, 2.929];
+    viewer.setCamera(rotation, center, 73);
+    document.getElementById('status').innerHTML = '&nbsp;';
+  });
 }
-function transferase() {
-  load('1r6a');
-}
+
 document.getElementById('cartoon').onclick = cartoon;
 document.getElementById('line-trace').onclick = lineTrace;
 document.getElementById('preset').onclick = preset;
@@ -58,7 +66,9 @@ document.getElementById('lines').onclick = lines;
 document.getElementById('trace').onclick = trace;
 document.getElementById('sline').onclick = sline;
 document.getElementById('tube').onclick = tube;
+
 window.onresize = function(event) {
-  pv.fitParent();
+  viewer.fitParent();
 }
-document.addEventListener('DOMContentLoaded', transferase);
+
+viewer.on('viewerReady', loadTransferase);

@@ -41,48 +41,54 @@ SOURCE_FILES = [
 ALL_FILES = ['src/gl-matrix.js'];
 Array.prototype.push.apply(ALL_FILES, SOURCE_FILES);
 
-var browserify = require("browserify");
-var fs = require("fs");
-var mkdirp = require("mkdirp");
 
-var START_SNIPPET="\n\
-(function (root, factory) {\n\
-    if (typeof define === 'function' && define.amd) {\n\
-        define([], factory);\n\
-    } else {\n\
-        var pv = factory();\n\
-        root.pv = pv;\n\
-        root.io = pv.io;\n\
-        root.mol = pv.mol;\n\
-        root.color = pv.color;\n\
-        root.rgb = pv.rgb;\n\
-        root.viewpoint = pv.viewpoint;\n\
-        root.vec3 = pv.vec3;\n\
-        root.vec4 = pv.vec4;\n\
-        root.mat3 = pv.mat3;\n\
-        root.mat4 = pv.mat4;\n\
-        root.quat = pv.quat;\n\
-    }\n\
-}(this, function () {\n\
-    // modules will be inlined here\n\
-";
 
 var END_SNIPPET='return pv; }));';
 
 module.exports = function(grunt) {
 
+  var pkg = grunt.file.readJSON('package.json');
+  var BANNER='/**\n\
+ * PV - WebGL protein viewer v' + pkg.version + '\n\
+ * http://biasmv.github.io/pv\n\
+ * \n\
+ * Copyright 2013-2015 Marco Biasini\n\
+ * Released under the MIT license\n\
+ */\n';
+
+  var START_SNIPPET=BANNER+"\n\
+  (function (root, factory) {\n\
+      if (typeof define === 'function' && define.amd) {\n\
+          define([], factory);\n\
+      } else {\n\
+          var pv = factory();\n\
+          root.pv = pv;\n\
+          root.io = pv.io;\n\
+          root.mol = pv.mol;\n\
+          root.color = pv.color;\n\
+          root.rgb = pv.rgb;\n\
+          root.viewpoint = pv.viewpoint;\n\
+          root.vec3 = pv.vec3;\n\
+          root.vec4 = pv.vec4;\n\
+          root.mat3 = pv.mat3;\n\
+          root.mat4 = pv.mat4;\n\
+          root.quat = pv.quat;\n\
+      }\n\
+  }(this, function () {\n\
+      // modules will be inlined here\n\
+  ";
   // Project configuration.
   grunt.initConfig({
-    pkg: grunt.file.readJSON('package.json'),
+    pkg: pkg,
     uglify: {
       options: {
-        banner: '',
+        banner: BANNER,
         preserveComments : false,
         report : 'min'
       },
       build: {
-        src: 'js/pv.rel.js',
-        dest: 'js/pv.min.js'
+        src: 'js/bio-pv.rel.js',
+        dest: 'js/bio-pv.min.js'
       }
     },
     jshint : {
@@ -106,8 +112,8 @@ module.exports = function(grunt) {
 
     removelogging : {
       dist :  {
-        src : 'js/pv.dbg.js',
-        dest : 'js/pv.rel.js',
+        src : 'js/bio-pv.dbg.js',
+        dest : 'js/bio-pv.rel.js',
       }
     },
     requirejs: {
@@ -117,7 +123,7 @@ module.exports = function(grunt) {
         optimize: 'none',
         skipModuleInsertion : true,
         include: ['pv'],
-        out : 'js/pv.dbg.js',
+        out : 'js/bio-pv.dbg.js',
         onModuleBundleComplete : function(data) {
           var fs = require('fs'),
           amdclean = require('amdclean'),
@@ -127,6 +133,10 @@ module.exports = function(grunt) {
             transformAMDChecks : false,
             aggressiveOptimizations : true,
             createAnonymousAMDModule : true,
+            prefixMode : 'camelCase',
+            escodegen : {
+              comment : false,
+            },
             wrap : {
               start : START_SNIPPET,
               end : END_SNIPPET
@@ -149,5 +159,4 @@ module.exports = function(grunt) {
   grunt.registerTask('default', [
     'jshint', 'requirejs:js', 'removelogging', 'uglify'
   ]);
-
 };

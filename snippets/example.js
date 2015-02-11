@@ -1,77 +1,73 @@
 var activeTab = 'styleTab';
 $('#colorTab').hide();
 
-var app = require("bio-pv");
-
-var width = document.getElementById('gl').offsetWidth;
-var height = document.getElementById('gl').offsetHeight;
-
-var pv = app.Viewer(document.getElementById('gl'), 
-    { quality : 'high', width: width, height : height,
+var viewer = pv.Viewer(document.getElementById('gl'), 
+    { quality : 'medium', width: 'auto', height : 'auto',
       antialias : true, outline : false,
       background : 'white',
       slabMode : 'auto'});
 
 var structure;
+
 function lines() {
-  pv.clear();
-  pv.lines('structure', structure, { 
+  viewer.clear();
+  return viewer.lines('structure', structure, { 
     color: color.byResidueProp('num'),
     showRelated : '1' });
 }
 function cartoon() {
-  pv.clear();
-  pv.cartoon('structure', structure, { 
+  viewer.clear();
+  return viewer.cartoon('structure', structure, { 
     color : color.ssSuccession(), showRelated : '1', 
   });
 }
 function lineTrace() {
-  pv.clear();
-  pv.lineTrace('structure', structure, { showRelated : '1' });
+  viewer.clear();
+  return viewer.lineTrace('structure', structure, { showRelated : '1' });
 }
 
 function spheres() {
-  pv.clear();
-  pv.spheres('structure', structure, { showRelated : '1' });
+  viewer.clear();
+  return viewer.spheres('structure', structure, { showRelated : '1' });
 }
 
 function sline() {
-  pv.clear();
-  pv.sline('structure', structure, 
+  viewer.clear();
+  return viewer.sline('structure', structure, 
       { color : color.uniform('red'), showRelated : '1'});
 }
 
 function tube() {
-  pv.clear();
-  pv.tube('structure', structure);
-  pv.lines('structure.ca', structure.select({aname :'CA'}), 
-      { color: color.uniform('blue'), lineWidth : 1,
-        showRelated : '1' });
+  viewer.clear();
+  return viewer.tube('structure', structure);
 }
 
 function trace() {
-  pv.clear();
-  pv.trace('structure', structure, { showRelated : '1' });
+  viewer.clear();
+  return viewer.trace('structure', structure, { showRelated : '1' });
 }
 function ballsAndSticks() {
-  pv.clear();
-  pv.ballsAndSticks('structure', structure, { showRelated : '1' });
+  viewer.clear();
+  return viewer.ballsAndSticks('structure', structure, { showRelated : '1' });
 }
 
 function preset() {
-  pv.clear();
-  var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
-  pv.ballsAndSticks('structure.ligand', ligand, { 
+  viewer.clear();
+  var ligand = structure.select('ligand')
+  viewer.ballsAndSticks('structure.ligand', ligand, { 
+    showRelated : '1'
   });
-  pv.cartoon('structure.protein', structure, { boundingSpheres: false });
+  return viewer.cartoon('structure.protein', structure, {
+    showRelated : '1'
+  });
 }
 
 function load(pdb_id) {
   $.ajax({ url : '../pdbs/'+pdb_id+'.pdb', success : function(data) {
-    structure = io.pdb(data);
-    //mol.assignHelixSheet(structure);
-    cartoon();
-    pv.autoZoom();
+    structure = pv.io.pdb(data);
+    var go = cartoon();
+    viewer.setRotation(viewpoint.principalAxes(go));
+    viewer.autoZoom();
   }});
 }
 function kinase() {
@@ -82,10 +78,10 @@ $(function() {
   $( "#slider" ).slider({
     slide: function(event, ui) {
 
-      pv.forEach(function(go) {
+      viewer.forEach(function(go) {
         go.setOpacity(1.0 - ui.value/100. , go);
       });
-      pv.requestRedraw();
+      viewer.requestRedraw();
     }
   })
 });
@@ -113,60 +109,50 @@ function longHelices() {
 }
 
 function ssSuccession() {
-  pv.forEach(function(go) {
+  viewer.forEach(function(go) {
     go.colorBy(color.ssSuccession());
   });
-  pv.requestRedraw();
+  viewer.requestRedraw();
 }
 
 function uniform() {
-  pv.forEach(function(go) {
+  viewer.forEach(function(go) {
     go.colorBy(color.uniform([0,1,0]));
   });
-  pv.requestRedraw();
+  viewer.requestRedraw();
 }
 function byElement() {
-  pv.forEach(function(go) {
+  viewer.forEach(function(go) {
     go.colorBy(color.byElement());
   });
-  pv.requestRedraw();
+  viewer.requestRedraw();
 }
 
 function ss() {
-  pv.forEach(function(go) {
+  viewer.forEach(function(go) {
     go.colorBy(color.bySS());
   });
-  pv.requestRedraw();
+  viewer.requestRedraw();
 }
 
 function proInRed() {
-  pv.forEach(function(go) {
+  viewer.forEach(function(go) {
     go.colorBy(color.uniform('red'), go.select({rname : 'PRO'}));
   });
-  pv.requestRedraw();
+  viewer.requestRedraw();
 }
 function rainbow() {
-  pv.forEach(function(go) {
+  viewer.forEach(function(go) {
     go.colorBy(color.rainbow());
   });
-  pv.requestRedraw();
+  viewer.requestRedraw();
 }
 
 function byChain() {
-  pv.forEach(function(go) {
+  viewer.forEach(function(go) {
     go.colorBy(color.byChain());
   });
-  pv.requestRedraw();
-}
-
-var auto = true;
-function test() {
-  if (auto) {
-    pv.slabMode('fixed', { near: 0.1, far : 400.0});
-  } else {
-    pv.slabMode('auto');
-  }
-  auto = !auto;
+  viewer.requestRedraw();
 }
 
 $('#cartoon').click(cartoon);
@@ -177,7 +163,6 @@ $('#trace').click(trace);
 $('#sline').click(sline);
 $('#spheres').click(spheres);
 $('#balls-and-sticks').click(ballsAndSticks);
-$('#test').click(test);
 $('#tube').click(tube);
 $('#1ake').click(kinase);
 $('#1r6a').click(transferase);
@@ -204,8 +189,8 @@ $('#pdbid').change(function() {
     .done(function(data) {
       st.text('loaded');
       structure = io.pdb(data);
-      cartoon();
-      pv.autoZoom();
+      preset();
+      viewer.autoZoom();
       st.fadeOut(2000);
     })
   .fail(function() {
@@ -213,23 +198,21 @@ $('#pdbid').change(function() {
     st.fadeOut(2000);
   });
 });
+
 $('#save').click(function() {
-  var imgDataURL = pv.imageData();
+  var imgDataURL = viewer.imageData();
   window.open(imgDataURL);
 });
+
 $('#showOutline').change(function() {
-  pv.options('outline', this.checked);
-  pv.requestRedraw();
-});
-$('#fog').change(function() {
-  pv.options('fog', this.checked);
-  pv.requestRedraw();
+  viewer.options('outline', this.checked);
+  viewer.requestRedraw();
 });
 
-document.addEventListener('DOMContentLoaded', crambin);
-/*
-   window.addEventListener('resize', function() {
-   pv.fitParent();
-   });
-   */
+$('#fog').change(function() {
+  viewer.options('fog', this.checked);
+  viewer.requestRedraw();
+});
+
+viewer.on('viewerReady', crambin);
 

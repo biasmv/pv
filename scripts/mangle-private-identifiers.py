@@ -52,8 +52,6 @@ for occurences, token in sorted_by_occurence:
   replacements[token] = next_available_name(index)
   index += 1
 
-for original, replacement in replacements.iteritems():
-  print '%s -> %s' % (original, replacement)
 replaced = [replacements.get(t, t) for t in tokens]
 open(sys.argv[2], 'w').write(''.join(replaced))
 

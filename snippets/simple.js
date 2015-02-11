@@ -1,27 +1,33 @@
-var app = require("bio-pv");
+!(function() {
 
-var pv = app.Viewer(yourDiv, 
-    { quality : 'high', width: 600, height : 600,
-      antialias : true, outline : false,
-      background : 'white',
-      slabMode : 'auto'});
-
-
-function load(pdb_id) {
-  $.ajax({ url : '../pdbs/'+pdb_id+'.pdb', success : function(data) {
-    structure = io.pdb(data);
-    //mol.assignHelixSheet(structure);
-    cartoon();
-    pv.autoZoom();
-  }});
-}
-
-function cartoon() {
-  pv.clear();
-  pv.cartoon('structure', structure, { 
-    color : color.ssSuccession(), showRelated : '1', 
+  var viewer = pv.Viewer(document.getElementById('hereGoesTheViewer'), { 
+        quality : 'medium', width: 'auto', height : 'auto',
+        antialias : true, outline : true,
+        slabMode : 'auto'
   });
-}
 
-// load default
-load('1crn');
+  function load(name, pdbId) {
+    pv.io.fetchPdb('../pdbs/'+pdbId+'.pdb', function(structure) {
+      // render everything as helix/sheet/coil cartoon, coloring by secondary 
+      // structure succession
+      var go = viewer.cartoon(name, structure, { 
+        color : color.ssSuccession()
+      });
+      // find camera orientation such that the molecules biggest extents are 
+      // aligned to the screen plane.
+      viewer.setRotation(pv.viewpoint.principalAxes(go));
+      // adapt zoom level to contain the whole structure
+      viewer.autoZoom();
+    });
+  }
+
+
+  // load default
+  load('lyase', '4ubb');
+
+  // tell viewer to resize when window size changes.
+  window.onresize = function(event) {
+    viewer.fitParent();
+  }
+
+})();
