@@ -49,6 +49,33 @@ It is quite common to only apply operations (coloring, displaying) to subset of 
  - Views can be assembled manually through :func:`pv.mol.MolView.addChain`, :func:`pv.mol.ChainView.addResidue`, :func:`pv.mol.ResidueView.addAtom`. This is the most flexible but also the most verbose way of creating views.
 
 
+Loading Molecular Structures
+-----------------------------------------------------------------------------------------
+
+The following functions import structures from different data formats. 
+
+.. function:: pv.io.pdb(pdbData)
+
+  Loads a structure from the *pdbData* string and returns it. In case multiple models are present in the file (as designated by MODEL/ENDMDL), only the first is read. The following record types are handled:
+
+   * *ATOM/HETATM* for the actual coordinate data. Alternative atom locations other than those labelled as *A* are discarded.
+   * *HELIX/STRAND* for assignment of secondary structure information.
+   * *REMARK 350* for handling of biological assemblies
+
+.. function:: pv.io.sdf(sdfData)
+
+  Load small molecules from *sdfData* and returns them. In case multiple molecules are present, these molecules are returned as separate chains of the same :class:`pv.mol.Mol` instance.
+
+  Currently, only a minimal set of information is extracted from SDF files:
+
+  * atom position, element, atom name (set to the element)
+  * connectivity information
+  * the chain name is set to the structure title
+
+.. function:: pv.io.fetchPdb(url, callback)
+              pv.io.fetchSdf(url, callback)
+
+  Performs an adjax request the provided URL and loads the data as a structure using either :func:`pv.io.pdb`, or :func:`pv.io.sdf`. Upon success, the callback is invoked with the loaded structure as the only argument.
 
 
 Mol (and MolView)
@@ -56,7 +83,7 @@ Mol (and MolView)
 
 .. class:: pv.mol.Mol()
 
-  Represents a complete molecular structure which may consist of multiple polypeptide chains, solvent and other molecules.
+  Represents a complete molecular structure which may consist of multiple polypeptide chains, solvent and other molecules.  Instances of mol are typically created through one of the io functions, e.g. :func:`pv.io.pdb`, or :func:`pv.io.sdf`.
 
 .. class:: pv.mol.MolView()
 
@@ -223,21 +250,18 @@ Mol (and MolView)
 
   Returns the list of chains matching the specified names. In case a chain does not exist (or is not part of the view), the chain name is ignored, as if it were not specified.
 
-.. function:: pv.io.pdb(pdbData)
-
-  Loads a structure from the *pdbData* string and returns it. In case multiple models are present in the file (as designated by MODEL/ENDMDL), only the first is read. The following record types are handled:
-
-   * *ATOM/HETATM* for the actual coordinate data. Alternative atom locations other than those labelled as *A* are discarded.
-   * *HELIX/STRAND* for assignment of secondary structure information.
-   * *REMARK 350* for handling of biological assemblies
 
 Chain (and ChainView)
 -----------------------------------------------------------------------------------------
 
 .. class:: pv.mol.Chain
 
+  Represents either a linear chain of molecules, e.g. as in peptides or an unordered collection of molecules such as water. New instances are created by calling :func:`pv.mol.Mol.addChain`.
+
 
 .. class:: pv.mol.ChainView
+
+  Represents a subset of a chain, that is a selected subset of residues and atoms. New instances are created and added to an existing :class:`pv.mol.MolView` instance by calling :func:`pv.mol.MolView.addChain`.
 
 .. function:: pv.mol.Chain.name()
               pv.mol.ChainView.name()
@@ -310,8 +334,12 @@ Residue (and ResidueView)
 
 .. class:: pv.mol.Residue
 
+  Represents a residue, e.g. a logical unit of atoms, such as an amino acid, a nucleotide, or a sugar. New residues are created and added to an existing :class:`pv.mol.Chain` instance by calling :func:`pv.mol.Chain.addResidue`.
+
 
 .. class:: pv.mol.ResidueView
+
+  Represents a subset of a residue, e.g. a subset of the atoms the residue contains. New residue views are created and added to an existing :class:`pv.mol.ChainView` by calling :func:`pv.mol.ChainView.addResidue`.
 
 
 .. function:: pv.mol.Residue.name()
@@ -376,8 +404,12 @@ Atom (and AtomView)
 
 .. class:: pv.mol.Atom
 
+  Stores properties such as positions, name element etc of an atom. Atoms always have parent residue. New atoms are created by adding them to an existing residue through :func:`pv.mol.Residue.addAtom`.
+
 
 .. class:: pv.mol.AtomView
+
+  Represents a selected atom as part of a view. New atom views are created by adding them to an existing :class:`pv.mol.ResidueView` through :func:`pv.mol.ResidueView.addAtom`.
 
 
 .. function:: pv.mol.Atom.name()
