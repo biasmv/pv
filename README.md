@@ -77,6 +77,7 @@ Changelog
 - viewerReady event (@andreasprlic)
 - PV can optionally be used as an AMD module without polluting the global namespace
 - added more unit and functional tests. The tests reach a coverage of 80% of the total number of exectuable lines of code.
+- support for loading small molecules from SDF files
 
 ### New in Version 1.3.1
 
