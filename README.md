@@ -64,6 +64,10 @@ Documentation for pv is available [here](http://pv.readthedocs.org).
 Changelog
 ----------------------------------------
 
+### New Since Latest Release
+
+Not so much
+
 ### New in Version 1.4.0
 
 - Basic support RNA/DNA rendering for all render modes
