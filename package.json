@@ -1,6 +1,6 @@
 {
   "name": "bio-pv",
-  "version": "1.4.0dev",
+  "version": "1.4.0",
   "description": "WebGL protein viewer ",
   "homepage": "https://github.com/biasmv/pv",
   "author": {

@@ -64,7 +64,7 @@ Documentation for pv is available [here](http://pv.readthedocs.org).
 Changelog
 ----------------------------------------
 
-### New Since latest Release
+### New in Version 1.4.0
 
 - Basic support RNA/DNA rendering for all render modes
 - Multi-touch support for iOS and Android (with contributions by @kozmad, @lordvlad)
