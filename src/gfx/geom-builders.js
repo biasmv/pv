@@ -115,10 +115,8 @@ function TubeProfile(points, num, strength) {
 
   var normal = vec3.create();
   for (var i = 0; i < this._arcs; ++i) {
-    var i_prev = i === 0 ? this._arcs - 1 : i - 1;
-    var i_next = i === this._arcs - 1 ? 0 : i + 1;
-    normal[0] = this._verts[3 * i_next + 1] - this._verts[3 * i_prev + 1];
-    normal[1] = this._verts[3 * i_prev] - this._verts[3 * i_next];
+    normal[0] = this._verts[3 * i + 0];
+    normal[1] = this._verts[3 * i + 1];
     vec3.normalize(normal, normal);
     this._normals[3 * i] = normal[0];
     this._normals[3 * i + 1] = normal[1];
