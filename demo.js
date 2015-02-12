@@ -15,8 +15,10 @@ requirejs.config({
 // from the JavaScript console.
 var viewer;
 
-require(['pv'], function(pv) {
+var pv;
+require(['pv'], function(PV) {
 
+pv = PV;
 var io = pv.io;
 var viewpoint = pv.viewpoint;
 var color = pv.color;
