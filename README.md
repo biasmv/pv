@@ -66,7 +66,7 @@ Changelog
 
 ### New Since Latest Release
 
-Not so much
+- Added Viewer.spin command to spin the camera around an axis
 
 ### New in Version 1.4.0
 
