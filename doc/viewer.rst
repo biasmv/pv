@@ -183,6 +183,41 @@ These methods will automatically add the object to the viewer, there is not need
 Camera Positioning/Orientation
 ---------------------------------------------------------------------------------
 
+.. function:: pv.Viewer.setCamera(rotation, center, zoom[, ms])
+
+  Function to directly set the rotation, center and zoom of the camera. 
+
+
+  The combined transformation matrix for the camera is calculated as follows: First the origin is shifted to the center, then the rotation is applied, and lastly the camera is translated away from the center by the negative zoom along the rotated Z-axis.
+
+  :param rotation: Either a 4x4 or 3x3 matrix in the form of a one-dimensional array of length 16 or 9. It is up to the caller to ensure the matrix is a valid rotation matrix.
+  :param center: the new camera center.
+  :param zoom: distance of the eye position from the viewing center
+  :param ms: if provided and non-zero defines the animation time for moving/rotating/zooming the camera from the current position to the new rotation,center and zoom. If zero, the rotation/center and zoom factors are directly set to the desired values. The default is zero.
+
+
+.. function:: pv.Viewer.setRotation(rotation[, ms])
+
+  Function to directly set the rotation of the camera. This is identical to calling :class:`~pv.Viewer.setCamera` with the current center and zoom values.
+
+  :param rotation: Either a  4x4 or 3x3 matrix in the form of a one-dimensional array of length 16 or 9. It is up to the caller to make sure the matrix is a rotation matrix.
+  :param ms: if provided and non-zero defines the animation time rotating the camera from the current rotation to the target rotation. If zero, the rotation is immediately set to the target rotation. The default is zero.
+
+.. function:: pv.Viewer.setCenter(center[, ms])
+
+  Function to directly set the center of view of the camera. This is identical to calling :class:`~pv.Viewer.setCamera` with the current rotation and zoom values.
+
+  :param center: The new center of view of the "center". 
+  :param ms: if provided and non-zero defines the time in which the camera center moves from the current center the target center. If zero, the center is immediately set to the target center. The default is zero.
+
+
+.. function:: pv.Viewer.setZoom(zoom[, ms])
+
+  Function to directly set the zoom factor of the camera. This is identical to calling :class:`~pv.Viewer.setCamera` with the current rotation and center values.
+
+  :param zoom: The distance of the camera from the "center". Only positive values are allowed.
+  :param ms: if provided and non-zero defines the time in which the camera zoom level moves from thecurrent zoom level to the target zoom. If zero, the zoom is immediately set to the target zoom. The default is zero.
+
 .. function:: pv.Viewer.centerOn(obj)
 
   Center the camera on a given object, leaving the zoom level and orientation untouched.
@@ -210,18 +245,6 @@ Camera Positioning/Orientation
     viewer.fitTo(obj);
 
   :param what: must be an object which implements updateProjectionInterval, e.g. a SceneNode, a :class:`pv.mol.MolView`, or :class:`pv.mol.Mol`.
-
-.. function:: pv.Viewer.setCamera(rotation, center, zoom, ms)
-
-  Function to directly set the rotation, center and zoom of the camera. 
-
-
-  The combined transformation matrix for the camera is calculated as follows: First the origin is shifted to the center, then the rotation is applied, and lastly the camera is translated away from the center by the negative zoom along the rotated Z-axis.
-
-  :param rotation: Either a 4x4 or 3x3 matrix in the form of a one-dimensional array of length 16 or 9.
-  :param center: the new camera center.
-  :param zoom: distance of the eye position from the viewing center
-  :param ms: if provided and non-zero defines the animation time for moving/rotating/zooming the camera from the current position to the new rotation,center and zoom.
 
 Fog and Slab Modes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
