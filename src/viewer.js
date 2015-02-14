@@ -49,7 +49,7 @@ define([
     render, 
     TextLabel, 
     CustomMesh, 
-    animation, 
+    anim, 
     SceneNode) {
 
 "use strict";
@@ -149,14 +149,14 @@ function PV(domElement, opts) {
   this._resize = false;
   this._lastTimestamp = null;
   this._objectIdManager = new UniqueObjectIdPool();
+  // these two are set to the animation objects when spin/rockAndRoll 
+  // are active
+  this._spin = null;
+  this._rockAndRoll = null;
 
   this.listenerMap = {};
 
-  this._camAnim = { 
-      center : null, zoom : null, 
-      rotation : null 
-  };
-
+  this._animControl = new anim.AnimationControl();
   // NOTE: make sure to only request features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
   // detection only happens in PV._initGL. Once this happened, we are
@@ -564,8 +564,7 @@ PV.prototype = {
     } else {
       rotation4 = mat4.clone(rotation);
     }
-    this._camAnim.rotation = 
-      new animation.Rotate(this._cam.rotation(), rotation4, ms);
+    this._animControl.add(anim.rotate(this._cam.rotation(), rotation4, ms));
     this.requestRedraw();
   },
 
@@ -578,28 +577,7 @@ PV.prototype = {
 
   // performs interpolation of current camera position
   _animateCam : function() {
-    var anotherRedraw = false;
-    if (this._camAnim.center) {
-      this._cam.setCenter(this._camAnim.center.step());
-      if (this._camAnim.center.finished()) {
-        this._camAnim.center = null;
-      }
-      anotherRedraw = true;
-    }
-    if (this._camAnim.rotation) {
-      this._cam.setRotation(this._camAnim.rotation.step());
-      if (this._camAnim.rotation.finished()) {
-        this._camAnim.rotation = null;
-      }
-      anotherRedraw = true;
-    }
-    if (this._camAnim.zoom) {
-      this._cam.setZoom(this._camAnim.zoom.step());
-      if (this._camAnim.zoom.finished()) {
-        this._camAnim.zoom = null;
-      }
-      anotherRedraw = true;
-    }
+    var anotherRedraw = this._animControl.run(this._cam);
     if (anotherRedraw) {
       this.requestRedraw();
     }
@@ -635,8 +613,8 @@ PV.prototype = {
       this._cam.setCenter(center);
       return;
     }
-    this._camAnim.center = 
-      new animation.Move(this._cam.center(), vec3.clone(center), ms);
+    this._animControl.add(anim.move(this._cam.center(), 
+                                    vec3.clone(center), ms));
     this.requestRedraw();
   },
 
@@ -646,8 +624,7 @@ PV.prototype = {
       this._cam.setZoom(zoom);
       return;
     }
-    this._camAnim.zoom = 
-      new animation.Animation(this._cam.zoom(), zoom, ms);
+    this._animControl.add(anim.zoom(this._cam.zoom(), zoom, ms));
     this.requestRedraw();
   },
 
@@ -990,20 +967,28 @@ PV.prototype = {
 
   // enable disable rock and rolling of camera
   rockAndRoll : function(enable) {
-    if (enable === true) {
-      this._camAnim.rotation = 
-        new animation.RockAndRoll(this._cam.rotation(), [0, 1, 0], 2000);
-      this.requestRedraw();
-    } else if (enable === false) {
-      this._camAnim.rotation = null;
-      this.requestRedraw();
+    if (enable === undefined) {
+      return this._rockAndRoll !== null;
     }
-    return this._camAnim.rotation !== null;
+    if (!!enable) {
+      this._rockAndRoll = anim.rockAndRoll();
+      this._animControl.add(this._rockAndRoll);
+      this.requestRedraw();
+      return true;
+    } 
+    this._animControl.remove(this._rockAndRoll);
+    this._rockAndRoll = null;
+    this.requestRedraw();
+    return false;
   },
 
   spin : function(speed, axis) {
-    if (speed === undefined || speed === false) {
-      this._camAnim.rotation = null;
+    if (speed === undefined) {
+      return this._spin !== null;
+    }
+    if (speed === false) {
+      this._animControl.remove(this._spin);
+      this._spin = null;
       this.requestRedraw();
       return false;
     } 
@@ -1011,8 +996,8 @@ PV.prototype = {
       speed = Math.PI/8;
     }
     axis = axis || [0, 1, 0];
-    this._camAnim.rotation = 
-      new animation.Spin(this._cam.rotation(), axis, speed);
+    this._spin = anim.spin(axis, speed);
+    this._animControl.add(this._spin);
     this.requestRedraw();
     return true;
   },

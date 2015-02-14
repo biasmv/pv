@@ -259,6 +259,9 @@ Camera Positioning/Orientation
 
     :param speed: The number of radians per second to rotate. When positive, rotation is in counter-clockwise direction, when negative rotation is in clockwise direction.
 
+    :return: true when spinning is enabled, false if not.
+
+
 Fog and Slab Modes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 

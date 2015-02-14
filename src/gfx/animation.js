@@ -45,11 +45,12 @@ function Animation(from, to, duration) {
   this._finished = false;
 }
 
+
 Animation.prototype = {
   setLooping : function(looping) {
     this._looping = looping;
   },
-  step : function() {
+  step : function(cam) {
     var now = Date.now();
     var elapsed = now - this._start;
     var t;
@@ -65,13 +66,14 @@ Animation.prototype = {
         this._finished = t === 1.0;
       }
     }
-    return this._setTo(t);
+    this.apply(cam, t);
+    return this._finished;
   },
 
-  _setTo : function(t) {
+  apply : function(cam, t) {
     var smoothInterval = (1 - Math.cos(t * Math.PI ) ) / 2;
     this._current = this._from * (1-smoothInterval) + this._to * smoothInterval;
-    return this._current;
+    cam.setZoom(this._current);
   },
 
   finished : function() {
@@ -87,10 +89,10 @@ function Move(from, to, duration) {
 }
 
 utils.derive(Move, Animation, {
-  _setTo : function(t) {
+  apply : function(cam, t) {
     var smoothInterval = (1 - Math.cos(t * Math.PI ) ) / 2;
     vec3.lerp(this._current, this._from, this._to, smoothInterval);
-    return this._current;
+    cam.setCenter(this._current);
   }
 });
 
@@ -108,69 +110,118 @@ function Rotate(initialRotation, destinationRotation, duration) {
 }
 
 utils.derive(Rotate, Animation, {
-
-  _setTo : (function() {
+  apply : (function() {
     var quatRot = quat.create();
     
-    return function(t) {
+    return function(cam, t) {
       quat.slerp(quatRot, this._from, this._to, t);
       mat3.fromQuat(this._current, quatRot);
-      return this._current;
+      cam.setRotation(this._current);
     };
   })()
 });
 
-function RockAndRoll(rotation, axis, duration) {
-  var initial = mat3.create();
-  mat3.fromMat4(initial, rotation);
-  Animation.call(this, initial, null, duration);
+function RockAndRoll(axis, duration) {
+  Animation.call(this, null, null, duration);
   this._axis = vec3.clone(axis);
   this.setLooping(true);
-  this._current = mat3.create();
+  this._previousAngle = 0.0;
 }
 
 utils.derive(RockAndRoll, Animation, {
-  _setTo : (function() {
+  apply : (function() {
     var axisRot = mat3.create();
-    return function(t) {
+    var rotation = mat3.create();
+    return function(cam, t) {
+      mat3.fromMat4(rotation, cam.rotation());
       var angle = 0.2 * Math.sin(2 * t * Math.PI);
-      geom.axisRotation(axisRot, this._axis, angle);
-      mat3.mul(this._current, this._from, axisRot);
-      return this._current;
+      var deltaAngle = angle - this._previousAngle;
+      this._previousAngle = angle;
+      geom.axisRotation(axisRot, this._axis, deltaAngle);
+      mat3.mul(rotation, axisRot, rotation);
+      cam.setRotation(rotation);
     };
   })()
 });
 
-function Spin(rotation, axis, speed) {
-  var initial = mat3.create();
-  mat3.fromMat4(initial, rotation);
+function Spin(axis, speed) {
   var duration = 1000 * (2 * Math.PI / speed);
-  console.log(duration);
-  Animation.call(this, initial, null, duration);
+  Animation.call(this, null, null, duration);
   this._axis = vec3.clone(axis);
   this.setLooping(true);
   this._speed = speed;
-  this._current = mat3.create();
+  this._previousT = 0.0;
 }
 
 utils.derive(Spin, Animation, {
-  _setTo : (function() {
+  apply : (function() {
     var axisRot = mat3.create();
-    return function(t) {
-      var angle = Math.PI * 2 * t;
+    var rotation = mat3.create();
+    return function(cam, t) {
+      mat3.fromMat4(rotation, cam.rotation());
+      var angle = Math.PI * 2 * (t - this._previousT);
+      this._previousT = t;
       geom.axisRotation(axisRot, this._axis, angle);
-      mat3.mul(this._current, axisRot, this._from, axisRot);
-      return this._current;
+      mat3.mul(rotation, axisRot, rotation);
+      cam.setRotation(rotation);
     };
   })()
 });
 
+
+function AnimationControl() {
+  this._animations = [];
+}
+
+AnimationControl.prototype = {
+  // apply all currently active animations to the camera 
+  // returns true if there are pending animations.
+  run : function(camera) {
+    var time = Date.now();
+    this._animations = this._animations.filter(function(anim) {
+      return !anim.step(camera, time);
+    });
+    return this._animations.length > 0;
+  },
+  add : function(animation) {
+    this._animations.push(animation);
+  },
+  remove : function(animation) {
+    this._animations = this._animations.filter(function(a) {
+      return a !== animation;
+    });
+  }
+};
+
+
+function move(from, to, duration) {
+  return new Move(from, to, duration);
+}
+
+function rotate(from, to, duration) {
+  return new Rotate(from, to, duration);
+}
+
+function zoom(from, to, duration) {
+  return new Animation(from, to, duration);
+}
+
+
+function spin(axis, speed) {
+  return new Spin(axis, speed);
+}
+
+function rockAndRoll() {
+  return new RockAndRoll([0, 1, 0], 2000);
+}
+
 return {
-  Move : Move,
-  Rotate : Rotate,
-  RockAndRoll : RockAndRoll,
-  Animation : Animation,
-  Spin : Spin
+  AnimationControl : AnimationControl,
+  move : move,
+  rotate : rotate,
+  zoom : zoom,
+  rockAndRoll : rockAndRoll,
+  spin : spin
 };
 
 });
