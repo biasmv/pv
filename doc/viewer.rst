@@ -300,7 +300,7 @@ Custom viewer event handlers can be registered by calling :func:`pv.Viewer.addLi
 Initialization Event (viewerReady)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Invoked when the viewer is completely initialized and is ready for displaying of structures. It's recommended to put calls to any of the functions :ref:`described here <pv.viewer.rendering>` into a viewerReady callback as they expect a completely constructed viewer. It's however possible to start loading the structure data before 'viewerReady', as long as they are not added to the viewer.
+Invoked when the viewer is completely initialized and is ready for displaying of structures. It's recommended to put calls to any of the :ref:`geometry-creating funtions<pv.viewer.rendering>` into a viewerReady callback as they expect a completely constructed viewer. It's however possible to start loading the structure data before 'viewerReady', as long as they are not added to the viewer.
 
 Callbacks receive the initialized viewer as the first argument. 
 
