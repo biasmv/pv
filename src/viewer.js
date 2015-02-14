@@ -1001,6 +1001,22 @@ PV.prototype = {
     return this._camAnim.rotation !== null;
   },
 
+  spin : function(speed, axis) {
+    if (speed === undefined || speed === false) {
+      this._camAnim.rotation = null;
+      this.requestRedraw();
+      return false;
+    } 
+    if (speed === true) {
+      speed = Math.PI/8;
+    }
+    axis = axis || [0, 1, 0];
+    this._camAnim.rotation = 
+      new animation.Spin(this._cam.rotation(), axis, speed);
+    this.requestRedraw();
+    return true;
+  },
+
   slabMode : function(mode, options) {
     options = options || {};
     var strategy = slabModeToStrategy(mode, options);

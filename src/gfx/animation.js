@@ -141,11 +141,36 @@ utils.derive(RockAndRoll, Animation, {
   })()
 });
 
+function Spin(rotation, axis, speed) {
+  var initial = mat3.create();
+  mat3.fromMat4(initial, rotation);
+  var duration = 1000 * (2 * Math.PI / speed);
+  console.log(duration);
+  Animation.call(this, initial, null, duration);
+  this._axis = vec3.clone(axis);
+  this.setLooping(true);
+  this._speed = speed;
+  this._current = mat3.create();
+}
+
+utils.derive(Spin, Animation, {
+  _setTo : (function() {
+    var axisRot = mat3.create();
+    return function(t) {
+      var angle = Math.PI * 2 * t;
+      geom.axisRotation(axisRot, this._axis, angle);
+      mat3.mul(this._current, axisRot, this._from, axisRot);
+      return this._current;
+    };
+  })()
+});
+
 return {
   Move : Move,
   Rotate : Rotate,
   RockAndRoll : RockAndRoll,
-  Animation : Animation
+  Animation : Animation,
+  Spin : Spin
 };
 
 });

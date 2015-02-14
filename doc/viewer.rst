@@ -246,6 +246,21 @@ Camera Positioning/Orientation
 
   :param what: must be an object which implements updateProjectionInterval, e.g. a SceneNode, a :class:`pv.mol.MolView`, or :class:`pv.mol.Mol`.
 
+
+.. function:: pv.Viewer.spin(enable)
+              pv.Viewer.spin(speed[, axis])
+
+    Enable/disable spinning of the viewer around a screen axis.
+
+    The first signature enables/disables spinning with default parameters, the second allows to control the speed as well as the axis to rotate around.
+
+    :param enable: whether spinning should be enabled. When false, spinning is disabled. When true, spinning is enabled around the y axis with a default speed of Math.PI/8, meaning a full rotation takes 16 seconds.
+    :param axis: 3 dimensional axis to rotate around. The axes are in the screen coordinate system, meaning the X- and Y-axes are aligned to the screen's X and Y axes and the Z axis points towards the camera's eye position. The default rotation axis is [0,1,0]. The axis must be normalized.
+
+    :param speed: The number of radians per second to rotate. When positive, rotation is in counter-clockwise direction, when negative rotation is in clockwise direction.
+
+
+
 Fog and Slab Modes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
