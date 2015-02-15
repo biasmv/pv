@@ -5,6 +5,7 @@ SOURCE_FILES = [
   'src/gfx/animation.js',
   'src/gfx/base-geom.js',
   'src/gfx/cam.js',
+  'src/gfx/canvas.js',
   'src/gfx/chain-data.js',
   'src/gfx/custom-mesh.js',
   'src/gfx/framebuffer.js',

@@ -34,7 +34,8 @@ define([
   './gfx/label', 
   './gfx/custom-mesh', 
   './gfx/animation', 
-  './gfx/scene-node'], 
+  './gfx/scene-node',
+  './gfx/canvas'], 
   function(
     glMatrix, 
     color, 
@@ -50,7 +51,8 @@ define([
     TextLabel, 
     CustomMesh, 
     anim, 
-    SceneNode) {
+    SceneNode,
+    canvas) {
 
 "use strict";
 
@@ -90,25 +92,6 @@ var requestAnimFrame = (function(){
          };
 })();
 
-function isWebGLSupported(gl) {
-  if (document.readyState !== "complete" &&
-      document.readyState !== "loaded" &&
-      document.readyState !== "interactive") {
-    console.error('isWebGLSupported only works after DOMContentLoaded');
-    return false;
-  }
-  if (gl === undefined) {
-    try {
-      var canvas = document.createElement("canvas");
-      return !!  (window.WebGLRenderingContext &&
-          canvas.getContext("experimental-webgl"));
-    } catch(e) {
-      return false;
-    }
-  }
-  return !!gl;
-}
-
 function slabModeToStrategy(mode, options) {
   mode = mode || 'auto';
   if (mode === 'fixed') {
@@ -139,7 +122,7 @@ PickingResult.prototype = {
 };
 
 
-function PV(domElement, opts) {
+function Viewer(domElement, opts) {
   this._options = this._initOptions(opts, domElement);
 
   this._initialized = false;
@@ -159,7 +142,7 @@ function PV(domElement, opts) {
   this._animControl = new anim.AnimationControl();
   // NOTE: make sure to only request features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
-  // detection only happens in PV._initGL. Once this happened, we are
+  // detection only happens in Viewer._initGL. Once this happened, we are
   // save to use whatever feature pleases us, e.g. typed arrays, 2D 
   // contexts etc.
   this._initCanvas();
@@ -176,10 +159,10 @@ function PV(domElement, opts) {
   if (document.readyState === "complete" ||  
     document.readyState === "loaded" ||  
       document.readyState === "interactive") {
-    this._initPV();
+    this._initViewer();
   } else {
     document.addEventListener('DOMContentLoaded', 
-                              utils.bind(this, this._initPV));
+                              utils.bind(this, this._initViewer));
   }
 }
 
@@ -190,7 +173,7 @@ function optValue(opts, name, defaultValue) {
   return defaultValue;
 }
 
-PV.prototype = {
+Viewer.prototype = {
 
   _initOptions : function(opts, domElement) {
     opts = opts || {};
@@ -239,25 +222,14 @@ PV.prototype = {
     }
   },
 
-  // resizes the canvas, separated out from PV.resize because we want
-  // to call this function directly in a requestAnimationFrame together
   // with rendering to avoid flickering.
   _ensureSize : function() {
     if (!this._resize) {
       return;
     }
     this._resize = false;
-    var realWidth = this._options.width * this._options.samples;
-    var realHeight = this._options.height * this._options.samples;
-    this._options.realWidth = realWidth;
-    this._options.realHeight = realHeight;
-    this._gl.viewport(0, 0, realWidth, realHeight);
-    this._canvas.width = realWidth;
-    this._canvas.height = realHeight;
-    this._cam.setViewportSize(realWidth, realHeight);
-    if (this._options.samples > 1) {
-      this._initManualAntialiasing(this._options.samples);
-    }
+    this._cam.setViewportSize(this._canvas.viewportWidth(), 
+                              this._canvas.viewportHeight());
     this._pickBuffer.resize(this._options.width, this._options.height);
   },
 
@@ -265,6 +237,7 @@ PV.prototype = {
     if (width === this._options.width && height === this._options.height) {
       return;
     }
+    this._canvas.resize(width, height);
     this._resize = true;
     this._options.width = width;
     this._options.height = height;
@@ -277,7 +250,7 @@ PV.prototype = {
   },
 
   gl : function() {
-    return this._gl;
+    return this._canvas.gl();
   },
 
   ok : function() {
@@ -324,177 +297,51 @@ PV.prototype = {
   // returns the content of the WebGL context as a data URL element which can be
   // inserted into an img element. This allows users to save a picture to disk
   imageData : function() {
-    return this._canvas.toDataURL();
-  },
-
-  _initContext : function() {
-    try {
-      var contextOpts = {
-        antialias : this._options.antialias,
-        preserveDrawingBuffer : true // for image export
-      };
-      this._gl = this._canvas.getContext('experimental-webgl', contextOpts);
-    }
-    catch (err) {
-      console.error('WebGL not supported', err);
-      return false;
-    }
-    if (!this._gl) {
-      console.error('WebGL not supported');
-      return false;
-    }
-    return true;
-  },
-
-  _initManualAntialiasing : function(samples) {
-    var scale_factor = 1.0 / samples;
-    var trans_x = -(1 - scale_factor) * 0.5 * this._options.realWidth;
-    var trans_y = -(1 - scale_factor) * 0.5 * this._options.realHeight;
-    var translate = 'translate(' + trans_x + 'px, ' + trans_y + 'px)';
-    var scale = 'scale(' + scale_factor + ', ' + scale_factor + ')';
-    var transform = translate + ' ' + scale;
-
-    this._canvas.style.webkitTransform = transform;
-    this._canvas.style.transform = transform;
-    this._canvas.style.ieTransform = transform;
-    this._canvas.width = this._options.realWidth;
-    this._canvas.height = this._options.realHeight;
+    return this._canvas.imageData();
   },
 
   _initPickBuffer : function() {
     var fbOptions = {
       width : this._options.width, height : this._options.height
     };
-    this._pickBuffer = new FrameBuffer(this._gl, fbOptions);
-  },
-
-  _initGL : function() {
-    var samples = 1;
-    if (!this._initContext()) {
-      return false;
-    }
-
-    var gl = this._gl;
-    if (!gl.getContextAttributes().antialias && this._options.antialias) {
-      samples = 2;
-    }
-    this._options.realWidth = this._options.width * samples;
-    this._options.realHeight = this._options.height * samples;
-    this._options.samples = samples;
-    if (samples > 1) {
-      this._initManualAntialiasing(samples);
-    }
-    gl.viewportWidth = this._options.realWidth;
-    gl.viewportHeight = this._options.realHeight;
-
-    gl.clearColor(this._options.background[0], this._options.background[1], 
-                  this._options.background[2], 1.0);
-    gl.lineWidth(2.0);
-    gl.cullFace(gl.FRONT);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-    this._initPickBuffer();
-    return true;
-  },
-
-
-  _shaderFromString : function(shader_code, type) {
-    var shader;
-    var gl = this._gl;
-    if (type === 'fragment') {
-      shader = gl.createShader(gl.FRAGMENT_SHADER);
-    } else if (type === 'vertex') {
-      shader = gl.createShader(gl.VERTEX_SHADER);
-    } else {
-      console.error('could not determine type for shader');
-      return null;
-    }
-    
-    // replace the precision placeholder in shader source code with appropriate
-    // value. See comment on top of shaders.js for details.
-    var prec = shouldUseHighPrecision() ? 'highp' : 'mediump';
-    var code = shader_code.replace('${PRECISION}', prec);
-    gl.shaderSource(shader, code);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      console.error(gl.getShaderInfoLog(shader));
-      return null;
-    }
-    return shader;
-  },
-
-  _initShader : function(vert_shader, frag_shader) {
-    var gl = this._gl;
-    var fs = this._shaderFromString(frag_shader, 'fragment');
-    var vs = this._shaderFromString(vert_shader, 'vertex');
-    var shaderProgram = gl.createProgram();
-    gl.attachShader(shaderProgram, vs);
-    gl.attachShader(shaderProgram, fs);
-    gl.linkProgram(shaderProgram);
-    if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-      console.error('could not initialise shaders');
-      console.error(gl.getShaderInfoLog(shaderProgram));
-      return null;
-    }
-    gl.clearColor(this._options.background[0], this._options.background[1], 
-                  this._options.background[2], 1.0);
-    gl.enable(gl.BLEND);
-    gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-    gl.enable(gl.CULL_FACE);
-    gl.enable(gl.DEPTH_TEST);
-
-    // get vertex attribute location for the shader once to
-    // avoid repeated calls to getAttribLocation/getUniformLocation
-    var getAttribLoc = utils.bind(gl, gl.getAttribLocation);
-    var getUniformLoc = utils.bind(gl, gl.getUniformLocation);
-    shaderProgram.posAttrib = getAttribLoc(shaderProgram, 'attrPos');
-    shaderProgram.colorAttrib = getAttribLoc(shaderProgram, 'attrColor');
-    shaderProgram.normalAttrib = getAttribLoc(shaderProgram, 'attrNormal');
-    shaderProgram.objIdAttrib = getAttribLoc(shaderProgram, 'attrObjId');
-    shaderProgram.symId = getUniformLoc(shaderProgram, 'symId');
-    shaderProgram.projection = getUniformLoc(shaderProgram, 'projectionMat');
-    shaderProgram.modelview = getUniformLoc(shaderProgram, 'modelviewMat');
-    shaderProgram.rotation = getUniformLoc(shaderProgram, 'rotationMat');
-    shaderProgram.fog = getUniformLoc(shaderProgram, 'fog');
-    shaderProgram.fogFar = getUniformLoc(shaderProgram, 'fogFar');
-    shaderProgram.fogNear = getUniformLoc(shaderProgram, 'fogNear');
-    shaderProgram.fogColor = getUniformLoc(shaderProgram, 'fogColor');
-    shaderProgram.outlineColor = getUniformLoc(shaderProgram, 'outlineColor');
-
-    return shaderProgram;
+    this._pickBuffer = new FrameBuffer(this._canvas.gl(), fbOptions);
   },
 
   _mouseUp : function() {
     var canvas = this._canvas;
-    canvas.removeEventListener('mousemove', this._mouseRotateListener, false);
-    canvas.removeEventListener('mousemove', this._mousePanListener, false);
-    canvas.removeEventListener('mouseup', this._mouseUpListener, false);
-    document.removeEventListener('mouseup', this._mouseUpListener, false);
+    canvas.removeEventListener('mousemove', this._mouseRotateListener);
+    canvas.removeEventListener('mousemove', this._mousePanListener);
+    canvas.removeEventListener('mouseup', this._mouseUpListener);
+    document.removeEventListener('mouseup', this._mouseUpListener);
     document.removeEventListener('mousemove', this._mouseRotateListener);
     document.removeEventListener('mousemove', this._mousePanListener);
   },
 
-  _initPV : function() {
-    if (!this._initGL()) {
+  _initViewer : function() {
+    if (!this._canvas.initGL()) {
       this._domElement.removeChild(this._canvas);
       this._domElement.innerHTML = WEBGL_NOT_SUPPORTED;
       this._domElement.style.width = this._options.width + 'px';
       this._domElement.style.height = this._options.height + 'px';
       return false;
     }
+    this._initPickBuffer();
     this._2dcontext = this._textureCanvas.getContext('2d');
     this._float32Allocator = new PoolAllocator(Float32Array);
     this._uint16Allocator = new PoolAllocator(Uint16Array);
-    this._cam = new Cam(this._gl);
-    this._cam.setUpsamplingFactor(this._options.samples);
+    this._cam = new Cam(this._canvas.gl());
+    this._cam.setUpsamplingFactor(this._canvas.superSamplingFactor());
     this._cam.fog(this._options.fog);
     this._cam.setFogColor(this._options.background);
+
+    var c = this._canvas;
+    var p = shouldUseHighPrecision() ? 'highp' : 'mediump';
     this._shaderCatalog = {
-      hemilight : this._initShader(shaders.HEMILIGHT_VS, shaders.HEMILIGHT_FS),
-      outline : this._initShader(shaders.OUTLINE_VS, shaders.OUTLINE_FS),
-      lines : this._initShader(shaders.HEMILIGHT_VS, shaders.LINES_FS),
-      text : this._initShader(shaders.TEXT_VS, shaders.TEXT_FS),
-      select : this._initShader(shaders.SELECT_VS, shaders.SELECT_FS)
+      hemilight : c.initShader(shaders.HEMILIGHT_VS, shaders.HEMILIGHT_FS, p),
+      outline : c.initShader(shaders.OUTLINE_VS, shaders.OUTLINE_FS, p),
+      lines : c.initShader(shaders.HEMILIGHT_VS, shaders.LINES_FS, p),
+      text : c.initShader(shaders.TEXT_VS, shaders.TEXT_FS, p),
+      select : c.initShader(shaders.SELECT_VS, shaders.SELECT_FS, p)
     };
 
     this._boundDraw = utils.bind(this, this._draw);
@@ -506,15 +353,12 @@ PV.prototype = {
     // Firefox responds to the wheel event, whereas other browsers listen to
     // the mousewheel event. Register different event handlers, depending on
     // what properties are available.
-    var addListener = utils.bind(this._canvas, this._canvas.addEventListener);
-    if ('onwheel' in this._canvas) {
-      addListener('wheel', utils.bind(this, this._mouseWheelFF), false);
-    } else {
-      addListener('mousewheel', utils.bind(this, this._mouseWheel), false);
-    }
-    addListener('dblclick', utils.bind(this, this._mouseDoubleClick), false);
-    addListener('mousedown', utils.bind(this, this._mouseDown), false);
-    this._touchHandler = new TouchHandler(this._canvas, this, this._cam);
+    this._canvas.onWheel(utils.bind(this, this._mouseWheelFF), 
+                         utils.bind(this, this._mouseWheel));
+    this._canvas.on('dblclick', utils.bind(this, this._mouseDoubleClick));
+    this._canvas.on('mousedown', utils.bind(this, this._mouseDown));
+    this._touchHandler = new TouchHandler(this._canvas.domElement(), 
+                                          this, this._cam);
 
     if (!this._initialized) {
       this._initialized = true;
@@ -540,12 +384,15 @@ PV.prototype = {
   },
 
   _initCanvas : function() {
-    this._canvas = document.createElement('canvas');
+    var canvasOptions = {
+      antialias : this._options.antialias,
+      height : this._options.height,
+      width : this._options.width,
+      backgroundColor : this._options.background
+    };
+    this._canvas = new canvas.Canvas(this._domElement, canvasOptions);
     this._textureCanvas = document.createElement('canvas');
     this._textureCanvas.style.display = 'none';
-    this._canvas.width = this._options.width;
-    this._canvas.height = this._options.height;
-    this._domElement.appendChild(this._canvas);
     this._domElement.appendChild(this._textureCanvas);
   },
 
@@ -584,24 +431,32 @@ PV.prototype = {
   },
 
   _draw : function() {
+    if (this._canvas === null) {
+      // only happens when viewer has been destroyed
+      return;
+    }
     this._redrawRequested = false;
-    this._ensureSize();
     this._animateCam();
+    this._canvas.bind();
+    // must be called "after" canvas.bind(). we need to some of the properties
+    // calculated in canvas._ensureSize()
+    this._ensureSize();
+    var gl = this._canvas.gl();
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
     var newSlab = this._options.slabMode.update(this._objects, this._cam);
     if (newSlab !== null) {
       this._cam.setNearFar(newSlab.near, newSlab.far);
     }
 
-    this._gl.clear(this._gl.COLOR_BUFFER_BIT | this._gl.DEPTH_BUFFER_BIT);
-    this._gl.viewport(0, 0, this._options.realWidth, this._options.realHeight);
-    this._gl.enable(this._gl.CULL_FACE);
+    gl.enable(gl.CULL_FACE);
     if (this._options.outline) {
-      this._gl.cullFace(this._gl.BACK);
-      this._gl.enable(this._gl.CULL_FACE);
+      gl.cullFace(gl.BACK);
+      gl.enable(gl.CULL_FACE);
       this._drawWithPass('outline');
     }
-    this._gl.cullFace(this._gl.FRONT);
-    this._gl.enable(this._gl.BLEND);
+    gl.cullFace(gl.FRONT);
+    gl.enable(gl.BLEND);
     this._drawWithPass('normal');
 
 
@@ -654,7 +509,7 @@ PV.prototype = {
 
   _mouseDoubleClick : (function() {
     return function(event) {
-      var rect = this._canvas.getBoundingClientRect();
+      var rect = this._canvas.domElement().getBoundingClientRect();
       var picked = this.pick(
           { x : event.clientX - rect.left, y : event.clientY - rect.top });
       this._dispatchEvent(event, 'atomDoubleClicked', picked);
@@ -707,21 +562,20 @@ PV.prototype = {
     if (typeof this.lastClickTime === 'undefined' || 
         (currentTime - this.lastClickTime > 300)) {
       this.lastClickTime = currentTime;
-      var rect = this._canvas.getBoundingClientRect();
+      var rect = this._canvas.domElement().getBoundingClientRect();
       var picked = this.pick(
           { x : event.clientX - rect.left, y : event.clientY - rect.top });
       this._dispatchEvent(event, 'atomClicked', picked);
     }
     event.preventDefault();
     if (event.shiftKey === true) {
-      this._canvas.addEventListener('mousemove', this._mousePanListener, false);
+      this._canvas.on('mousemove', this._mousePanListener);
       document.addEventListener('mousemove', this._mousePanListener, false);
     } else {
-      this._canvas.addEventListener('mousemove', this._mouseRotateListener,
-                                    false);
+      this._canvas.on('mousemove', this._mouseRotateListener);
       document.addEventListener('mousemove', this._mouseRotateListener, false);
     }
-    this._canvas.addEventListener('mouseup', this._mouseUpListener, false);
+    this._canvas.on('mouseup', this._mouseUpListener);
     document.addEventListener('mouseup', this._mouseUpListener, false);
     this._lastMousePos = { x : event.pageX, y : event.pageY };
   },
@@ -805,7 +659,7 @@ PV.prototype = {
     options.color = options.color || color.uniform([ 1, 0, 1 ]);
     options.lineWidth = options.lineWidth || 4.0;
 
-    var obj = render.lineTrace(structure, this._gl, options);
+    var obj = render.lineTrace(structure, this._canvas.gl(), options);
     return this.add(name, obj);
   },
 
@@ -815,7 +669,7 @@ PV.prototype = {
     options.sphereDetail = this.options('sphereDetail');
     options.radiusMultiplier = options.radiusMultiplier || 1.0;
 
-    var obj = render.spheres(structure, this._gl, options);
+    var obj = render.spheres(structure, this._canvas.gl(), options);
     return this.add(name, obj);
   },
 
@@ -826,7 +680,7 @@ PV.prototype = {
     options.strength = options.strength || 1.0;
     options.lineWidth = options.lineWidth || 4.0;
 
-    var obj = render.sline(structure, this._gl, options);
+    var obj = render.sline(structure, this._canvas.gl(), options);
     return this.add(name, obj);
   },
 
@@ -838,7 +692,7 @@ PV.prototype = {
     options.arcDetail = options.arcDetail || this.options('arcDetail');
     options.radius = options.radius || 0.3;
     options.forceTube = options.forceTube || false;
-    var obj = render.cartoon(structure, this._gl, options);
+    var obj = render.cartoon(structure, this._canvas.gl(), options);
     var added = this.add(name, obj);
     return added;
   },
@@ -846,7 +700,7 @@ PV.prototype = {
 
   surface : function(name, data, opts) {
     var options = this._handleStandardOptions(opts);
-    var obj = render.surface(data, this._gl, options);
+    var obj = render.surface(data, this._canvas.gl(), options);
     return this.add(name, obj);
   },
 
@@ -867,7 +721,7 @@ PV.prototype = {
     options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
     options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
 
-    var obj = render.ballsAndSticks(structure, this._gl, options);
+    var obj = render.ballsAndSticks(structure, this._canvas.gl(), options);
     return this.add(name, obj);
   },
 
@@ -875,7 +729,7 @@ PV.prototype = {
     var options = this._handleStandardMolOptions(opts, structure);
     options.color = options.color || color.byElement();
     options.lineWidth = options.lineWidth || 4.0;
-    var obj = render.lines(structure, this._gl, options);
+    var obj = render.lines(structure, this._canvas.gl(), options);
     return this.add(name, obj);
   },
 
@@ -886,7 +740,7 @@ PV.prototype = {
     options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
     options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
 
-    var obj = render.trace(structure, this._gl, options);
+    var obj = render.trace(structure, this._canvas.gl(), options);
     return this.add(name, obj);
   },
 
@@ -1014,7 +868,7 @@ PV.prototype = {
   },
 
   label : function(name, text, pos, options) {
-    var label = new TextLabel(this._gl, this._textureCanvas, 
+    var label = new TextLabel(this._canvas.gl(), this._textureCanvas, 
                               this._2dcontext, pos, text, options);
     this.add(name, label);
     return label;
@@ -1022,7 +876,7 @@ PV.prototype = {
   customMesh : function(name, opts) {
     var options = this._handleStandardOptions(opts);
     
-    var mesh = new CustomMesh(name, this._gl, 
+    var mesh = new CustomMesh(name, this._canvas.gl(), 
                               options.float32Allocator, 
                               options.uint16Allocator);
     this.add(name, mesh);
@@ -1032,7 +886,7 @@ PV.prototype = {
   // INTERNAL: draws scene into offscreen pick buffer with the "select"
   // shader.
   _drawPickingScene : function() {
-    var gl = this._gl;
+    var gl = this._canvas.gl();
     gl.clearColor(0.0, 0.0, 0.0, 0.0);
     gl.disable(gl.BLEND);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -1047,7 +901,7 @@ PV.prototype = {
     this._pickBuffer.bind();
     this._drawPickingScene();
     var pixels = new Uint8Array(4);
-    var gl = this._gl;
+    var gl = this._canvas.gl();
     gl.readPixels(pos.x, this._options.height - pos.y, 1, 1,
                   gl.RGBA, gl.UNSIGNED_BYTE, pixels);
     this._pickBuffer.release();
@@ -1141,24 +995,22 @@ PV.prototype = {
     return this._objects;
   },
   isWebGLSupported : function() {
-    return isWebGLSupported(this._gl);
+    return this._canvas.isWebGLSupported();
   },
   destroy : function() {
     this.clear();
-    this._canvas.width = 1;
-    this._canvas.height = 1;
-    this._canvas.parentElement.removeChild(this._canvas);
+    this._canvas.destroy();
     this._canvas = null;
   },
 };
 
-PV.prototype.on = PV.prototype.addListener;
+Viewer.prototype.on = Viewer.prototype.addListener;
 
 return { 
   Viewer : function(elem, options) { 
-    return new PV(elem, options); 
+    return new Viewer(elem, options); 
   },
-  isWebGLSupported : isWebGLSupported
+  isWebGLSupported : canvas.isWebGLSupported
 };
 
 });
