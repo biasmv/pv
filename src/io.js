@@ -220,7 +220,10 @@ PDBReader.prototype = {
     if (element === '') {
       element = guessAtomElementFromName(fullAtomName);
     }
-    var atom = this._currRes.addAtom(atomName, pos, element, isHetatm);
+    var occupancy = line.substr(54,6).trim();
+    var tempFactor = line.substr(60,6).trim();
+    var atom = this._currRes.addAtom(atomName, pos, element, isHetatm,
+                                     occupancy, tempFactor);
     // in case parseConect records is set to true, store away the atom serial
     if (this._options.conectRecords) {
       var serial = parseInt(line.substr(6,5).trim(), 10);
