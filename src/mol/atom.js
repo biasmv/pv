@@ -37,8 +37,6 @@ AtomBase.prototype = {
   pos : function() { return this._pos; },
   element : function() { return this._element; },
   index : function() { return this._index; },
-  occupancy : function() { return this._occupancy; },
-  tempFactor : function() { return this._tempFactor; },
 
   prop : function(propName) { 
     return this[propName]();
@@ -64,8 +62,8 @@ function Atom(residue, name, pos, element, index, isHetatm,
   this._pos = pos;
   this._index = index;
   this._element = element;
-  this._occupancy = occupancy;
-  this._tempFactor = tempFactor;
+  this._occupancy = occupancy !== undefined ? occupancy : null;
+  this._tempFactor = tempFactor !== undefined ? tempFactor : null;
 }
 
 utils.derive(Atom, AtomBase, {
@@ -80,6 +78,10 @@ utils.derive(Atom, AtomBase, {
   qualifiedName : function() {
     return this.residue().qualifiedName()+'.'+this.name();
   },
+  occupancy : function() { return this._occupancy; },
+
+  tempFactor : function() { return this._tempFactor; },
+
   isHetatm : function() { 
     return this._isHetatm; 
   },
@@ -101,6 +103,8 @@ utils.derive(AtomView, AtomBase, {
   residue : function() { return this._resView; },
   bonds : function() { return this._atom.bonds(); },
   index : function() { return this._atom.index(); },
+  occupancy : function() { return this._atom.occupancy(); },
+  tempFactor : function() { return this._atom.tempFactor(); },
   qualifiedName : function() {
     return this._atom.qualifiedName();
   },
