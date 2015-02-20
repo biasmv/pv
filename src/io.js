@@ -220,10 +220,11 @@ PDBReader.prototype = {
     if (element === '') {
       element = guessAtomElementFromName(fullAtomName);
     }
-    var occupancy = line.substr(54,6).trim();
-    var tempFactor = line.substr(60,6).trim();
+    var occupancy = parseFloat(line.substr(54,6).trim());
+    var tempFactor = parseFloat(line.substr(60,6).trim());
     var atom = this._currRes.addAtom(atomName, pos, element, isHetatm,
-                                     occupancy, tempFactor);
+                                     isNaN(occupancy) ? null : occupancy, 
+                                     isNaN(tempFactor) ? null : tempFactor);
     // in case parseConect records is set to true, store away the atom serial
     if (this._options.conectRecords) {
       var serial = parseInt(line.substr(6,5).trim(), 10);
