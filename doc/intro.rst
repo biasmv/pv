@@ -25,7 +25,7 @@ When you do this, you will need to compile the pv.dbg.js, pv.rel.js and pv.min.j
   # run grunt with the default tasks
   grunt
 
-Upon success, bio-pv.js, bio-pv.min.js are placed in the top-level folder of the project. You can just grab them from there and place them in your own project.
+Upon success, bio-pv.js, bio-pv.min.js are placed in the ```js``` folder. You can just grab them from there and place them in your own project.
 
 
 Setting up a small website
