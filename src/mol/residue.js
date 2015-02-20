@@ -136,10 +136,10 @@ utils.derive(Residue, ResidueBase, {
 
   full : function() { return this; },
 
-  addAtom : function(name, pos, element, isHetatm) {
+  addAtom : function(name, pos, element, isHetatm, occupancy, tempFactor) {
     var atom = new Atom(this, name, pos, element, 
                         this.structure().nextAtomIndex(), 
-                        isHetatm);
+                        isHetatm, occupancy, tempFactor);
     this._atoms.push(atom);
     return atom;
   },

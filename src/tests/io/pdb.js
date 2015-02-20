@@ -155,4 +155,26 @@ test('sets HETATM flag', function(assert) {
 
 });
 
+var OCCUPANCY_AND_TEMP_FACTOR='\
+ATOM   3316  C   GLY B 214      24.173   7.911  -3.276100.00 94.23           C\n\
+ATOM   3317  O   GLY B 214      24.730   8.496  -4.208  0.55-94.94           O\n\
+ATOM   3318  OXT GLY B 214      23.962   8.474  -2.196  1.00999.99           O\n\
+ATOM   3317  O   GLY A 216      24.730   8.496  -4.208                       O\n\
+END\n\
+';
+
+test('occupancy and temp-factor', function(assert) {
+  var structure = io.pdb(OCCUPANCY_AND_TEMP_FACTOR);
+  var atoms = structure.atoms();
+  assert.strictEqual(atoms[0].occupancy(), 100.00);
+  assert.strictEqual(atoms[1].occupancy(), 0.55);
+  assert.strictEqual(atoms[2].occupancy(), 1.00);
+  assert.strictEqual(atoms[3].occupancy(), null);
+
+  assert.strictEqual(atoms[0].tempFactor(), 94.23);
+  assert.strictEqual(atoms[1].tempFactor(),-94.94);
+  assert.strictEqual(atoms[2].tempFactor(), 999.99);
+  assert.strictEqual(atoms[3].tempFactor(), null);
+});
+
 });
