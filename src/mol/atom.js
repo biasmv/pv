@@ -33,14 +33,6 @@ function AtomBase() {
 
 
 AtomBase.prototype = {
-  name : function() { return this._name; },
-  pos : function() { return this._pos; },
-  element : function() { return this._element; },
-  index : function() { return this._index; },
-
-  prop : function(propName) { 
-    return this[propName]();
-  },
 
   bondCount : function() { return this.bonds().length; },
 
@@ -77,6 +69,13 @@ utils.derive(Atom, AtomBase, {
   full : function() { return this; },
   qualifiedName : function() {
     return this.residue().qualifiedName()+'.'+this.name();
+  },
+  pos : function() { return this._pos; },
+  element : function() { return this._element; },
+  index : function() { return this._index; },
+
+  prop : function(propName) { 
+    return this[propName]();
   },
   occupancy : function() { return this._occupancy; },
 

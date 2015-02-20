@@ -323,4 +323,20 @@ test('residues in rnum range on view', function(assert) {
 });
 
 
+test('atom properties', function(assert) {
+  var oxygen = FRAGMENT.atom('A.905.O1');
+  assert.strictEqual(oxygen.occupancy(), 1.0);
+  assert.strictEqual(oxygen.tempFactor(), 0.08);
+  assert.strictEqual(oxygen.element(), 'O');
+  assert.strictEqual(oxygen.index(), 82);
+  
+  // do the same on view 
+  var oxygenView = FRAGMENT.select().atom('A.905.O1');
+  assert.strictEqual(oxygenView.occupancy(), 1.0);
+  assert.strictEqual(oxygenView.tempFactor(), 0.08);
+  assert.strictEqual(oxygenView.element(), 'O');
+  assert.strictEqual(oxygenView.index(), 82);
+});
+
+
 });
