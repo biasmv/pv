@@ -865,16 +865,16 @@ var _cartoonForSingleTrace = (function() {
 
       if (i === e -1) {
         vec3.set(tangent, sdiv[ix3] - sdiv[imox3],
-                  sdiv[ix3 + 1] - sdiv[imox3 + 1],
-                  sdiv[ix3 + 2] - sdiv[imox3 + 2]);
+                 sdiv[ix3 + 1] - sdiv[imox3 + 1],
+                 sdiv[ix3 + 2] - sdiv[imox3 + 2]);
       } else {
         vec3.set(tangent, sdiv[ipox3] - sdiv[imox3],
-                  sdiv[ipox3 + 1] - sdiv[imox3 + 1],
-                  sdiv[ipox3 + 2] - sdiv[imox3 + 2]);
+                 sdiv[ipox3 + 1] - sdiv[imox3 + 1],
+                 sdiv[ipox3 + 2] - sdiv[imox3 + 2]);
       }
       vec3.normalize(tangent, tangent);
       vec4.set(color, interpColors[ix4], interpColors[ix4 + 1],
-                interpColors[ix4 + 2], interpColors[ix4 + 3]);
+               interpColors[ix4 + 2], interpColors[ix4 + 3]);
 
       var offset = 0; // <- set special handling of coil to helix,strand
                       //    transitions.
@@ -910,8 +910,8 @@ var _cartoonForSingleTrace = (function() {
             // the vertices of the rotated profile align with the previous
             // profile.
             vec3.set(normal2, normalSdiv[imox3] - sdiv[imox3],
-                      normalSdiv[imox3 + 1] - sdiv[imox3 + 1],
-                      normalSdiv[imox3 + 2] - sdiv[imox3 + 2]);
+                     normalSdiv[imox3 + 1] - sdiv[imox3 + 1],
+                     normalSdiv[imox3 + 2] - sdiv[imox3 + 2]);
             vec3.normalize(normal2, normal2);
             var argAngle = 2 * Math.PI / (opts.arcDetail * 4);
             var signedAngle = geom.signedAngle(normal, normal2, tangent);
@@ -930,8 +930,8 @@ var _cartoonForSingleTrace = (function() {
       // only set normal *after* handling the coil -> helix,strand
       // transition, since we depend on the normal of the previous step.
       vec3.set(normal, normalSdiv[3 * i] - sdiv[ix3],
-                normalSdiv[ix3 + 1] - sdiv[ix3 + 1],
-                normalSdiv[ix3 + 2] - sdiv[ix3 + 2]);
+               normalSdiv[ix3 + 1] - sdiv[ix3 + 1],
+               normalSdiv[ix3 + 2] - sdiv[ix3 + 2]);
       vec3.normalize(normal, normal);
       vertStart = vertArray.numVerts();
       var objIndex = Math.floor((i + halfSplineDetail) / opts.splineDetail);
@@ -992,7 +992,7 @@ var _renderSingleTrace = (function() {
                                    atom : trace.centralAtomAt(0)}), 
         idEnd = 0;
     opts.protoSphere.addTransformed(va, caPrevPos, opts.radius,
-                                       colorOne, idStart);
+                                   colorOne, idStart);
     var vertEnd = null;
     vertAssoc.addAssoc(traceIndex, va, 0, vertStart, vertEnd);
     var colors = opts.float32Allocator.request(trace.length() * 4);
@@ -1030,8 +1030,8 @@ var _renderSingleTrace = (function() {
       remainingVerts -= vertsPerIteration;
       var endSphere = va.numVerts();
       opts.protoCyl.addTransformed(va, midPoint, length,
-                                      opts.radius, rotation, colorOne,
-                                      colorTwo, idStart, idEnd);
+                                   opts.radius, rotation, colorOne,
+                                   colorTwo, idStart, idEnd);
       vertEnd = va.numVerts();
       vertEnd = vertEnd - (vertEnd - endSphere) / 2;
 
