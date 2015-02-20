@@ -439,6 +439,17 @@ Atom (and AtomView)
   Returns true when the atom was imported from a HETATM record, false if not. This flag is only meaningful for structures imported from PDB files and will return false for other file formats.
 
 
+.. function:: pv.mol.Atom.occupancy()
+              pv.mol.AtomView.occupancy()
+
+  Returns the occupancy of this atom. In case this value is not available, null will be returned.
+
+.. function:: pv.mol.Atom.tempFactor()
+              pv.mol.AtomView.tempFactor()
+
+  Returns the temperature factor (aka B-factor) of this atom. In case this value is not available, null will be returned.
+
+
 Bond
 -----------------------------------------------------------------------------------------
 
