@@ -32,6 +32,7 @@ SOURCE_FILES = [
   'src/mol/symmetry.js',
   'src/pv.js',
   'src/slab.js',
+  'src/mouse.js',
   'src/touch.js',
   'src/unique-object-id-pool.js',
   'src/utils.js',

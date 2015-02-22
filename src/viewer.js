@@ -30,6 +30,7 @@ define([
   './gfx/cam', 
   './gfx/shaders', 
   './touch', 
+  './mouse', 
   './gfx/render', 
   './gfx/label', 
   './gfx/custom-mesh', 
@@ -47,6 +48,7 @@ define([
     Cam, 
     shaders, 
     TouchHandler, 
+    MouseHandler,
     render, 
     TextLabel, 
     CustomMesh, 
@@ -207,21 +209,6 @@ Viewer.prototype = {
     return options;
   },
 
-  _centerOnClicked : function(picked) {
-    if (picked === null) {
-      return;
-    }
-    var transformedPos = vec3.create();
-    var newAtom = picked.object().atom;
-    var pos = newAtom.pos();
-    if (picked.transform()) {
-      vec3.transformMat4(transformedPos, pos, picked.transform());
-      this.setCenter(transformedPos, this._options.animateTime);
-    } else {
-      this.setCenter(pos, this._options.animateTime);
-    }
-  },
-
   // with rendering to avoid flickering.
   _ensureSize : function() {
     if (!this._resize) {
@@ -307,16 +294,6 @@ Viewer.prototype = {
     this._pickBuffer = new FrameBuffer(this._canvas.gl(), fbOptions);
   },
 
-  _mouseUp : function() {
-    var canvas = this._canvas;
-    canvas.removeEventListener('mousemove', this._mouseRotateListener);
-    canvas.removeEventListener('mousemove', this._mousePanListener);
-    canvas.removeEventListener('mouseup', this._mouseUpListener);
-    document.removeEventListener('mouseup', this._mouseUpListener);
-    document.removeEventListener('mousemove', this._mouseRotateListener);
-    document.removeEventListener('mousemove', this._mousePanListener);
-  },
-
   _initViewer : function() {
     if (!this._canvas.initGL()) {
       this._domElement.removeChild(this._canvas);
@@ -333,6 +310,7 @@ Viewer.prototype = {
     this._cam.setUpsamplingFactor(this._canvas.superSamplingFactor());
     this._cam.fog(this._options.fog);
     this._cam.setFogColor(this._options.background);
+    this._mouseHandler.setCam(this._cam);
 
     var c = this._canvas;
     var p = shouldUseHighPrecision() ? 'highp' : 'mediump';
@@ -346,17 +324,6 @@ Viewer.prototype = {
 
     this._boundDraw = utils.bind(this, this._draw);
 
-    this._mousePanListener = utils.bind(this, this._mousePan);
-    this._mouseRotateListener = utils.bind(this, this._mouseRotate);
-    this._mouseUpListener = utils.bind(this, this._mouseUp);
-
-    // Firefox responds to the wheel event, whereas other browsers listen to
-    // the mousewheel event. Register different event handlers, depending on
-    // what properties are available.
-    this._canvas.onWheel(utils.bind(this, this._mouseWheelFF), 
-                         utils.bind(this, this._mouseWheel));
-    this._canvas.on('dblclick', utils.bind(this, this._mouseDoubleClick));
-    this._canvas.on('mousedown', utils.bind(this, this._mouseDown));
     this._touchHandler = new TouchHandler(this._canvas.domElement(), 
                                           this, this._cam);
 
@@ -394,6 +361,8 @@ Viewer.prototype = {
     this._textureCanvas = document.createElement('canvas');
     this._textureCanvas.style.display = 'none';
     this._domElement.appendChild(this._textureCanvas);
+    this._mouseHandler = new MouseHandler(this._canvas, this, this._cam, 
+                                          this._options.animateTime);
   },
 
   setRotation : function(rotation, ms) {
@@ -495,29 +464,6 @@ Viewer.prototype = {
     this._objects = [];
   },
 
-  _mouseWheel : function(event) {
-    this._cam.zoom(event.wheelDelta < 0 ? -1 : 1);
-    event.preventDefault();
-    this.requestRedraw();
-  },
-
-  _mouseWheelFF : function(event) {
-    this._cam.zoom(event.deltaY < 0 ? 1 : -1);
-    event.preventDefault();
-    this.requestRedraw();
-  },
-
-  _mouseDoubleClick : (function() {
-    return function(event) {
-      var rect = this._canvas.domElement().getBoundingClientRect();
-      var picked = this.pick(
-          { x : event.clientX - rect.left, y : event.clientY - rect.top });
-      this._dispatchEvent(event, 'atomDoubleClicked', picked);
-      this.requestRedraw();
-    };
-  })(),
-
-
   addListener : function(eventName, callback) {
     var callbacks = this.listenerMap[eventName];
     if (typeof callbacks === 'undefined') {
@@ -525,7 +471,9 @@ Viewer.prototype = {
       this.listenerMap[eventName] = callbacks;
     }
     if (callback === 'center') {
-      callbacks.push(utils.bind(this, this._centerOnClicked));
+      var cb = utils.bind(this._mouseHandler, 
+                          this._mouseHandler._centerOnClicked);
+      callbacks.push(cb);
     } else {
       callbacks.push(callback);
     }
@@ -551,62 +499,6 @@ Viewer.prototype = {
         callback(arg, event);
       });
     }
-  },
-
-  _mouseDown : function(event) {
-    if (event.button !== 0) {
-      return;
-    }
-    var currentTime = (new Date()).getTime();
-    // make sure it isn't a double click
-    if (typeof this.lastClickTime === 'undefined' || 
-        (currentTime - this.lastClickTime > 300)) {
-      this.lastClickTime = currentTime;
-      var rect = this._canvas.domElement().getBoundingClientRect();
-      var picked = this.pick(
-          { x : event.clientX - rect.left, y : event.clientY - rect.top });
-      this._dispatchEvent(event, 'atomClicked', picked);
-    }
-    event.preventDefault();
-    if (event.shiftKey === true) {
-      this._canvas.on('mousemove', this._mousePanListener);
-      document.addEventListener('mousemove', this._mousePanListener, false);
-    } else {
-      this._canvas.on('mousemove', this._mouseRotateListener);
-      document.addEventListener('mousemove', this._mouseRotateListener, false);
-    }
-    this._canvas.on('mouseup', this._mouseUpListener);
-    document.addEventListener('mouseup', this._mouseUpListener, false);
-    this._lastMousePos = { x : event.pageX, y : event.pageY };
-  },
-
-  _mouseRotate : function(event) {
-    var newMousePos = { x : event.pageX, y : event.pageY };
-    var delta = {
-      x : newMousePos.x - this._lastMousePos.x,
-      y : newMousePos.y - this._lastMousePos.y
-    };
-
-    var speed = 0.005;
-    this._cam.rotateX(speed * delta.y);
-    this._cam.rotateY(speed * delta.x);
-    this._lastMousePos = newMousePos;
-    this.requestRedraw();
-  },
-
-  _mousePan : function(event) {
-    var newMousePos = { x : event.pageX, y : event.pageY };
-    var delta = {
-      x : newMousePos.x - this._lastMousePos.x,
-      y : newMousePos.y - this._lastMousePos.y
-    };
-
-    // adjust speed according to distance to camera center, it's not
-    // perfect but gives good enough results.
-    var speed = 0.001 * this._cam.zoom();
-    this._cam.panXY(speed * delta.x, speed * delta.y);
-    this._lastMousePos = newMousePos;
-    this.requestRedraw();
   },
 
   RENDER_MODES : [ 

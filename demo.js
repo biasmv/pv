@@ -87,7 +87,6 @@ function load(pdb_id) {
     structure = io.pdb(data);
     //mol.assignHelixSheet(structure);
     cartoon();
-
     viewer.autoZoom();
   }});
 }
@@ -201,7 +200,6 @@ viewer = pv.Viewer(document.getElementById('viewer'), {
     background : '#333', animateTime: 500,
 });
 viewer.addListener('viewerReady', longHelices);
-
 window.addEventListener('resize', function() {
       viewer.fitParent();
 });
