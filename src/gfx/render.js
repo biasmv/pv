@@ -97,10 +97,10 @@ var spheresForChain = (function() {
   return function(meshGeom, vertAssoc, opts, chain) {
     var atomCount = chain.atomCount();
     var idRange = opts.idPool.getContinuousRange(atomCount);
+    meshGeom.addIdRange(idRange);
     var vertsPerSphere = opts.protoSphere.numVerts();
     var indicesPerSphere = opts.protoSphere.numIndices();
     var radius = 1.5 * opts.radiusMultiplier;
-    meshGeom.addIdRange(idRange);
     meshGeom.addChainVertArray(chain, vertsPerSphere*atomCount, 
                               indicesPerSphere*atomCount);
     chain.eachAtom(function(atom) {
@@ -285,10 +285,10 @@ var makeLineTrace = (function() {
 
     var colors = opts.float32Allocator.request(trace.length() * 4);
     var idRange = opts.idPool.getContinuousRange(trace.length());
+    lineGeom.addIdRange(idRange);
     var idOne = idRange.nextId({ geom: lineGeom, 
                                  atom : trace.centralAtomAt(0) });
     var idTwo;
-    lineGeom.addIdRange(idRange);
     for (var i = 1; i < trace.length(); ++i) {
 
       opts.color.colorFor(trace.centralAtomAt(i - 1), colorOne, 0);
@@ -552,6 +552,7 @@ var _addNucleotideSticks = (function() {
     for (var i = 0; i < traces.length; ++i) {
       var trace = traces[i];
       var idRange = opts.idPool.getContinuousRange(trace.length());
+      meshGeom.addIdRange(idRange);
       for (var j = 0; j <  trace.length(); ++j) {
         var atomVerts = opts.protoCyl.numVerts();
         var va = meshGeom.vertArrayWithSpaceFor(atomVerts);
@@ -811,9 +812,9 @@ var _cartoonForSingleTrace = (function() {
 
     var objIds = [];
     var idRange = opts.idPool.getContinuousRange(trace.length());
+    meshGeom.addIdRange(idRange);
     _colorPosNormalsFromTrace(meshGeom, trace, colors, positions, normals, 
                               objIds, idRange, opts);
-    meshGeom.addIdRange(idRange);
     var vertArray = meshGeom.vertArrayWithSpaceFor(numVerts);
     var sdiv = geom.catmullRomSpline(positions, trace.length(),
                                       opts.splineDetail, opts.strength,

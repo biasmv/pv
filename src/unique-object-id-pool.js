@@ -33,6 +33,7 @@ function ContinuousIdRange(pool, start, end) {
 ContinuousIdRange.prototype = {
   nextId : function(obj) {
     var id = this._next;
+    console.assert(this._next < this._end);
     this._next++;
     this._pool._objects[id] = obj;
     return id;
@@ -49,9 +50,7 @@ ContinuousIdRange.prototype = {
 // requested in sequential groups. 
 // FIXME: describe why!
 function UniqueObjectIdPool() {
-  this._objects = {};
-  this._unusedRangeStart = 0;
-  this._free = [];
+  this.clear();
 }
 
 UniqueObjectIdPool.prototype = {
@@ -71,16 +70,25 @@ UniqueObjectIdPool.prototype = {
     if (bestIndex !== -1) {
       var result = this._free[bestIndex];
       this._free.splice(bestIndex, 1);
+      this._usedCount ++;
       return result;
     }
     var start = this._unusedRangeStart;
     var end = start + num;
     if (end > 65536) {
-      console.log('not enough free object ids.');
+      console.error('not enough free object ids.');
       return null;
     }
     this._unusedRangeStart = end;
-    return new ContinuousIdRange(this, start, end);
+    var newRange = new ContinuousIdRange(this, start, end);
+    this._usedCount ++;
+    return newRange;
+  },
+  clear : function() {
+    this._objects = {};
+    this._unusedRangeStart = 0;
+    this._free = [];
+    this._usedCount = 0;
   },
   recycle : function(range) {
     for (var i = range._start; i < range._next; ++i) {
@@ -88,6 +96,11 @@ UniqueObjectIdPool.prototype = {
     }
     range._next = range._start;
     this._free.push(range);
+    this._usedCount--;
+    console.assert(this._usedCount >= 0);
+    if (this._free.length > 0 && this._usedCount === 0) {
+      this.clear();
+    }
   },
   objectForId : function(id) {
     return this._objects[id];
