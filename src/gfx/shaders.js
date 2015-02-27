@@ -197,8 +197,9 @@ void main(void) {\n\
   integralObjId/=256;\n\
   int green = intMod(integralObjId, 256);\n\
   integralObjId/=256;\n\
-  int blue = symId;\n\
-  gl_FragColor = vec4(float(red), float(green), float(blue), 255.0)/255.0;\n\
+  int blue = intMod(integralObjId, 256);\n\
+  int alpha = symId;\n\
+  gl_FragColor = vec4(float(red), float(green), float(blue), float(alpha))/255.0;\n\
 }'
 
 });

@@ -800,11 +800,8 @@ Viewer.prototype = {
     if (pixels.data) {
       pixels = pixels.data;
     }
-    if (pixels[3] === 0) {
-      return null;
-    }
-    var objId = pixels[0] | pixels[1] << 8;
-    var symIndex = pixels[2];
+    var objId = pixels[0] | (pixels[1] << 8) | (pixels[2] << 16);
+    var symIndex = pixels[3];
 
     var obj = this._objectIdManager.objectForId(objId);
     if (obj === undefined) {

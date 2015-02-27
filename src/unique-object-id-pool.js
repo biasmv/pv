@@ -54,6 +54,7 @@ function UniqueObjectIdPool() {
 }
 
 UniqueObjectIdPool.prototype = {
+  MAX_ID : 16777216, // 2^24
   getContinuousRange : function(num) {
     // FIXME: keep the "free" list sorted, so we can binary search it
     // for a good match
@@ -75,7 +76,7 @@ UniqueObjectIdPool.prototype = {
     }
     var start = this._unusedRangeStart;
     var end = start + num;
-    if (end > 65536) {
+    if (end > this.MAX_ID) {
       console.error('not enough free object ids.');
       return null;
     }
