@@ -67,6 +67,8 @@ Changelog
 ### New Since Latest Release
 
 - Added Viewer.spin command to spin the camera around an axis
+- Relax some limits on number of elements that could be rendered at full connectivity level. Now it would theoretically be possible to render 2^24 atoms, even though the amount of geometry is likely to take down the browser.
+- Fix rendering for very long RNA molecules that broke some assumptions in the cartoon rendering code (1J5E for example see issue #82).
 
 ### New in Version 1.4.0
 
