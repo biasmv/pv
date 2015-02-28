@@ -68,6 +68,10 @@ utils.derive(IndexedVertexArray, VertexArrayBase, {
   numIndices : function() { return this._numTriangles * 3; },
 
   addVertex : function(pos, normal, color, objId) {
+    if (this._numVerts === this._maxVerts) {
+      console.error('maximum number of vertices reached');
+      return;
+    }
     var i = this._numVerts * this._FLOATS_PER_VERT;
     this._vertData[i++] = pos[0];
     this._vertData[i++] = pos[1];

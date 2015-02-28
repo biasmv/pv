@@ -93,14 +93,25 @@ utils.derive(MeshGeom, BaseGeom, {
     return newVa;
   },
 
+  // makes sure the current vertex array has at least space for numVerts more 
+  // vertices. If so, the current vertex array is returned. If not, a new 
+  // vertex array is created with as much space as possible:
+  // - if there are still more than 2^16 vertices required for this mesh geom,
+  //   a new vertex array with 2^16 vertices is returned
+  // - if there are less than 2^16 vertices are required, a new vertex array
+  //   with the number of remaining vertices is returned.
+  //
+  // Note: this depends on the total number of vertices provided to 
+  // addVertArray/addChainVertArray. In case there are too few vertices passed
+  // to addVertArray/addChainVertArray, bad stuff will happen!
   vertArrayWithSpaceFor : function(numVerts) {
     var currentVa = this._indexedVAs[this._indexedVAs.length - 1];
     var remaining = currentVa.maxVerts() - currentVa.numVerts();
     if (remaining >= numVerts) {
       return currentVa;
     }
-    this._remainingVerts = this._remainingVerts - currentVa.numVerts();
-    this._remainingIndices = this._remainingIndices - currentVa.numIndices();
+    this._remainingVerts -= currentVa.numVerts();
+    this._remainingIndices -= currentVa.numIndices();
     numVerts = this._boundedVertArraySize(this._remainingVerts);
     var newVa = null;
     if (currentVa instanceof MeshChainData) {

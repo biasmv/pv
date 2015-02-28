@@ -523,7 +523,13 @@ exports.trace = function(structure, gl, opts) {
 var _cartoonNumVerts = function(traces, vertsPerSlice, splineDetail) {
   var numVerts = 0;
   for (var i = 0; i < traces.length; ++i) {
-    numVerts += ((traces[i].length() - 1) * splineDetail + 1) * vertsPerSlice;
+    var traceVerts = 
+      ((traces[i].length() - 1) * splineDetail + 1) * vertsPerSlice;
+    // in case there are more than 2^16 vertices for a single trace, we
+    // need to manually split the trace in two and duplicate one of the
+    // trace slices. Let's make room for some additional space...
+    var splits = Math.ceil((traceVerts + 2)/65536);
+    numVerts += traceVerts + (splits - 1) * vertsPerSlice;
     // triangles for capping the tube
     numVerts += 2;
   }
@@ -549,13 +555,14 @@ var _addNucleotideSticks = (function() {
   var color = vec4.create();
   return function(meshGeom, vertAssoc, traces, opts) {
     var radius = opts.radius * 1.8;
+    var vertsPerNucleotideStick = opts.protoCyl.numVerts() +
+       2 * opts.protoSphere.numVerts();
     for (var i = 0; i < traces.length; ++i) {
       var trace = traces[i];
       var idRange = opts.idPool.getContinuousRange(trace.length());
       meshGeom.addIdRange(idRange);
       for (var j = 0; j <  trace.length(); ++j) {
-        var atomVerts = opts.protoCyl.numVerts();
-        var va = meshGeom.vertArrayWithSpaceFor(atomVerts);
+        var va = meshGeom.vertArrayWithSpaceFor(vertsPerNucleotideStick);
         var vertStart = va.numVerts();
         var residue = trace.residueAt(j);
         var resName = residue.name();
@@ -581,12 +588,13 @@ var _addNucleotideSticks = (function() {
         geom.buildRotation(rotation, dir, left, up, false);
 
         opts.protoCyl.addTransformed(va, center, length, radius, 
-                                        rotation, color, color, objId, objId);
+                                     rotation, color, color, objId, objId);
         opts.protoSphere.addTransformed(va, endAtom.pos(), radius, 
-                                           color, objId);
+                                        color, objId);
         opts.protoSphere.addTransformed(va, startAtom.pos(), radius, 
-                                           color, objId);
+                                        color, objId);
         var vertEnd = va.numVerts();
+        console.assert(vertEnd <= 65536, 'too many vertices');
         vertAssoc.addAssoc(endAtom, va, vertStart, vertEnd);
       }
     }
@@ -620,9 +628,8 @@ var cartoonForChain = function(meshGeom, vertAssoc, nucleotideAssoc, opts,
   }
   meshGeom.addChainVertArray(chain, numVerts, numIndices);
   for (var ti = 0; ti < traces.length; ++ti) {
-    _cartoonForSingleTrace(meshGeom, vertAssoc, traces[ti], traceIndex, 
-                           opts);
-    traceIndex++;
+    traceIndex = _cartoonForSingleTrace(meshGeom, vertAssoc, traces[ti], 
+                                        traceIndex, opts);
   }
   _addNucleotideSticks(meshGeom, nucleotideAssoc, nucleicAcidTraces, opts);
   return traceIndex;
@@ -795,6 +802,7 @@ function capTubeEnd(va, baseIndex, numTubeVerts) {
   va.addTriangle(center, baseIndex, baseIndex + numTubeVerts - 1);
 }
 
+
 // constructs a cartoon representation for a single consecutive backbone
 // trace.
 var _cartoonForSingleTrace = (function() {
@@ -805,7 +813,6 @@ var _cartoonForSingleTrace = (function() {
   return function(meshGeom, vertAssoc, trace, traceIndex, opts) {
     var numVerts =
         _cartoonNumVerts([trace], opts.arcDetail * 4, opts.splineDetail);
-
     var positions = opts.float32Allocator.request(trace.length() * 3);
     var colors = opts.float32Allocator.request(trace.length() * 4);
     var normals = opts.float32Allocator.request(trace.length() * 3);
@@ -845,6 +852,7 @@ var _cartoonForSingleTrace = (function() {
     var vertStart = vertArray.numVerts();
     vertArray.addVertex(pos, [-tangent[0], -tangent[1], -tangent[2]], 
                         color, objIds[0]);
+    
     _cartoonAddTube(vertArray, pos, normal, trace.residueAt(0).ss(), tangent,
                     color, radius, true, opts, 0, objIds[0]);
     capTubeStart(vertArray, vertStart, opts.arcDetail * 4);
@@ -858,6 +866,7 @@ var _cartoonForSingleTrace = (function() {
     var steps = geom.catmullRomSplineNumPoints(trace.length(),
                                                 opts.splineDetail, false);
 
+    var vertsPerSlice = opts.arcDetail * 4;
     for (var i = 1, e = steps; i < e; ++i) {
       // compute 3*i, 3*(i-1), 3*(i+1) once and reuse
       var ix3 = 3 * i, ix4 = 4 * i,  ipox3 = 3 * (i + 1), imox3 = 3 * (i - 1);
@@ -939,6 +948,19 @@ var _cartoonForSingleTrace = (function() {
       var objId = objIds[Math.min(objIds.length - 1, objIndex)];
       _cartoonAddTube(vertArray, pos, normal, thisSS,
                       tangent, color, radius, false, opts, offset, objId);
+      // in case we are running out of indices, start new vertex array and 
+      // duplicate last slice. If we are on the last slice, we only need one 
+      // additional vertex for the capping, otherwise we need a full slice 
+      // worth of vertices.
+      var additionalVerts = (i === e - 1) ? 1 : vertsPerSlice;
+      if (vertArray.numVerts() + additionalVerts > vertArray.maxVerts()) {
+        vertEnd = vertArray.numVerts();
+        vertAssoc.addAssoc(traceIndex, vertArray, slice, vertStart, vertEnd);
+        vertArray = meshGeom.vertArrayWithSpaceFor(additionalVerts);
+        vertStart = 0;
+        _cartoonAddTube(vertArray, pos, normal, thisSS,
+                        tangent, color, radius, true, opts, 0, objId);
+      }
       if (drawArrow) {
         vertAssoc.addAssoc(traceIndex, vertArray, slice, vertStart, vertEnd);
         // FIXME: arrow has completely wrong normals. Profile normals are 
@@ -963,6 +985,7 @@ var _cartoonForSingleTrace = (function() {
     capTubeEnd(vertArray, vertStart, opts.arcDetail * 4);
     opts.float32Allocator.release(normals);
     opts.float32Allocator.release(positions);
+    return traceIndex + 1;
   };
 })();
 
