@@ -92,10 +92,10 @@ BackboneTrace.prototype = {
     var fullTraceIdx = 0, listIdx = 0;
     var subsets = [];
     while (listIdx < residues.length && fullTraceIdx < this._trace.length) {
-      // increase pointer until we residue indices match.
+      // increase pointer until the residue indices match.
       var residueIndex = residues[listIdx].full().index();
       while (this._trace.length > fullTraceIdx &&
-            this._trace[fullTraceIdx].index() < residueIndex) {
+             this._trace[fullTraceIdx].index() < residueIndex) {
         ++fullTraceIdx;
       }
       if (fullTraceIdx >= this._trace.length) {
@@ -110,18 +110,14 @@ BackboneTrace.prototype = {
         break;
       }
       var fullTraceBegin = fullTraceIdx;
-      var residueListBegin = listIdx;
       while (residues.length > listIdx && this._trace.length > fullTraceIdx &&
-            residues[listIdx].full().index() ===
+             residues[listIdx].full().index() ===
                 this._trace[fullTraceIdx].index()) {
         ++listIdx;
         ++fullTraceIdx;
       }
-      var residueListEnd = listIdx;
       var fullTraceEnd = fullTraceIdx;
-      subsets.push(
-          new TraceSubset(this, fullTraceBegin, fullTraceEnd,
-                          residues.slice(residueListBegin, residueListEnd)));
+      subsets.push(new TraceSubset(this, fullTraceBegin, fullTraceEnd));
     }
     return subsets;
   }
@@ -134,12 +130,10 @@ BackboneTrace.prototype.smoothNormalAt = BackboneTrace.prototype.normalAt;
 // a trace subset, e.g. the part of a trace contained in a view. End regions
 // are handled automatically depending on whether the beginning/end of the
 // trace subset coincides with the C- and N-terminus of the full trace.
-
-function TraceSubset(fullTrace, fullTraceBegin, fullTraceEnd, trace) {
+function TraceSubset(fullTrace, fullTraceBegin, fullTraceEnd) {
   this._fullTrace = fullTrace;
   this._fullTraceBegin = fullTraceBegin;
   this._fullTraceEnd = fullTraceEnd;
-  this._trace = trace;
   this._isNTerminal = this._fullTraceBegin === 0;
   this._isCTerminal = this._fullTrace.length() === this._fullTraceEnd;
   var length = this._fullTraceEnd - this._fullTraceBegin;
