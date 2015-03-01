@@ -125,7 +125,6 @@ ChainBase.prototype  = {
       // binary search our way to heaven
       var startIdx = 
         utils.indexFirstLargerEqualThan(residues, numify(start), rnumComp);
-      console.log(startIdx, start, residues[0].num());
       if (startIdx === -1) {
         return matching;
       }
@@ -172,7 +171,7 @@ function shouldIntroduceTraceBreak(aaStretch, prevResidue, thisResidue) {
   // these checks are on purpose more relaxed than the checks we use in 
   // deriveConnectivity(). We don't really care about correctness of bond 
   // lengths here. The only thing that matters is that the residues are 
-  // more or less close so that they could potentially/ be connected.
+  // more or less close so that they could potentially be connected.
   var prevAtom, thisAtom;
   if (aaStretch) {
     prevAtom = prevResidue.atom('C');
@@ -180,6 +179,11 @@ function shouldIntroduceTraceBreak(aaStretch, prevResidue, thisResidue) {
   } else {
     prevAtom = prevResidue.atom('O3\'');
     thisAtom = thisResidue.atom('P');
+  }
+
+  // in case there is a bond, we don't introduce a chain break
+  if (prevAtom.isConnectedTo(thisAtom)) {
+    return false;
   }
   var sqrDist = vec3.sqrDist(prevAtom.pos(), thisAtom.pos());
   return (Math.abs(sqrDist - 1.5*1.5) > 1);

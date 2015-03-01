@@ -449,6 +449,11 @@ Atom (and AtomView)
 
   Returns the temperature factor (aka B-factor) of this atom. In case this value is not available, null will be returned.
 
+.. function pv.mol.Atom.isConnectedTo(otherAtom)
+            pv.mol.AtomView.isConnectedTo(otherAtom)
+
+  Returns true if there is a bond between this atom and other atom, false otherwise. In case otherAtom is null, false is returned.
+
 
 Bond
 -----------------------------------------------------------------------------------------

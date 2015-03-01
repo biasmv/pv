@@ -41,7 +41,23 @@ AtomBase.prototype = {
     for (var i = 0, e = bonds.length; i < e; ++i) {
       callback(bonds[i]);
     }
-  }
+  },
+  isConnectedTo: function(otherAtom) {
+    if (otherAtom === null) {
+      return false;
+    }
+    var other = otherAtom.full();
+    var me = this.full();
+    var bonds = this.bonds();
+    for (var i = 0, e = bonds.length; i < e; ++i) {
+      var bond = bonds[i];
+      if ((bond.atom_one() === me && bond.atom_two() === other) ||
+          (bond.atom_one() === other && bond.atom_two() === me)) {
+        return true;
+      }
+    }
+    return false;
+  },
 };
 
 function Atom(residue, name, pos, element, index, isHetatm,

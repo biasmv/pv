@@ -159,6 +159,20 @@ HETATM 2141  O   HOH A 916     -11.502 -50.640   0.340  1.00 50.23           O  
 
 var FRAGMENT = io.pdb(PDB_FRAGMENT);
 
+test('is atom connected to', function(assert) {
+  var atomA = FRAGMENT.atom('A.268.C');
+  var atomB = FRAGMENT.atom('A.268.O');
+  assert.ok(atomA.isConnectedTo(atomB));
+  assert.ok(atomB.isConnectedTo(atomA));
+  assert.ok(!atomB.isConnectedTo(atomB));
+  assert.ok(!atomA.isConnectedTo(atomA));
+
+  var atomC = FRAGMENT.atom('A.268.CB');
+  assert.ok(!atomA.isConnectedTo(atomC));
+  assert.ok(!atomC.isConnectedTo(atomA));
+  assert.ok(!atomC.isConnectedTo(null));
+});
+
 test('get atom by name', function(assert) {
   var oxygen = FRAGMENT.atom('A.905.O1');
   assert.strictEqual(oxygen.name(), 'O1');
