@@ -22,8 +22,8 @@
 define([
   './gl-matrix', 
   './color', 
-  './slab', 
   './unique-object-id-pool', 
+  './gfx/canvas', 
   './utils', 
   './gfx/framebuffer', 
   './buffer-allocators', 
@@ -36,12 +36,12 @@ define([
   './gfx/custom-mesh', 
   './gfx/animation', 
   './gfx/scene-node',
-  './gfx/canvas'], 
+  './slab'], 
   function(
     glMatrix, 
     color, 
-    slab, 
     UniqueObjectIdPool, 
+    canvas, 
     utils, 
     FrameBuffer, 
     PoolAllocator, 
@@ -54,7 +54,10 @@ define([
     CustomMesh, 
     anim, 
     SceneNode,
-    canvas) {
+    // slab must be last due to a problem in AMDClean that occurs
+    // when the last parameter name does not match the module file 
+    // name
+    slab) {
 
 "use strict";
 
