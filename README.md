@@ -64,6 +64,10 @@ Documentation for pv is available [here](http://pv.readthedocs.org).
 Changelog
 ----------------------------------------
 
+### New since Latest Release
+
+nothing at all
+
 ### New in Version 1.5.0
 
 - Added Viewer.spin command to spin the camera around an axis
