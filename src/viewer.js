@@ -346,6 +346,10 @@ Viewer.prototype = {
     requestAnimFrame(this._boundDraw);
   },
 
+  boundingClientRect : function() {
+    return this._domElement.getBoundingClientRect();
+  },
+
   _drawWithPass : function(pass) {
     for (var i = 0, e = this._objects.length; i !== e; ++i) {
       this._objects[i]
