@@ -749,8 +749,13 @@ Viewer.prototype = {
       speed = Math.PI/8;
     }
     axis = axis || [0, 1, 0];
-    this._spin = anim.spin(axis, speed);
-    this._animControl.add(this._spin);
+    if (this._spin === null) {
+      this._spin = anim.spin(axis, speed);
+      this._animControl.add(this._spin);
+    } else {
+      this._spin.setSpeed(speed);
+      this._spin.setAxis(axis);
+    }
     this.requestRedraw();
     return true;
   },

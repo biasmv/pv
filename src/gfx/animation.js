@@ -165,7 +165,13 @@ utils.derive(Spin, Animation, {
       mat3.mul(rotation, axisRot, rotation);
       cam.setRotation(rotation);
     };
-  })()
+  })(),
+  setSpeed : function(speed) {
+    this._speed = speed;
+  },
+  setAxis : function(axis) {
+    this._axis = axis;
+  }
 });
 
 
