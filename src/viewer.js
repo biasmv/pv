@@ -724,9 +724,11 @@ Viewer.prototype = {
       return this._rockAndRoll !== null;
     }
     if (!!enable) {
-      this._rockAndRoll = anim.rockAndRoll();
-      this._animControl.add(this._rockAndRoll);
-      this.requestRedraw();
+      if (this._rockAndRoll === null) {
+        this._rockAndRoll = anim.rockAndRoll();
+        this._animControl.add(this._rockAndRoll);
+        this.requestRedraw();
+      }
       return true;
     } 
     this._animControl.remove(this._rockAndRoll);
