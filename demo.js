@@ -5,7 +5,7 @@ requirejs.config({
   // minified PV version. Grunt needs to be run before for this to work.
   /*
   paths : {
-    pv : '/js/pv.min'
+    pv : '/js/bio-pv.min'
   }
   */
 });
