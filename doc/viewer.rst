@@ -60,6 +60,8 @@ The following code defines a new viewer. This can be done during page load time,
 
   * *high* render the scene with maximum detail.
 
+  Changes to the quality only affect newly created objects/geometries. Already existing objects/geometries are not affected.
+
 
 .. _pv.viewer.rendering:
 
