@@ -158,8 +158,10 @@ MouseHandler.prototype = {
 
     // adjust speed according to distance to camera center, it's not
     // perfect but gives good enough results.
-    var speed = 0.001 * this._cam.zoom();
-    this._cam.panXY(speed * delta.x, speed * delta.y);
+    var speed = 
+      0.002 * Math.tan(0.5 * this._cam.fieldOfViewY()) * this._cam.zoom();
+    this._cam.panXY(speed * delta.x,
+                    speed * delta.y);
     this._lastMousePos = newMousePos;
     this._viewer.requestRedraw();
   }

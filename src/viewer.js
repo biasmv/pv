@@ -193,6 +193,7 @@ Viewer.prototype = {
       slabMode : slabModeToStrategy(opts.slabMode),
       atomClick: opts.atomClicked || opts.atomClick || null,
       outline : optValue(opts, 'outline', true),
+      fov : optValue(opts, 'fov', 45.0),
       // for backwards compatibility
       atomDoubleClicked : optValue(opts, 'atomDoubleClicked', 
                                    optValue(opts, 'atomDoubleClick', 'center')),
@@ -253,6 +254,9 @@ Viewer.prototype = {
         this._cam.fog(value);
         this._options.fog = value;
         this.requestRedraw();
+      } else if (optName === 'fov') {
+        this._options.fov = value;
+        this._cam.setFieldOfViewY(value * Math.PI / 180.0);
       } else {
         this._options[optName] = value;
       }
@@ -313,6 +317,7 @@ Viewer.prototype = {
     this._cam.setUpsamplingFactor(this._canvas.superSamplingFactor());
     this._cam.fog(this._options.fog);
     this._cam.setFogColor(this._options.background);
+    this._cam.setFieldOfViewY(this._options.fov * Math.PI / 180.0);
     this._mouseHandler.setCam(this._cam);
 
     var c = this._canvas;

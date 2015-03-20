@@ -129,8 +129,10 @@ TouchHandler.prototype = {
     if (newState.numTouches === 2 && this._touchState.numTouches === 2) {
       // scale pan amount by current zoom value. This increases the camera
       // shift when far away from the image center. 
-      this._cam.panXY(newState.deltaCenter.x * 0.001 * this._cam.zoom(),
-                      newState.deltaCenter.y * 0.001 * this._cam.zoom());
+      var speed = 
+        0.002 * Math.tan(0.5 * this._cam.fieldOfViewY()) * this._cam.zoom();
+      this._cam.panXY(newState.deltaCenter.x * speed,
+                      newState.deltaCenter.y * speed);
     }
     var deltaZRotation =  - newState.deltaRotation;
     this._cam.rotateZ(deltaZRotation);

@@ -94,6 +94,11 @@ Cam.prototype = {
     return this._fovY;
   },
 
+  setFieldOfViewY : function(value) {
+    this._fovY = value;
+    this._updateProjectionMat = true;
+  },
+
   aspectRatio : function() {
     return this._width / this._height;
   },
