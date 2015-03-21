@@ -303,7 +303,7 @@ Viewer.prototype = {
 
   _initViewer : function() {
     if (!this._canvas.initGL()) {
-      this._domElement.removeChild(this._canvas);
+      this._domElement.removeChild(this._canvas.domElement());
       this._domElement.innerHTML = WEBGL_NOT_SUPPORTED;
       this._domElement.style.width = this._options.width + 'px';
       this._domElement.style.height = this._options.height + 'px';
