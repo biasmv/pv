@@ -87,7 +87,7 @@ UniqueObjectIdPool.prototype = {
   },
   clear : function() {
     this._objects = {};
-    this._unusedRangeStart = 0;
+    this._unusedRangeStart = 1;
     this._free = [];
     this._usedCount = 0;
   },
