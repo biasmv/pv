@@ -2,7 +2,7 @@ require(['viewer', 'io', 'color'], function(pv, io, color) {
 
 var ALL_STYLES = [
   'cartoon', 'tube', 'lines', 'spheres', 'ballsAndSticks',
-  'sline', 'trace', 'lineTrace'
+  'sline', 'trace', 'lineTrace', 'points'
 ];
 
 function createViewer() {

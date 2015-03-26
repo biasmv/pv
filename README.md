@@ -67,6 +67,7 @@ Changelog
 ### New since Latest Release
 
 - Added option to set field of view (FOV)
+- Added "points" rendering mode in which every atom is rendered as a point. This is useful for rendering point clouds.
 
 ### New in Version 1.5.0
 

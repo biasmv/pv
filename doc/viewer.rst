@@ -89,6 +89,16 @@ These methods will automatically add the object to the viewer, there is not need
 
   :returns: The geometry of the object. 
 
+.. function:: pv.Viewer.points(name, structure[, options])
+
+  Renders the atoms of a structure (:class:`~pv.mol.Mol`, or :class:`~pv.mol.MolView`) as a point cloud. Valid *options* are:
+
+  * *color*: the color operation to be used. Defaults to :func:`pv.color.byElement`.
+  * *pointSize* relative point size of the points to be rendered. Defaults to 1.0
+
+  :returns: The geometry of the object. 
+
+
 .. function:: pv.Viewer.spheres(name, structure[, options])
 
   Renders the structure (:class:`~pv.mol.Mol`, or :class:`~pv.mol.MolView`) at full-atom level using a sphere for each atom. Valid *options* are:

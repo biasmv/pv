@@ -47,6 +47,22 @@ void main(void) {\n\
   }\n\
 }',
 
+// hemilight vertex shader
+LINES_VS : '\n\
+attribute vec3 attrPos;\n\
+attribute vec4 attrColor;\n\
+\n\
+uniform mat4 projectionMat;\n\
+uniform mat4 modelviewMat;\n\
+varying vec4 vertColor;\n\
+uniform float pointSize;\n\
+void main(void) {\n\
+  gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
+  float distToCamera = vec4(modelviewMat * vec4(attrPos, 1.0)).z;\n\
+  gl_PointSize = pointSize * 200.0 / abs(distToCamera); \n\
+  vertColor = attrColor;\n\
+}',
+
 // hemilight fragment shader
 HEMILIGHT_FS : '\n\
 precision ${PRECISION} float;\n\
@@ -170,6 +186,7 @@ SELECT_VS : '\n\
 precision ${PRECISION} float;\n\
 uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
+uniform float pointSize;\n\
 attribute vec3 attrPos;\n\
 attribute float attrObjId;\n\
 \n\
@@ -177,6 +194,8 @@ varying float objId;\n\
 \n\
 void main(void) {\n\
   gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
+  float distToCamera = vec4(modelviewMat * vec4(attrPos, 1.0)).z;\n\
+  gl_PointSize = pointSize * 200.0 / abs(distToCamera); \n\
   objId = attrObjId;\n\
 }',
 

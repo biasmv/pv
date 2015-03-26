@@ -325,7 +325,7 @@ Viewer.prototype = {
     this._shaderCatalog = {
       hemilight : c.initShader(shaders.HEMILIGHT_VS, shaders.HEMILIGHT_FS, p),
       outline : c.initShader(shaders.OUTLINE_VS, shaders.OUTLINE_FS, p),
-      lines : c.initShader(shaders.HEMILIGHT_VS, shaders.LINES_FS, p),
+      lines : c.initShader(shaders.LINES_VS, shaders.LINES_FS, p),
       text : c.initShader(shaders.TEXT_VS, shaders.TEXT_FS, p),
       select : c.initShader(shaders.SELECT_VS, shaders.SELECT_FS, p)
     };
@@ -515,7 +515,7 @@ Viewer.prototype = {
 
   RENDER_MODES : [ 
     'sline', 'lines', 'trace', 'lineTrace', 'cartoon', 'tube', 'spheres', 
-    'ballsAndSticks',
+    'ballsAndSticks', 'points'
   ],
 
   /// simple dispatcher which allows to render using a certain style.
@@ -634,6 +634,14 @@ Viewer.prototype = {
     options.color = options.color || color.byElement();
     options.lineWidth = options.lineWidth || 4.0;
     var obj = render.lines(structure, this._canvas.gl(), options);
+    return this.add(name, obj);
+  },
+
+  points : function(name, structure, opts) {
+    var options = this._handleStandardMolOptions(opts, structure);
+    options.color = options.color || color.byElement();
+    options.pointSize = options.pointSize || 1.0;
+    var obj = render.points(structure, this._canvas.gl(), options);
     return this.add(name, obj);
   },
 

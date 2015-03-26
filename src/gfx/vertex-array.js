@@ -32,7 +32,8 @@ define(
 // (unindexed) vertex array for line-based geometries
 function VertexArray(gl, numVerts, float32Allocator)  {
   VertexArrayBase.call(this, gl, numVerts, float32Allocator);
-  this._numLines = 0;
+  this._numVerts = 0;
+  this._primitiveType = this._gl.LINES;
 }
 
 utils.derive(VertexArray, VertexArrayBase, {
@@ -42,30 +43,34 @@ utils.derive(VertexArray, VertexArrayBase, {
   _COLOR_OFFSET : 3,
   _ID_OFFSET : 7,
 
-  numVerts : function() { return this._numLines * 2; },
+  numVerts : function() { return this._numVerts; },
 
-  addLine : function(startPos, startColor, endPos, endColor, idOne, idTwo) {
-    var index = this._FLOATS_PER_VERT * this._numLines * 2;
-    this._vertData[index++] = startPos[0];
-    this._vertData[index++] = startPos[1];
-    this._vertData[index++] = startPos[2];
-    this._vertData[index++] = startColor[0];
-    this._vertData[index++] = startColor[1];
-    this._vertData[index++] = startColor[2];
-    this._vertData[index++] = startColor[3];
-    this._vertData[index++] = idOne;
-    this._vertData[index++] = endPos[0];
-    this._vertData[index++] = endPos[1];
-    this._vertData[index++] = endPos[2];
-    this._vertData[index++] = endColor[0];
-    this._vertData[index++] = endColor[1];
-    this._vertData[index++] = endColor[2];
-    this._vertData[index++] = endColor[3];
-    this._vertData[index++] = idTwo;
+  setDrawAsPoints : function(enable) {
+    if (enable) {
+      this._primitiveType = this._gl.POINTS;
+    } else {
+      this._primitiveType = this._gl.LINES;
+    }
+  },
 
-    this._numLines += 1;
+  addPoint : function(pos, color, id) {
+    var index = this._FLOATS_PER_VERT * this._numVerts;
+    this._vertData[index++] = pos[0];
+    this._vertData[index++] = pos[1];
+    this._vertData[index++] = pos[2];
+    this._vertData[index++] = color[0];
+    this._vertData[index++] = color[1];
+    this._vertData[index++] = color[2];
+    this._vertData[index++] = color[3];
+    this._vertData[index++] = id;
+    this._numVerts += 1;
     this._ready = false;
     this._boundingSpehre = null;
+  },
+
+  addLine : function(startPos, startColor, endPos, endColor, idOne, idTwo) {
+    this.addPoint(startPos, startColor, idOne);
+    this.addPoint(endPos, endColor, idTwo);
   },
 
 
@@ -105,7 +110,7 @@ utils.derive(VertexArray, VertexArrayBase, {
   // draws all triangles contained in the indexed vertex array using the 
   // provided shader.
   draw : function() {
-    this._gl.drawArrays(this._gl.LINES, 0, this._numLines * 2);
+    this._gl.drawArrays(this._primitiveType, 0, this._numVerts);
   }
 });
 

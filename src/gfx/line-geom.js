@@ -40,6 +40,7 @@ function LineGeom(gl, float32Allocator) {
   this._vertArrays = [];
   this._float32Allocator = float32Allocator;
   this._lineWidth = 1.0;
+  this._pointSize = 1.0;
 }
 
 utils.derive(LineGeom, BaseGeom, {
@@ -53,6 +54,9 @@ utils.derive(LineGeom, BaseGeom, {
 
   setLineWidth : function(width) {
     this._lineWidth = width;
+  },
+  setPointSize : function(size) {
+    this._pointSize = size;
   },
 
   vertArrays : function() {
@@ -83,6 +87,10 @@ utils.derive(LineGeom, BaseGeom, {
   _drawVertArrays : function(cam, shader, vertArrays, 
                                                 additionalTransforms) {
     this._gl.lineWidth(this._lineWidth * cam.upsamplingFactor());
+    if (shader.pointSize) {
+      this._gl.uniform1f(shader.pointSize, 
+                         this._pointSize * cam.upsamplingFactor());
+    }
     var i;
     if (additionalTransforms) {
       for (i = 0; i < vertArrays.length; ++i) {

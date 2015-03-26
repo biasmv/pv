@@ -224,6 +224,7 @@ Canvas.prototype = {
     shaderProgram.fogNear = getUniformLoc(shaderProgram, 'fogNear');
     shaderProgram.fogColor = getUniformLoc(shaderProgram, 'fogColor');
     shaderProgram.outlineColor = getUniformLoc(shaderProgram, 'outlineColor');
+    shaderProgram.pointSize = getUniformLoc(shaderProgram, 'pointSize');
 
     return shaderProgram;
   },

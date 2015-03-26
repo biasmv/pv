@@ -201,6 +201,42 @@ exports.ballsAndSticks = function(structure, gl, opts) {
   return meshGeom;
 };
 
+var pointsForChain = (function () {
+  var clr = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
+  return function(lineGeom, vertAssoc, chain, opts) {
+    var atomCount = chain.atomCount();
+    var idRange = opts.idPool.getContinuousRange(atomCount);
+    lineGeom.addIdRange(idRange);
+    var va = lineGeom.addChainVertArray(chain, atomCount);
+    va.setDrawAsPoints(true);
+    chain.eachAtom(function(atom) {
+      var vertStart = va.numVerts();
+      opts.color.colorFor(atom, clr, 0);
+      var objId = idRange.nextId({ geom : lineGeom, atom: atom });
+      va.addPoint(atom.pos(), clr, objId);
+      var vertEnd = va.numVerts();
+      vertAssoc.addAssoc(atom, va, vertStart, vertEnd);
+    });
+  };
+})();
+
+
+exports.points = function(structure, gl, opts) {
+  console.time('points');
+  var vertAssoc = new AtomVertexAssoc(structure, true);
+  opts.color.begin(structure);
+  var lineGeom = new LineGeom(gl, opts.float32Allocator);
+  lineGeom.setPointSize(opts.pointSize);
+  lineGeom.addVertAssoc(vertAssoc);
+  lineGeom.setShowRelated(opts.showRelated);
+  structure.eachChain(function(chain) {
+    pointsForChain(lineGeom, vertAssoc, chain, opts);
+  });
+  opts.color.end(structure);
+  console.timeEnd('points');
+  return lineGeom;
+};
+
 var linesForChain = (function () {
   var mp = vec3.create();
   var clr = vec4.fromValues(0.0, 0.0, 0.0, 1.0);

@@ -25,6 +25,13 @@ var color = pv.color;
 
 var structure;
 
+function points() {
+  viewer.clear();
+  viewer.points('structure', structure, {
+                color: color.byResidueProp('num'),
+                showRelated : '1' });
+}
+
 function lines() {
   viewer.clear();
   viewer.lines('structure', structure, {
@@ -176,6 +183,7 @@ $('#style-sline').click(sline);
 $('#style-trace').click(trace);
 $('#style-lines').click(lines);
 $('#style-balls-and-sticks').click(ballsAndSticks);
+$('#style-points').click(points);
 $('#style-spheres').click(spheres);
 $('#color-uniform').click(uniform);
 $('#color-element').click(byElement);
