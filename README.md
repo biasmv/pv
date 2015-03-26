@@ -66,7 +66,7 @@ Changelog
 
 ### New since Latest Release
 
-nothing at all
+- Added option to set field of view (FOV)
 
 ### New in Version 1.5.0
 
