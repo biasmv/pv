@@ -1,72 +1,82 @@
-var activeTab = 'styleTab';
-$('#colorTab').hide();
+var viewer;
 
-var viewer = pv.Viewer(document.getElementById('gl'), 
-    { quality : 'medium', width: 'auto', height : 'auto',
-      antialias : true, outline : false,
-      background : 'white',
-      slabMode : 'auto'});
+var pv = PV = require("bio-pv");
+
+var io = pv.io;
+var viewpoint = pv.viewpoint;
+var color = pv.color;
 
 var structure;
 
+function points() {
+  viewer.clear();
+  viewer.points('structure', structure, {
+                color: color.byResidueProp('num'),
+                showRelated : '1' });
+}
+
 function lines() {
   viewer.clear();
-  return viewer.lines('structure', structure, { 
-    color: color.byResidueProp('num'),
-    showRelated : '1' });
+  viewer.lines('structure', structure, {
+              color: color.byResidueProp('num'),
+              showRelated : '1' });
 }
+
 function cartoon() {
   viewer.clear();
-  return viewer.cartoon('structure', structure, { 
-    color : color.ssSuccession(), showRelated : '1', 
+  var go = viewer.cartoon('structure', structure, {
+      color : color.ssSuccession(), showRelated : '1',
   });
+  var rotation = viewpoint.principalAxes(go);
+  viewer.setRotation(rotation)
 }
+
 function lineTrace() {
   viewer.clear();
-  return viewer.lineTrace('structure', structure, { showRelated : '1' });
+  viewer.lineTrace('structure', structure, { showRelated : '1' });
 }
 
 function spheres() {
   viewer.clear();
-  return viewer.spheres('structure', structure, { showRelated : '1' });
+  viewer.spheres('structure', structure, { showRelated : '1' });
 }
 
 function sline() {
   viewer.clear();
-  return viewer.sline('structure', structure, 
-      { color : color.uniform('red'), showRelated : '1'});
+  viewer.sline('structure', structure,
+          { color : color.uniform('red'), showRelated : '1'});
 }
 
 function tube() {
   viewer.clear();
-  return viewer.tube('structure', structure);
+  viewer.tube('structure', structure);
+  viewer.lines('structure.ca', structure.select({aname :'CA'}),
+            { color: color.uniform('blue'), lineWidth : 1,
+              showRelated : '1' });
 }
 
 function trace() {
   viewer.clear();
-  return viewer.trace('structure', structure, { showRelated : '1' });
+  viewer.trace('structure', structure, { showRelated : '1' });
 }
 function ballsAndSticks() {
   viewer.clear();
-  return viewer.ballsAndSticks('structure', structure, { showRelated : '1' });
+  viewer.ballsAndSticks('structure', structure, { showRelated : '1' });
 }
 
 function preset() {
   viewer.clear();
-  var ligand = structure.select('ligand')
-  viewer.ballsAndSticks('structure.ligand', ligand, { 
-    showRelated : '1'
+  var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
+  viewer.ballsAndSticks('structure.ligand', ligand, {
   });
-  return viewer.cartoon('structure.protein', structure, {
-    showRelated : '1'
-  });
+  viewer.cartoon('structure.protein', structure, { boundingSpheres: false });
 }
 
 function load(pdb_id) {
   $.ajax({ url : '../pdbs/'+pdb_id+'.pdb', success : function(data) {
-    structure = pv.io.pdb(data);
-    var go = cartoon();
-    viewer.setRotation(viewpoint.principalAxes(go));
+    structure = io.pdb(data);
+    //mol.assignHelixSheet(structure);
+    cartoon();
     viewer.autoZoom();
   }});
 }
@@ -74,23 +84,6 @@ function kinase() {
   load('1ake');
 }
 
-$(function() {
-  $( "#slider" ).slider({
-    slide: function(event, ui) {
-
-      viewer.forEach(function(go) {
-        go.setOpacity(1.0 - ui.value/100. , go);
-      });
-      viewer.requestRedraw();
-    }
-  })
-});
-
-function showTab(tabName) {
-  $('#'+activeTab).hide();
-  $('#'+tabName).show();
-  activeTab = tabName;
-}
 function crambin() {
   load('1crn');
 }
@@ -101,11 +94,11 @@ function transferase() {
 
 function telethonin() { load('2f8v'); }
 
-function porin() { 
-  load('2por'); 
+function porin() {
+  load('2por');
 }
 function longHelices() {
-  load('4c46');
+  load('4C46');
 }
 
 function ssSuccession() {
@@ -155,64 +148,49 @@ function byChain() {
   viewer.requestRedraw();
 }
 
-$('#cartoon').click(cartoon);
-$('#line-trace').click(lineTrace);
-$('#preset').click(preset);
-$('#lines').click(lines);
-$('#trace').click(trace);
-$('#sline').click(sline);
-$('#spheres').click(spheres);
-$('#balls-and-sticks').click(ballsAndSticks);
-$('#tube').click(tube);
-$('#1ake').click(kinase);
+function polymerase() {
+  load('4UBB');
+};
+
+$(document).foundation();
 $('#1r6a').click(transferase);
 $('#1crn').click(crambin);
-$('#2por').click(porin);
-$('#1rb8').click(function() { load('1rb8'); });
-$('#2f8v').click(telethonin);
+$('#1ake').click(kinase);
+$('#4ubb').click(polymerase);
 $('#4c46').click(longHelices);
-$('#rainbow').click(rainbow);
-$('#ss').click(ss);
-$('#uniform').click(uniform);
-$('#by-ele').click(byElement);
-$('#ss-suc').click(ssSuccession);
-$('#by-chain').click(byChain);
-$('#pro-in-red').click(proInRed);
-$('#pdbid').change(function() {
-  var st = $('#status')
-    st.show();
+$('#2f8v').click(telethonin);
+$('#style-cartoon').click(cartoon);
+$('#style-tube').click(tube);
+$('#style-line-trace').click(lineTrace);
+$('#style-sline').click(sline);
+$('#style-trace').click(trace);
+$('#style-lines').click(lines);
+$('#style-balls-and-sticks').click(ballsAndSticks);
+$('#style-points').click(points);
+$('#style-spheres').click(spheres);
+$('#color-uniform').click(uniform);
+$('#color-element').click(byElement);
+$('#color-chain').click(byChain);
+$('#color-ss-succ').click(ssSuccession);
+$('#color-ss').click(ss);
+$('#color-rainbow').click(rainbow);
+$('#load-from-pdb').change(function() {
   var pdbId = this.value;
   this.value = '';
   this.blur();
-  st.text('retrieving file from pdb.org. This may take a while');
   $.ajax('http://pdb.org/pdb/files/'+pdbId+'.pdb')
     .done(function(data) {
-      st.text('loaded');
       structure = io.pdb(data);
-      preset();
+      cartoon();
       viewer.autoZoom();
-      st.fadeOut(2000);
     })
-  .fail(function() {
-    st.text('could not load '+pdbId+' from PDB.org');
-    st.fadeOut(2000);
-  });
 });
-
-$('#save').click(function() {
-  var imgDataURL = viewer.imageData();
-  window.open(imgDataURL);
+viewer = pv.Viewer(document.getElementById('viewer'), { 
+    width : 'auto', height: 'auto', antialias : true, 
+    outline : true, quality : 'medium',
+    background : '#333', animateTime: 500,
 });
-
-$('#showOutline').change(function() {
-  viewer.options('outline', this.checked);
-  viewer.requestRedraw();
+viewer.addListener('viewerReady', longHelices);
+window.addEventListener('resize', function() {
+      viewer.fitParent();
 });
-
-$('#fog').change(function() {
-  viewer.options('fog', this.checked);
-  viewer.requestRedraw();
-});
-
-viewer.on('viewerReady', crambin);
-
