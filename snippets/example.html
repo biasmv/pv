@@ -1,192 +1,101 @@
-  <div id=toolbar>
-    <input type=text name=pdbid id=pdbid 
-    placeholder='Enter PDB identifier to load' />&nbsp;&nbsp;<span id=status></span>
-  </div>
-  <div id=inspector>
-
-    <span class=btn onclick='showTab("styleTab")'>Style</span>
-    <span class=btn onclick='showTab("colorTab")'>Color</span>
-    <ul id=styleTab>
-      <h1></h1>
-      <li id=preset>Preset</li>
-      <li id=cartoon>Cartoon</li>
-      <li id=tube>Tube</li>
-      <li id=lines>Lines</li>
-      <li id=line-trace>Line Trace</li>
-      <li id=sline>Smooth Line Trace</li>
-      <li id=trace>Trace</li>
-      <li id=spheres>Spheres</li>
-      <li id=balls-and-sticks>Balls and Sticks</li>
-    </ul>
-    <ul id=colorTab>
-      <h1></h1>
-       <li id=uniform>Uniform</li>
-       <li id=by-chain>By Chain</li>
-       <li id=by-ele>By Element (CPK)</li>
-       <li id=rainbow>Rainbow</li>
-       <li id=ss>Secondary Structure</li>
-       <li id=ss-suc>Secondary Structure Succession</li>
-       <li id=pro-in-red>Prolines in Red</li>
-    </ul>
-     <ul>
-      <h1></h1>
-      <li><div id="slider" class="sl"></div></li>
-      <li><input type="checkbox" name="outline" 
-                 value="yes" id=showOutline autocomplete=off>Show Outline</li>
-      <li><input type="checkbox" name="fog" 
-                 value="yes" checked=true id=fog autocomplete=off>Fog</li>
-      <li id=save>Export As Image</li>
-    </ul>
-     <ul>
-      <h1></h1>
-       <li id=1r6a>Methyl transferase</li>
-       <li id=1ake>Adenylate kinase</li>
-       <li id=1crn>Crambin</li>
-       <li id=2por>Porin</li>
-       <li id=2f8v>Telethonin</li>
-       <li id=4c46>Long Helices</li>
-       <li id=1rb8>Capsid</li>
-    </ul>
-  </div>
-  <div id=gl>
-  </div>
-  <div id=copyright>Copyright (2015) Marco Biasini</div>
- 
-
-    <style>
+<link rel='stylesheet' href='../css/foundation.css'>
+<style>
     body {
-      font-family: Helvetica;
-      /*background-color: #fff;/*#f0f0f0;*/*/
-      background-color: #000;
-      width:100%;
-      height:100%;
-      font-weight: lighter;
-      margin: 0px;
-      overflow: hidden;
+        padding: 0px;
+        margin: 0px;
+        height: 100%;
     }
-    #gl {
-      position:fixed;
-      left:233px;
-      top:49px;
-      bottom:0px;
-      right:0px;
+    #viewer {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        bottom: 0px;
+        right: 0px;
+        margin: 0px;
+        padding: 0px;
+        overflow: hidden;
     }
-    .screenshot {
-      position:fixed;
-      top:49px;
-      left:233px;
-    }
-    #inspector {
-      position:fixed;
-      width:200px;
-      top:49px;
-      font-size:10pt;
-      bottom:0px;
-      
-      background-color:white;
-      border-right-color:#ccc;
-      padding:15px;
-      box-shadow: 2px 0px 2px #ddd;
-    }
+</style>
+<div id="viewer">
+    <nav class="top-bar" data-topbar role="navigation">
+        <ul class="title-area">
+            <li class="name">
+                <h1><a href="#">PV</a></h1>
+            </li>
+            <!-- Remove the class "menu-icon" to get rid of menu icon. Take out "Menu" to just have icon alone -->
+            <li class="toggle-topbar menu-icon"><a href="#"><span>Menu</span></a>
+            </li>
+        </ul>
 
-    #inspector ul {
-      padding:0px;
-    }
-
-    #inspector ul li {
-      margin-left:5px;
-      margin-right:5px;
-      margin-bottom:5px;
-      list-style:none;
-      cursor: pointer;
-      color:#660000
-    }
-
-    #inspector ul li:hover {
-      color:#994444;
-    }
-    #toolbar {
-      position:fixed;
-      background-color:#fafafa;
-      top:0px;
-      left:0px;
-      padding-top:8px;
-      padding-left:8px;
-      border-bottom-style:solid;
-      border-bottom-color:#ccc;
-      border-bottom-width:1px;
-      right:0px;
-      height:40px;
-    }
-    #copyright {
-      bottom:0px;
-      position: fixed;
-      left:20px;
-      color:#888;
-      border-top-style:solid;
-      border-top-color:#ccc;
-      border-top-width:1px;
-      font-size:10pt;
-      padding-bottom:20px;
-      padding-left:5px;
-      padding-top:20px;
-    }
-    #toolbar a {
-      float:right;
-      padding-right:10px;
-      color:#660000;
-      text-decoration:none;
-    }
-    #toolbar a:hover {
-      color:#994444;
-    }
-    #inspector h1 {
-      margin-top:20px;
-      border-top-style:solid;
-      border-top-color:#ccc;
-      border-top-width:1px;
-      padding-bottom:10px;
-      padding-top:10px;
-      font-size:10pt;
-      font-weight:lighter;
-      color:#888;
-      text-align:center;
-    }
-    #toolbar input {
-      padding: 0.5em 0.6em;
-      display: inline-block;
-      border: 1px solid #ccc;
-      font-size: 0.8em;
-      width:210px;
-      box-shadow: inset 0 1px 3px #ddd;
-      border-radius: 4px;
-      -webkit-transition: 0.3s linear border;
-      -moz-transition: 0.3s linear border;
-      -ms-transition: 0.3s linear border;
-      -o-transition: 0.3s linear border;
-      transition: 0.3s linear border;
-      -webkit-box-sizing: border-box;
-      -moz-box-sizing: border-box;
-      box-sizing: border-box;
-    }
-
-    span.btn:hover {
-      border-color:#dcc;
-    }
-    span.btn {
-      background-color:#fdd;
-      margin-left:5px;
-      margin-right:5px;
-      border-color:#edd;
-      padding:5px;
-      padding-left:8px;
-      padding-right:8px;
-      color:#977;
-      cursor:pointer;
-      border-radius:3px;
-      border-style:solid;
-      border-width:1px;
-    }
-    .sl { display: block; }
-    </style>
- 
+        <section class="top-bar-section">
+            <!-- Right Nav Section -->
+            <ul class=left>
+                <div class="row collapse">
+                    <div class="large-8 small-9 columns">
+                        <input type="text" id=load-from-pdb placeholder="1ake">
+                    </div>
+                    <div class="large-4 small-3 columns">
+                        <a href="#" class="alert button expand">Get</a>
+                    </div>
+                </div>
+            </ul>
+            <ul class="right">
+                <li class="has-dropdown">
+                    <a href="#">Load</a>
+                    <ul class="dropdown">
+                        <li><a id=1r6a href="#">Methyl Transferase</a>
+                        </li>
+                        <li><a id=4c46 href="#">Long Helices</a>
+                        </li>
+                        <li><a id=2f8v href="#">Telethonin</a>
+                        </li>
+                        <li><a id=1ake href="#">Adenylate Kinase</a>
+                        </li>
+                        <li><a id=4ubb href="#">DNA Polymerase</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="has-dropdown">
+                    <a href="#">Style</a>
+                    <ul class="dropdown">
+                        <li><a id=style-cartoon href="#">Cartoon</a>
+                        </li>
+                        <li><a id=style-tube href="#">Tube</a>
+                        </li>
+                        <li><a id=style-trace href="#">Trace</a>
+                        </li>
+                        <li><a id=style-line-trace href="#">Line Trace</a>
+                        </li>
+                        <li><a id=style-sline href="#">Smooth Line Trace</a>
+                        </li>
+                        <li><a id=style-lines href="#">Bonds (Lines)</a>
+                        </li>
+                        <li><a id=style-spheres href="#">Spheres</a>
+                        </li>
+                        <li><a id=style-balls-and-sticks href="#">Balls And Sticks</a>
+                        </li>
+                        <li><a id=style-points href="#">Points</a>
+                        </li>
+                    </ul>
+                </li>
+                <li class="has-dropdown">
+                    <a href="#">Color</a>
+                    <ul class="dropdown">
+                        <li><a id=color-uniform href="#">Uniform</a>
+                        </li>
+                        <li><a id=color-chain href="#">Chain</a>
+                        </li>
+                        <li><a id=color-element href="#">Element</a>
+                        </li>
+                        <li><a id=color-ss href="#">Secondary Structure</a>
+                        </li>
+                        <li><a id=color-ss-succ href="#">Secondary Structure Succession</a>
+                        </li>
+                        <li><a id=color-rainbow href="#">Rainbow</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+    </nav>
+</div>

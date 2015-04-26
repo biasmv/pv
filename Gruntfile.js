@@ -62,6 +62,11 @@ module.exports = function(grunt) {
   (function (root, factory) {\n\
       if (typeof define === 'function' && define.amd) {\n\
           define([], factory);\n\
+      } else if (typeof exports === 'object') { \n\
+        exports = factory(); \n\
+        if (typeof module === 'object') { \n\
+          module.exports = exports; \n\
+        } \n\
       } else {\n\
           var pv = factory();\n\
           root.pv = pv;\n\

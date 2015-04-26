@@ -1,3 +1,5 @@
+var pv = require("bio-pv");
+
 var viewer = pv.Viewer(document.getElementById('gl'), 
     { quality : 'high', width: 'auto', height : 'auto',
       antialias : true, outline : true});

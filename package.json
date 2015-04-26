@@ -19,9 +19,8 @@
       "url": "https://github.com/biasmv/pv/blob/master/LICENSE.txt"
     }
   ],
-  "main": "bio-pv.min.js",
+  "main": "js/bio-pv.rel.js",
   "devDependencies": {
-    "biojs-sniper": "0.0.6",
     "grunt": "~0.4.5",
     "grunt-contrib-concat": "~0.3.0",
     "grunt-contrib-jshint": "~0.6.3",
@@ -31,17 +30,25 @@
     "mkdirp": "^0.5.0",
     "amdclean": "~2.4.0"
   },
+  "optionalDependencies": {
+    "browserify": "^9.0.8",
+    "sniper": "^0.2.16"
+  },
   "sniper": {
     "js": [
-      "/bio-pv.min.js"
+      "/js/bio-pv.rel.bro.js"
     ],
+    "buildJS": [],
     "first": "example",
-    "snippets" : ["snippets"]
+    "snippets": [
+      "snippets"
+    ]
   },
-  "scripts" : {
-    "prepublish": "scripts/make.sh"
+  "scripts": {
+    "prepublish": "scripts/make.sh",
+    "build-biojs": "browserify -r ./:bio-pv > js/bio-pv.rel.bro.js"
   },
-  "files" : [
+  "files": [
     "README.md",
     "bio-pv.js",
     "bio-pv.min.js",
