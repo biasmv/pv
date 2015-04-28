@@ -66,6 +66,10 @@ Changelog
 
 ### New since Latest Release
 
+- absolutely nothing
+
+### New in Version 1.6.0
+
 - Added option to set field of view (FOV)
 - Added "points" rendering mode in which every atom is rendered as a point. This is useful for rendering point clouds.
 - Get BioJS snippets working again (@greenify)
