@@ -66,7 +66,7 @@ Changelog
 
 ### New since Latest Release
 
-- absolutely nothing
+- PDB import: Improved code to guess element from atom name. This fixes issues in correctly detecting hydrogen atoms for some cases.
 
 ### New in Version 1.6.0
 
