@@ -126,10 +126,16 @@ function guessAtomElementFromName(fourLetterName) {
         ++i;
         charCode = trimmed.charCodeAt(i);
       }
+      return trimmed[i];
     }
     // when first character is not empty and length is smaller than 4,
-    // assume it's a "heavy" atom and use the first two letters as the 
-    // atom name. That's not always correct
+    // assume that it's either a heavy atom (CA, etc), or a hydrogen 
+    // name with a numeric prefix.  That's not always correct, though.
+    var firstCharCode = trimmed.charCodeAt(0);
+    if (firstCharCode >= 48 && firstCharCode <= 57) {
+      // numeric prefix, so it's a hydrogen
+      return trimmed[1];
+    }
     return trimmed.substr(0, 2);
   }
   return fourLetterName[1];
@@ -493,7 +499,8 @@ return {
   sdf : sdf,
   Remark350Reader : Remark350Reader,
   fetchPdb : fetchPdb,
-  fetchSdf : fetchSdf
+  fetchSdf : fetchSdf,
+  guessAtomElementFromName : guessAtomElementFromName
 };
 
 });

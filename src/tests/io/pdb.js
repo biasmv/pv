@@ -163,6 +163,17 @@ ATOM   3317  O   GLY A 216      24.730   8.496  -4.208                       O\n
 END\n\
 ';
 
+test('guess element from atom name', function(assert) {
+  assert.strictEqual('H', io.guessAtomElementFromName('1H2 '));
+  assert.strictEqual('H', io.guessAtomElementFromName(' H1 '));
+  assert.strictEqual('P', io.guessAtomElementFromName(' P  '));
+  assert.strictEqual('O', io.guessAtomElementFromName(' O2\''));
+  assert.strictEqual('O', io.guessAtomElementFromName(' O2\''));
+  assert.strictEqual('C', io.guessAtomElementFromName(' CA '));
+  assert.strictEqual('CA', io.guessAtomElementFromName('CA  '));
+  assert.strictEqual('C', io.guessAtomElementFromName(' C  '));
+});
+
 test('occupancy and temp-factor', function(assert) {
   var structure = io.pdb(OCCUPANCY_AND_TEMP_FACTOR);
   var atoms = structure.atoms();
