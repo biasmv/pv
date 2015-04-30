@@ -274,15 +274,15 @@ Viewer.prototype = {
       return;
     }
     if (qual === 'medium') {
-      this._options.arcDetail = 3;
+      this._options.arcDetail = 2;
       this._options.sphereDetail = 10;
-      this._options.splineDetail = 4;
+      this._options.splineDetail = 5;
       return;
     }
     if (qual === 'low') {
       this._options.arcDetail = 2;
       this._options.sphereDetail = 8;
-      this._options.splineDetail = 2;
+      this._options.splineDetail = 3;
       return;
     }
     console.error('invalid quality argument', qual);

@@ -56,17 +56,32 @@ var R = 0.7071;
 var COIL_POINTS = [ -R, -R, 0, R, -R, 0, R, R, 0, -R, R, 0 ];
 
 var HELIX_POINTS = [
-  -6 * R, -1.0 * R, 0,
-   6 * R, -1.0 * R, 0,
-   6 * R,  1.0 * R, 0,
-  -6 * R,  1.0 * R, 0
+  -6.0 * R, -0.9 * R, 0,
+  -5.8 * R, -1.0 * R, 0,
+
+   5.8 * R, -1.0 * R, 0,
+   6.0 * R, -0.9 * R, 0,
+
+   6.0 * R,  0.9 * R, 0,
+   5.8 * R,  1.0 * R, 0,
+
+  -5.8 * R,  1.0 * R, 0,
+  -6.0 * R,  0.9 * R, 0
 ];
 
+
 var ARROW_POINTS = [
- -10 * R, -1.0 * R, 0,
-  10 * R, -1.0 * R, 0,
-  10 * R,  1.0 * R, 0,
- -10 * R,  1.0 * R, 0
+ -10.0 * R, -0.9 * R, 0,
+  -9.8 * R, -1.0 * R, 0,
+
+   9.8 * R, -1.0 * R, 0,
+  10.0 * R, -0.9 * R, 0,
+
+  10.0 * R,  0.9 * R, 0,
+   9.8 * R,  1.0 * R, 0,
+
+  -9.8 * R,  1.0 * R, 0,
+ -10.0 * R,  0.9 * R, 0
 ];
 
 // performs an in-place smoothing over 3 consecutive positions.
@@ -675,9 +690,10 @@ exports.cartoon = function(structure, gl, opts) {
   console.time('cartoon');
   opts.arrowSkip = Math.floor(opts.splineDetail * 3 / 4);
   opts.coilProfile = new TubeProfile(COIL_POINTS, opts.arcDetail, 1.0);
-  opts.helixProfile = new TubeProfile(HELIX_POINTS, opts.arcDetail, 0.1);
-  opts.strandProfile = new TubeProfile(HELIX_POINTS, opts.arcDetail, 0.1);
-  opts.arrowProfile = new TubeProfile(ARROW_POINTS, opts.arcDetail, 0.1);
+  opts.arrowProfile = new TubeProfile(ARROW_POINTS, opts.arcDetail/2, 0.1);
+  opts.helixProfile = new TubeProfile(HELIX_POINTS, opts.arcDetail/2, 0.1);
+  console.log(opts.helixProfile);
+  opts.strandProfile = new TubeProfile(HELIX_POINTS, opts.arcDetail/2, 0.1);
   opts.protoCyl = new ProtoCylinder(opts.arcDetail * 4);
   opts.protoSphere = new ProtoSphere(opts.arcDetail * 4, 
                                         opts.arcDetail * 4);

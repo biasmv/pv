@@ -145,7 +145,7 @@ void main(void) {\n\
   gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
   vec4 normal = modelviewMat * vec4(attrNormal, 0.0);\n\
   vertAlpha = attrColor.a;\n\
-  gl_Position.xy += normal.xy*0.200;\n\
+  gl_Position.xy += normal.xy*0.100;\n\
 }',
 
 TEXT_VS : '\n\

@@ -106,7 +106,7 @@ ProtoSphere.prototype = {
 // cartoon render mode.
 function TubeProfile(points, num, strength) {
   var interpolated =
-      geom.catmullRomSpline(points, points.length / 3, num, strength, true);
+    geom.catmullRomSpline(points, points.length / 3, num, strength, true);
 
   this._indices = new Uint16Array(interpolated.length * 2);
   this._verts = interpolated;
