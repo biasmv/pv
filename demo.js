@@ -195,12 +195,12 @@ $('#load-from-pdb').change(function() {
   var pdbId = this.value;
   this.value = '';
   this.blur();
-  $.ajax('http://pdb.org/pdb/files/'+pdbId+'.pdb')
-    .done(function(data) {
-      structure = io.pdb(data);
-      cartoon();
-      viewer.autoZoom();
-    })
+  io.fetchPdb('http://pdb.org/pdb/files' + pdbId + '.pdb', 
+              function(s) {
+    structure = s;
+    cartoon();
+    viewer.autoZoom();
+  });
 });
 viewer = pv.Viewer(document.getElementById('viewer'), { 
     width : 'auto', height: 'auto', antialias : true, 
