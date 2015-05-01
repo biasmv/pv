@@ -86,15 +86,6 @@ VertexArrayBase.prototype = {
       center[0] += this._vertData[index + 0];
       center[1] += this._vertData[index + 1];
       center[2] += this._vertData[index + 2];
-      if (isNaN(center[0])) {
-        console.log(this, i, numVerts, 'x NaN');
-      }
-      if (isNaN(center[2])) {
-        console.log(this, i, numVerts, 'y NaN');
-      }
-      if (isNaN(center[2])) {
-        console.log(this, i, numVerts, 'z NaN');
-      }
     }
     vec3.scale(center, center, 1.0/numVerts);
     var radiusSquare = 0.0;

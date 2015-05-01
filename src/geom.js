@@ -22,6 +22,7 @@ define(['gl-matrix'], function(glMatrix) {
 "use strict";
 
 var vec3 = glMatrix.vec3;
+var vec4 = glMatrix.vec4;
 var mat3 = glMatrix.mat3;
 var quat = glMatrix.quat;
 
@@ -229,7 +230,7 @@ var diagonalizer = (function() {
         // no room for improvement - reached machine precision.
         break;
       }  
-      vec3.set(jr, 0, 0, 0, 0); // jacobi rotation for this iteration.
+      vec4.set(jr, 0, 0, 0, 0); // jacobi rotation for this iteration.
       // using 1/2 angle identity sin(a/2) = sqrt((1-cos(a))/2)  
       jr[k] = sgn * Math.sqrt((1.0 - c) / 2.0);  
       // since our quat-to-matrix convention was for v*M instead of M*v

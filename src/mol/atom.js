@@ -26,7 +26,10 @@ define(
   function(
     glMatrix, utils) {
 
+
 "use strict";
+
+var vec3 = glMatrix.vec3;
 
 function AtomBase() {
 }
@@ -87,6 +90,11 @@ utils.derive(Atom, AtomBase, {
     return this.residue().qualifiedName()+'.'+this.name();
   },
   pos : function() { return this._pos; },
+
+  setPos : function(pos) { 
+    vec3.copy(this._pos, pos); 
+  },
+
   element : function() { return this._element; },
   index : function() { return this._index; },
 

@@ -692,7 +692,6 @@ exports.cartoon = function(structure, gl, opts) {
   opts.coilProfile = new TubeProfile(COIL_POINTS, opts.arcDetail, 1.0);
   opts.arrowProfile = new TubeProfile(ARROW_POINTS, opts.arcDetail/2, 0.1);
   opts.helixProfile = new TubeProfile(HELIX_POINTS, opts.arcDetail/2, 0.1);
-  console.log(opts.helixProfile);
   opts.strandProfile = new TubeProfile(HELIX_POINTS, opts.arcDetail/2, 0.1);
   opts.protoCyl = new ProtoCylinder(opts.arcDetail * 4);
   opts.protoSphere = new ProtoSphere(opts.arcDetail * 4, 

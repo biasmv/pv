@@ -30,6 +30,7 @@ SOURCE_FILES = [
   'src/mol/select.js',
   'src/mol/trace.js',
   'src/mol/symmetry.js',
+  'src/mol/supoerpose.js',
   'src/pv.js',
   'src/slab.js',
   'src/mouse.js',
