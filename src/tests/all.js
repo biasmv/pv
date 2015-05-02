@@ -52,6 +52,7 @@ var UNIT_TESTS = [
   'tests/mol/iterators',
   'tests/mol/select',
   'tests/mol/assign-helix-sheet',
+  'tests/mol/superpose',
   'tests/viewer/functional',
   'tests/io/pdb',
   'tests/colors',

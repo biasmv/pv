@@ -151,7 +151,125 @@ var superpose = (function() {
   };
 })();
 
-return superpose;
+
+// Parses different representations of a list of atom names and returns a
+// set (a dictionary actually with elements contained in the set set to 
+// true) that describes the list.
+//
+//  * undefined/null to null. This translates to match any atom
+//  * 'all' to null
+//  * 'backbone' to { 'N', 'CA', 'C', 'O' }
+//  * 'aname1, aname2' to { 'aname1', 'aname2' }
+//  * ['aname1', 'aname2']  to  { 'aname1', 'aname2' }
+function parseAtomNames(atoms) {
+  if (atoms === undefined || atoms === null || atoms === 'all') {
+    return null;
+  }
+  if (atoms === 'backbone') {
+    return { 'CA' : true, 'C' : true, 'O' : true, 'N' : true };
+  }
+  if (atoms.substr !== undefined) {
+    var results = {};
+    var atomNames = atoms.split(',');
+    for (var i = 0; i < atomNames.length; ++i) {
+      results[atomNames[i].trim()] = true;
+    }
+    return results;
+  } else {
+    var results = {};
+    for (var i = 0; i < atoms.length; ++i) {
+      results[atoms[i]] = true;
+    }
+    return results;
+  }
+}
+
+function addAtomsPresentInBoth(inA, inB, outA, outB, atomSet) {
+  var atomsA = inA.atoms();
+  var atomsB = inB.atoms();
+  for (var i = 0; i < atomsA.length; ++i) {
+    var atomA = atomsA[i];
+    if (atomSet !== null && atomSet[atomA.name()] !== true) {
+      continue;
+    }
+    for (var j = 0; j < atomsB.length; ++j) {
+      var atomB = atomsB[j];
+      if (atomB.name() === atomA.name()) {
+        outA.push(atomA);
+        outB.push(atomB);
+        break;
+      }
+    }
+  }
+}
+
+function matchResidues(inA, inB, atoms, matchFn) {
+  var outA = inA.full().createEmptyView();
+  var outB = inB.full().createEmptyView();
+  var numChains = Math.min(inA.chains().length, inB.chains().length);
+  var atomSet = parseAtomNames(atoms)
+
+  for (var i = 0; i < numChains; ++i) {
+    var chainA = inA.chains()[i];
+    var chainB = inB.chains()[i];
+    var matchedResidues = matchFn(chainA, chainB);
+    var residuesA = matchedResidues[0];
+    var residuesB = matchedResidues[1];
+    if (residuesA.length !== residuesB.length) {
+      console.errors('chains', chainA.name(), ' and', chainB.name(), 
+                     ' do not contain the same number of residues.');
+      return null;
+    }
+
+    var outChainA = outA.addChain(chainA);
+    var outChainB = outB.addChain(chainB);
+    for (var j = 0; j < residuesA.length; ++j) {
+      var residueA = residuesA[j];
+      var residueB = residuesB[j];
+      var outAtomsA = [], outAtomsB = [];
+      addAtomsPresentInBoth(residueA, residueB, outAtomsA, outAtomsB, atomSet);
+      if (outAtomsA.length === 0) {
+        continue;
+      }
+      var outResidueA = outChainA.addResidue(residueA);
+      var outResidueB = outChainB.addResidue(residueB);
+      for (var k = 0; k < outAtomsA.length; ++k) {
+        outResidueA.addAtom(outAtomsA[k]);
+        outResidueB.addAtom(outAtomsB[k]);
+      }
+    }
+  }
+  return [outA, outB];
+}
+
+function matchResiduesByIndex(inA, inB, atoms) {
+  return matchResidues(inA, inB, atoms, function(chainA, chainB) { 
+    return [chainA.residues(), chainB.residues()];
+  });
+}
+
+function matchResiduesByNum(inA, inB, atoms) {
+  return matchResidues(inA, inB, atoms, function(chainA, chainB) { 
+    var outA = [], outB = [];
+    var inA = chainA.residues();
+    for (var i = 0; i < inA.length; ++i) {
+      var resB = chainB.residueByRnum(inA[i].num());
+      if (resB !== null) {
+        outA.push(inA[i]);
+        outB.push(resB);
+      }
+    }
+    return [outA, outB];
+  });
+}
+
+return {
+  superpose : superpose,
+  matchResiduesByNum : matchResiduesByNum,
+  matchResiduesByIndex : matchResiduesByIndex,
+  parseAtomNames : parseAtomNames,
+  addAtomsPresentInBoth : addAtomsPresentInBoth
+};
 
 });
 

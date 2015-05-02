@@ -24,7 +24,7 @@ define(
     './mol',
     './superpose'
   ], 
-  function(glMatrix, mol, superpose) {
+  function(glMatrix, mol, sp) {
 
 "use strict";
 
@@ -96,7 +96,9 @@ function assignHelixSheet(structure) {
 return {
   Mol: mol.Mol,
   assignHelixSheet : assignHelixSheet,
-  superpose: superpose
+  superpose: sp.superpose,
+  matchResiduesByIndex: sp.matchResiduesByIndex,
+  matchResiduesByNum: sp.matchResiduesByNum,
 
 };
 
