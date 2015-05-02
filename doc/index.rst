@@ -19,6 +19,7 @@ Contents:
    scene
    coloring
    mol
+   superpose
 
 
 

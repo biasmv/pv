@@ -89,7 +89,11 @@ var superpose = (function() {
       console.error('atom counts do not match (' + 
                     subjectAtoms.length + 'in structure vs ' + 
                     referenceAtoms.length + ' in reference)');
-      return null;
+      return false;
+    }
+    if (subjectAtoms.length < 3) {
+      console.error('at least 3 atoms are required for superposition') ;
+      return false;
     }
     calculateCov(subjectAtoms, referenceAtoms, subjectCenter, 
                  referenceCenter, cov);
@@ -143,6 +147,7 @@ var superpose = (function() {
       vec3.add(shiftedPos, referenceCenter, shiftedPos);
       atom.setPos(shiftedPos);
     }
+    return true;
   };
 })();
 
