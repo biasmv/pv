@@ -208,7 +208,7 @@ $('#load-from-pdb').change(function() {
   var pdbId = this.value;
   this.value = '';
   this.blur();
-  io.fetchPdb('http://pdb.org/pdb/files' + pdbId + '.pdb', 
+  io.fetchPdb('http://pdb.org/pdb/files/' + pdbId + '.pdb', 
               function(s) {
     structure = s;
     cartoon();
