@@ -145,19 +145,6 @@ function ss() {
   viewer.requestRedraw();
 }
 
-function superpose() {
-  io.fetchPdb('pdbs/1ake.pdb', function(m1) {
-    io.fetchPdb('pdbs/1ake.pdb', function(m2) {
-      var ch1 = m1.select({chain : 'A', aname : 'CA'});
-      var ch2 = m2.select({chain : 'B', aname : 'CA' });
-      pv.mol.superpose(ch1, ch2);
-      viewer.tube('subject', ch1, { color : color.uniform('red') });
-      viewer.tube('reference', ch2, { color : color.uniform('yellow') });
-      viewer.centerOn(ch2);
-    });
-  });
-}
-
 function proInRed() {
   viewer.forEach(function(go) {
     go.colorBy(color.uniform('red'), go.select({rname : 'PRO'}));
@@ -208,8 +195,9 @@ $('#load-from-pdb').change(function() {
   var pdbId = this.value;
   this.value = '';
   this.blur();
-  io.fetchPdb('http://pdb.org/pdb/files/' + pdbId + '.pdb', 
-              function(s) {
+  var url = 'http://www.rcsb.org/pdb/files/' + pdbId + '.pdb';
+  console.log(url)
+  io.fetchPdb(url, function(s) {
     structure = s;
     cartoon();
     viewer.autoZoom();
@@ -220,7 +208,7 @@ viewer = pv.Viewer(document.getElementById('viewer'), {
     outline : true, quality : 'medium',
     background : '#333', animateTime: 500,
 });
-viewer.addListener('viewerReady', superpose);
+viewer.addListener('viewerReady', transferase);
 window.addEventListener('resize', function() {
       viewer.fitParent();
 });
