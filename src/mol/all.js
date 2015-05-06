@@ -95,6 +95,7 @@ function assignHelixSheet(structure) {
 
 return {
   Mol: mol.Mol,
+  MolView: mol.MolView,
   assignHelixSheet : assignHelixSheet,
   superpose: sp.superpose,
   matchResiduesByIndex: sp.matchResiduesByIndex,
