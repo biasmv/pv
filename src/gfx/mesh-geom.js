@@ -148,7 +148,11 @@ utils.derive(MeshGeom, BaseGeom, {
   shaderForStyleAndPass :
       function(shaderCatalog, style, pass) {
     if (pass === 'normal') {
-      return shaderCatalog.hemilight;
+      if (style === 'hemilight') {
+        return shaderCatalog.hemilight;
+      } else {
+        return shaderCatalog.phong;
+      }
     }
     if (pass === 'select') {
       return shaderCatalog.select;

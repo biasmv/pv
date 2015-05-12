@@ -87,6 +87,36 @@ void main(void) {\n\
                         fog_factor);\n\
   }\n\
 }',
+// phong fragment shader
+PHONG_FS : '\n\
+precision ${PRECISION} float;\n\
+\n\
+varying vec4 vertColor;\n\
+varying vec3 vertNormal;\n\
+varying vec3 vertPos;\n\
+uniform float fogNear;\n\
+uniform float fogFar;\n\
+uniform vec3 fogColor;\n\
+uniform bool fog;\n\
+uniform float zoom;\n\
+\n\
+void main(void) {\n\
+  vec3 eyePos = vec3(0.0, 0.0, zoom);\n\
+  float dp = dot(vertNormal, normalize(eyePos - vertPos));\n\
+  float hemi = max(0.0, dp)*0.8+0.2;\n\
+  hemi *= vertColor.a;\n\
+  vec3 rgbColor = vertColor.rgb * hemi; \n\
+  rgbColor += min(vertColor.rgb, 0.8) * pow(max(0.0, dp), 16.0);\n\
+  //vec3 rgbColor = vertColor.rgb * hemi;\n\
+  gl_FragColor = vec4(clamp(rgbColor, 0.0, 1.0), vertColor.a);\n\
+  if (gl_FragColor.a == 0.0) { discard; }\n\
+  float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
+  if (fog) {\n\
+    float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
+    gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
+                        fog_factor);\n\
+  }\n\
+}',
 
 // hemilight vertex shader
 HEMILIGHT_VS : '\n\
@@ -98,7 +128,9 @@ uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
 varying vec4 vertColor;\n\
 varying vec3 vertNormal;\n\
+varying vec3 vertPos;\n\
 void main(void) {\n\
+  vertPos = (modelviewMat * vec4(attrPos, 1.0)).xyz;\n\
   gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
   vec4 n = (modelviewMat * vec4(attrNormal, 0.0));\n\
   vertNormal = n.xyz;\n\

@@ -169,6 +169,17 @@ function polymerase() {
   load('4UBB');
 };
 
+
+function phong() {
+  viewer.options('style', 'phong');
+  viewer.requestRedraw();
+}
+
+function hemilight() {
+  viewer.options('style', 'hemilight');
+  viewer.requestRedraw();
+}
+
 $(document).foundation();
 $('#1r6a').click(transferase);
 $('#1crn').click(crambin);
@@ -190,6 +201,8 @@ $('#color-element').click(byElement);
 $('#color-chain').click(byChain);
 $('#color-ss-succ').click(ssSuccession);
 $('#color-ss').click(ss);
+$('#phong').click(phong);
+$('#hemilight').click(hemilight);
 $('#color-rainbow').click(rainbow);
 $('#load-from-pdb').change(function() {
   var pdbId = this.value;
@@ -205,7 +218,7 @@ $('#load-from-pdb').change(function() {
 });
 viewer = pv.Viewer(document.getElementById('viewer'), { 
     width : 'auto', height: 'auto', antialias : true, 
-    outline : true, quality : 'medium',
+    outline : true, quality : 'medium', style : 'hemilight',
     background : '#333', animateTime: 500,
 });
 viewer.addListener('viewerReady', transferase);

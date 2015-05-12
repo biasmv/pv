@@ -324,6 +324,7 @@ Viewer.prototype = {
     var p = shouldUseHighPrecision() ? 'highp' : 'mediump';
     this._shaderCatalog = {
       hemilight : c.initShader(shaders.HEMILIGHT_VS, shaders.HEMILIGHT_FS, p),
+      phong : c.initShader(shaders.HEMILIGHT_VS, shaders.PHONG_FS, p),
       outline : c.initShader(shaders.OUTLINE_VS, shaders.OUTLINE_FS, p),
       lines : c.initShader(shaders.LINES_VS, shaders.LINES_FS, p),
       text : c.initShader(shaders.TEXT_VS, shaders.TEXT_FS, p),

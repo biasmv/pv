@@ -303,6 +303,7 @@ Cam.prototype = {
     gl.uniform1i(shader.fog, this._fog);
     var nearOffset =   this._zoom ;
     gl.uniform1f(shader.fogFar, this._fogFar + nearOffset);
+    gl.uniform1f(shader.zoom, this._zoom);
     gl.uniform1f(shader.fogNear, this._fogNear + nearOffset);
     gl.uniform3fv(shader.fogColor, this._fogColor);
     gl.uniform3fv(shader.outlineColor, this._outlineColor);
