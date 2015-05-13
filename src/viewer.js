@@ -353,7 +353,7 @@ Viewer.prototype = {
   },
 
   boundingClientRect : function() {
-    return this._domElement.getBoundingClientRect();
+    return this._canvas.domElement().getBoundingClientRect();
   },
 
   _drawWithPass : function(pass) {
