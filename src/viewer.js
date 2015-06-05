@@ -108,6 +108,30 @@ function slabModeToStrategy(mode, options) {
   return null;
 }
 
+
+function PickedObject(target, node, symIndex, pos) {
+  this._pos = pos;
+  this._target = target;
+  this._node = node;
+  this._symIndex = symIndex;
+}
+
+PickedObject.prototype =  {
+  symIndex : function() { 
+    return this._symIndex; 
+  },
+  target : function() {
+    return this._target;
+  },
+  pos : function() {
+    return this._pos;
+  },
+
+  node : function() {
+    return this._node;
+  }
+};
+
 function PickingResult(obj, symIndex, transform) {
   this._obj = obj;
   this._symIndex = symIndex;
@@ -142,7 +166,7 @@ function Viewer(domElement, opts) {
   this._spin = null;
   this._rockAndRoll = null;
 
-  this.listenerMap = {};
+  this.listenerMap = { };
 
   this._animControl = new anim.AnimationControl();
   // NOTE: make sure to only request features supported by all browsers,
@@ -155,10 +179,18 @@ function Viewer(domElement, opts) {
   this.quality(this._options.quality);
 
   if (this._options.atomDoubleClicked !== null) {
-    this.addListener('atomDoubleClicked', this._options.atomDoubleClicked);
+    this.on('atomDoubleClicked', this._options.atomDoubleClicked);
   }
   if (this._options.atomClick !== null) {
-    this.addListener('atomClicked', this._options.atomClick);
+    this.on('atomClicked', this._options.atomClick);
+  }
+
+
+  if (this._options.objectClicked !== null) {
+    this.on('objectClicked', this._options.objectClicked);
+  }
+  if (this._options.objectDoubleClicked !== null) {
+    this.on('objectDoubleClicked', this._options.objectDoubleClicked);
   }
 
   if (document.readyState === "complete" ||  
@@ -193,6 +225,8 @@ Viewer.prototype = {
       slabMode : slabModeToStrategy(opts.slabMode),
       atomClick: opts.atomClicked || opts.atomClick || null,
       outline : optValue(opts, 'outline', true),
+      objectDoubleClicked : optValue(opts, 'objectDoubleClicked', 'center'),
+      objectClicked : opts.objectClicked || null,
       fov : optValue(opts, 'fov', 45.0),
       // for backwards compatibility
       atomDoubleClicked : optValue(opts, 'atomDoubleClicked', 
@@ -819,32 +853,45 @@ Viewer.prototype = {
     this._drawWithPass('select');
   },
 
-  pick : function(pos) {
-    this._pickBuffer.bind();
-    this._drawPickingScene();
-    var pixels = new Uint8Array(4);
-    var gl = this._canvas.gl();
-    gl.readPixels(pos.x, this._options.height - pos.y, 1, 1,
-                  gl.RGBA, gl.UNSIGNED_BYTE, pixels);
-    this._pickBuffer.release();
-    if (pixels.data) {
-      pixels = pixels.data;
-    }
-    var objId = pixels[0] | (pixels[1] << 8) | (pixels[2] << 16);
-    var symIndex = pixels[3];
+  pick : (function() {
+    return function(pos) {
+      this._pickBuffer.bind();
+      this._drawPickingScene();
+      var pixels = new Uint8Array(4);
+      var gl = this._canvas.gl();
+      gl.readPixels(pos.x, this._options.height - pos.y, 1, 1,
+                    gl.RGBA, gl.UNSIGNED_BYTE, pixels);
+      this._pickBuffer.release();
+      if (pixels.data) {
+        pixels = pixels.data;
+      }
+      var objId = pixels[0] | (pixels[1] << 8) | (pixels[2] << 16);
+      var symIndex = pixels[3];
 
-    var obj = this._objectIdManager.objectForId(objId);
-    console.log('object', obj);
-    if (obj === undefined) {
-      return null;
-    }
-    var transform = null;
-    if (symIndex !== 255) {
-      transform = obj.geom.symWithIndex(symIndex);
-    }
-    return new PickingResult(obj, symIndex < 255 ? symIndex : null,
-                            transform);
-  },
+      var picked = this._objectIdManager.objectForId(objId);
+      if (picked === undefined) {
+        return null;
+      }
+      var transformedPos = vec3.create();
+      var target = null;
+      if (symIndex !== 255) {
+        target = picked.atom;
+        var transform = picked.geom.symWithIndex(symIndex);
+        vec3.transformMat4(transformedPos, picked.atom.pos(), transform);
+      } else {
+        if (picked.atom !== undefined) {
+          target = picked.atom;
+          transformedPos = picked.atom.pos();
+        } else {
+          target = picked.userData;
+          transformedPos = picked.center;
+        }
+      }
+      return new PickedObject(target, picked.geom, 
+                              symIndex < 255 ? symIndex : null,
+                              transformedPos);
+    };
+  })(),
 
   add : function(name, obj) {
     obj.name(name);

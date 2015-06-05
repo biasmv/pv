@@ -91,7 +91,7 @@ Geometric shapes can be added to the 3D scene through :class:`CustomMesh`. At th
   :param start: 3-dimensional start coordinate of the tube
   :param end: 3-dimensional end coordinate of the tube
   :param radius: radius in Angstrom
-  :param options: a dictionary with the following keys. *color*: when provided, used as the color for the tube, *cap* when set to false, the tube is left open ,meaning the ends are not capped.
+  :param options: a dictionary with the following keys. *color*: when provided, used as the color for the tube, *cap* when set to false, the tube is left open ,meaning the ends are not capped. *userData*: when provided the user data is added to the object. This data is available when a pick event (click/double click occurs on the object as the userData property. When not provided, userData is set to null.
 
 .. function:: CustomMesh.addSphere(center, radius[, options])
 
@@ -99,5 +99,5 @@ Geometric shapes can be added to the 3D scene through :class:`CustomMesh`. At th
 
   :param center: 3-dimensional center coordinate for the sphere
   :param radius: radius in Angstrom
-  :param options: a dictionary with the following keys. *color*: when provided, used as the color for the tube.
+  :param options: a dictionary with the following keys. *color*: when provided, used as the color for the tube. *userData*: when provided the user data is added to the object. This data is available when a pick event (click/double click occurs on the object as the userData property. When not provided, userData is set to null.
 

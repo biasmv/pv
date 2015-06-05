@@ -143,8 +143,15 @@ utils.derive(CustomMesh, SceneNode, {
         this._data.addVertex(start, [-dir[0], -dir[1], -dir[2]], color, 0);
         capTubeStart(this._data, startIndex, 8);
       }
+      var userData = options.userData !== undefined ? options.userData : null;
+      console.log(userData);
+      var objectId = this._nextObjectId({
+        center : midPoint,
+        userData : userData,
+        geom : this
+      });
       this._protoCyl.addTransformed(this._data, midPoint, length, radius, 
-                                    rotation, color, color, 0, 0);
+                                    rotation, color, color, objectId, objectId);
       if (cap) {
         var baseIndex = this._data.numVerts();
         this._data.addVertex(end, dir, color, 0);
@@ -176,7 +183,8 @@ utils.derive(CustomMesh, SceneNode, {
     var userData = options.userData !== undefined ? options.userData : null;
     var objectId = this._nextObjectId({
       center : center,
-      userData : userData
+      userData : userData,
+      geom : this
     });
     this._protoSphere.addTransformed(this._data, center, radius, 
                                      color, objectId);

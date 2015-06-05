@@ -21,15 +21,14 @@
 define([
   './gl-matrix', 
   './utils', 
+  'mol/atom'
   ], 
   function(
     glMatrix, 
-    utils) {
+    utils,
+    mol) {
 
 "use strict";
-
-var vec3 = glMatrix.vec3;
-
 
 function MouseHandler(canvas, viewer, cam, animationTime) {
   this._viewer = viewer;
@@ -46,15 +45,8 @@ MouseHandler.prototype = {
     if (picked === null) {
       return;
     }
-    var transformedPos = vec3.create();
-    var newAtom = picked.object().atom;
-    var pos = newAtom.pos();
-    if (picked.transform()) {
-      vec3.transformMat4(transformedPos, pos, picked.transform());
-      this._viewer.setCenter(transformedPos, this._animationTime);
-    } else {
-      this._viewer.setCenter(pos, this._animationTime);
-    }
+    console.log(picked.target(), picked.node());
+    this._viewer.setCenter(picked.pos(), this._animationTime);
   },
 
   _mouseUp : function() {
@@ -103,7 +95,11 @@ MouseHandler.prototype = {
       var rect = this._canvas.domElement().getBoundingClientRect();
       var picked = this._viewer.pick(
           { x : event.clientX - rect.left, y : event.clientY - rect.top });
-      this._viewer._dispatchEvent(event, 'atomDoubleClicked', picked);
+      if  (picked.target() instanceof mol.Atom ||
+           picked.target() instanceof mol.AtomView) {
+        this._viewer._dispatchEvent(event, 'atomDoubleClicked', picked);
+      }
+      this._viewer._dispatchEvent(event, 'objectDoubleClicked', picked);
       this._viewer.requestRedraw();
     };
   })(),
@@ -121,6 +117,11 @@ MouseHandler.prototype = {
       var picked = this._viewer.pick(
           { x : event.clientX - rect.left, y : event.clientY - rect.top });
       this._viewer._dispatchEvent(event, 'atomClicked', picked);
+      if  (picked.target() instanceof mol.Atom ||
+           picked.target() instanceof mol.AtomView) {
+        this._viewer._dispatchEvent(event, 'atomClicked', picked);
+      }
+      this._viewer._dispatchEvent(event, 'objectClicked', picked);
     }
     event.preventDefault();
     if (event.shiftKey === true) {

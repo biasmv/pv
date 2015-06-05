@@ -185,13 +185,13 @@ function cross() {
   viewer.clear();
   var go = viewer.customMesh('custom');
 
-  go.addSphere([-10, 0, 0], 2);
-  go.addSphere([10, 0, 0], 2);
-  go.addSphere([0, -10, 0], 2);
-  go.addSphere([0, 10, 0], 2);
-  go.addSphere([0, 0, -10], 2);
-  go.addSphere([0, 0, 10], 2);
-  viewer.setCenter([0,0,0], 2);
+  go.addSphere([-10, 0, 0], 2, { userData : 'one' } );
+  go.addSphere([10, 0, 0], 2, { userData : 'two' } );
+  go.addSphere([0, -10, 0], 2, { userData : 'three' } );
+  go.addSphere([0, 10, 0], 2, { userData : 'four' } );
+  go.addSphere([0, 0, -10], 2, { userData : 'five' } );
+  go.addSphere([0, 0, 10], 2, { userData : 'six' } );
+  viewer.setCenter([0,0,0], 2, { userData : 'seven' } );
   viewer.setZoom(20);
 }
 
