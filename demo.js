@@ -180,6 +180,21 @@ function hemilight() {
   viewer.requestRedraw();
 }
 
+
+function cross() {
+  viewer.clear();
+  var go = viewer.customMesh('custom');
+
+  go.addSphere([-10, 0, 0], 2);
+  go.addSphere([10, 0, 0], 2);
+  go.addSphere([0, -10, 0], 2);
+  go.addSphere([0, 10, 0], 2);
+  go.addSphere([0, 0, -10], 2);
+  go.addSphere([0, 0, 10], 2);
+  viewer.setCenter([0,0,0], 2);
+  viewer.setZoom(20);
+}
+
 $(document).foundation();
 $('#1r6a').click(transferase);
 $('#1crn').click(crambin);
@@ -221,7 +236,7 @@ viewer = pv.Viewer(document.getElementById('viewer'), {
     outline : true, quality : 'medium', style : 'hemilight',
     background : '#333', animateTime: 500,
 });
-viewer.addListener('viewerReady', transferase);
+viewer.addListener('viewerReady', cross);
 window.addEventListener('resize', function() {
       viewer.fitParent();
 });

@@ -44,6 +44,11 @@ var mat3 = glMatrix.mat3;
 
 var forceRGB = color.forceRGB;
 
+
+// number of ids to be allocated whenever we run out of objects. This would 
+// ideally depend on number of objects the user is going to create.
+var ID_CHUNK_SIZE = 100;
+
 // small helper with the same interface as IndexedVertexArray that can be used 
 // as a drop-in when the number of vertices/indices is not known in advance.
 function DynamicIndexedVertexArray() {
@@ -77,7 +82,7 @@ DynamicIndexedVertexArray.prototype = {
   }
 };
 
-function CustomMesh(name, gl, float32Allocator, uint16Allocator) {
+function CustomMesh(name, gl, float32Allocator, uint16Allocator, idPool) {
   SceneNode.call(this, gl);
   this._float32Allocator = float32Allocator;
   this._uint16Allocator = uint16Allocator;
@@ -85,7 +90,10 @@ function CustomMesh(name, gl, float32Allocator, uint16Allocator) {
   this._protoSphere = new gb.ProtoSphere(8, 8);
   this._protoCyl = new gb.ProtoCylinder(8);
   this._va = null;
+  this._idRanges = [];
+  this._idPool = idPool;
   this._ready = false;
+  this._currentRange = null;
 }
 
 // FIXME: these are duplicated from render.js and should be moved to a 
@@ -145,11 +153,33 @@ utils.derive(CustomMesh, SceneNode, {
       this._ready = false;
     };
   })(),
+  _nextObjectId : function(data) {
+    // because we have no idea how many different objects the user will 
+    // create we will just allocate the object ids in chunks of 
+    // ID_CHUNK_SIZE
+    if (!this._currentRange || !this._currentRange.hasLeft()) {
+      this._currentRange = this._idPool.getContinuousRange(ID_CHUNK_SIZE);
+      this._idRanges.push(this._currentRange);
+    }
+    return this._currentRange.nextId(data);
+  },
+  destroy : function() {
+    SceneNode.prototype.destroy.call(this);
+    for (var i = 0; i < this._idRanges.length; ++i) {
+      this._idRanges[i].recycle();
+    }
+  },
 
   addSphere : function(center, radius, options) {
     options = options || {};
     var color = forceRGB(options.color || 'white');
-    this._protoSphere.addTransformed(this._data, center, radius, color, 0);
+    var userData = options.userData !== undefined ? options.userData : null;
+    var objectId = this._nextObjectId({
+      center : center,
+      userData : userData
+    });
+    this._protoSphere.addTransformed(this._data, center, radius, 
+                                     color, objectId);
     this._ready = false;
   },
   _prepareVertexArray : function() {
@@ -189,7 +219,7 @@ utils.derive(CustomMesh, SceneNode, {
       return shaderCatalog.hemilight;
     }
     if (pass === 'select') {
-      return null;
+      return shaderCatalog.select;
     }
     if (pass === 'outline') {
       return shaderCatalog.outline;

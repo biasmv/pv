@@ -799,7 +799,8 @@ Viewer.prototype = {
     
     var mesh = new CustomMesh(name, this._canvas.gl(), 
                               options.float32Allocator, 
-                              options.uint16Allocator);
+                              options.uint16Allocator,
+                              options.idPool);
     this.add(name, mesh);
     return mesh;
   },
@@ -833,6 +834,7 @@ Viewer.prototype = {
     var symIndex = pixels[3];
 
     var obj = this._objectIdManager.objectForId(objId);
+    console.log('object', obj);
     if (obj === undefined) {
       return null;
     }

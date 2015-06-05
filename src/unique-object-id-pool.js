@@ -38,6 +38,9 @@ ContinuousIdRange.prototype = {
     this._pool._objects[id] = obj;
     return id;
   },
+  hasLeft : function() {
+    return this._next < this._end;
+  },
   recycle : function() {
     this._pool.recycle(this);
   },
