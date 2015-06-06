@@ -45,7 +45,6 @@ MouseHandler.prototype = {
     if (picked === null) {
       return;
     }
-    console.log(picked.target(), picked.node());
     this._viewer.setCenter(picked.pos(), this._animationTime);
   },
 
@@ -95,11 +94,11 @@ MouseHandler.prototype = {
       var rect = this._canvas.domElement().getBoundingClientRect();
       var picked = this._viewer.pick(
           { x : event.clientX - rect.left, y : event.clientY - rect.top });
-      if  (picked.target() instanceof mol.Atom ||
+      if  (picked === null || picked.target() instanceof mol.Atom ||
            picked.target() instanceof mol.AtomView) {
         this._viewer._dispatchEvent(event, 'atomDoubleClicked', picked);
       }
-      this._viewer._dispatchEvent(event, 'objectDoubleClicked', picked);
+      this._viewer._dispatchEvent(event, 'doubleClicked', picked);
       this._viewer.requestRedraw();
     };
   })(),
@@ -116,12 +115,11 @@ MouseHandler.prototype = {
       var rect = this._canvas.domElement().getBoundingClientRect();
       var picked = this._viewer.pick(
           { x : event.clientX - rect.left, y : event.clientY - rect.top });
-      this._viewer._dispatchEvent(event, 'atomClicked', picked);
-      if  (picked.target() instanceof mol.Atom ||
+      if  (picked === null || picked.target() instanceof mol.Atom ||
            picked.target() instanceof mol.AtomView) {
         this._viewer._dispatchEvent(event, 'atomClicked', picked);
       }
-      this._viewer._dispatchEvent(event, 'objectClicked', picked);
+      this._viewer._dispatchEvent(event, 'clicked', picked);
     }
     event.preventDefault();
     if (event.shiftKey === true) {

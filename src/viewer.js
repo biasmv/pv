@@ -186,11 +186,11 @@ function Viewer(domElement, opts) {
   }
 
 
-  if (this._options.objectClicked !== null) {
-    this.on('objectClicked', this._options.objectClicked);
+  if (this._options.clicked !== null) {
+    this.on('clicked', this._options.clicked);
   }
-  if (this._options.objectDoubleClicked !== null) {
-    this.on('objectDoubleClicked', this._options.objectDoubleClicked);
+  if (this._options.doubleClicked !== null) {
+    this.on('doubleClicked', this._options.doubleClicked);
   }
 
   if (document.readyState === "complete" ||  
@@ -225,8 +225,8 @@ Viewer.prototype = {
       slabMode : slabModeToStrategy(opts.slabMode),
       atomClick: opts.atomClicked || opts.atomClick || null,
       outline : optValue(opts, 'outline', true),
-      objectDoubleClicked : optValue(opts, 'objectDoubleClicked', 'center'),
-      objectClicked : opts.objectClicked || null,
+      doubleClicked : optValue(opts, 'doubleClicked', 'center'),
+      clicked : opts.clicked || null,
       fov : optValue(opts, 'fov', 45.0),
       // for backwards compatibility
       atomDoubleClicked : optValue(opts, 'atomDoubleClicked', 
