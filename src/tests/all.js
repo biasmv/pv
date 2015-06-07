@@ -59,7 +59,8 @@ var UNIT_TESTS = [
   'tests/gfx/base-geom',
   'tests/gfx/canvas',
   'tests/io/sdf',
-  'tests/unique-object-id-pool'
+  'tests/unique-object-id-pool',
+  'tests/viewer/pick'
 ];
 
 // require the unit tests.
