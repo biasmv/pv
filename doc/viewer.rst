@@ -350,12 +350,12 @@ The following code simply logs the clicked atom to the console when an atom is c
 
 .. code-block:: javascript
 
-  viewer.addListener('clicked', function(picked) {
+  viewer.addListener('click', function(picked) {
     if (picked === null) return;
     var target = picked.target();
-    if (target.qualifiedName !=== undefined) {
-      console.log('clicked atom:', target.qualifiedName(), ' on object: ', 
-                  target.node().name());
+    if (target.qualifiedName !== undefined) {
+      console.log('clicked atom', target.qualifiedName(), 'on object',
+                  picked.node().name());
     }
   });
 
@@ -364,7 +364,7 @@ The following code shows how to listen for double click events to either make th
 .. code-block:: javascript
 
   var structure = .... // point to what you want the default background selection to view
-  viewer.addListener('doubleClick', function(picked) {
+  viewer.on('doubleClick', function(picked) {
     if (picked === null) {
       viewer.fitTo(structure);
       return;

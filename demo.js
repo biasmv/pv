@@ -194,7 +194,6 @@ function cross() {
   viewer.setCenter([0,0,0], 2, { userData : 'seven' } );
   viewer.setZoom(20);
 }
-
 $(document).foundation();
 $('#1r6a').click(transferase);
 $('#1crn').click(crambin);
@@ -234,9 +233,26 @@ $('#load-from-pdb').change(function() {
 viewer = pv.Viewer(document.getElementById('viewer'), { 
     width : 'auto', height: 'auto', antialias : true, 
     outline : true, quality : 'medium', style : 'hemilight',
-    background : '#333', animateTime: 500,
+    background : '#333', animateTime: 500, doubleClick : null
 });
 viewer.addListener('viewerReady', crambin);
+
+viewer.on('doubleClick', function(picked) {
+  if (picked === null) {
+    viewer.fitTo(structure);
+     return;
+  }
+  viewer.setCenter(picked.pos(), 500);
+});
+
+viewer.addListener('click', function(picked) {
+  if (picked === null) return;
+  var target = picked.target();
+  if (target.qualifiedName !== undefined) {
+    console.log('clicked atom', target.qualifiedName(), 'on object',
+                picked.node().name());
+  }
+});
 window.addEventListener('resize', function() {
       viewer.fitParent();
 });
