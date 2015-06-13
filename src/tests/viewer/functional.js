@@ -1,5 +1,4 @@
 require(['viewer', 'io', 'color'], function(pv, io, color) { 
-;bn
 
 var ALL_STYLES = [
   'cartoon', 'tube', 'lines', 'spheres', 'ballsAndSticks',

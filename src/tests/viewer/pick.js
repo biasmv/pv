@@ -1,4 +1,7 @@
-require(['viewer', 'io', 'color'], function(pv, io, color) { 
+require(['viewer', 'io', 'color', 'gl-matrix'], 
+        function(pv, io, color, glMatrix) { 
+
+var mat4 = glMatrix.mat4;
 
 var ALL_STYLES = [
   'cartoon', 'tube', 'lines', 'spheres', 'ballsAndSticks',
@@ -39,6 +42,9 @@ test('pick atom', function(assert) {
     assert.strictEqual(picked.target(), firstAtom);
     assert.strictEqual(picked.symIndex(), 0);
     assert.strictEqual(picked.node(), go);
+    // the following lines test for the deprecated interface
+    assert.strictEqual(picked.object().atom, firstAtom);
+    assert.mat4Equal(picked.transform(), mat4.create());
     done();
   });
 });
