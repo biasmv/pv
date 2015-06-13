@@ -189,7 +189,7 @@ These methods will automatically add the object to the viewer, there is not need
 
   :param name: uniquely identifies the custom mesh.
 
-  :returns: A new :class:`CustomMesh` instance.
+  :returns: A new :class:`pv.CustomMesh` instance.
 
 .. _pv.viewer.camera:
 
@@ -337,24 +337,25 @@ The following code example shows how to add a yellow sphere to the center of the
 
 .. _pv.viewer.events.mouse:
 
-Mouse Interaction Events (atomClicked, atomDoubleClicked)
+Mouse Interaction Events (click, doubleClick)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Mouse selection events are fired when the user clicks or double clicks a residue/atom. 
+Mouse selection events are fired when the user clicks or double clicks on the viewer. 
 
-The arguments of the callback function are *picked*, and *originalEvent* which is the original mouse event. Picked contains information about the scene nodes that was clicked/doubleClicked as well as the actual clicked atom. It also contains a transformation matrix, that if set needs to be applied to the atom's position to get the correct position in global coordinates. This is illustrated in the second example below.
+The arguments of the callback function are *picked*, and *originalEvent* which is the original mouse event. Picked contains information about the scene nodes that was clicked/doubleClicked as well as target of the event. For representations of molecules, the target is always an atom, for custom meshes target is set to the user-specified data stored in the mesh when calling :func:`~pv.CustomMesh.addTube`, or :func:`~pv.CustomMesh.addSphere`. When no object was under the cursor, picked is null.
 
-The following code simply logs the clicked residue to the console when an atom is clicked.
+It also contains a transformation matrix, that if set needs to be applied to the atom's position to get the correct position in global coordinates. This is illustrated in the second example below.
+
+The following code simply logs the clicked atom to the console when an atom is clicked and does nothing otherwise.
 
 .. code-block:: javascript
 
-  viewer.addListener("atomClicked", function(picked, originalEvent) {
-
-    if (picked) {
-      var newAtom = picked.object().atom;
-      var geom = picked.object().geom;
-      
-      console.log(" Residue number=" + newAtom.residue().num());
+  viewer.addListener('clicked', function(picked) {
+    if (picked === null) return;
+    var target = picked.target();
+    if (target.qualifiedName !=== undefined) {
+      console.log('clicked atom:', target.qualifiedName(), ' on object: ', 
+                  target.node().name());
     }
   });
 
@@ -363,20 +364,12 @@ The following code shows how to listen for double click events to either make th
 .. code-block:: javascript
 
   var structure = .... // point to what you want the default background selection to view
-  viewer.addListener("atomDoubleClicked", function(picked, originalEvent) {
+  viewer.addListener('doubleClick', function(picked) {
     if (picked === null) {
       viewer.fitTo(structure);
       return;
     }
-    var transformedPos = vec3.create();
-    var newAtom = picked.object().atom;
-    var pos = newAtom.pos();
-    if (picked.transform()) {
-        vec3.transformMat4(transformedPos, pos, picked.transform());
-      viewer.setCenter(transformedPos, 500);
-    } else {
-      viewer.setCenter(pos, 500);
-    }
+    viewer.setCenter(picked.pos(), 500);
   });
 
 

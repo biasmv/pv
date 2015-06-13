@@ -109,11 +109,13 @@ function slabModeToStrategy(mode, options) {
 }
 
 
-function PickedObject(target, node, symIndex, pos) {
+function PickedObject(target, node, symIndex, pos, object, transform) {
   this._pos = pos;
   this._target = target;
   this._node = node;
   this._symIndex = symIndex;
+  this._legacyObject = object;
+  this._legacyTransform = transform;
 }
 
 PickedObject.prototype =  {
@@ -129,27 +131,17 @@ PickedObject.prototype =  {
 
   node : function() {
     return this._node;
+  },
+  // the following functions are here for supporting the old pick interface.
+  // It's use is discouraged as it's much more complicated to use.
+  transform : function() {
+    return this._legacyTransform;
+  },
+
+  object: function() {
+    return this._legacyObject;
   }
 };
-
-function PickingResult(obj, symIndex, transform) {
-  this._obj = obj;
-  this._symIndex = symIndex;
-  this._transform = transform;
-}
-
-PickingResult.prototype = {
-  object : function() { 
-    return this._obj; 
-  },
-  symIndex : function() { 
-    return this._symIndex; 
-  },
-  transform : function() { 
-    return this._transform; 
-  }
-};
-
 
 function Viewer(domElement, opts) {
   this._options = this._initOptions(opts, domElement);
@@ -178,19 +170,11 @@ function Viewer(domElement, opts) {
 
   this.quality(this._options.quality);
 
-  if (this._options.atomDoubleClicked !== null) {
-    this.on('atomDoubleClicked', this._options.atomDoubleClicked);
-  }
-  if (this._options.atomClick !== null) {
-    this.on('atomClicked', this._options.atomClick);
-  }
-
-
-  if (this._options.clicked !== null) {
-    this.on('clicked', this._options.clicked);
+  if (this._options.click !== null) {
+    this.on('click', this._options.click);
   }
   if (this._options.doubleClicked !== null) {
-    this.on('doubleClicked', this._options.doubleClicked);
+    this.on('doubleClick', this._options.doubleClick);
   }
 
   if (document.readyState === "complete" ||  
@@ -210,6 +194,41 @@ function optValue(opts, name, defaultValue) {
   return defaultValue;
 }
 
+
+function getDoubleClickHandler(opts) {
+  if (opts.atomDoubleClick) {
+    console.warn('use of atomDoubleClick is deprecated. ',
+                 'use doubleClick instead');
+    return opts.atomDoubleClick;
+  }
+  if (opts.atomDoubleClicked) {
+    console.warn('use of atomDoubleClicked is deprecated. ',
+                 'use doubleClick instead');
+    return opts.atomDoubleClicked;
+  }
+  if (opts.doubleClick) {
+    return opts.doubleClick;
+  }
+  return 'center';
+}
+
+function getClickHandler(opts) {
+  if (opts.atomClick) {
+    console.warn('use of atomClick is deprecated. ',
+                 'use click instead');
+    return opts.atomClick;
+  }
+  if (opts.atomClicked) {
+    console.warn('use of atomClicked is deprecated. ',
+                 'use click instead');
+    return opts.atomClicked;
+  }
+  if (opts.click) {
+    return opts.click;
+  }
+  return null;
+}
+
 Viewer.prototype = {
 
   _initOptions : function(opts, domElement) {
@@ -223,20 +242,12 @@ Viewer.prototype = {
       style : optValue(opts, 'style', 'hemilight'),
       background : color.forceRGB(opts.background || 'white'),
       slabMode : slabModeToStrategy(opts.slabMode),
-      atomClick: opts.atomClicked || opts.atomClick || null,
       outline : optValue(opts, 'outline', true),
-      doubleClicked : optValue(opts, 'doubleClicked', 'center'),
-      clicked : opts.clicked || null,
       fov : optValue(opts, 'fov', 45.0),
-      // for backwards compatibility
-      atomDoubleClicked : optValue(opts, 'atomDoubleClicked', 
-                                   optValue(opts, 'atomDoubleClick', 'center')),
+      doubleClick : getDoubleClickHandler(opts),
+      click : getClickHandler(opts),
       fog : optValue(opts, 'fog', true)
     };
-    if ('atomDoubleClick' in opts || 'atomClick' in opts) {
-      console.warn('use of atomDoubleClick/atomClick is deprecated. ',
-                   'use atomDoubleClicked/atomClicked instead');
-    }
     var parentRect = domElement.getBoundingClientRect();
     if (options.width === 'auto') {
       options.width = parentRect.width;
@@ -874,9 +885,10 @@ Viewer.prototype = {
       }
       var transformedPos = vec3.create();
       var target = null;
+      var transform = null;
       if (symIndex !== 255) {
         target = picked.atom;
-        var transform = picked.geom.symWithIndex(symIndex);
+        transform = picked.geom.symWithIndex(symIndex);
         vec3.transformMat4(transformedPos, picked.atom.pos(), transform);
       } else {
         if (picked.atom !== undefined) {
@@ -889,7 +901,7 @@ Viewer.prototype = {
       }
       return new PickedObject(target, picked.geom, 
                               symIndex < 255 ? symIndex : null,
-                              transformedPos);
+                              transformedPos, picked, transform);
     };
   })(),
 

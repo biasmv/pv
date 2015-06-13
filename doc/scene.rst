@@ -66,7 +66,7 @@ The displaying of molecules is handled by :class:`pv.BaseGeom`, and subclasses. 
 Drawing Geometric Shapes
 =========================================================================================
 
-Geometric shapes can be added to the 3D scene through :class:`CustomMesh`. At the moment, only two shapes are supported: tubes and spheres. More can be added on request. A new :class:`CustomMesh` instance can be obtained by calling :func:`pv.Viewer.customMesh`.
+Geometric shapes can be added to the 3D scene through :class:`pv.CustomMesh`. At the moment, only two shapes are supported: tubes and spheres. More can be added on request. A new :class:`pv.CustomMesh` instance can be obtained by calling :func:`pv.Viewer.customMesh`.
 
 **Example**
 
@@ -79,25 +79,25 @@ Geometric shapes can be added to the 3D scene through :class:`CustomMesh`. At th
   cm.addTube([0,0, -50], [0,0,50], 1, { cap : true, color : 'blue' });
   cm.addSphere([0, 0, 0], 3, { color : 'yellow' });
 
-.. class:: CustomMesh
+.. class:: pv.CustomMesh
 
   Holds a collection of user-defined geometric shapes
 
 
-.. function:: CustomMesh.addTube(start, end, radius[, options])
+.. function:: pv.CustomMesh.addTube(start, end, radius[, options])
 
   Adds a tube (open or capped) to the custom mesh container
 
   :param start: 3-dimensional start coordinate of the tube
   :param end: 3-dimensional end coordinate of the tube
   :param radius: radius in Angstrom
-  :param options: a dictionary with the following keys. *color*: when provided, used as the color for the tube, *cap* when set to false, the tube is left open ,meaning the ends are not capped. *userData*: when provided the user data is added to the object. This data is available when a pick event (click/double click occurs on the object as the userData property. When not provided, userData is set to null.
+  :param options: a dictionary with the following keys. *color*: when provided, used as the color for the tube, *cap* when set to false, the tube is left open, meaning the ends are not capped. *userData*: when provided the user data is added to the object. This data is available when a pick event (click/double click occurs on the object as the target of the pick event. When not provided, userData is set to null.
 
-.. function:: CustomMesh.addSphere(center, radius[, options])
+.. function:: pv.CustomMesh.addSphere(center, radius[, options])
 
   Adds a sphere to the custom mesh container
 
   :param center: 3-dimensional center coordinate for the sphere
   :param radius: radius in Angstrom
-  :param options: a dictionary with the following keys. *color*: when provided, used as the color for the tube. *userData*: when provided the user data is added to the object. This data is available when a pick event (click/double click occurs on the object as the userData property. When not provided, userData is set to null.
+  :param options: a dictionary with the following keys. *color*: when provided, used as the color for the tube. *userData*: when provided the user data is added to the object. This data is available when a pick event (click/double click occurs on the object as the target of the pick event. When not provided, userData is set to null.
 

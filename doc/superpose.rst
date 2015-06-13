@@ -38,6 +38,5 @@ PV has support for pair-wise superposition of structures through the :func:`pv.m
   :type inA: :class:`~pv.mol.Mol` or :class:`~pv.mol.MolView`
   :param inB: Second structure
   :type inB: :class:`~pv.mol.Mol` or :class:`~pv.mol.MolView`
-  :param atoms: The subset of atoms to be included in the two views.
-  :type atoms: null, string or list
+  :param atoms: The subset of atoms to be included in the two views. Must either be null, string or a list of strings.
   :returns: An array of length two containing the two created views as ``[outA, outB]``.
