@@ -236,7 +236,7 @@ viewer = pv.Viewer(document.getElementById('viewer'), {
     outline : true, quality : 'medium', style : 'hemilight',
     background : '#333', animateTime: 500,
 });
-viewer.addListener('viewerReady', cross);
+viewer.addListener('viewerReady', crambin);
 window.addEventListener('resize', function() {
       viewer.fitParent();
 });
