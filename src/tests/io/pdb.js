@@ -188,4 +188,32 @@ test('occupancy and temp-factor', function(assert) {
   assert.strictEqual(atoms[3].tempFactor(), null);
 });
 
+
+test('load multi-model PDB file', function(assert) {
+  var done = assert.async();
+  io.fetchPdb('/pdbs/1nmr.pdb', function(structures) {
+    assert.strictEqual(structures.length, 20);
+    for (var i = 0; i < structures.length; ++i) {
+      // check that all structures have the same number of atoms and 
+      // that they have the correct assembly information attached.
+      assert.strictEqual(structures[i].atoms().length, 1290);
+      assert.strictEqual(structures[i].assembly(), null);
+      // check secondary structure assignment
+      assert.strictEqual(structures[i].chain('A').residueByRnum(19).ss(),  'H');
+
+    }
+    done();
+  }, { loadAllModels : true });
+});
+
+test('only load first model when loadAllModels option is not set', function(assert) {
+  var done = assert.async();
+  io.fetchPdb('/pdbs/1nmr.pdb', function(structure) {
+    assert.strictEqual(structure.atoms().length, 1290);
+    assert.strictEqual(structure.assembly(), null);
+    assert.strictEqual(structure.chain('A').residueByRnum(19).ss(),  'H');
+    done();
+  });
+});
+
 });

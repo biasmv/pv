@@ -70,6 +70,7 @@ Changelog
 - Add support for click events on custom meshes
 - Deprecated atomDoubleClick/atomClick events in favor of click/doubleClicked to make it clearer that the target of the click event might be objects other than atoms. 
 - Simplified the picking results object. The picking results now provides the position of the clicked object as the ```pos()``` property. It is no longer required to transform the atom position by the symmetry transformation matrix when displaying biological units.
+- Support for loading multi-model pdb files.
 
 ### New in Version 1.6.0
 

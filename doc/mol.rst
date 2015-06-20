@@ -54,9 +54,11 @@ Loading Molecular Structures
 
 The following functions import structures from different data formats. 
 
-.. function:: pv.io.pdb(pdbData)
+.. function:: pv.io.pdb(pdbData[, options])
 
-  Loads a structure from the *pdbData* string and returns it. In case multiple models are present in the file (as designated by MODEL/ENDMDL), only the first is read. The following record types are handled:
+  Loads a structure from the *pdbData* string and returns it. In case multiple models are present (as designated by MODEL/ENDMDL), only the first is read. This behavior can be changed by passing  ``loadAllModels : true`` to the options dictionary. In that case all models present in the string are loaded and returned as an array. Secondary structure and assembly information is assigned to all of the models. 
+  
+The following record types are handled:
 
    * *ATOM/HETATM* for the actual coordinate data. Alternative atom locations other than those labelled as *A* are discarded.
    * *HELIX/STRAND* for assignment of secondary structure information.
@@ -72,10 +74,10 @@ The following functions import structures from different data formats.
   * connectivity information
   * the chain name is set to the structure title
 
-.. function:: pv.io.fetchPdb(url, callback)
+.. function:: pv.io.fetchPdb(url, callback[, options])
               pv.io.fetchSdf(url, callback)
 
-  Performs an adjax request the provided URL and loads the data as a structure using either :func:`pv.io.pdb`, or :func:`pv.io.sdf`. Upon success, the callback is invoked with the loaded structure as the only argument.
+  Performs an adjax request the provided URL and loads the data as a structure using either :func:`pv.io.pdb`, or :func:`pv.io.sdf`. Upon success, the callback is invoked with the loaded structure as the only argument. *options* is passed as-is to :func:`pv.io.pdb`.
 
 
 Mol (and MolView)

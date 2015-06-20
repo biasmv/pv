@@ -194,6 +194,17 @@ function cross() {
   viewer.setCenter([0,0,0], 2, { userData : 'seven' } );
   viewer.setZoom(20);
 }
+
+function ensemble() {
+  io.fetchPdb('/pdbs/1nmr.pdb', function(structures) {
+    viewer.clear()
+    structure = structures[i];
+    for (var i = 0; i < structures.length; ++i) {
+      go = viewer.cartoon('ensemble_'+ i, structures[i]);
+    }
+    viewer.autoZoom();
+  }, { loadAllModels : true } );
+}
 $(document).foundation();
 $('#1r6a').click(transferase);
 $('#1crn').click(crambin);
@@ -201,6 +212,7 @@ $('#1ake').click(kinase);
 $('#4ubb').click(polymerase);
 $('#4c46').click(longHelices);
 $('#2f8v').click(telethonin);
+$('#ensemble').click(ensemble);
 $('#style-cartoon').click(cartoon);
 $('#style-tube').click(tube);
 $('#style-line-trace').click(lineTrace);

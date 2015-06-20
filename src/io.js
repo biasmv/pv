@@ -157,6 +157,12 @@ function PDBReader(options) {
 
 PDBReader.prototype = {
 
+  // these are used as the return value of processLine()
+  CONTINUE : 1,
+  MODEL_COMPLETE : 2,
+  FILE_END : 3,
+  ERROR : 4,
+
   parseHelixRecord : function(line) {
     var frstNum = parseInt(line.substr(21, 4), 10);
     var frstInsCode = line[25] === ' ' ? '\0' : line[25];
@@ -260,7 +266,7 @@ PDBReader.prototype = {
   processLine : function(line) {
     var recordName = line.substr(0, 6);
     if (recordName === 'ATOM  ' || recordName === 'HETATM') {
-      return this.parseAndAddAtom(line);
+      return this.parseAndAddAtom(line) ? this.CONTINUE : this.ERROR;
     }
     if (recordName === 'REMARK') {
       // for now we are only interested in the biological assembly information
@@ -269,21 +275,24 @@ PDBReader.prototype = {
       if (remarkNumber === '350') {
         this._remark350Reader.nextLine(line);
       }
-      return true;
+      return this.CONTINUE;
     }
     if (recordName === 'HELIX ') {
-      return this.parseHelixRecord(line);
+      return this.parseHelixRecord(line) ? this.CONTINUE : this.ERROR;
     }
     if (recordName === 'SHEET ') {
-      return this.parseSheetRecord(line);
+      return this.parseSheetRecord(line) ? this.CONTINUE : this.ERROR;
     }
     if (this._options.conectRecords && recordName === 'CONECT') {
-      return this.parseConectRecord(line);
+      return this.parseConectRecord(line) ? this.CONTINUE : this.ERROR;
     }
-    if (recordName === 'END   ' || recordName === 'ENDMDL') {
-      return false;
+    if (recordName === 'END   ') {
+      return this.FILE_END;
     }
-    return true;
+    if (recordName === 'ENDMDL') {
+      return this.MODEL_COMPLETE;
+    }
+    return this.CONTINUE;
   },
 
   // called after parsing to perform any work that requires the complete 
@@ -292,6 +301,10 @@ PDBReader.prototype = {
   // sheet records, (b) derives connectivity and (c) assigns assembly 
   // information.
   finish : function() {
+    // check if we have at least one atom, if not return null
+    if (this._currChain === null) {
+      return null;
+    }
     var chain = null;
     var i;
     for (i = 0; i < this._sheets.length; ++i) {
@@ -315,7 +328,12 @@ PDBReader.prototype = {
     this._structure.deriveConnectivity();
     console.log('imported', this._structure.chains().length, 'chain(s),',
                 this._structure.residueCount(), 'residue(s)');
-    return this._structure;
+    var result = this._structure;
+    this._structure = new mol.Mol();
+    this._currChain =  null;
+    this._currRes = null;
+    this._currAtom = null;
+    return result;
   },
   _assignBondsFromConectRecords : function(structure) {
     for (var i = 0; i < this._conect.length; ++i) {
@@ -349,14 +367,36 @@ function pdb(text, options) {
   var opts = options || {};
   var lines = getLines(text);
   var reader = new PDBReader(opts);
+  var structures = [];
+  // depending on whether the loadAllModels flag is set process all models 
+  // in the PDB file
   for (var i = 0; i < lines.length; i++) {
-    if (!reader.processLine(lines[i])) {
-      break;
+    var result = reader.processLine(lines[i]);
+    if (result === reader.ERROR) {
+      console.timeEnd('pdb');
+      return null;
     }
+    if (result === reader.CONTINUE) {
+      continue;
+    }
+    var struct = reader.finish();
+    if (struct !== null) {
+      structures.push(struct);
+    }
+    if (result === reader.MODEL_COMPLETE && opts.loadAllModels) {
+      continue;
+    }
+    break;
   }
   var structure = reader.finish();
+  if (structure !== null) {
+    structures.push(structure);
+  }
   console.timeEnd('pdb');
-  return structure;
+  if (opts.loadAllModels) {
+    return structures;
+  }
+  return structures[0];
 }
 
 
