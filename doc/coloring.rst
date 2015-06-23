@@ -100,6 +100,9 @@ The following will add a new color operation which colors atoms based on their i
 
   function evenOdd() {
     return new pv.color.ColorOp(function(atom, out, index) {
+      // index + 0, index + 1 etc. are the positions in the output array 
+      // at which the red (+0), green (+1), blue (+2) and  alpha (+3) 
+      // components are to be written.
       if (atom.index() % 2 === 0) {
         out[index+0] = 1.0; out[index+1] = 0.0; 
         out[index+2] = 0.0; out[index+3] = 1.0;
