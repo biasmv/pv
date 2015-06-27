@@ -3,12 +3,13 @@ from docutils.parsers.rst import Directive
 from sphinx.util.compat import make_admonition
 from sphinx.util.nodes import set_source_info
 from sphinx.locale import _
+import os
 
 class PVSample(nodes.Admonition, nodes.Element):
     pass
 
 RAW_CODE_PRELUDE='''
-<script type='text/javascript' src='/bio-pv.min.js'></script>
+<script type='text/javascript' src='%s/bio-pv.min.js'></script>
 
 <style>
 #viewer {
@@ -22,7 +23,7 @@ RAW_CODE_PRELUDE='''
 }
 #viewer-wrap {
   text-align:center;
-  width: 100%;
+  width: 100%%;
 }
 </style>
 
@@ -42,8 +43,13 @@ class PVSampleDirective(Directive):
 
         literal = nodes.literal_block(code, code)
         literal['language' ] = 'html'
+        print env.docname
+        doc_dir = os.path.dirname(env.docname)
+        relative_static_path = os.path.relpath(env.config.html_static_path[0],
+                                               doc_dir)
 
-        raw_html_code = nodes.raw(code, RAW_CODE_PRELUDE + code, 
+        prelude = RAW_CODE_PRELUDE % relative_static_path
+        raw_html_code = nodes.raw(code, prelude + code, 
                                   format='html')
         set_source_info(self, literal)
         set_source_info(self, raw_html_code)

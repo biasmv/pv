@@ -1,7 +1,7 @@
 Display an NMR ensemble
 =================================================
 
-In this sample we are going to use the *loadAllModels* option of the PDB parser to load all structures present in a multi-model PDB file. The models are then displayed together in the viewer.
+In this sample we are going to use the *loadAllModels* option of the :func:`PDB parser<pv.io.fetchPdb>` to load all structures present in a multi-model PDB file. The models are then displayed together in the viewer using the :func:`cartoon render mode <pv.Viewer.cartoon>`.
 
 .. pv-sample::
 
@@ -9,7 +9,7 @@ In this sample we are going to use the *loadAllModels* option of the PDB parser 
   var viewer = pv.Viewer(document.getElementById('viewer'), 
                         { width : 300, height : 300, antialias : true });
 
-  pv.io.fetchPdb('/pdbs/1nmr.pdb', function(structures) {
+  pv.io.fetchPdb('http://www.rcsb.org/pdb/files/2mjx.pdb', function(structures) {
       // put this in the viewerReady block to make sure we don't try to add the 
       // object before the viewer is ready. In case the viewer is completely 
       // loaded, the function will be immediately executed.
@@ -19,8 +19,9 @@ In this sample we are going to use the *loadAllModels* option of the PDB parser 
           viewer.cartoon('structure_' + (index++), s); 
         });
         // adjust center of view and zoom such that all structures can be seen.
-        viewer.centerOn(structures[0]);
-        viewer.setZoom(70);
+        var rotation = pv.viewpoint.principalAxes(viewer.all()[0]);
+        viewer.setRotation(rotation)
+        viewer.autoZoom();
       });
   },  { loadAllModels : true });
   </script>
