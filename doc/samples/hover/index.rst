@@ -3,7 +3,7 @@ Get name of atom under mouse cursor
 
 This sample shows how to get the name of the atom under the mouse cursor. The code also shows how to change color of an individual atom. 
 
-This sample requires PV 1.7.0 to work.
+This sample requires PV 1.7.0 and higher to work as it relies on functionality that was added in 1.7.0.
 
 .. pv-sample::
 
