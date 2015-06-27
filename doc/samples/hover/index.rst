@@ -40,12 +40,12 @@ This sample requires PV 1.7.0 and higher to work as it relies on functionality t
       if (picked) {
         var atom = picked.target();
         document.getElementById('picked-atom-name').innerHTML = atom.qualifiedName();
-        // set color of current picked atom to red and store the current color so we 
-        // know what it was.
+        // get RGBA color and store in the color array, so we know what it was 
+        // before changing it to the highlight color.
         var color = [0,0,0,0];
-        // get RGBA color and store in the color array.
         picked.node().getColorForAtom(atom, color);
         prevPicked = { atom : atom, color : color, node : picked.node() };
+
         setColorForAtom(picked.node(), atom, 'red');
       } else {
         document.getElementById('picked-atom-name').innerHTML = '&nbsp;';
