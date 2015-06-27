@@ -1,3 +1,7 @@
+"""
+Adds the pv-sample directive that allows to show code for an 
+example which is at the same time executed life on the web-page.
+"""
 from docutils import nodes
 from docutils.parsers.rst import Directive
 from sphinx.util.compat import make_admonition
@@ -49,11 +53,11 @@ class PVSampleDirective(Directive):
                                                doc_dir)
 
         prelude = RAW_CODE_PRELUDE % relative_static_path
-        raw_html_code = nodes.raw(code, prelude + code, 
+        raw_html_code = nodes.raw(code, prelude + code + '</br>', 
                                   format='html')
         set_source_info(self, literal)
         set_source_info(self, raw_html_code)
-        return [raw_html_code, literal]
+        return [raw_html_code, nodes.subtitle('', 'Source Code'), literal]
 
 class PVSampleListDirective(Directive):
 
