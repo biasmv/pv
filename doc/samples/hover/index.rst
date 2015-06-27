@@ -1,7 +1,9 @@
 Get name of atom under mouse cursor
 =================================================
 
-This sample shows how to get the name of the atom under the mouse cursor. The code also shows how to change color of an individual atom.
+This sample shows how to get the name of the atom under the mouse cursor. The code also shows how to change color of an individual atom. 
+
+This sample requires PV 1.7.0 to work.
 
 .. pv-sample::
 
@@ -18,10 +20,11 @@ This sample shows how to get the name of the atom under the mouse cursor. The co
       go.colorBy(pv.color.uniform(color), view);
   }
 
+  // variable to store the previously picked atom. Required for resetting the color 
+  // whenever the mouse moves.
   var prevPicked = null;
   // add mouse move event listener to the div element containing the viewer. Whenever 
-  // the mouse moves, use viewer.pick() to get the current atom under the cursor. We 
-  // display the atom's name in the span below the viewer.
+  // the mouse moves, use viewer.pick() to get the current atom under the cursor. 
   parent.addEventListener('mousemove', function(event) {
       var rect = viewer.boundingClientRect();
       var picked = viewer.pick({ x : event.clientX - rect.left, 
@@ -40,6 +43,7 @@ This sample shows how to get the name of the atom under the mouse cursor. The co
         // set color of current picked atom to red and store the current color so we 
         // know what it was.
         var color = [0,0,0,0];
+        // get RGBA color and store in the color array.
         picked.node().getColorForAtom(atom, color);
         prevPicked = { atom : atom, color : color, node : picked.node() };
         setColorForAtom(picked.node(), atom, 'red');
@@ -50,6 +54,7 @@ This sample shows how to get the name of the atom under the mouse cursor. The co
       viewer.requestRedraw();
   });
   pv.io.fetchPdb('http://www.rcsb.org/pdb/files/1crn.pdb', function(structure) {
+      // put this in the viewerReady block to make sure we don't try to add the 
       // object before the viewer is ready. In case the viewer is completely 
       // loaded, the function will be immediately executed.
       viewer.on('viewerReady', function() {
