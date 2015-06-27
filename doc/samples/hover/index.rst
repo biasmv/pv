@@ -29,7 +29,7 @@ This sample requires PV 1.7.0 and higher to work as it relies on functionality t
       var rect = viewer.boundingClientRect();
       var picked = viewer.pick({ x : event.clientX - rect.left, 
                                  y : event.clientY - rect.top });
-      if (prevPicked !== null && picked != null && 
+      if (prevPicked !== null && picked !== null && 
           picked.target() === prevPicked.atom) {
         return;
       }
@@ -37,7 +37,7 @@ This sample requires PV 1.7.0 and higher to work as it relies on functionality t
         // reset color of previously picked atom.
         setColorForAtom(prevPicked.node, prevPicked.atom, prevPicked.color);
       }
-      if (picked) {
+      if (picked !== null) {
         var atom = picked.target();
         document.getElementById('picked-atom-name').innerHTML = atom.qualifiedName();
         // get RGBA color and store in the color array, so we know what it was 
