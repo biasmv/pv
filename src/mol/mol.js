@@ -465,6 +465,14 @@ utils.derive(MolView, MolBase, {
     return chainView;
   },
 
+  addAtom : function(atom) {
+    var chain = this.chain(atom.residue().chain().name());
+    if (chain === null) {
+      chain = this.addChain(atom.residue().chain());
+    }
+    return chain.addAtom(atom);
+  },
+
 
   containsResidue : function(residue) {
     if (!residue) {

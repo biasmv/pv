@@ -333,6 +333,15 @@ utils.derive(ChainView, ChainBase, {
     return resView;
   },
 
+
+  addAtom : function(atom) {
+    var resView = this._residueMap[atom.residue().full().index()];
+    if (resView === undefined) {
+      resView = this.addResidue(atom.residue());
+    }
+    return resView.addAtom(atom);
+  },
+
   containsResidue : function(residue) {
     var resView = this._residueMap[residue.full().index()];
     if (resView === undefined) {
