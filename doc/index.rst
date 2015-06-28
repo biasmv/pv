@@ -21,6 +21,7 @@ Contents:
    mol
    superpose
    samples/index
+   developer
 
 
 
