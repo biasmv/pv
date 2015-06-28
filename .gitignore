@@ -11,3 +11,4 @@ js/bio-pv.browserify.js
 build
 *.csf
 *.tgz
+*.pyc
