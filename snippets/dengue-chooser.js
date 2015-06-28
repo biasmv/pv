@@ -13,7 +13,7 @@ function lines() {
 
 function cartoon() {
   viewer.clear();
-  viewer.cartoon('structure', structure, { color: color.ssSuccession() });
+  viewer.cartoon('structure', structure, { color: pv.color.ssSuccession() });
 }
 
 function lineTrace() {
