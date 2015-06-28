@@ -10,3 +10,4 @@ js/bio-pv.browserify.js
 /doc/_build
 build
 *.csf
+*.tgz
