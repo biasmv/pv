@@ -37,7 +37,7 @@
   },
   "sniper": {
     "js": [
-      "/js/bio-pv.rel.bro.js"
+      "/js/bio-pv.browserify.js"
     ],
     "buildJS": [],
     "first": "example",
@@ -47,7 +47,7 @@
   },
   "scripts": {
     "prepublish": "scripts/make.sh",
-    "build-biojs": "browserify -r ./:bio-pv > js/bio-pv.rel.bro.js"
+    "build-biojs": "browserify -r ./:bio-pv > js/bio-pv.browserify.js"
   },
   "files": [
     "README.md",
@@ -58,6 +58,9 @@
     "pdbs",
     "js/jquery-2.0.2.min.js",
     "js/jquery-ui.min.js",
+    "js/bio-pv.browserify.js",
+    "js/modernizr-2.8.3.min.js",
+    "foundation-5.4.7.min.js",
     "package.json"
   ],
   "keywords": [
