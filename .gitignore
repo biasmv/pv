@@ -3,6 +3,7 @@
 /js/bio-pv.dbg.js
 /js/bio-pv.rel.js
 js/bio-pv.rel.bro.js
+js/bio-pv.browserify.js
 /bio-pv.min.js
 /bio-pv.js
 /node_modules
