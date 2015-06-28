@@ -51,6 +51,9 @@ How to release a new version of PV
 
 These are the steps to release a new version of PV:
 
+Release Testing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
 * Check that all unit tests pass
 * Check that the samples in the documentation work
 * Check that all samples in the demo work
@@ -72,5 +75,14 @@ These are the steps to release a new version of PV:
     cd package
     biojs-sniper
     open http://localhost:9090/snippets
+
+Release Publishing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+* Publish the package to npm: ``npm publish``
+* tag the release using ``git tag v$version -m "tagging v$version"``
+* Upload the release package to github releases
+* Create a readthedocs documentation version for the new tag
+* Set the tag as the default version
 
 
