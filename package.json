@@ -40,7 +40,7 @@
       "/js/bio-pv.browserify.js"
     ],
     "buildJS": [],
-    "first": "example",
+    "first": "simple",
     "snippets": [
       "snippets"
     ]
