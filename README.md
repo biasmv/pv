@@ -64,6 +64,10 @@ Documentation for pv is available [here](http://pv.readthedocs.org).
 Changelog
 ----------------------------------------
 
+### New since latest release
+
+Nothing at all
+
 ### New in Version 1.7.0
 
 - PDB import: Improved code to guess element from atom name. This fixes issues in correctly detecting hydrogen atoms for some cases.
