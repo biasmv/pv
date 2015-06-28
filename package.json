@@ -19,7 +19,8 @@
       "url": "https://github.com/biasmv/pv/blob/master/LICENSE.txt"
     }
   ],
-  "main": "js/bio-pv.rel.js",
+  "main": "bio-pv.js",
+
   "devDependencies": {
     "grunt": "~0.4.5",
     "grunt-contrib-concat": "~0.3.0",
