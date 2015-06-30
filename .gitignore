@@ -12,3 +12,4 @@ build
 *.csf
 *.tgz
 *.pyc
+bower.json
