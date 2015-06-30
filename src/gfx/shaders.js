@@ -141,6 +141,7 @@ void main(void) {\n\
 OUTLINE_FS : '\n\
 precision ${PRECISION} float;\n\
 varying float vertAlpha;\n\
+varying float vertSelect;\n\
 \n\
 uniform vec3 outlineColor;\n\
 uniform float fogNear;\n\
@@ -149,13 +150,15 @@ uniform vec3 fogColor;\n\
 uniform bool fog;\n\
 \n\
 void main() {\n\
-  gl_FragColor = vec4(outlineColor, vertAlpha);\n\
+  gl_FragColor = vec4(mix(outlineColor, vec3(0.0, 1.0, 0.0), \n\
+                          vertSelect), \n\
+                      vertAlpha);\n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
   if (fog) { \n\
     float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
     gl_FragColor = mix(gl_FragColor, vec4(fogColor, vertAlpha),\n\
-                        fog_factor);\n\
+                       fog_factor);\n\
   }\n\
 }',
 
@@ -167,17 +170,20 @@ precision ${PRECISION} float;\n\
 attribute vec3 attrPos;\n\
 attribute vec3 attrNormal;\n\
 attribute vec4 attrColor;\n\
+attribute float attrSelect;\n\
                                                                        \n\
 uniform vec3 outlineColor;\n\
 uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
 varying float vertAlpha;\n\
+varying float vertSelect;\n\
 \n\
 void main(void) {\n\
   gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
   vec4 normal = modelviewMat * vec4(attrNormal, 0.0);\n\
   vertAlpha = attrColor.a;\n\
-  gl_Position.xy += normal.xy*0.100;\n\
+  vertSelect = attrSelect;\n\
+  gl_Position.xy += gl_Position.w*normal.xy*0.002 * (1.0 + attrSelect);\n\
   gl_Position.z += gl_Position.w*0.0001;\n\
 }',
 

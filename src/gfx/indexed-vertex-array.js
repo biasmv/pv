@@ -84,15 +84,19 @@ utils.derive(IndexedVertexArray, VertexArrayBase, {
     this._vertData[i++] = color[2];
     this._vertData[i++] = color[3];
     this._vertData[i++] = objId;
+    this._vertData[i++] = 0.0; // select
     this._numVerts += 1;
     this._ready = false;
   },
 
-  _FLOATS_PER_VERT : 11,
-  _BYTES_PER_VERT : 11 * 4,
+  _FLOATS_PER_VERT : 12,
+  _BYTES_PER_VERT : 12 * 4,
 
   _OBJID_OFFSET : 10,
   _OBJID_BYTE_OFFSET : 10 * 4,
+
+  _SELECT_OFFSET : 11,
+  _SELECT_BYTE_OFFSET : 11 * 4,
 
   _COLOR_OFFSET : 6,
   _COLOR_BYTE_OFFSET : 6 * 4,
@@ -148,6 +152,11 @@ utils.derive(IndexedVertexArray, VertexArrayBase, {
                              byteStride, this._OBJID_BYTE_OFFSET);
       gl.enableVertexAttribArray(shader.objIdAttrib);
     }
+    if (shader.selectAttrib !== -1) {
+      gl.vertexAttribPointer(shader.selectAttrib, 1, gl.FLOAT, false,
+                             byteStride, this._SELECT_BYTE_OFFSET);
+      gl.enableVertexAttribArray(shader.selectAttrib);
+    }
   },
 
   releaseAttribs : function(shader) {
@@ -161,6 +170,9 @@ utils.derive(IndexedVertexArray, VertexArrayBase, {
     }
     if (shader.objIdAttrib !== -1) {
       gl.disableVertexAttribArray(shader.objIdAttrib);
+    }
+    if (shader.selectAttrib !== -1) {
+      gl.disableVertexAttribArray(shader.selectAttrib);
     }
   },
 

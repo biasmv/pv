@@ -289,6 +289,14 @@ utils.derive(BaseGeom, SceneNode, {
       this._vertAssocs[i].setOpacity(val, view);
     }
     console.timeEnd('BaseGeom.setOpacity');
+  },
+  setSelection : function(view) {
+    console.time('BaseGeom.setSelection');
+    this._ready = false;
+    for (var i = 0; i < this._vertAssocs.length; ++i) {
+      this._vertAssocs[i].setSelection(view);
+    }
+    console.timeEnd('BaseGeom.setSelection');
   }
 });
 

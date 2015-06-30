@@ -260,6 +260,10 @@ Cam.prototype = {
     return this._currentShader;
   },
 
+  invalidateCurrentShader : function() {
+    this._currentShader = null;
+  },
+
   // sets all OpenGL parameters to make this camera active.
   //
   // among other things, it sets the follow uniforms on the shader:

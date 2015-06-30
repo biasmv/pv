@@ -65,6 +65,12 @@ VertexArrayBase.prototype = {
     this._ready = false;
   },
 
+  setSelected : function(index, a) {
+    var selected = index * this._FLOATS_PER_VERT + this._SELECT_OFFSET;
+    this._vertData[selected] = a;
+    this._ready = false;
+  },
+
 
   boundingSphere : function() {
     if (!this._boundingSphere) {

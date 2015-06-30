@@ -377,10 +377,8 @@ Viewer.prototype = {
     };
 
     this._boundDraw = utils.bind(this, this._draw);
-
     this._touchHandler = new TouchHandler(this._canvas.domElement(), 
                                           this, this._cam);
-
     if (!this._initialized) {
       this._initialized = true;
       this._dispatchEvent({'name':'viewerReadyEvent'},
@@ -456,7 +454,6 @@ Viewer.prototype = {
       this.requestRedraw();
     }
   },
-
   _draw : function() {
     if (this._canvas === null) {
       // only happens when viewer has been destroyed
@@ -486,8 +483,6 @@ Viewer.prototype = {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
     this._drawWithPass('normal');
-
-
   },
 
   setCenter : function(center, ms) {

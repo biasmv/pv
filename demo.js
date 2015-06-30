@@ -27,16 +27,18 @@ var structure;
 
 function points() {
   viewer.clear();
-  viewer.points('structure', structure, {
-                color: color.byResidueProp('num'),
-                showRelated : '1' });
+  var go = viewer.points('structure', structure, {
+                         color: color.byResidueProp('num'),
+                         showRelated : '1' });
+  go.setSelection(structure.select({ rnumRange : [15,20] }));
 }
 
 function lines() {
   viewer.clear();
-  viewer.lines('structure', structure, {
+  var go = viewer.lines('structure', structure, {
               color: color.byResidueProp('num'),
               showRelated : '1' });
+  go.setSelection(structure.select({ rnumRange : [15,20] }));
 }
 
 function cartoon() {
@@ -44,41 +46,50 @@ function cartoon() {
   var go = viewer.cartoon('structure', structure, {
       color : color.ssSuccession(), showRelated : '1',
   });
+  go.setSelection(structure.select({ rnumRange : [15,20] }));
+  
   var rotation = viewpoint.principalAxes(go);
   viewer.setRotation(rotation)
 }
 
 function lineTrace() {
   viewer.clear();
-  viewer.lineTrace('structure', structure, { showRelated : '1' });
+  var go = viewer.lineTrace('structure', structure, { showRelated : '1' });
+  go.setSelection(structure.select({ rnumRange : [15,20] }));
 }
 
 function spheres() {
   viewer.clear();
-  viewer.spheres('structure', structure, { showRelated : '1' });
+  var go = viewer.spheres('structure', structure, { showRelated : '1' });
+  go.setSelection(structure.select({ rnumRange : [15,20] }));
 }
 
 function sline() {
   viewer.clear();
-  viewer.sline('structure', structure,
+  var go = viewer.sline('structure', structure,
           { color : color.uniform('red'), showRelated : '1'});
+  go.setSelection(structure.select({ rnumRange : [15,20] }));
 }
 
 function tube() {
   viewer.clear();
-  viewer.tube('structure', structure);
+  var go = viewer.tube('structure', structure);
   viewer.lines('structure.ca', structure.select({aname :'CA'}),
             { color: color.uniform('blue'), lineWidth : 1,
               showRelated : '1' });
+  go.setSelection(structure.select({ rnumRange : [15,20] }));
 }
 
 function trace() {
   viewer.clear();
-  viewer.trace('structure', structure, { showRelated : '1' });
+  var go = viewer.trace('structure', structure, { showRelated : '1' });
+  go.setSelection(structure.select({ rnumRange : [15,20] }));
+
 }
 function ballsAndSticks() {
   viewer.clear();
-  viewer.ballsAndSticks('structure', structure, { showRelated : '1' });
+  var go = viewer.ballsAndSticks('structure', structure, { showRelated : '1' });
+  go.setSelection(structure.select({ rnumRange : [15,20] }));
 }
 
 function preset() {
@@ -245,7 +256,7 @@ $('#load-from-pdb').change(function() {
 viewer = pv.Viewer(document.getElementById('viewer'), { 
     width : 'auto', height: 'auto', antialias : true, 
     outline : true, quality : 'medium', style : 'hemilight',
-    background : '#333', animateTime: 500, doubleClick : null
+    background : '#fff', animateTime: 500, doubleClick : null
 });
 viewer.addListener('viewerReady', crambin);
 
