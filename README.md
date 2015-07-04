@@ -64,9 +64,15 @@ Documentation for pv is available [here](http://pv.readthedocs.org).
 Changelog
 ----------------------------------------
 
+# New since latest release
+
+- Added special selection highlighting render mode.
+- Improve handling of click event by only firing click events when the mouse button is pressed/released within a short timespan.
+- Improve rendering of outline by properly scaling the extrusion factor based on the size of the GL canvas.
+
 # New in Version 1.7.1
 
-- Added bower.json to release package so people can install PV using bower
+- Added bower.json to release package so people can install PV using bower. This only works for release packages, but not the git repository itself.
 
 ### New in Version 1.7.0
 
