@@ -223,45 +223,5 @@ void main() { \n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
 }',
 
-SELECT_VS : '\n\
-precision ${PRECISION} float;\n\
-uniform mat4 projectionMat;\n\
-uniform mat4 modelviewMat;\n\
-uniform float pointSize;\n\
-attribute vec3 attrPos;\n\
-attribute float attrObjId;\n\
-\n\
-varying float objId;\n\
-\n\
-void main(void) {\n\
-  gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
-  float distToCamera = vec4(modelviewMat * vec4(attrPos, 1.0)).z;\n\
-  gl_PointSize = pointSize * 200.0 / abs(distToCamera); \n\
-  objId = attrObjId;\n\
-}',
-
-SELECT_FS : '\n\
-precision ${PRECISION} float;\n\
-\n\
-varying float objId;\n\
-uniform int symId;\n\
-\n\
-int intMod(int x, int y) { \n\
-  int z = x/y;\n\
-  return x-y*z;\n\
-}\n\
-void main(void) {\n\
-  // ints are only required to be 7bit...\n\
-  int integralObjId = int(objId+0.5);\n\
-  int red = intMod(integralObjId, 256);\n\
-  integralObjId/=256;\n\
-  int green = intMod(integralObjId, 256);\n\
-  integralObjId/=256;\n\
-  int blue = intMod(integralObjId, 256);\n\
-  int alpha = symId;\n\
-  gl_FragColor = vec4(float(red), float(green), \n\
-                      float(blue), float(alpha))/255.0;\n\
-}'
-
 });
 

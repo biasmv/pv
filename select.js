@@ -28,9 +28,9 @@ viewer = pv.Viewer(document.getElementById('viewer'), {
 
 viewer.options('selectionColor', 'blue');
 
-pv.io.fetchPdb('/pdbs/1r6a.pdb', function(s) {
+pv.io.fetchPdb('/pdbs/1crn.pdb', function(s) {
   viewer.on('viewerReady', function() {
-    viewer.cartoon('crambin', s);
+    viewer.lines('crambin', s);
     viewer.autoZoom();
   });
 });
