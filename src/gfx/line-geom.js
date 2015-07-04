@@ -39,7 +39,7 @@ function LineGeom(gl, float32Allocator) {
   BaseGeom.call(this, gl);
   this._vertArrays = [];
   this._float32Allocator = float32Allocator;
-  this._lineWidth = 1.0;
+  this._lineWidth = 0.5;
   this._pointSize = 1.0;
 }
 
@@ -66,12 +66,10 @@ utils.derive(LineGeom, BaseGeom, {
   shaderForStyleAndPass :
       function(shaderCatalog, style, pass) {
     if (pass === 'outline') {
-      return null;
+      return shaderCatalog.selectLines;
     }
     if (pass === 'select') {
       return shaderCatalog.select;
-    }
-    if (pass === 'glow') {
     }
     return shaderCatalog.lines;
   },
@@ -85,20 +83,26 @@ utils.derive(LineGeom, BaseGeom, {
   },
 
   _drawVertArrays : function(cam, shader, vertArrays, 
-                                                additionalTransforms) {
-    this._gl.lineWidth(this._lineWidth * cam.upsamplingFactor());
-    if (shader.pointSize) {
-      this._gl.uniform1f(shader.pointSize, 
-                         this._pointSize * cam.upsamplingFactor());
+                             additionalTransforms) {
+    var pointSizeMul = cam.upsamplingFactor();
+    if (shader.selectAttrib !== -1) {
+      pointSizeMul = 4.0 * cam.upsamplingFactor();
+
     }
     var i;
     if (additionalTransforms) {
+      this._gl.lineWidth(pointSizeMul * this._lineWidth);
       for (i = 0; i < vertArrays.length; ++i) {
         vertArrays[i].drawSymmetryRelated(cam, shader, additionalTransforms);
       }
     } else {
-      this._gl.uniform1i(shader.symId, 255);
       cam.bind(shader);
+      this._gl.lineWidth(pointSizeMul * this._lineWidth);
+      this._gl.uniform1i(shader.symId, 255);
+      if (shader.pointSize) {
+        this._gl.uniform1f(shader.pointSize, 
+                          pointSizeMul * this._pointSize);
+      }
       for (i = 0; i < vertArrays.length; ++i) {
         vertArrays[i].bind(shader);
         vertArrays[i].draw();

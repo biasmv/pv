@@ -377,7 +377,8 @@ Viewer.prototype = {
       outline : c.initShader(shaders.OUTLINE_VS, shaders.OUTLINE_FS, p),
       lines : c.initShader(shaders.LINES_VS, shaders.LINES_FS, p),
       text : c.initShader(shaders.TEXT_VS, shaders.TEXT_FS, p),
-      select : c.initShader(shaders.SELECT_VS, shaders.SELECT_FS, p)
+      selectLines : c.initShader(shaders.SELECT_LINES_VS, 
+                                 shaders.SELECT_LINES_FS, p)
     };
 
     this._boundDraw = utils.bind(this, this._draw);

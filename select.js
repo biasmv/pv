@@ -26,11 +26,12 @@ viewer = pv.Viewer(document.getElementById('viewer'), {
     background : '#333', animateTime: 500, doubleClick : null
 });
 
-viewer.options('selectionColor', 'blue');
+viewer.options('selectionColor', '#f00');
 
 pv.io.fetchPdb('/pdbs/1crn.pdb', function(s) {
   viewer.on('viewerReady', function() {
-    viewer.lines('crambin', s);
+    var go = viewer.lineTrace('crambin', s, { showRelated: '1'});
+    go.setSelection(go.select({rnumRange : [15,20]}));
     viewer.autoZoom();
   });
 });

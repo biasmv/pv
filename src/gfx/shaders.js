@@ -47,6 +47,46 @@ void main(void) {\n\
   }\n\
 }',
 
+SELECT_LINES_FS : '\n\
+precision ${PRECISION} float;\n\
+\n\
+varying float vertSelect;\n\
+varying vec3 vertNormal;\n\
+uniform float fogNear;\n\
+uniform float fogFar;\n\
+uniform vec3 fogColor;\n\
+uniform bool fog;\n\
+uniform vec3 selectionColor;\n\
+\n\
+void main(void) {\n\
+  gl_FragColor = mix(vec4(0.0, 0.0, 0.0, 0.0), vec4(selectionColor, 1.0), \n\
+                     vertSelect);\n\
+  gl_FragColor.a = step(0.5, vertSelect);\n\
+  if (gl_FragColor.a == 0.0) { discard; }\n\
+  float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
+  if (fog) {\n\
+    float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
+    gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
+                        fog_factor);\n\
+  }\n\
+}',
+// hemilight vertex shader
+SELECT_LINES_VS : '\n\
+attribute vec3 attrPos;\n\
+attribute float attrSelect;\n\
+\n\
+uniform mat4 projectionMat;\n\
+uniform mat4 modelviewMat;\n\
+uniform float pointSize;\n\
+varying float vertSelect;\n\
+void main(void) {\n\
+  gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
+  gl_Position.z += gl_Position.w * 0.000001; \n\
+  float distToCamera = vec4(modelviewMat * vec4(attrPos, 1.0)).z;\n\
+  gl_PointSize = pointSize * 200.0 / abs(distToCamera); \n\
+  vertSelect = attrSelect;\n\
+}',
+
 // hemilight vertex shader
 LINES_VS : '\n\
 attribute vec3 attrPos;\n\

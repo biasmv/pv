@@ -38,10 +38,11 @@ function VertexArray(gl, numVerts, float32Allocator)  {
 
 utils.derive(VertexArray, VertexArrayBase, {
 
-  _FLOATS_PER_VERT : 8,
+  _FLOATS_PER_VERT : 9,
   _POS_OFFSET : 0,
   _COLOR_OFFSET : 3,
   _ID_OFFSET : 7,
+  _SELECT_OFFSET : 8,
 
   numVerts : function() { return this._numVerts; },
 
@@ -63,9 +64,10 @@ utils.derive(VertexArray, VertexArrayBase, {
     this._vertData[index++] = color[2];
     this._vertData[index++] = color[3];
     this._vertData[index++] = id;
+    this._vertData[index++] = 0.0;
     this._numVerts += 1;
     this._ready = false;
-    this._boundingSpehre = null;
+    this._boundingSphere = null;
   },
 
   addLine : function(startPos, startColor, endPos, endColor, idOne, idTwo) {
@@ -87,9 +89,15 @@ utils.derive(VertexArray, VertexArrayBase, {
     this._gl.enableVertexAttribArray(shader.posAttrib);
     if (shader.objIdAttrib !== -1) {
       this._gl.vertexAttribPointer(shader.objIdAttrib, 1, this._gl.FLOAT, false,
-                                    this._FLOATS_PER_VERT * 4,
-                                    this._ID_OFFSET * 4);
+                                   this._FLOATS_PER_VERT * 4,
+                                   this._ID_OFFSET * 4);
       this._gl.enableVertexAttribArray(shader.objIdAttrib);
+    }
+    if (shader.selectAttrib !== -1) {
+      this._gl.vertexAttribPointer(shader.selectAttrib, 1, this._gl.FLOAT, 
+                                   false, this._FLOATS_PER_VERT * 4,
+                                   this._SELECT_OFFSET * 4);
+      this._gl.enableVertexAttribArray(shader.selectAttrib);
     }
   },
 
@@ -99,6 +107,9 @@ utils.derive(VertexArray, VertexArrayBase, {
       this._gl.disableVertexAttribArray(shader.colorAttrib); }
     if (shader.objIdAttrib !== -1) {
       this._gl.disableVertexAttribArray(shader.objIdAttrib);
+    }
+    if (shader.selectAttrib !== -1) {
+      this._gl.disableVertexAttribArray(shader.selectAttrib);
     }
   },
 
