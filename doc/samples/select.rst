@@ -20,7 +20,7 @@ Usage
       width : '300', height: '300', antialias : true, 
       outline : true, quality : 'medium', style : 'hemilight',
       background : 'white', animateTime: 500,
-      selectionColor : '#ff0'
+      selectionColor : '#f00'
   });
 
   pv.io.fetchPdb('../_static/1crn.pdb', function(s) {

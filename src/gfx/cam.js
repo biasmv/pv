@@ -140,6 +140,7 @@ Cam.prototype = {
     this._updateProjectionMat = true;
     this._width = width;
     this._height = height;
+    this._relativePixelSize = new Float32Array([1.0/width, 1.0/height]);
   },
 
   viewportWidth : function() {
@@ -319,6 +320,7 @@ Cam.prototype = {
     gl.uniform3fv(shader.fogColor, this._fogColor);
     gl.uniform3fv(shader.outlineColor, this._outlineColor);
     gl.uniform3fv(shader.selectionColor, this._selectionColor);
+    gl.uniform2fv(shader.relativePixelSize, this._relativePixelSize);
   }
 };
 

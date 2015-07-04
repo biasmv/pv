@@ -177,13 +177,15 @@ uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
 varying float vertAlpha;\n\
 varying float vertSelect;\n\
+uniform vec2 relativePixelSize;\n\
 \n\
 void main(void) {\n\
   gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
   vec4 normal = modelviewMat * vec4(attrNormal, 0.0);\n\
   vertAlpha = attrColor.a;\n\
   vertSelect = attrSelect;\n\
-  gl_Position.xy += gl_Position.w*normal.xy*0.002 * (1.0 + 1.5 * attrSelect);\n\
+  vec2 offset = normal.xy * relativePixelSize * (1.5 + 2.0 * attrSelect);\n\
+  gl_Position.xy += gl_Position.w * offset;\n\
   gl_Position.z += gl_Position.w*0.0001;\n\
 }',
 
