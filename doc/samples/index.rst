@@ -6,3 +6,4 @@ List of PV samples
   structure-with-ligand
   ensemble
   hover
+  select
