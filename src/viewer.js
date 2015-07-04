@@ -698,21 +698,29 @@ Viewer.prototype = {
     return this.add(name, obj);
   },
 
+  _updateProjectionIntervals : function(axes, intervals, structure) {
+    structure.eachAtom(function(atom) {
+      var pos = atom.pos();
+      for (var i = 0; i < 3; ++i) {
+        intervals[i].update(vec3.dot(pos, axes[i]));
+      }
+    });
+    for (var i = 0; i < 3; ++i) {
+      intervals[i].extend(1.5);
+    }
+  },
+
   fitTo : function(what) {
     var axes = this._cam.mainAxes();
     var intervals = [ new utils.Range(), new utils.Range(), new utils.Range() ];
     if (what instanceof SceneNode) {
       what.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
-                                    intervals[1], intervals[2]);
+                                     intervals[1], intervals[2]);
     } else if (what.eachAtom !== undefined) {
-      what.eachAtom(function(atom) {
-        var pos = atom.pos();
-        for (var i = 0; i < 3; ++i) {
-          intervals[i].update(vec3.dot(pos, axes[i]));
-        }
-      });
-      for (var i = 0; i < 3; ++i) {
-        intervals[i].extend(1.5);
+      this._updateProjectionIntervals(axes, intervals, what);
+    } else if (what.length !== undefined) {
+      for (var i = 0; i < what.length; ++i) {
+        this._updateProjectionIntervals(axes, intervals, what[i]);
       }
     }
     this._fitToIntervals(axes, intervals);

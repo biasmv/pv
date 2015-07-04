@@ -33,6 +33,15 @@ pv.io.fetchPdb('/pdbs/1r6a.pdb', function(s) {
 });
 
 document.addEventListener('keypress', function(ev) {
+  if (ev.charCode === 13) {
+    var allSelections = [];
+    viewer.forEach(function(go) {
+      if (go.selection !== undefined) {
+        allSelections.push(go.selection());
+      }
+    });
+    viewer.fitTo(allSelections);
+  }
 });
 
 viewer.on('click', function(picked, ev) {
