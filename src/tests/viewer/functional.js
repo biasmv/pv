@@ -21,6 +21,7 @@ test('renders structure subset asymmetric units in all styles', function(assert)
     for (var i = 0; i < ALL_STYLES.length; ++i) {
       var view = structure.select({ rnumRange : [40, 60] })
       var obj = viewer.renderAs(ALL_STYLES[i], view, ALL_STYLES[i]);
+      obj.setSelection(obj.selection());
       assert.ok(!!obj);
     }
     viewer.autoZoom();
@@ -41,6 +42,7 @@ test('renders structure subset assembly 1 in all styles', function(assert) {
       var view = structure.select({ rnumRange : [40, 60] })
       var obj = viewer.renderAs(ALL_STYLES[i], view, 
                                 ALL_STYLES[i], { showRelated : '1'});
+      obj.setSelection(obj.selection());
       assert.ok(!!obj);
     }
     viewer.autoZoom();
@@ -60,6 +62,7 @@ test('renders full structure asymmetric units in all styles', function(assert) {
   io.fetchPdb('/pdbs/1r6a.pdb', function(structure) {
     for (var i = 0; i < ALL_STYLES.length; ++i) {
       var obj = viewer.renderAs(ALL_STYLES[i], structure, ALL_STYLES[i]);
+      obj.setSelection(obj.selection());
       assert.ok(!!obj);
     }
     viewer.autoZoom();
@@ -79,6 +82,7 @@ test('renders full structure assembly 1 in all styles', function(assert) {
     for (var i = 0; i < ALL_STYLES.length; ++i) {
       var obj = viewer.renderAs(ALL_STYLES[i], structure, 
                                 ALL_STYLES[i], { showRelated : '1'});
+      obj.setSelection(obj.selection());
       assert.ok(!!obj);
     }
     viewer.autoZoom();

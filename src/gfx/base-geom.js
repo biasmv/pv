@@ -72,6 +72,7 @@ function BaseGeom(gl) {
   this._idRanges = [];
   this._vertAssocs = [];
   this._showRelated = null;
+  this._selection = null;
 }
 
 utils.derive(BaseGeom, SceneNode, {
@@ -292,12 +293,19 @@ utils.derive(BaseGeom, SceneNode, {
   },
   setSelection : function(view) {
     console.time('BaseGeom.setSelection');
+    this._selection = view;
     this._ready = false;
     for (var i = 0; i < this._vertAssocs.length; ++i) {
       this._vertAssocs[i].setSelection(view);
     }
     console.timeEnd('BaseGeom.setSelection');
-  }
+  },
+   selection : function() {
+     if (this._selection === null) {
+       this._selection = this.structure().createEmptyView();
+     }
+     return this._selection;
+   }
 });
 
 
