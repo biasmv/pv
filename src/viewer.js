@@ -243,6 +243,8 @@ Viewer.prototype = {
       background : color.forceRGB(opts.background || 'white'),
       slabMode : slabModeToStrategy(opts.slabMode),
       outline : optValue(opts, 'outline', true),
+      outlineColor : color.forceRGB(optValue(opts, 'outlineColor', 'black')),
+      selectionColor : color.forceRGB(optValue(opts, 'selectionColor', '#3f3')),
       fov : optValue(opts, 'fov', 45.0),
       doubleClick : getDoubleClickHandler(opts),
       click : getClickHandler(opts),
@@ -295,17 +297,17 @@ Viewer.prototype = {
 
   options : function(optName, value) {
     if (value !== undefined) {
+      this._options[optName] = value;
       if (optName === 'fog') {
         this._cam.fog(value);
-        this._options.fog = value;
         this.requestRedraw();
       } else if (optName === 'fov') {
-        this._options.fov = value;
         this._cam.setFieldOfViewY(value * Math.PI / 180.0);
-      } else {
-        this._options[optName] = value;
-      }
-      return value;
+      } else if (optName === 'selectionColor') {
+        this._cam.setSelectionColor(color.forceRGB(value));
+      } else if (optName === 'outlineColor') {
+        this._cam.setOutlineColorColor(color.forceRGB(value));
+      } 
     }
     return this._options[optName];
   },
@@ -362,6 +364,8 @@ Viewer.prototype = {
     this._cam.setUpsamplingFactor(this._canvas.superSamplingFactor());
     this._cam.fog(this._options.fog);
     this._cam.setFogColor(this._options.background);
+    this._cam.setOutlineColor(this._options.outlineColor);
+    this._cam.setSelectionColor(this._options.selectionColor);
     this._cam.setFieldOfViewY(this._options.fov * Math.PI / 180.0);
     this._mouseHandler.setCam(this._cam);
 

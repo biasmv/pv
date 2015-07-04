@@ -47,6 +47,7 @@ function Cam(gl) {
   this._fovY = Math.PI * 45.0 / 180.0;
   this._fogColor = vec3.fromValues(1, 1, 1);
   this._outlineColor = vec3.fromValues(0.1, 0.1, 0.1);
+  this._selectionColor = vec3.fromValues(0.1, 1.0, 0.1);
   this._center = vec3.create();
   this._zoom = 50;
   this._updateProjectionMat = true;
@@ -263,6 +264,12 @@ Cam.prototype = {
   invalidateCurrentShader : function() {
     this._currentShader = null;
   },
+  setOutlineColor : function(color) {
+    this._outlineColor = vec3.clone(color);
+  },
+  setSelectionColor : function(color) {
+    this._selectionColor = vec3.clone(color);
+  },
 
   // sets all OpenGL parameters to make this camera active.
   //
@@ -311,6 +318,7 @@ Cam.prototype = {
     gl.uniform1f(shader.fogNear, this._fogNear + nearOffset);
     gl.uniform3fv(shader.fogColor, this._fogColor);
     gl.uniform3fv(shader.outlineColor, this._outlineColor);
+    gl.uniform3fv(shader.selectionColor, this._selectionColor);
   }
 };
 

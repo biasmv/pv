@@ -40,6 +40,13 @@ The displaying of molecules is handled by :class:`pv.BaseGeom`, and subclasses. 
   :param color: array of length 4 into which the color is placed
   :returns: the array holding the color, or null if the atom is not part of the rendered geometry
 
+.. function:: pv.BaseGeom.setSelection(selection)
+              pv.BaseGeom.selection()
+
+   Get/set selection of the render geometry, e.g. the part of the structure that is drawn as selected. The viewer draws a a halo around the selected parts of the structure using the current highlight color. Outline rendering must be turned on for selection highlights to be drawn around the selected parts.
+
+   :param selection: the subset of the structure to be selected/highlighted.
+
 .. function:: pv.BaseGeom.eachCentralAtom(callback) 
   
   Helper function for looping over all visible central atoms, including symmetry related ones

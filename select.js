@@ -22,8 +22,11 @@ pv = PV;
 viewer = pv.Viewer(document.getElementById('viewer'), { 
     width : 'auto', height: 'auto', antialias : true, 
     outline : true, quality : 'medium', style : 'hemilight',
+    selectionColor : 'red',
     background : '#333', animateTime: 500, doubleClick : null
 });
+
+viewer.options('selectionColor', 'blue');
 
 pv.io.fetchPdb('/pdbs/1r6a.pdb', function(s) {
   viewer.on('viewerReady', function() {

@@ -144,14 +144,14 @@ varying float vertAlpha;\n\
 varying float vertSelect;\n\
 \n\
 uniform vec3 outlineColor;\n\
+uniform vec3 selectionColor;\n\
 uniform float fogNear;\n\
 uniform float fogFar;\n\
 uniform vec3 fogColor;\n\
 uniform bool fog;\n\
 \n\
 void main() {\n\
-  gl_FragColor = vec4(mix(outlineColor, vec3(0.0, 1.0, 0.0), \n\
-                          vertSelect), \n\
+  gl_FragColor = vec4(mix(outlineColor, selectionColor, vertSelect), \n\
                       vertAlpha);\n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
