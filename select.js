@@ -36,8 +36,6 @@ document.addEventListener('keypress', function(ev) {
 });
 
 viewer.on('click', function(picked, ev) {
-  // FIXME: figure out how to prevent context menu from popping up when Ctrl 
-  // is pressed.
   if (picked === null || picked.target() === null) {
     return;
   }
@@ -51,7 +49,11 @@ viewer.on('click', function(picked, ev) {
   } else {
     var sel = picked.node().structure().createEmptyView();
   }
-  sel.addAtom(picked.target());
+  if (!sel.removeAtom(picked.target(), true)) {
+    // in case atom was not part of the view, we have to add it, because it 
+    // wasn't selected before. Otherwise removeAtom took care of it.
+    sel.addAtom(picked.target());
+  } 
   picked.node().setSelection(sel);
   viewer.requestRedraw();
 });

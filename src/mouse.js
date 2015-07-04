@@ -34,6 +34,7 @@ function MouseHandler(canvas, viewer, cam, animationTime) {
   this._cam = cam;
   this._canvas = canvas;
   this._animationTime = animationTime;
+  this._lastMouseUpTime = null;
   this._init();
 }
 
@@ -46,8 +47,18 @@ MouseHandler.prototype = {
     this._viewer.setCenter(picked.pos(), this._animationTime);
   },
 
-  _mouseUp : function() {
+  _mouseUp : function(event) {
     var canvas = this._canvas;
+    var currentTime = (new Date()).getTime();
+    if ((this._lastMouseUpTime === null ||
+        currentTime - this._lastMouseUpTime > 300) &
+        (currentTime - this._lastMouseDownTime < 300)) {
+      var rect = this._canvas.domElement().getBoundingClientRect();
+      var picked = this._viewer.pick(
+          { x : event.clientX - rect.left, y : event.clientY - rect.top });
+      this._viewer._dispatchEvent(event, 'click', picked);
+    }
+    this._lastMouseUpTime = currentTime;
     canvas.removeEventListener('mousemove', this._mouseRotateListener);
     canvas.removeEventListener('mousemove', this._mousePanListener);
     canvas.removeEventListener('mouseup', this._mouseUpListener);
@@ -101,16 +112,7 @@ MouseHandler.prototype = {
     if (event.button !== 0) {
       return;
     }
-    var currentTime = (new Date()).getTime();
-    // make sure it isn't a double click
-    if (typeof this.lastClickTime === 'undefined' || 
-        (currentTime - this.lastClickTime > 300)) {
-      this.lastClickTime = currentTime;
-      var rect = this._canvas.domElement().getBoundingClientRect();
-      var picked = this._viewer.pick(
-          { x : event.clientX - rect.left, y : event.clientY - rect.top });
-      this._viewer._dispatchEvent(event, 'click', picked);
-    }
+    this._lastMouseDownTime = (new Date()).getTime();
     event.preventDefault();
     if (event.shiftKey === true) {
       this._canvas.on('mousemove', this._mousePanListener);
