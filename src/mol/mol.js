@@ -473,6 +473,22 @@ utils.derive(MolView, MolBase, {
     return chain.addAtom(atom);
   },
 
+  removeAtom : function(atom, removeEmptyResiduesAndChains) {
+    if (atom === null) {
+      return false;
+    }
+    var chain = this.chain(atom.residue().chain().name());
+    if (chain === null) {
+      return false;
+    }
+    var removed = chain.removeAtom(atom, removeEmptyResiduesAndChains);
+    if (removed && chain.residues().length === 0) {
+      this._chains = this._chains.filter(function(c) { 
+        return c !== chain;
+      });
+    }
+    return removed;
+  },
 
   containsResidue : function(residue) {
     if (!residue) {

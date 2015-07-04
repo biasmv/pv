@@ -327,7 +327,7 @@ utils.derive(ChainView, ChainBase, {
     if (recurse) {
       var atoms = residue.atoms();
       for (var i = 0; i < atoms.length; ++i) {
-        resView.addAtom(atoms[i].full());
+        resView.addAtom(atoms[i].full(), false);
       }
     }
     return resView;
@@ -339,7 +339,23 @@ utils.derive(ChainView, ChainBase, {
     if (resView === undefined) {
       resView = this.addResidue(atom.residue());
     }
-    return resView.addAtom(atom);
+    return resView.addAtom(atom, true);
+  },
+
+  removeAtom : function(atom, removeEmptyResidues) {
+    var resView = this._residueMap[atom.residue().full().index()];
+    if (resView === undefined) {
+      return false;
+    }
+    var removed = resView.removeAtom(atom);
+    if (removed && resView.atoms().length === 0 && removeEmptyResidues) {
+      delete this._residueMap[atom.residue().full().index()];
+      // FIXME: this is terribly slow.
+      this._residues = this._residues.filter(function(r) { 
+        return r !== resView; 
+      });
+    }
+    return removed;
   },
 
   containsResidue : function(residue) {

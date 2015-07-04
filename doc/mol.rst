@@ -227,7 +227,7 @@ Mol (and MolView)
 
   :returns: the newly created :class:`pv.mol.Chain` instance
 
-.. function:: pv.mol.MolView.addChain(residue, includeAllResiduesAndAtoms)
+.. function:: pv.mol.MolView.addChain(chain, includeAllResiduesAndAtoms)
 
   Adds the given chain to the structure view
 
@@ -235,6 +235,24 @@ Mol (and MolView)
   :param includeAllResiduesAndAtoms: when true, residues and atoms contained in the chain are directly added as new :class:`pv.mol.ResidueView`, :class:`pv.mol.AtomView` instances. When set to false (the default), the new chain view is created with an empty list of residues.
 
   :returns: the newly created :class:`pv.mol.ChainView` instance
+
+.. function:: pv.mol.MolView.addAtom(atom)
+
+  Adds the given atom to the view. If the atom is already contained in the view, it is not added again. If an atom's residue or chain are not yet part of the view, they are added as well.
+
+  :param atom: the atom to add. Must either be a :class:`pv.mol.AtomView`, or :class:`pv.mol.Atom` instance.
+
+  :returns: the newly created :class:`pv.mol.AtomView` instance, or the existing atom if the atom was already contained in the view.
+
+.. function:: pv.mol.MolView.removeAtom(atom, removeEmptyResiduesAndChains)
+
+  Remove the given atom from the view.
+
+  :param atom: The atom to remove must either be a :class:`pv.mol.AtomView`, or :class:`pv.mol.Atom` instance.
+  :param removeEmptyResiduesAndChains: when true removes now-empty residues an chains from the view. When false, empty residues an chains remain in the view.
+
+  :returns: true if the atom was part of the view an was removed, false if not.
+
 
 
 .. function:: pv.mol.Mol.chain(name)

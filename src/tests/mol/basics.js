@@ -353,4 +353,73 @@ test('atom properties', function(assert) {
 });
 
 
+test('add atom', function(assert) {
+  var oxygen = FRAGMENT.atom('A.905.O1');
+  var view = FRAGMENT.createEmptyView();
+  view.addAtom(oxygen);
+  assert.strictEqual(1, view.atomCount());
+  // make sure that we check for duplicates
+  view.addAtom(oxygen);
+  assert.strictEqual(1, view.atomCount());
+
+  var viewAtom = view.atoms()[0];
+  view.addAtom(viewAtom);
+  assert.strictEqual(1, view.atomCount());
+});
+
+test('remove atom and keep empty residues and chains', function(assert) {
+  var view = FRAGMENT.createEmptyView();
+  view.addAtom(FRAGMENT.atom('A.905.O1'));
+  view.addAtom(FRAGMENT.atom('A.905.O2'));
+  view.addAtom(FRAGMENT.atom('A.263.C'));
+  assert.strictEqual(3, view.atomCount());
+  // remove atom that's not part of the view
+  assert.ok(!view.removeAtom(FRAGMENT.atom('A.905.O3')));
+  assert.strictEqual(3, view.atomCount());
+
+  assert.ok(view.removeAtom(FRAGMENT.atom('A.905.O1')));
+  assert.strictEqual(view.atomCount(), 2);
+  assert.strictEqual(view.residueCount(), 2);
+  assert.strictEqual(view.chains().length, 1);
+  assert.ok(view.removeAtom(FRAGMENT.atom('A.905.O2')));
+  assert.strictEqual(view.atomCount(), 1);
+  assert.strictEqual(view.residueCount(), 2);
+  assert.strictEqual(view.chains().length, 1);
+
+  assert.ok(view.removeAtom(FRAGMENT.atom('A.263.C')));
+  assert.strictEqual(view.atomCount(), 0);
+  assert.strictEqual(view.residueCount(), 2);
+  assert.strictEqual(view.chains().length, 1);
+
+});
+
+
+test('remove atom and remove empty residues and chains', function(assert) {
+  var view = FRAGMENT.createEmptyView();
+  view.addAtom(FRAGMENT.atom('A.905.O1'));
+  view.addAtom(FRAGMENT.atom('A.905.O2'));
+  view.addAtom(FRAGMENT.atom('A.263.C'));
+  assert.strictEqual(3, view.atomCount());
+  // remove atom that's not part of the view
+  assert.ok(!view.removeAtom(FRAGMENT.atom('A.905.O3', true)));
+  assert.strictEqual(3, view.atomCount());
+
+  assert.ok(view.removeAtom(FRAGMENT.atom('A.905.O1'), true));
+  assert.ok(view.containsResidue(FRAGMENT.atom('A.905.O1').residue()));
+  assert.strictEqual(view.atomCount(), 2);
+  assert.strictEqual(view.residueCount(), 2);
+  assert.strictEqual(view.chains().length, 1);
+  assert.ok(view.removeAtom(FRAGMENT.atom('A.905.O2'), true));
+  assert.ok(!view.containsResidue(FRAGMENT.atom('A.905.O1').residue()));
+  assert.strictEqual(view.atomCount(), 1);
+  assert.strictEqual(view.residueCount(), 1);
+  assert.strictEqual(view.chains().length, 1);
+
+  assert.ok(view.removeAtom(FRAGMENT.atom('A.263.C'), true));
+  assert.ok(!view.containsResidue(FRAGMENT.atom('A.263.C').residue()));
+  assert.strictEqual(view.atomCount(), 0);
+  assert.strictEqual(view.residueCount(), 0);
+  assert.strictEqual(view.chains().length, 0);
+
+});
 });

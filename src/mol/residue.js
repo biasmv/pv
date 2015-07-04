@@ -167,9 +167,25 @@ function ResidueView(chainView, residue) {
 
 
 utils.derive(ResidueView, ResidueBase, {
-  addAtom : function(atom) {
+  addAtom : function(atom, checkDuplicates) {
+    if (checkDuplicates) {
+      for (var i = 0; i < this._atoms.length; ++i) {
+        var ai = this._atoms[i];
+        if (ai.index() === atom.index()) {
+          return ai;
+        }
+      }
+    }
     var atomView = new AtomView(this, atom.full());
     this._atoms.push(atomView);
+    return atomView;
+  },
+  removeAtom : function(atom) {
+    var lengthBefore = this._atoms.length;
+    this._atoms = this._atoms.filter(function(a) { 
+      return a.index() !== atom.index();
+    });
+    return lengthBefore !== this._atoms.length;
   },
 
   full : function() { return this._residue; },
