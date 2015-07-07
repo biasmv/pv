@@ -19,7 +19,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 define(
-  ['../color'], function(color) {
+  ['../color', '../geom'], function(color, geom) {
 
 "use strict";
 
@@ -226,23 +226,23 @@ TraceVertexAssoc.prototype = {
   },
 
   setSelection : function(view) {
-    var colorData = [];
+    var selData = [];
     var i, j;
     var traces = this._structure.backboneTraces();
     for (i = 0; i < traces.length; ++i) {
       // get current residue colors
-      var data = this._perResidueColors[i];
+      var data = new Float32Array(this._perResidueColors[i].length);
       var index = 0;
       var trace = traces[i];
       for (j = 0; j < trace.length(); ++j) {
         var selected = view.containsResidue(trace.residueAt(j)) ? 1.0 : 0.0;
-        data[index + 3] = selected;
-        index+=4;
+        data[index] = selected;
+        index+=1;
       }
       if (this._interpolation > 1) {
-        colorData.push(color.interpolateColor(data, this._interpolation));
+        selData.push(geom.interpolateScalars(data, this._interpolation));
       } else {
-        colorData.push(data);
+        selData.push(data);
       }
     }
 
@@ -250,8 +250,8 @@ TraceVertexAssoc.prototype = {
     for (i = 0; i < this._assocs.length; ++i) {
       var assoc = this._assocs[i];
       var ai = assoc.slice;
-      var newColors = colorData[assoc.traceIndex];
-      var a = newColors[ai*4+3];
+      var sel = selData[assoc.traceIndex];
+      var a = sel[ai];
       var va = assoc.vertexArray;
       for (j = assoc.vertStart ; j < assoc.vertEnd; ++j) {
         va.setSelected(j, a);

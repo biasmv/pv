@@ -280,6 +280,25 @@ var buildRotation = (function() {
 ;
 })();
 
+// linearly interpolates the array of values and returns it as an Float32Array
+function interpolateScalars(values, num) {
+  var out = new Float32Array(num*(values.length-1) + 1);
+  var index = 0;
+  var bf = 0.0, af = 0.0;
+  var delta = 1/num;
+  for (var i = 0; i < values.length-1; ++i) {
+    bf = values[i];
+    af = values[i + 1];
+    for (var j = 0; j < num; ++j) {
+      var t = delta * j;
+      out[index+0] = bf*(1-t)+af*t;
+      index+=1;
+    }
+  }
+  out[index+0] = af;
+  return out;
+}
+
 return {
   signedAngle : signedAngle,
   axisRotation : axisRotation,
@@ -287,6 +306,7 @@ return {
   diagonalizer : diagonalizer,
   catmullRomSpline : catmullRomSpline,
   cubicHermiteInterpolate : cubicHermiteInterpolate,
+  interpolateScalars : interpolateScalars,
   catmullRomSplineNumPoints : catmullRomSplineNumPoints,
   Sphere : Sphere,
   buildRotation : buildRotation
