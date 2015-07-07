@@ -10,7 +10,7 @@ This sample shows how to render a protein in cartoon mode and display the contai
   var parent = document.getElementById('viewer');
   var viewer = pv.Viewer(parent,
                         { width : 300, height : 300, antialias : true });
-  pv.io.fetchPdb('http://www.rcsb.org/pdb/files/1r6a.pdb', function(structure) {
+  pv.io.fetchPdb('_static/1r6a.pdb', function(structure) {
     // select the two ligands contained in the methyl transferase by name, so
     // we can display them as balls and sticks.
     viewer.on('viewerReady', function() {

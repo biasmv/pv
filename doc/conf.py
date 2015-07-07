@@ -12,7 +12,14 @@
 # serve to show the default.
 
 import sys, os
+import shutil
 
+
+pdb_structures = ['1r6a', '1crn', '1nmr' ]
+
+for pdb_id in pdb_structures:
+  shutil.copyfile(os.path.join('../pdbs/%s.pdb' % pdb_id), 
+                  os.path.join('_static/%s.pdb' % pdb_id))
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.

@@ -9,7 +9,7 @@ In this sample we are going to use the *loadAllModels* option of the :func:`PDB 
   var viewer = pv.Viewer(document.getElementById('viewer'), 
                         { width : 300, height : 300, antialias : true });
 
-  pv.io.fetchPdb('http://www.rcsb.org/pdb/files/2mjx.pdb', function(structures) {
+  pv.io.fetchPdb('_static/1nmr.pdb', function(structures) {
       // put this in the viewerReady block to make sure we don't try to add the 
       // object before the viewer is ready. In case the viewer is completely 
       // loaded, the function will be immediately executed.

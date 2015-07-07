@@ -20,7 +20,7 @@ Contents:
    coloring
    mol
    superpose
-   samples/index
+   samples
    developer
 
 

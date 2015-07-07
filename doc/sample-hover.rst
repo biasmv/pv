@@ -53,7 +53,7 @@ This sample requires PV 1.7.0 and higher to work as it relies on functionality t
       }
       viewer.requestRedraw();
   });
-  pv.io.fetchPdb('http://www.rcsb.org/pdb/files/1crn.pdb', function(structure) {
+  pv.io.fetchPdb('_static/1crn.pdb', function(structure) {
       // put this in the viewerReady block to make sure we don't try to add the 
       // object before the viewer is ready. In case the viewer is completely 
       // loaded, the function will be immediately executed.

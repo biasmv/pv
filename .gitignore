@@ -6,6 +6,7 @@ js/bio-pv.rel.bro.js
 js/bio-pv.browserify.js
 /bio-pv.min.js
 /bio-pv.js
+/doc/_static/*.pdb
 /node_modules
 /doc/_build
 build
