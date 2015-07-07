@@ -64,6 +64,10 @@ Documentation for pv is available [here](http://pv.readthedocs.org).
 Changelog
 ----------------------------------------
 
+# New in Version 1.7.2
+
+- Made a few changes to the samples contained in the docs that don't work for some people. There is no functionality change on the code-level, that's why there is no 1.7.2 release.
+
 # New in Version 1.7.1
 
 - Added bower.json to release package so people can install PV using bower
