@@ -70,6 +70,10 @@ Changelog
 - Improve handling of click event by only firing click events when the mouse button is pressed/released within a short timespan.
 - Improve rendering of outline by properly scaling the extrusion factor based on the size of the GL canvas.
 
+# New in Version 1.7.2
+
+- Made a few changes to the samples contained in the docs that don't work for some people. There is no functionality change on the code-level, that's why there is no 1.7.2 release.
+
 # New in Version 1.7.1
 
 - Added bower.json to release package so people can install PV using bower. This only works for release packages, but not the git repository itself.
