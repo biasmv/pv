@@ -23,7 +23,7 @@ Usage
       selectionColor : '#f00'
   });
 
-  pv.io.fetchPdb('../_static/1crn.pdb', function(s) {
+  pv.io.fetchPdb('_static/1crn.pdb', function(s) {
     viewer.on('viewerReady', function() {
       viewer.cartoon('crambin', s);
       viewer.autoZoom();
