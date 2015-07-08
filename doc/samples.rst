@@ -9,3 +9,4 @@ PV Usage Code Samples
   sample-hover
   sample-select
   sample-static-label
+  sample-3d-label
