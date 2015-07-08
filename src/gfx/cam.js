@@ -79,7 +79,13 @@ Cam.prototype = {
     return this._upsamplingFactor;
   },
   setUpsamplingFactor : function(val) {
-    this._upsamplingFactor = val;
+    if (this._upsamplingFactor !== val) {
+      this._incrementStateId();
+      this._upsamplingFactor = val;
+      var x = this._upsamplingFactor/this._width;
+      var y = this._upsamplingFactor/this._height;
+      this._relativePixelSize = new Float32Array([x, y]);
+    }
   },
 
   // returns the 3 main axes of the current camera rotation
@@ -140,7 +146,8 @@ Cam.prototype = {
     this._updateProjectionMat = true;
     this._width = width;
     this._height = height;
-    this._relativePixelSize = new Float32Array([1.0/width, 1.0/height]);
+    this._relativePixelSize = new Float32Array([this._upsamplingFactor/width, 
+                                                this._upsamplingFactor/height]);
   },
 
   viewportWidth : function() {
