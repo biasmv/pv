@@ -34,7 +34,7 @@ Usage
   // presses. Whenever the return key is pressed,  the camera zooms
   // in on the currently selected residues.
   document.addEventListener('keypress', function(ev) {
-    if (ev.charCode === 13) {
+    if (ev.keyCode === 13) {
       var allSelections = [];
       viewer.forEach(function(go) {
         if (go.selection !== undefined) {
