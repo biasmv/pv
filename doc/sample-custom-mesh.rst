@@ -9,7 +9,7 @@ This sample demonstrates how to add custom geometry to the 3d scene. The code pl
   var parent = document.getElementById('viewer');
   viewer = pv.Viewer(parent, { 
       width : '300', height: '300', antialias : true, 
-      outline : true, quality : 'medium', style : 'hemilight',
+      outline : true, quality : 'high', style : 'hemilight',
   });
   viewer.on('viewerReady', function() {
     var helix = viewer.customMesh('custom');
@@ -21,11 +21,13 @@ This sample demonstrates how to add custom geometry to the 3d scene. The code pl
       // add sphere at the given position with a radius of 0.1
       helix.addSphere([x,y,z], 0.1, { color : [color, color, 0]});
       
-      // add a capped tube  in th center of the helix with a radius of 0.1
-      helix.addTube([0, -5, 0], [0, 5, 0], 0.1, { cap : true, color : 'blue' });
+      // add a capped tube  in the center of the helix with a 
+      // radius of 0.1
+      helix.addTube([0, -5, 0], [0, 5, 0], 0.1, 
+                    { cap : true, color : 'blue' });
 
-      // set zoom to a pre-determined value. Alternatively, viewer.autoZoom() can 
-      // be used.
+      // set zoom to a pre-determined value. Alternatively, 
+      // viewer.autoZoom() can be used.
       viewer.setZoom(14);
     }
   });
