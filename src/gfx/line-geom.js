@@ -87,11 +87,15 @@ utils.derive(LineGeom, BaseGeom, {
     var pointSizeMul = cam.upsamplingFactor();
     if (shader.selectAttrib !== -1) {
       pointSizeMul = 4.0 * cam.upsamplingFactor();
-
     }
     var i;
     if (additionalTransforms) {
+      cam.bind(shader);
       this._gl.lineWidth(pointSizeMul * this._lineWidth);
+      if (shader.pointSize) {
+        this._gl.uniform1f(shader.pointSize, 
+                          pointSizeMul * this._pointSize);
+      }
       for (i = 0; i < vertArrays.length; ++i) {
         vertArrays[i].drawSymmetryRelated(cam, shader, additionalTransforms);
       }
