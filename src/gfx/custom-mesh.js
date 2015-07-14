@@ -66,7 +66,7 @@ DynamicIndexedVertexArray.prototype = {
     this._vertData.push(pos[0], pos[1], pos[2], 
                         normal[0], normal[1], normal[2], 
                         color[0], color[1], color[2], color[3], 
-                        objId);
+                        objId, 0.0);
   },
   addTriangle : function(indexOne, indexTwo, indexThree) {
     this._indexData.push(indexOne, indexTwo, indexThree);
