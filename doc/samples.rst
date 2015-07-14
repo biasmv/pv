@@ -10,3 +10,4 @@ PV Usage Code Samples
   sample-select
   sample-static-label
   sample-3d-label
+  sample-custom-mesh
