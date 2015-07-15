@@ -252,6 +252,29 @@ test('residue select on structure', function(assert) {
   assert.strictEqual(view.chains().length, 1);
 });
 
+
+test('add residues', function(assert) {
+  var rnums = [268,903,904,905];
+  var firstView = FRAGMENT.select({rnums : rnums });
+  assert.ok(firstView.chain('A')._rnumsOrdered === true);
+  var i, res, res2;
+  for (i = 0; i < rnums.length; ++i) {
+    res = firstView.chain('A').residueByRnum(rnums[i]);
+    assert.strictEqual(res.num(), rnums[i]);
+  }
+  var secondView = FRAGMENT.createEmptyView();
+  var r = [];
+  firstView.eachResidue(function(x) { r.push(x); });
+  secondView.addResidues(r, true);
+  var other = [];
+  secondView.eachResidue(function(x) { other.push(x); });
+  for (i = 0; i < rnums.length; ++i) {
+    res = firstView.chain('A').residueByRnum(rnums[i]);
+    res2 = secondView.chain('A').residueByRnum(rnums[i]);
+    assert.strictEqual(res.num(), res2.num());
+  }
+});
+
 test('atom select on structure', function(assert) {
   var view = FRAGMENT.atomSelect(function(a) { return a.name() === 'CA'; });
   var count = 0;

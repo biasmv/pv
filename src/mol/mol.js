@@ -501,6 +501,19 @@ utils.derive(MolView, MolBase, {
     return chain.containsResidue(residue);
   },
 
+  addResidues : function (residues, recurse) {
+    var that = this;
+    var chainsViews = {};
+    residues.forEach(function  (residue) {
+      var chainName = residue.chain().name();
+      if (typeof chainsViews[chainName] === 'undefined') {
+        chainsViews[chainName] = that.addChain(residue.chain(), false); 
+      }
+      chainsViews[chainName].addResidue(residue, recurse);
+    });
+    return chainsViews;
+  },
+
 
   chains : function() { return this._chains; },
 

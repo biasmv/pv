@@ -525,30 +525,43 @@ Viewer.prototype = {
   },
 
   addListener : function(eventName, callback) {
-    var callbacks = this.listenerMap[eventName];
-    if (typeof callbacks === 'undefined') {
-      callbacks = [];
-      this.listenerMap[eventName] = callbacks;
+    if (eventName === 'keypress' || 
+        eventName === 'keydown' || 
+        eventName === 'keyup') {
+      // handle keypress events directly onto the parent domElement
+      // mouse downs will make it have focus
+//      this._domElement
+      document.addEventListener(eventName, utils.bind(this, callback),
+          false);
+
     }
-    if (callback === 'center') {
-      var cb = utils.bind(this._mouseHandler, 
-                          this._mouseHandler._centerOnClicked);
-      callbacks.push(cb);
-    } else {
-      callbacks.push(callback);
-    }
-    // in case viewer is already initialized, fire viewerReady immediately. 
-    // Otherwise, the callback would never be invoked in this case:
-    //  
-    // document.addEventListener('DOMContentLoaded', function() {
-    //    viewer = pv.Viewer(...);
-    //    viewer.on('viewerReady', function(viewer) {
-    //    });
-    // });
-    if (this._initialized && eventName === 'viewerReady') {
-      // don't use dispatch here, we only want this very callback to be 
-      // invoked.
-      callback(this, null);
+    else {
+
+      var callbacks = this.listenerMap[eventName];
+      if (typeof callbacks === 'undefined') {
+        callbacks = [];
+        this.listenerMap[eventName] = callbacks;
+      }
+      if (callback === 'center') {
+        var cb = utils.bind(this._mouseHandler, 
+                            this._mouseHandler._centerOnClicked);
+        callbacks.push(cb);
+      } else {
+        callbacks.push(callback);
+      }
+      // in case viewer is already initialized, fire viewerReady immediately. 
+      // Otherwise, the callback would never be invoked in this case:
+      //  
+      // document.addEventListener('DOMContentLoaded', function() {
+      //    viewer = pv.Viewer(...);
+      //    viewer.on('viewerReady', function(viewer) {
+      //    });
+      // });
+      if (this._initialized && eventName === 'viewerReady') {
+        // don't use dispatch here, we only want this very callback to be 
+        // invoked.
+        callback(this, null);
+      }
     }
   },
 
