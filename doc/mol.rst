@@ -241,7 +241,10 @@ Mol (and MolView)
   Adds all residues to their respective chain 
 
   :param residues: list of new residues
+<<<<<<< HEAD
   :param includeAllAtoms: when true, all atoms of the residue are directly added as new AtomViews to the residue. When set to false (the default), a new residue view is created with an empty list of atoms.
+=======
+>>>>>>> 44ed4daca27353a000b33788101aaf8af99e7fa1
 
   :returns: a map of chain name to chain for the affected chains with new residues.
 
