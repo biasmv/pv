@@ -236,6 +236,14 @@ Mol (and MolView)
 
   :returns: the newly created :class:`pv.mol.ChainView` instance
 
+.. function:: pv.mol.Mol.addResidues(residues, includeAllAtoms)
+
+  Adds all residues to their respective chain 
+
+  :param residues: list of new residues
+
+  :returns: a map of chain name to chain for the affected chains with new residues.
+
 .. function:: pv.mol.MolView.addAtom(atom)
 
   Adds the given atom to the view. If the atom is already contained in the view, it is not added again. If an atom's residue or chain are not yet part of the view, they are added as well.
