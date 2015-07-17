@@ -155,7 +155,7 @@ uniform bool fog;\n\
 \n\
 void main(void) {\n\
   float dp = dot(vertNormal, vec3(0.0, 0.0, 1.0));\n\
-  float hemi = max(0.0, dp)*0.5+0.5;\n\
+  float hemi = min(1.0, max(0.0, dp)*0.6+0.5);\n\
   hemi *= vertColor.a;\n\
   gl_FragColor = vec4(vertColor.rgb*hemi, vertColor.a);\n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
@@ -182,10 +182,10 @@ uniform float zoom;\n\
 void main(void) {\n\
   vec3 eyePos = vec3(0.0, 0.0, zoom);\n\
   float dp = dot(vertNormal, normalize(eyePos - vertPos));\n\
-  float hemi = max(0.0, dp)*0.8+0.2;\n\
+  float hemi = min(1.0, max(0.3, dp)+0.2);\n\
   hemi *= vertColor.a;\n\
   vec3 rgbColor = vertColor.rgb * hemi; \n\
-  rgbColor += min(vertColor.rgb, 0.8) * pow(max(0.0, dp), 16.0);\n\
+  rgbColor += min(vertColor.rgb, 0.8) * pow(max(0.0, dp), 18.0);\n\
   //vec3 rgbColor = vertColor.rgb * hemi;\n\
   gl_FragColor = vec4(clamp(rgbColor, 0.0, 1.0), vertColor.a);\n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
