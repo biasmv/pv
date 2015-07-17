@@ -260,12 +260,35 @@ viewer.on('doubleClick', function(picked) {
   viewer.setCenter(picked.pos(), 500);
 });
 
+var lastAtom = null;
+
 viewer.addListener('click', function(picked) {
   if (picked === null) return;
   var target = picked.target();
   if (target.qualifiedName !== undefined) {
-    console.log('clicked atom', target.qualifiedName(), 'on object',
-                picked.node().name());
+    var view = picked.node()
+        .structure().createEmptyView();
+    viewer.requestRedraw();
+    if (lastAtom !== null) {
+      viewer.rm('dist.*');
+      var g = viewer.customMesh('dist.line');
+      var p1 = lastAtom.pos();
+      var p2 = target.pos();
+      var m = pv.vec3.clone(p1);
+      pv.vec3.add(m, m, p2);
+      pv.vec3.scale(m, m, 0.5);
+      g.addTube(p1, p2, 0.1, 
+                { cap : true, color : 'white' });
+      var d = pv.vec3.distance(p1, p2);
+      var l = viewer.label('dist.label',
+                           d.toFixed(2), m);
+      console.log('distance: ', d);
+      lastAtom = null;
+    } else {
+      lastAtom = target;
+      view.addAtom(target);
+    }
+    picked.node().setSelection(view);
   }
 });
 window.addEventListener('resize', function() {

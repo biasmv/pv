@@ -11,3 +11,4 @@ PV Usage Code Samples
   sample-static-label
   sample-3d-label
   sample-custom-mesh
+  sample-measure-distance
