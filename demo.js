@@ -246,7 +246,7 @@ $('#load-from-pdb').change(function() {
 });
 viewer = pv.Viewer(document.getElementById('viewer'), { 
     width : 'auto', height: 'auto', antialias : true, fog : true,
-    outline : true, quality : 'medium', style : 'hemilight',
+    /*outline : true, */quality : 'medium', style : 'hemilight',
     background : '#fff', animateTime: 500, doubleClick : null
 });
 viewer.addListener('viewerReady', crambin);

@@ -31,6 +31,8 @@ Initialization and Configuration
   * *animateTime* controls the default animation duration in milliseconds. By default, the animation is set to 0 (no animation). By setting it to higher values, rotation, zoom and shift are animated. Note that enabling this can have negative impact on performance, especially with large molecules and on low-end devices.
   * *fog* whether depth-cue ('fog') should be enabled. By default, fog is enabled. Pass false to disable fog.
   * *fov* the field of view in degrees. Default is 45 degrees.
+  * *outline* whether outline rendering should be enabled. When enabled, outline rendering draws a uniformly colored outline around the mesh geometries to improve contrast. By default outline rendering is enabled.
+  * *outlineColor* the color of the outline. Default is black. When outline rendering is disabled, setting this value has no effect.
   * *outlineWidth* the width of the outline in pixels. Default is 1.5. When outline rendering is disabled, setting this value has no effect.
 
 
