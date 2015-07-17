@@ -162,7 +162,7 @@ void main(void) {\n\
   gl_FragColor = vec4(vertColor.rgb*hemi, vertColor.a);\n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
   gl_FragColor.rgb = mix(gl_FragColor.rgb, selectionColor, \n\
-                         step(0.5, vertSelect) * 0.8);\n\
+                         step(0.5, vertSelect) * 0.7);\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
   if (fog) {\n\
     float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
@@ -192,7 +192,7 @@ void main(void) {\n\
   hemi *= vertColor.a;\n\
   vec3 rgbColor = vertColor.rgb * hemi; \n\
   rgbColor += min(vertColor.rgb, 0.8) * pow(max(0.0, dp), 18.0);\n\
-  rgbColor = mix(rgbColor, selectionColor, step(0.5, vertSelect) * 0.8);\n\
+  rgbColor = mix(rgbColor, selectionColor, step(0.5, vertSelect) * 0.7);\n\
   gl_FragColor = vec4(clamp(rgbColor, 0.0, 1.0), vertColor.a);\n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
