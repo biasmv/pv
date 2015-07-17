@@ -151,6 +151,8 @@ varying vec3 vertNormal;\n\
 uniform float fogNear;\n\
 uniform float fogFar;\n\
 uniform vec3 fogColor;\n\
+uniform vec3 selectionColor;\n\
+varying float vertSelect;\n\
 uniform bool fog;\n\
 \n\
 void main(void) {\n\
@@ -159,6 +161,8 @@ void main(void) {\n\
   hemi *= vertColor.a;\n\
   gl_FragColor = vec4(vertColor.rgb*hemi, vertColor.a);\n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
+  gl_FragColor.rgb = mix(gl_FragColor.rgb, selectionColor, \n\
+                         step(0.5, vertSelect) * 0.8);\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
   if (fog) {\n\
     float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
@@ -178,6 +182,8 @@ uniform float fogFar;\n\
 uniform vec3 fogColor;\n\
 uniform bool fog;\n\
 uniform float zoom;\n\
+uniform vec3 selectionColor;\n\
+varying float vertSelect;\n\
 \n\
 void main(void) {\n\
   vec3 eyePos = vec3(0.0, 0.0, zoom);\n\
@@ -186,7 +192,7 @@ void main(void) {\n\
   hemi *= vertColor.a;\n\
   vec3 rgbColor = vertColor.rgb * hemi; \n\
   rgbColor += min(vertColor.rgb, 0.8) * pow(max(0.0, dp), 18.0);\n\
-  //vec3 rgbColor = vertColor.rgb * hemi;\n\
+  rgbColor = mix(rgbColor, selectionColor, step(0.5, vertSelect) * 0.8);\n\
   gl_FragColor = vec4(clamp(rgbColor, 0.0, 1.0), vertColor.a);\n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
@@ -202,18 +208,21 @@ HEMILIGHT_VS : '\n\
 attribute vec3 attrPos;\n\
 attribute vec4 attrColor;\n\
 attribute vec3 attrNormal;\n\
+attribute float attrSelect;\n\
 \n\
 uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
 varying vec4 vertColor;\n\
 varying vec3 vertNormal;\n\
 varying vec3 vertPos;\n\
+varying float vertSelect;\n\
 void main(void) {\n\
   vertPos = (modelviewMat * vec4(attrPos, 1.0)).xyz;\n\
   gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
   vec4 n = (modelviewMat * vec4(attrNormal, 0.0));\n\
   vertNormal = n.xyz;\n\
   vertColor = attrColor;\n\
+  vertSelect = attrSelect;\n\
 }',
 
 // outline shader. mixes outlineColor with fogColor

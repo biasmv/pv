@@ -44,7 +44,7 @@ function cartoon() {
   var go = viewer.cartoon('structure', structure, {
       color : color.ssSuccession(), showRelated : '1',
   });
-  
+  go.setSelection(go.select({rnumRange : [15,20]}));
   var rotation = viewpoint.principalAxes(go);
   viewer.setRotation(rotation)
 }
@@ -247,9 +247,10 @@ $('#load-from-pdb').change(function() {
 viewer = pv.Viewer(document.getElementById('viewer'), { 
     width : 'auto', height: 'auto', antialias : true, fog : true,
     outline : true, quality : 'medium', style : 'phong',
-    background : '#fff', animateTime: 500, doubleClick : null
+    selectionColor : 'white',
+    background : '#ccc', animateTime: 500, doubleClick : null
 });
-viewer.addListener('viewerReady', transferase);
+viewer.addListener('viewerReady', crambin);
 
 viewer.on('doubleClick', function(picked) {
   if (picked === null) {
