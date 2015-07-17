@@ -226,6 +226,7 @@ Canvas.prototype = {
     shaderProgram.fogNear = getUniformLoc(shaderProgram, 'fogNear');
     shaderProgram.fogColor = getUniformLoc(shaderProgram, 'fogColor');
     shaderProgram.outlineColor = getUniformLoc(shaderProgram, 'outlineColor');
+    shaderProgram.outlineWidth = getUniformLoc(shaderProgram, 'outlineWidth');
     shaderProgram.relativePixelSize = getUniformLoc(shaderProgram, 
                                                     'relativePixelSize');
     shaderProgram.selectionColor = getUniformLoc(shaderProgram, 

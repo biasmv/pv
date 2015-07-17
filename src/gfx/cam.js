@@ -47,6 +47,7 @@ function Cam(gl) {
   this._fovY = Math.PI * 45.0 / 180.0;
   this._fogColor = vec3.fromValues(1, 1, 1);
   this._outlineColor = vec3.fromValues(0.1, 0.1, 0.1);
+  this._outlineWidth = 1.0;
   this._selectionColor = vec3.fromValues(0.1, 1.0, 0.1);
   this._center = vec3.create();
   this._zoom = 50;
@@ -66,6 +67,12 @@ Cam.prototype = {
       if (this._stateId > 0xfffffffff) {
         this._stateId = 0;
       }
+  },
+  setOutlineWidth : function(value) {
+    if (this._outlineWidth !== value) {
+      this._outlineWidth = value;
+      this._incrementStateId();
+    }
   },
   setRotation : function(rot) {
     if (rot.length === 16) {
@@ -328,6 +335,7 @@ Cam.prototype = {
     gl.uniform3fv(shader.outlineColor, this._outlineColor);
     gl.uniform3fv(shader.selectionColor, this._selectionColor);
     gl.uniform2fv(shader.relativePixelSize, this._relativePixelSize);
+    gl.uniform1f(shader.outlineWidth, this._outlineWidth);
   }
 };
 

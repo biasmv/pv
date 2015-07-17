@@ -244,6 +244,7 @@ Viewer.prototype = {
       slabMode : slabModeToStrategy(opts.slabMode),
       outline : optValue(opts, 'outline', true),
       outlineColor : color.forceRGB(optValue(opts, 'outlineColor', 'black')),
+      outlineWidth: optValue(opts, 'outlineWidth', 1.5),
       selectionColor : color.forceRGB(optValue(opts, 'selectionColor', '#3f3')),
       fov : optValue(opts, 'fov', 45.0),
       doubleClick : getDoubleClickHandler(opts),
@@ -307,7 +308,9 @@ Viewer.prototype = {
         this._cam.setSelectionColor(color.forceRGB(value));
       } else if (optName === 'outlineColor') {
         this._cam.setOutlineColorColor(color.forceRGB(value));
-      } 
+      } else if (optName === 'outlineWidth') {
+        this._cam.setOutlineWidth(value + 0.0 /* force to float*/);
+      }
     }
     return this._options[optName];
   },
@@ -362,6 +365,7 @@ Viewer.prototype = {
     this._uint16Allocator = new PoolAllocator(Uint16Array);
     this._cam = new Cam(this._canvas.gl());
     this._cam.setUpsamplingFactor(this._canvas.superSamplingFactor());
+    this._cam.setOutlineWidth(this._options.outlineWidth);
     this._cam.fog(this._options.fog);
     this._cam.setFogColor(this._options.background);
     this._cam.setOutlineColor(this._options.outlineColor);
