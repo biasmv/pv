@@ -136,8 +136,9 @@ var superpose = (function() {
       tmp[8] = -1;
       mat3.mul(uMat, uMat, tmp);
     }
+    console.log(mat3.str(uMat));
     mat3.mul(rotation, mat3.transpose(vMat, vMat), uMat);
-    mat3.transpose(rotation, rotation);
+    //mat3.transpose(rotation, rotation);
     // apply transformation to all atoms
     var allAtoms = structure.full().atoms();
     for (var i = 0; i < allAtoms.length; ++i) {
@@ -216,8 +217,8 @@ function matchResidues(inA, inB, atoms, matchFn) {
     var residuesA = matchedResidues[0];
     var residuesB = matchedResidues[1];
     if (residuesA.length !== residuesB.length) {
-      console.errors('chains', chainA.name(), ' and', chainB.name(), 
-                     ' do not contain the same number of residues.');
+      console.error('chains', chainA.name(), ' and', chainB.name(), 
+                    ' do not contain the same number of residues.');
       return null;
     }
 
