@@ -198,7 +198,7 @@ function cross() {
 }
 
 function ensemble() {
-  io.fetchPdb('/pdbs/1nmr.pdb', function(structures) {
+  io.fetchPdb('pdbs/1nmr.pdb', function(structures) {
     viewer.clear()
     structure = structures[i];
     for (var i = 0; i < structures.length; ++i) {
