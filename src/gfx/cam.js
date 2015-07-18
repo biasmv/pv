@@ -51,6 +51,7 @@ function Cam(gl) {
   this._selectionColor = vec3.fromValues(0.1, 1.0, 0.1);
   this._center = vec3.create();
   this._zoom = 50;
+  this._screenDoorTransparency = false;
   this._updateProjectionMat = true;
   this._updateModelViewMat = true;
   this._upsamplingFactor = 1;
@@ -67,6 +68,10 @@ Cam.prototype = {
       if (this._stateId > 0xfffffffff) {
         this._stateId = 0;
       }
+  },
+  setScreenDoorTransparency : function(value) {
+    this._screenDoorTransparency = value;
+    this._incrementStateId();
   },
   setOutlineWidth : function(value) {
     if (this._outlineWidth !== value) {
@@ -336,6 +341,7 @@ Cam.prototype = {
     gl.uniform3fv(shader.selectionColor, this._selectionColor);
     gl.uniform2fv(shader.relativePixelSize, this._relativePixelSize);
     gl.uniform1f(shader.outlineWidth, this._outlineWidth);
+    gl.uniform1i(shader.screenDoorTransparency, this._screenDoorTransparency);
   }
 };
 

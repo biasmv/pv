@@ -229,6 +229,8 @@ Canvas.prototype = {
     shaderProgram.outlineWidth = getUniformLoc(shaderProgram, 'outlineWidth');
     shaderProgram.relativePixelSize = getUniformLoc(shaderProgram, 
                                                     'relativePixelSize');
+    shaderProgram.screenDoorTransparency = getUniformLoc(shaderProgram, 
+                                                    'screenDoorTransparency');
     shaderProgram.selectionColor = getUniformLoc(shaderProgram, 
                                                  'selectionColor');
     shaderProgram.pointSize = getUniformLoc(shaderProgram, 'pointSize');

@@ -249,7 +249,8 @@ Viewer.prototype = {
       fov : optValue(opts, 'fov', 45.0),
       doubleClick : getDoubleClickHandler(opts),
       click : getClickHandler(opts),
-      fog : optValue(opts, 'fog', true)
+      fog : optValue(opts, 'fog', true),
+      transparency : optValue(opts, 'transparency', 'alpha'),
     };
     var parentRect = domElement.getBoundingClientRect();
     if (options.width === 'auto') {
@@ -310,6 +311,9 @@ Viewer.prototype = {
         this._cam.setOutlineColorColor(color.forceRGB(value));
       } else if (optName === 'outlineWidth') {
         this._cam.setOutlineWidth(value + 0.0 /* force to float*/);
+      } else if (optName === 'transparency') {
+        var sd = value === 'screendoor';
+        this._cam.setScreenDoorTransparency(sd);
       }
     }
     return this._options[optName];
@@ -366,6 +370,8 @@ Viewer.prototype = {
     this._cam = new Cam(this._canvas.gl());
     this._cam.setUpsamplingFactor(this._canvas.superSamplingFactor());
     this._cam.setOutlineWidth(this._options.outlineWidth);
+    var sd = this._options.transparency === 'screendoor';
+    this._cam.setScreenDoorTransparency(sd);
     this._cam.fog(this._options.fog);
     this._cam.setFogColor(this._options.background);
     this._cam.setOutlineColor(this._options.outlineColor);
@@ -376,10 +382,14 @@ Viewer.prototype = {
     var c = this._canvas;
     var p = shouldUseHighPrecision() ? 'highp' : 'mediump';
     this._shaderCatalog = {
-      hemilight : c.initShader(shaders.HEMILIGHT_VS, shaders.HEMILIGHT_FS, p),
-      phong : c.initShader(shaders.HEMILIGHT_VS, shaders.PHONG_FS, p),
-      outline : c.initShader(shaders.OUTLINE_VS, shaders.OUTLINE_FS, p),
-      lines : c.initShader(shaders.LINES_VS, shaders.LINES_FS, p),
+      hemilight : c.initShader(shaders.HEMILIGHT_VS, 
+                               shaders.PRELUDE_FS + shaders.HEMILIGHT_FS, p),
+      phong : c.initShader(shaders.HEMILIGHT_VS, 
+                           shaders.PRELUDE_FS + shaders.PHONG_FS, p),
+      outline : c.initShader(shaders.OUTLINE_VS, 
+                             shaders.PRELUDE_FS + shaders.OUTLINE_FS, p),
+      lines : c.initShader(shaders.LINES_VS, 
+                           shaders.PRELUDE_FS + shaders.LINES_FS, p),
       text : c.initShader(shaders.TEXT_VS, shaders.TEXT_FS, p),
       selectLines : c.initShader(shaders.SELECT_LINES_VS, 
                                  shaders.SELECT_LINES_FS, p),

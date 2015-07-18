@@ -37,6 +37,8 @@ function lines() {
   var go = viewer.lines('structure', structure, {
               color: color.byResidueProp('num'),
               showRelated : '1' });
+  go.setSelection(go.select({rnumRange : [15,20]}));
+  go.setOpacity(0.5, go.select({rnumRange : [25,30]}));
 }
 
 function cartoon() {
@@ -44,7 +46,6 @@ function cartoon() {
   var go = viewer.cartoon('structure', structure, {
       color : color.ssSuccession(), showRelated : '1',
   });
-  go.setSelection(go.select({rnumRange : [15,20]}));
   var rotation = viewpoint.principalAxes(go);
   viewer.setRotation(rotation)
 }
@@ -247,7 +248,7 @@ $('#load-from-pdb').change(function() {
 viewer = pv.Viewer(document.getElementById('viewer'), { 
     width : 'auto', height: 'auto', antialias : true, fog : true,
     outline : true, quality : 'medium', style : 'phong',
-    selectionColor : 'white',
+    selectionColor : 'white', transparency : 'screendoor', 
     background : '#ccc', animateTime: 500, doubleClick : null
 });
 viewer.addListener('viewerReady', crambin);
@@ -255,42 +256,11 @@ viewer.addListener('viewerReady', crambin);
 viewer.on('doubleClick', function(picked) {
   if (picked === null) {
     viewer.fitTo(structure);
-     return;
+    return;
   }
   viewer.setCenter(picked.pos(), 500);
 });
 
-var lastAtom = null;
-
-viewer.addListener('click', function(picked) {
-  if (picked === null) return;
-  var target = picked.target();
-  if (target.qualifiedName !== undefined) {
-    var view = picked.node()
-        .structure().createEmptyView();
-    viewer.requestRedraw();
-    if (lastAtom !== null) {
-      viewer.rm('dist.*');
-      var g = viewer.customMesh('dist.line');
-      var p1 = lastAtom.pos();
-      var p2 = target.pos();
-      var m = pv.vec3.clone(p1);
-      pv.vec3.add(m, m, p2);
-      pv.vec3.scale(m, m, 0.5);
-      g.addTube(p1, p2, 0.1, 
-                { cap : true, color : 'white' });
-      var d = pv.vec3.distance(p1, p2);
-      var l = viewer.label('dist.label',
-                           d.toFixed(2), m);
-      console.log('distance: ', d);
-      lastAtom = null;
-    } else {
-      lastAtom = target;
-      view.addAtom(target);
-    }
-    picked.node().setSelection(view);
-  }
-});
 window.addEventListener('resize', function() {
       viewer.fitParent();
 });
