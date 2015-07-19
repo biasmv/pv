@@ -161,6 +161,7 @@ function Viewer(domElement, opts) {
   this.listenerMap = { };
 
   this._animControl = new anim.AnimationControl();
+  this._initKeyboardInput();
   // NOTE: make sure to only request features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
   // detection only happens in Viewer._initGL. Once this happened, we are
@@ -426,6 +427,23 @@ Viewer.prototype = {
     }
   },
 
+  _initKeyboardInput: function() {
+    // this function creates a textarea element inside a div with height 
+    // and width of zero. When the user clicks on the viewer, we set 
+    // focus on the text area to receive text input. This makes sure we 
+    // only capture keypress events when the viewer is focused.
+    var zeroSizedDiv = document.createElement('div');
+    zeroSizedDiv.setAttribute('style', 'overflow:hidden;width:0;height:0');
+    this._keyInput = document.createElement('textarea');
+    this._domElement.appendChild(zeroSizedDiv);
+    zeroSizedDiv.appendChild(this._keyInput);
+    this._keyInput.focus();
+  },
+
+  focus : function() {
+    this._keyInput.focus();
+  },
+
   _initCanvas : function() {
     var canvasOptions = {
       antialias : this._options.antialias,
@@ -439,6 +457,12 @@ Viewer.prototype = {
     this._domElement.appendChild(this._textureCanvas);
     this._mouseHandler = new MouseHandler(this._canvas, this, this._cam, 
                                           this._options.animateTime);
+    this._canvas.domElement()
+        .addEventListener('mousedown', utils.bind(this, this._gainFocus));
+  },
+
+  _gainFocus : function() {
+    this._keyInput.focus();
   },
 
   setRotation : function(rotation, ms) {
@@ -542,12 +566,10 @@ Viewer.prototype = {
     if (eventName === 'keypress' || 
         eventName === 'keydown' || 
         eventName === 'keyup') {
-      // handle keypress events directly onto the parent domElement
-      // mouse downs will make it have focus
-//      this._domElement
-      document.addEventListener(eventName, utils.bind(this, callback),
-          false);
-
+      console.log('keypress');
+      // attach keyboard events to key input text area. We will 
+      // only receive these events in case the text area has focus.
+      this._keyInput.addEventListener(eventName, callback, false);
     }
     else {
 
