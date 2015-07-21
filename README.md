@@ -64,12 +64,13 @@ Documentation for pv is available [here](http://pv.readthedocs.org).
 Changelog
 ----------------------------------------
 
-# New since latest release
+# New in Version 1.8.0
 
 - Implement screen-door transparency as an alternative to alpha-based transparency. To enable screen-door transparency, pass transparency : 'screendoor' when constructing the viewer.
 - Added special selection highlighting render mode.
 - Improve handling of click event by only firing click events when the mouse button is pressed/released within a short timespan.
 - Improve rendering of outline by properly scaling the extrusion factor based on the size of the GL canvas.
+- Added more sample code to documentation
 
 # New in Version 1.7.2
 
