@@ -20,6 +20,8 @@ pdb_structures = [ '1r6a', '1nmr', '1crn' ]
 for pdb_id in pdb_structures:
   shutil.copyfile('../pdbs/%s.pdb' % pdb_id, '_static/%s.pdb' % pdb_id)
 
+shutil.copyfile('../bio-pv.min.js', '_static/bio-pv.min.js')
+
 # If extensions (or modules to document with autodoc) are in another directory,
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.

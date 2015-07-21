@@ -5,12 +5,11 @@
 js/bio-pv.rel.bro.js
 js/bio-pv.browserify.js
 /doc/_static/*.pdb
-/bio-pv.min.js
 /bio-pv.js
 /node_modules
 /doc/_build
+/doc/_static/bio-pv.min.js
 build
 *.csf
 *.tgz
 *.pyc
-bower.json

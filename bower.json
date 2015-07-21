@@ -1,0 +1,36 @@
+  {
+    "name": "bio-pv",
+    "homepage": "https://github.com/biasmv/pv",
+      "authors": [
+      "Marco Biasini <mvbiasini@gmail.com>"
+    ],
+    "description": "WebGL protein viewer",
+    "main": "bio-pv.min.js",
+    "moduleType": [
+      "amd"
+    ],
+    "keywords": [
+      "protein",
+      "3d",
+      "webgl",
+      "biojs"
+    ],
+    "license": "MIT",
+    "ignore": [
+      "**/.*",
+      "node_modules",
+      "pdbs",
+      "js",
+      "build",
+      "doc",
+      "scripts",
+      "snippets",
+      "css",
+      "favicon.ico",
+      "demo.js",
+      "index.html",
+      "tests",
+      "tests",
+      "select.*"
+    ]
+  }
