@@ -13,7 +13,8 @@ Click on two atoms to measure the distance between them. After clicking the seco
   <script>
   var parent = document.getElementById('viewer');
   var viewer = pv.Viewer(parent,
-                        { width : 300, height : 300, antialias : true });
+                         { width : 300, height : 300, antialias : true, 
+                           selectionColor : 'red' });
 
   pv.io.fetchPdb('_static/1crn.pdb', function(structure) {
     viewer.on('viewerReady', function() {
