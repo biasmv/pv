@@ -14,7 +14,7 @@ To install PV with bower, change to your project directory and type the followin
 
 .. code-block:: bash
 
-  bower install bio-pv
+  bower install biasmv/pv#master
 
 .. note::
 
