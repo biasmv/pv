@@ -268,7 +268,6 @@ void main(void) {\n\
        (outlineWidth + 2.0 * step(0.5, attrSelect));\n\
   vec2 offset = normal.xy * expansion;\n\
   gl_Position.xy += gl_Position.w * offset;\n\
-  gl_Position.z += gl_Position.w*0.0001;\n\
 }',
 
 TEXT_VS : '\n\
