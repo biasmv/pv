@@ -6,26 +6,42 @@ Getting the PV source-code
 
 The simplest way to get PV into your website is by downloading one of the release tarballs from `github.com <https://github.com/biasmv/pv/releases>`_. The release tarballs contain the self-contained development and minified code for PV which can directly be integrated into your website.
 
+
+Installing with bower
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To install PV with bower, change to your project directory and type the following:
+
+.. code-block:: bash
+
+  bower install bio-pv
+
+.. note::
+
+  Bower support has only been added to versions 1.8 and newer, so it won't be possible to use this method of installation for older versions.
+
+
+
 Installing from git
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Alternatively, you can clone the github repository of PV. 
+Alternatively, you can clone the github repository of PV. This approach is only recommended if you are planning to make changes to PV itself. Otherwise it's simpler to either download one of the release tarballs or install through bower.
 
 .. code-block:: bash
 
   git clone https://github.com/biasmv/pv
   cd pv
 
-When you do this, you will need to compile the pv.dbg.js, pv.rel.js and pv.min.js files using `Grunt <http://gruntjs.com>`_. These are files containing all the code, with console statements (dbg), without console statements (rel) and minitified (min). Assuming you already have `NPM <https://npmjs.org/>`_ on your system, you can build the development and minified files by using the following commands:
+The minified version of PV is checked into the git repository (``bio-pv.min.js``). You may either use this file directly, or create it from the sources. In the case of the latter, you will need `Grunt <http://gruntjs.com>`_ and `NPM <https://npmjs.org/>`_ installed on your system. Use the following commands to build:
 
 .. code-block:: bash
  
   # setup dev environment for PV
   npm install --setup-dev
-  # run grunt with the default tasks
-  grunt
+  # runs grunt and applies some additional name mangling to the source
+  scripts/make.sh
 
-Upon success, bio-pv.js, bio-pv.min.js are placed in the ```js``` folder. You can just grab them from there and place them in your own project.
+Upon success, bio-pv.min.js is placed in the project's top-level folder. 
 
 
 Setting up a small website
