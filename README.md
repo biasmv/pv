@@ -64,6 +64,11 @@ Documentation for pv is available [here](http://pv.readthedocs.org).
 Changelog
 ----------------------------------------
 
+# New in Version 1.8.1
+
+- A few additional improvements to outline rendering quality
+- Made a few tweaks to documentation
+
 # New in Version 1.8.0
 
 - Implement screen-door transparency as an alternative to alpha-based transparency. To enable screen-door transparency, pass transparency : 'screendoor' when constructing the viewer.
