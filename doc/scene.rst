@@ -43,7 +43,7 @@ The displaying of molecules is handled by :class:`pv.BaseGeom`, and subclasses. 
 .. function:: pv.BaseGeom.setSelection(selection)
               pv.BaseGeom.selection()
 
-   Get/set selection of the render geometry, e.g. the part of the structure that is drawn as selected. The viewer draws a halo around the selected parts of the structure using the current highlight color. Outline rendering must be turned on for selection highlights to be drawn around the selected parts.
+   Get/set selection of the render geometry, e.g. the part of the structure that is drawn as selected. The viewer draws a halo around the selected parts of the structure using the current highlight color. 
 
    :param selection: the subset of the structure to be selected/highlighted.
 
