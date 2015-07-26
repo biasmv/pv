@@ -14,6 +14,7 @@ SOURCE_FILES = [
   'src/gfx/label.js',
   'src/gfx/line-geom.js',
   'src/gfx/mesh-geom.js',
+  'src/gfx/billboard-geom.js',
   'src/gfx/render.js',
   'src/gfx/scene-node.js',
   'src/gfx/shaders.js',

@@ -396,7 +396,12 @@ Viewer.prototype = {
                                  shaders.SELECT_LINES_FS, p),
       select : c.initShader(shaders.SELECT_VS, shaders.SELECT_FS, p)
     };
-
+    if (c.gl().getExtension('EXT_frag_depth')) {
+      this._shaderCatalog.spheres = c.initShader(shaders.SPHERES_VS, 
+                                                 shaders.SPHERES_FS, p);
+      this._shaderCatalog.outlineSpheres = c.initShader(shaders.SPHERES_VS, 
+                                                 shaders.OUTLINE_SPHERES_FS, p);
+    }
     this._boundDraw = utils.bind(this, this._draw);
     this._touchHandler = new TouchHandler(this._canvas.domElement(), 
                                           this, this._cam);
@@ -669,8 +674,15 @@ Viewer.prototype = {
     options.color = options.color || color.byElement();
     options.sphereDetail = this.options('sphereDetail');
     options.radiusMultiplier = options.radiusMultiplier || 1.0;
-
-    var obj = render.spheres(structure, this._canvas.gl(), options);
+    var obj;
+    // in case we can write to the depth buffer from the fragment shader 
+    // (EXT_frag_depth) we can use billboarded spheres instead of creating 
+    // the full sphere geometry. That's faster AND looks better.
+    if (this._canvas.gl().getExtension('EXT_frag_depth')) {
+      obj = render.billboardedSpheres(structure, this._canvas.gl(), options);
+    } else {
+      obj = render.spheres(structure, this._canvas.gl(), options);
+    }
     return this.add(name, obj);
   },
 

@@ -25,6 +25,7 @@ define(
     './geom-builders', 
     './mesh-geom', 
     './line-geom', 
+    './billboard-geom', 
     './vert-assoc', 
     '../color'
   ], 
@@ -34,6 +35,7 @@ define(
     geomBuilders, 
     MeshGeom, 
     LineGeom, 
+    BillboardGeom,
     vertAssoc, 
     color) {
 "use strict";
@@ -146,6 +148,56 @@ exports.spheres = function(structure, gl, opts) {
   console.timeEnd('spheres');
   return geom;
 };
+
+var billboardedSpheresForChain = (function() {
+  var color = vec4.fromValues(0.0, 0.0, 0.0, 1.0);
+
+  return function(meshGeom, vertAssoc, opts, chain) {
+    var atomCount = chain.atomCount();
+    var idRange = opts.idPool.getContinuousRange(atomCount);
+    meshGeom.addIdRange(idRange);
+    var vertsPerSphere = 4; // one quad per sphere
+    var indicesPerSphere = 6; // two triangles per quad
+    var radius = 1.5 * opts.radiusMultiplier;
+    meshGeom.addChainVertArray(chain, vertsPerSphere*atomCount, 
+                              indicesPerSphere*atomCount);
+    chain.eachAtom(function(atom) {
+      var va = meshGeom.vertArrayWithSpaceFor(vertsPerSphere);
+      opts.color.colorFor(atom, color, 0);
+      var objId = idRange.nextId({ geom: meshGeom, atom : atom });
+      var vertStart = va.numVerts();
+      // store center of quad in normal, so we can use a standard indexed 
+      // vertex array. 
+      var p = atom.pos();
+      va.addVertex([p[0] - radius, p[1] - radius, p[2]], p, color, objId);
+      va.addVertex([p[0] + radius, p[1] + radius, p[2]], p, color, objId);
+      va.addVertex([p[0] + radius, p[1] - radius, p[2]], p, color, objId);
+      va.addVertex([p[0] - radius, p[1] + radius, p[2]], p, color, objId);
+      va.addTriangle(vertStart + 0, vertStart + 1, vertStart + 2);
+      va.addTriangle(vertStart + 0, vertStart + 3, vertStart + 1);
+      var vertEnd = va.numVerts();
+      vertAssoc.addAssoc(atom, va, vertStart, vertEnd);
+    });
+  };
+})();
+
+exports.billboardedSpheres = function(structure, gl, opts) {
+  console.time('billboardedSpheres');
+  var geom = new BillboardGeom(gl, opts.float32Allocator, 
+                               opts.uint16Allocator);
+  var vertAssoc = new AtomVertexAssoc(structure, true);
+  geom.addVertAssoc(vertAssoc);
+  geom.setShowRelated(opts.showRelated);
+  opts.color.begin(structure);
+  structure.eachChain(function(chain) {
+    billboardedSpheresForChain(geom, vertAssoc, opts, chain);
+  });
+  opts.color.end(structure);
+  console.timeEnd('billboardedSpheres');
+  return geom;
+};
+
+
 
 
 var ballsAndSticksForChain = (function() {

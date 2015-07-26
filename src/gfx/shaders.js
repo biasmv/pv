@@ -304,5 +304,95 @@ void main() { \n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
 }',
 
+// spherical billboard fragment shader
+OUTLINE_SPHERES_FS : '\n\
+#extension GL_EXT_frag_depth : enable\n\
+precision ${PRECISION} float;\n\
+\n\
+varying vec2 vertTex;\n\
+varying vec4 vertCenter;\n\
+varying vec4 vertColor;\n\
+uniform float fogNear;\n\
+uniform float fogFar;\n\
+uniform vec3 outlineColor;\n\
+uniform vec3 fogColor;\n\
+uniform bool fog;\n\
+uniform mat4 projectionMat;\n\
+\n\
+void main(void) {\n\
+  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 0.5)\n\
+    discard;\n\
+  vec3 pos = vec3(vertTex.x, vertTex.y, \n\
+                  1.0*1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y);\n\
+  vec3 normal = normalize(pos);\n\
+  if (normal.z > 0.7) { \n\
+    discard; \n\
+  } \n\
+  vec4 projected = projectionMat * (vertCenter + vec4(pos, 1.0));\n\
+  float depth = projected.z / projected.w;\n\
+  gl_FragDepthEXT = depth;\n\
+  gl_FragColor = vec4(outlineColor, vertColor.a);\n\
+  if (fog) {\n\
+    float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
+    gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
+                        fog_factor);\n\
+  }\n\
+}',
+// spherical billboard fragment shader
+SPHERES_FS : '\n\
+#extension GL_EXT_frag_depth : enable\n\
+precision ${PRECISION} float;\n\
+\n\
+varying vec2 vertTex;\n\
+varying vec4 vertCenter;\n\
+varying vec4 vertColor;\n\
+uniform float fogNear;\n\
+uniform float fogFar;\n\
+uniform vec3 fogColor;\n\
+uniform bool fog;\n\
+uniform mat4 projectionMat;\n\
+\n\
+void main(void) {\n\
+  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 0.48)\n\
+    discard;\n\
+  vec3 pos = vec3(vertTex.x, vertTex.y, \n\
+                  1.0*1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y);\n\
+  vec3 normal = normalize(pos);\n\
+  float dp = dot(normal, vec3(0.0, 0.0, 1.0))*0.5+0.5;\n\
+  float hemi = max(0.0, dp);\n\
+  vec4 projected = projectionMat * (vertCenter + vec4(pos, 1.0));\n\
+  float depth = projected.z / projected.w;\n\
+  gl_FragDepthEXT = depth;\n\
+  gl_FragColor = vec4(vertColor.rgb*hemi, vertColor.a);\n\
+  if (fog) {\n\
+    float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
+    gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
+                        fog_factor);\n\
+  }\n\
+}',
+
+SPHERES_VS : '\n\
+precision ${PRECISION} float;\n\
+attribute vec3 attrPos;\n\
+attribute vec4 attrColor;\n\
+attribute vec3 attrNormal;\n\
+\n\
+uniform mat4 projectionMat;\n\
+uniform mat4 modelviewMat;\n\
+uniform mat4 rotationMat;\n\
+varying vec4 vertColor;\n\
+varying vec2 vertTex;\n\
+varying vec4 vertCenter;\n\
+void main() {\n\
+  vec3 d = attrPos - attrNormal;\n\
+  vec4 rotated = vec4(d, 0.0)*rotationMat;\n\
+  //vec4 rotated = vec4(d, 0.0);\n\
+  gl_Position = projectionMat * modelviewMat * \n\
+                (vec4(attrNormal, 1.0)+rotated);\n\
+  vertTex = normalize(d).xy;\n\
+  vertColor = attrColor;\n\
+  vertCenter = modelviewMat* vec4(attrNormal, 1.0);\n\
+}'
+
 });
 

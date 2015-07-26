@@ -96,7 +96,7 @@ function load(pdb_id) {
   $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
     structure = io.pdb(data);
     //mol.assignHelixSheet(structure);
-    cartoon();
+    spheres();
     viewer.autoZoom();
   }});
 }
