@@ -307,16 +307,11 @@ void main() { \n\
 // spherical billboard fragment shader
 OUTLINE_SPHERES_FS : '\n\
 #extension GL_EXT_frag_depth : enable\n\
-precision ${PRECISION} float;\n\
 \n\
 varying vec2 vertTex;\n\
 varying vec4 vertCenter;\n\
 varying vec4 vertColor;\n\
-uniform float fogNear;\n\
-uniform float fogFar;\n\
 uniform vec3 outlineColor;\n\
-uniform vec3 fogColor;\n\
-uniform bool fog;\n\
 uniform mat4 projectionMat;\n\
 \n\
 void main(void) {\n\
@@ -331,25 +326,16 @@ void main(void) {\n\
   vec4 projected = projectionMat * (vertCenter + vec4(pos, 1.0));\n\
   float depth = projected.z / projected.w;\n\
   gl_FragDepthEXT = depth;\n\
-  gl_FragColor = vec4(outlineColor, vertColor.a);\n\
-  if (fog) {\n\
-    float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
-    gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
-                        fog_factor);\n\
-  }\n\
+  gl_FragColor = vec4(handleFog(outlineColor), vertColor.a);\n\
+  gl_FragColor = handleAlpha(gl_FragColor);\n\
 }',
 // spherical billboard fragment shader
 SPHERES_FS : '\n\
 #extension GL_EXT_frag_depth : enable\n\
-precision ${PRECISION} float;\n\
 \n\
 varying vec2 vertTex;\n\
 varying vec4 vertCenter;\n\
 varying vec4 vertColor;\n\
-uniform float fogNear;\n\
-uniform float fogFar;\n\
-uniform vec3 fogColor;\n\
-uniform bool fog;\n\
 uniform mat4 projectionMat;\n\
 \n\
 void main(void) {\n\
@@ -358,17 +344,13 @@ void main(void) {\n\
   vec3 pos = vec3(vertTex.x, vertTex.y, \n\
                   1.0*1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y);\n\
   vec3 normal = normalize(pos);\n\
-  float dp = dot(normal, vec3(0.0, 0.0, 1.0))*0.5+0.5;\n\
+  float dp = dot(normal, vec3(0.0, 0.0, 1.0))*0.8+0.2;\n\
   float hemi = max(0.0, dp);\n\
   vec4 projected = projectionMat * (vertCenter + vec4(pos, 1.0));\n\
   float depth = projected.z / projected.w;\n\
   gl_FragDepthEXT = depth;\n\
-  gl_FragColor = vec4(vertColor.rgb*hemi, vertColor.a);\n\
-  if (fog) {\n\
-    float fog_factor = smoothstep(fogNear, fogFar, depth);\n\
-    gl_FragColor = mix(gl_FragColor, vec4(fogColor, gl_FragColor.w),\n\
-                        fog_factor);\n\
-  }\n\
+  gl_FragColor = vec4(handleFog(vertColor.rgb*hemi), vertColor.a);\n\
+  gl_FragColor = handleAlpha(gl_FragColor);\n\
 }',
 
 SPHERES_VS : '\n\

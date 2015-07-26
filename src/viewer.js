@@ -397,10 +397,12 @@ Viewer.prototype = {
       select : c.initShader(shaders.SELECT_VS, shaders.SELECT_FS, p)
     };
     if (c.gl().getExtension('EXT_frag_depth')) {
-      this._shaderCatalog.spheres = c.initShader(shaders.SPHERES_VS, 
-                                                 shaders.SPHERES_FS, p);
-      this._shaderCatalog.outlineSpheres = c.initShader(shaders.SPHERES_VS, 
-                                                 shaders.OUTLINE_SPHERES_FS, p);
+      this._shaderCatalog.spheres = 
+        c.initShader(shaders.SPHERES_VS, 
+                     shaders.PRELUDE_FS + shaders.SPHERES_FS, p);
+      this._shaderCatalog.outlineSpheres = 
+        c.initShader(shaders.SPHERES_VS, 
+                     shaders.PRELUDE_FS + shaders.OUTLINE_SPHERES_FS, p);
     }
     this._boundDraw = utils.bind(this, this._draw);
     this._touchHandler = new TouchHandler(this._canvas.domElement(), 
