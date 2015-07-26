@@ -403,6 +403,9 @@ Viewer.prototype = {
       this._shaderCatalog.outlineSpheres = 
         c.initShader(shaders.SPHERES_VS, 
                      shaders.PRELUDE_FS + shaders.OUTLINE_SPHERES_FS, p);
+      this._shaderCatalog.selectSpheres = 
+        c.initShader(shaders.SELECT_SPHERES_VS, 
+                     shaders.PRELUDE_FS + shaders.SELECT_SPHERES_FS, p);
     }
     this._boundDraw = utils.bind(this, this._draw);
     this._touchHandler = new TouchHandler(this._canvas.domElement(), 

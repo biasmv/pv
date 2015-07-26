@@ -45,6 +45,12 @@ vec4 handleAlpha(vec4 inColor) {\n\
     return inColor;\n\
   } \n\
 } \n\
+\n\
+int intMod(int x, int y) { \n\
+  int z = x/y;\n\
+  return x-y*z;\n\
+}\n\
+\n\
 uniform vec3 selectionColor;\n\
 \n\
 vec3 handleSelect(vec3 inColor, float vertSelect) { \n\
@@ -373,6 +379,63 @@ void main() {\n\
                 (vec4(attrNormal, 1.0)+rotated);\n\
   vertTex = normalize(d).xy;\n\
   vertColor = attrColor;\n\
+  vertCenter = modelviewMat* vec4(attrNormal, 1.0);\n\
+}',
+
+// spherical billboard fragment shader
+SELECT_SPHERES_FS : '\n\
+#extension GL_EXT_frag_depth : enable\n\
+\n\
+varying vec2 vertTex;\n\
+varying vec4 vertCenter;\n\
+varying vec4 vertColor;\n\
+uniform mat4 projectionMat;\n\
+varying float objId;\n\
+uniform int symId;\n\
+\n\
+void main(void) {\n\
+  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 0.48)\n\
+    discard;\n\
+  vec3 pos = vec3(vertTex.x, vertTex.y, \n\
+                  1.0*1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y);\n\
+  vec4 projected = projectionMat * (vertCenter + vec4(pos, 1.0));\n\
+  float depth = projected.z / projected.w;\n\
+  gl_FragDepthEXT = depth;\n\
+  // ints are only required to be 7bit...\n\
+  int integralObjId = int(objId+0.5);\n\
+  int red = intMod(integralObjId, 256);\n\
+  integralObjId/=256;\n\
+  int green = intMod(integralObjId, 256);\n\
+  integralObjId/=256;\n\
+  int blue = intMod(integralObjId, 256);\n\
+  int alpha = symId;\n\
+  gl_FragColor = vec4(float(red), float(green), \n\
+                      float(blue), float(alpha))/255.0;\n\
+}',
+
+SELECT_SPHERES_VS : '\n\
+precision ${PRECISION} float;\n\
+attribute vec3 attrPos;\n\
+attribute vec4 attrColor;\n\
+attribute vec3 attrNormal;\n\
+attribute float attrObjId;\n\
+\n\
+uniform mat4 projectionMat;\n\
+uniform mat4 modelviewMat;\n\
+uniform mat4 rotationMat;\n\
+varying vec4 vertColor;\n\
+varying vec2 vertTex;\n\
+varying vec4 vertCenter;\n\
+varying float objId;\n\
+void main() {\n\
+  vec3 d = attrPos - attrNormal;\n\
+  vec4 rotated = vec4(d, 0.0)*rotationMat;\n\
+  //vec4 rotated = vec4(d, 0.0);\n\
+  gl_Position = projectionMat * modelviewMat * \n\
+                (vec4(attrNormal, 1.0)+rotated);\n\
+  vertTex = normalize(d).xy;\n\
+  vertColor = attrColor;\n\
+  objId = attrObjId;\n\
   vertCenter = modelviewMat* vec4(attrNormal, 1.0);\n\
 }'
 

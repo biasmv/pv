@@ -49,12 +49,10 @@ utils.derive(BillboardGeom, MeshGeom, {
     if (pass === 'outline') {
       return shaderCatalog.outlineSpheres;
     }
-    return null;
-    /*
     if (pass === 'select') {
       return shaderCatalog.selectSpheres;
     }
-    */
+    return null;
   },
 });
 
