@@ -319,6 +319,7 @@ varying vec4 vertCenter;\n\
 varying vec4 vertColor;\n\
 uniform vec3 outlineColor;\n\
 uniform mat4 projectionMat;\n\
+varying float vertSelect;\n\
 \n\
 void main(void) {\n\
   if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 0.5)\n\
@@ -332,7 +333,8 @@ void main(void) {\n\
   vec4 projected = projectionMat * (vertCenter + vec4(pos, 1.0));\n\
   float depth = projected.z / projected.w;\n\
   gl_FragDepthEXT = depth;\n\
-  gl_FragColor = vec4(handleFog(outlineColor), vertColor.a);\n\
+  vec3 color = handleSelect(outlineColor, vertSelect);\n\
+  gl_FragColor = vec4(handleFog(color), vertColor.a);\n\
   gl_FragColor = handleAlpha(gl_FragColor);\n\
 }',
 // spherical billboard fragment shader
@@ -342,6 +344,7 @@ SPHERES_FS : '\n\
 varying vec2 vertTex;\n\
 varying vec4 vertCenter;\n\
 varying vec4 vertColor;\n\
+varying float vertSelect;\n\
 uniform mat4 projectionMat;\n\
 \n\
 void main(void) {\n\
@@ -355,7 +358,8 @@ void main(void) {\n\
   vec4 projected = projectionMat * (vertCenter + vec4(pos, 1.0));\n\
   float depth = projected.z / projected.w;\n\
   gl_FragDepthEXT = depth;\n\
-  gl_FragColor = vec4(handleFog(vertColor.rgb*hemi), vertColor.a);\n\
+  vec3 color = handleSelect(vertColor.rgb * hemi, vertSelect);\n\
+  gl_FragColor = vec4(handleFog(color), vertColor.a);\n\
   gl_FragColor = handleAlpha(gl_FragColor);\n\
 }',
 
@@ -364,6 +368,7 @@ precision ${PRECISION} float;\n\
 attribute vec3 attrPos;\n\
 attribute vec4 attrColor;\n\
 attribute vec3 attrNormal;\n\
+attribute float attrSelect;\n\
 \n\
 uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
@@ -371,6 +376,7 @@ uniform mat4 rotationMat;\n\
 varying vec4 vertColor;\n\
 varying vec2 vertTex;\n\
 varying vec4 vertCenter;\n\
+varying float vertSelect;\n\
 void main() {\n\
   vec3 d = attrPos - attrNormal;\n\
   vec4 rotated = vec4(d, 0.0)*rotationMat;\n\
@@ -379,6 +385,7 @@ void main() {\n\
                 (vec4(attrNormal, 1.0)+rotated);\n\
   vertTex = normalize(d).xy;\n\
   vertColor = attrColor;\n\
+  vertSelect = attrSelect;\n\
   vertCenter = modelviewMat* vec4(attrNormal, 1.0);\n\
 }',
 
