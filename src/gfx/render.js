@@ -166,13 +166,11 @@ var billboardedSpheresForChain = (function() {
       opts.color.colorFor(atom, color, 0);
       var objId = idRange.nextId({ geom: meshGeom, atom : atom });
       var vertStart = va.numVerts();
-      // store center of quad in normal, so we can use a standard indexed 
-      // vertex array. 
       var p = atom.pos();
-      va.addVertex([p[0] - radius, p[1] - radius, p[2]], p, color, objId);
-      va.addVertex([p[0] + radius, p[1] + radius, p[2]], p, color, objId);
-      va.addVertex([p[0] + radius, p[1] - radius, p[2]], p, color, objId);
-      va.addVertex([p[0] - radius, p[1] + radius, p[2]], p, color, objId);
+      va.addVertex(p, [-1.0, -1.0, radius], color, objId);
+      va.addVertex(p, [+1.0, +1.0, radius], color, objId);
+      va.addVertex(p, [+1.0, -1.0, radius], color, objId);
+      va.addVertex(p, [-1.0, +1.0, radius], color, objId);
       va.addTriangle(vertStart + 0, vertStart + 1, vertStart + 2);
       va.addTriangle(vertStart + 0, vertStart + 3, vertStart + 1);
       var vertEnd = va.numVerts();

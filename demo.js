@@ -247,7 +247,7 @@ $('#load-from-pdb').change(function() {
 });
 viewer = pv.Viewer(document.getElementById('viewer'), { 
     width : 'auto', height: 'auto', antialias : true, fog : true,
-    outline : true, quality : 'medium', style : 'phong',
+    outline : true, quality : 'high', style : 'phong',
     selectionColor : 'white', transparency : 'screendoor', 
     background : '#ccc', animateTime: 500, doubleClick : null
 });

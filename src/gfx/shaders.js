@@ -317,19 +317,17 @@ OUTLINE_SPHERES_FS : '\n\
 varying vec2 vertTex;\n\
 varying vec4 vertCenter;\n\
 varying vec4 vertColor;\n\
+varying float radius;\n\
 uniform vec3 outlineColor;\n\
 uniform mat4 projectionMat;\n\
 varying float vertSelect;\n\
 \n\
 void main(void) {\n\
-  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 0.5)\n\
+  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 1.0)\n\
     discard;\n\
-  vec3 pos = vec3(vertTex.x, vertTex.y, \n\
-                  1.0*1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y);\n\
-  vec3 normal = normalize(pos);\n\
-  if (normal.z > 0.7) { \n\
-    discard; \n\
-  } \n\
+  vec3 normal = vec3(vertTex.x, vertTex.y, \n\
+                     sqrt(1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y));\n\
+  vec3 pos = vertCenter.xyz + normal * radius;\n\
   vec4 projected = projectionMat * (vertCenter + vec4(pos, 1.0));\n\
   float depth = projected.z / projected.w;\n\
   gl_FragDepthEXT = depth;\n\
@@ -345,17 +343,18 @@ varying vec2 vertTex;\n\
 varying vec4 vertCenter;\n\
 varying vec4 vertColor;\n\
 varying float vertSelect;\n\
+varying float radius;\n\
 uniform mat4 projectionMat;\n\
 \n\
 void main(void) {\n\
-  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 0.48)\n\
+  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 0.97)\n\
     discard;\n\
-  vec3 pos = vec3(vertTex.x, vertTex.y, \n\
-                  1.0*1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y);\n\
-  vec3 normal = normalize(pos);\n\
-  float dp = dot(normal, vec3(0.0, 0.0, 1.0))*0.8+0.2;\n\
+  vec3 normal = vec3(vertTex.x, vertTex.y, \n\
+                     sqrt(1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y));\n\
+  vec3 pos = vertCenter.xyz + normal * radius;\n\
+  float dp = dot(normal, vec3(0.0, 0.0, 1.0))*0.7+0.3;\n\
   float hemi = max(0.0, dp);\n\
-  vec4 projected = projectionMat * (vertCenter + vec4(pos, 1.0));\n\
+  vec4 projected = projectionMat * vec4(pos, 1.0);\n\
   float depth = projected.z / projected.w;\n\
   gl_FragDepthEXT = depth;\n\
   vec3 color = handleSelect(vertColor.rgb * hemi, vertSelect);\n\
@@ -369,6 +368,7 @@ attribute vec3 attrPos;\n\
 attribute vec4 attrColor;\n\
 attribute vec3 attrNormal;\n\
 attribute float attrSelect;\n\
+varying float radius;\n\
 \n\
 uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
@@ -378,15 +378,16 @@ varying vec2 vertTex;\n\
 varying vec4 vertCenter;\n\
 varying float vertSelect;\n\
 void main() {\n\
-  vec3 d = attrPos - attrNormal;\n\
+  vec3 d = vec3(attrNormal.xy * attrNormal.z, 0.0);\n\
   vec4 rotated = vec4(d, 0.0)*rotationMat;\n\
   //vec4 rotated = vec4(d, 0.0);\n\
   gl_Position = projectionMat * modelviewMat * \n\
-                (vec4(attrNormal, 1.0)+rotated);\n\
-  vertTex = normalize(d).xy;\n\
+                (vec4(attrPos, 1.0)+rotated);\n\
+  vertTex = attrNormal.xy;\n\
   vertColor = attrColor;\n\
   vertSelect = attrSelect;\n\
-  vertCenter = modelviewMat* vec4(attrNormal, 1.0);\n\
+  vertCenter = modelviewMat* vec4(attrPos, 1.0);\n\
+  radius = attrNormal.z;\n\
 }',
 
 // spherical billboard fragment shader
@@ -398,14 +399,16 @@ varying vec4 vertCenter;\n\
 varying vec4 vertColor;\n\
 uniform mat4 projectionMat;\n\
 varying float objId;\n\
+varying float radius;\n\
 uniform int symId;\n\
 \n\
 void main(void) {\n\
-  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 0.48)\n\
+  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 1.0)\n\
     discard;\n\
-  vec3 pos = vec3(vertTex.x, vertTex.y, \n\
-                  1.0*1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y);\n\
-  vec4 projected = projectionMat * (vertCenter + vec4(pos, 1.0));\n\
+  vec3 normal = vec3(vertTex.x, vertTex.y, \n\
+                     sqrt(1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y));\n\
+  vec3 pos = vertCenter.xyz + normal * radius;\n\
+  vec4 projected = projectionMat * vec4(pos, 1.0);\n\
   float depth = projected.z / projected.w;\n\
   gl_FragDepthEXT = depth;\n\
   // ints are only required to be 7bit...\n\
@@ -426,24 +429,24 @@ attribute vec3 attrPos;\n\
 attribute vec4 attrColor;\n\
 attribute vec3 attrNormal;\n\
 attribute float attrObjId;\n\
+varying float radius;\n\
 \n\
 uniform mat4 projectionMat;\n\
 uniform mat4 modelviewMat;\n\
 uniform mat4 rotationMat;\n\
-varying vec4 vertColor;\n\
 varying vec2 vertTex;\n\
 varying vec4 vertCenter;\n\
 varying float objId;\n\
 void main() {\n\
-  vec3 d = attrPos - attrNormal;\n\
+  vec3 d = vec3(attrNormal.xy * attrNormal.z, 0.0);\n\
   vec4 rotated = vec4(d, 0.0)*rotationMat;\n\
   //vec4 rotated = vec4(d, 0.0);\n\
   gl_Position = projectionMat * modelviewMat * \n\
-                (vec4(attrNormal, 1.0)+rotated);\n\
-  vertTex = normalize(d).xy;\n\
-  vertColor = attrColor;\n\
+                (vec4(attrPos, 1.0)+rotated);\n\
+  vertTex = attrNormal.xy;\n\
+  vertCenter = modelviewMat* vec4(attrPos, 1.0);\n\
+  radius = attrNormal.z;\n\
   objId = attrObjId;\n\
-  vertCenter = modelviewMat* vec4(attrNormal, 1.0);\n\
 }'
 
 });
