@@ -323,10 +323,10 @@ uniform mat4 projectionMat;\n\
 varying float vertSelect;\n\
 \n\
 void main(void) {\n\
-  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 1.0)\n\
+  float zz = dot(vertTex, vertTex);\n\
+  if (zz > 1.0 && zz < 0.8)\n\
     discard;\n\
-  vec3 normal = vec3(vertTex.x, vertTex.y, \n\
-                     sqrt(1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y));\n\
+  vec3 normal = vec3(vertTex.x, vertTex.y, sqrt(1.0-zz));\n\
   vec3 pos = vertCenter.xyz + normal * radius;\n\
   vec4 projected = projectionMat * (vertCenter + vec4(pos, 1.0));\n\
   float depth = projected.z / projected.w;\n\
@@ -347,17 +347,19 @@ varying float radius;\n\
 uniform mat4 projectionMat;\n\
 \n\
 void main(void) {\n\
-  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 0.97)\n\
+  float zz = dot(vertTex, vertTex);\n\
+  if (zz > 0.8)\n\
     discard;\n\
-  vec3 normal = vec3(vertTex.x, vertTex.y, \n\
-                     sqrt(1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y));\n\
+  vec3 normal = vec3(vertTex.x, vertTex.y, sqrt(1.0-zz));\n\
   vec3 pos = vertCenter.xyz + normal * radius;\n\
-  float dp = dot(normal, vec3(0.0, 0.0, 1.0))*0.7+0.3;\n\
-  float hemi = max(0.0, dp);\n\
+  float dp = normal.z;\n\
+  float hemi = min(1.0, max(0.6, dp));\n\
   vec4 projected = projectionMat * vec4(pos, 1.0);\n\
   float depth = projected.z / projected.w;\n\
   gl_FragDepthEXT = depth;\n\
-  vec3 color = handleSelect(vertColor.rgb * hemi, vertSelect);\n\
+  vec3 rgbColor = vertColor.rgb * hemi; \n\
+  rgbColor += min(vertColor.rgb, 0.8) * pow(max(0.0, dp), 128.0);\n\
+  vec3 color = handleSelect(rgbColor * hemi, vertSelect);\n\
   gl_FragColor = vec4(handleFog(color), vertColor.a);\n\
   gl_FragColor = handleAlpha(gl_FragColor);\n\
 }',
@@ -403,10 +405,10 @@ varying float radius;\n\
 uniform int symId;\n\
 \n\
 void main(void) {\n\
-  if (vertTex.x*vertTex.x+vertTex.y*vertTex.y > 1.0)\n\
+  float zz = dot(vertTex, vertTex);\n\
+  if (zz > 1.0)\n\
     discard;\n\
-  vec3 normal = vec3(vertTex.x, vertTex.y, \n\
-                     sqrt(1.0-vertTex.x*vertTex.x-vertTex.y*vertTex.y));\n\
+  vec3 normal = vec3(vertTex.x, vertTex.y, sqrt(1.0-zz));\n\
   vec3 pos = vertCenter.xyz + normal * radius;\n\
   vec4 projected = projectionMat * vec4(pos, 1.0);\n\
   float depth = projected.z / projected.w;\n\
