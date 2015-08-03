@@ -20,24 +20,24 @@
 
 define(
   [
-    '../gl-matrix', 
     '../geom', 
-    './geom-builders', 
-    './mesh-geom', 
-    './line-geom', 
     './billboard-geom', 
+    './line-geom', 
+    './mesh-geom', 
+    './geom-builders', 
     './vert-assoc', 
-    '../color'
+    '../color',
+    '../gl-matrix'
   ], 
   function(
-    glMatrix, 
     geom, 
-    geomBuilders, 
-    MeshGeom, 
-    LineGeom, 
     BillboardGeom,
+    LineGeom, 
+    MeshGeom, 
+    geomBuilders, 
     vertAssoc, 
-    color) {
+    color, 
+    glMatrix) {
 "use strict";
 
 var vec3 = glMatrix.vec3;
