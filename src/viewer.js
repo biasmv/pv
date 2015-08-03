@@ -83,10 +83,17 @@ on how to unblock it.\
 var vec3 = glMatrix.vec3;
 var mat4 = glMatrix.mat4;
 
+function isiOS() {
+  return (/(iPad|iPhone|iPod)/g).test(navigator.userAgent);
+}
+
+function isAndroid() {
+  return /Android/i.test(navigator.userAgent);
+}
 function shouldUseHighPrecision() {
   // high precision for shaders is only required on iOS, all the other browsers 
   // are doing just fine with mediump.
-  return (/(iPad|iPhone|iPod)/g).test( navigator.userAgent );
+  return isiOS();
 }
 
 var requestAnimFrame = (function(){
@@ -438,6 +445,10 @@ Viewer.prototype = {
   },
 
   _initKeyboardInput: function() {
+    if (isiOS() || isAndroid()) {
+      this._keyInput = document;
+      return;
+    }
     // this function creates a textarea element inside a div with height 
     // and width of zero. When the user clicks on the viewer, we set 
     // focus on the text area to receive text input. This makes sure we 
@@ -451,7 +462,9 @@ Viewer.prototype = {
   },
 
   focus : function() {
-    this._keyInput.focus();
+    if (this._keyInput !== document) {
+      this._keyInput.focus();
+    }
   },
 
   _initCanvas : function() {
@@ -468,11 +481,7 @@ Viewer.prototype = {
     this._mouseHandler = new MouseHandler(this._canvas, this, this._cam, 
                                           this._options.animateTime);
     this._canvas.domElement()
-        .addEventListener('mousedown', utils.bind(this, this._gainFocus));
-  },
-
-  _gainFocus : function() {
-    this._keyInput.focus();
+        .addEventListener('mousedown', utils.bind(this, this.focus));
   },
 
   setRotation : function(rotation, ms) {
@@ -576,7 +585,6 @@ Viewer.prototype = {
     if (eventName === 'keypress' || 
         eventName === 'keydown' || 
         eventName === 'keyup') {
-      console.log('keypress');
       // attach keyboard events to key input text area. We will 
       // only receive these events in case the text area has focus.
       this._keyInput.addEventListener(eventName, callback, false);
