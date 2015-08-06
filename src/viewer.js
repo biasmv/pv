@@ -88,7 +88,7 @@ function isiOS() {
 }
 
 function isAndroid() {
-  return /Android/i.test(navigator.userAgent);
+  return (/Android/ig).test(navigator.userAgent);
 }
 function shouldUseHighPrecision() {
   // high precision for shaders is only required on iOS, all the other browsers 
