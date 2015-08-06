@@ -109,12 +109,12 @@ MouseHandler.prototype = {
   })(),
 
   _mouseDown : function(event) {
-    if (event.button !== 0) {
+    if (event.button !== 0 && event.button !== 1) {
       return;
     }
     this._lastMouseDownTime = (new Date()).getTime();
     event.preventDefault();
-    if (event.shiftKey === true) {
+    if (event.shiftKey === true || event.button === 1) {
       this._canvas.on('mousemove', this._mousePanListener);
       document.addEventListener('mousemove', this._mousePanListener, false);
     } else {
