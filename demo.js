@@ -47,6 +47,7 @@ function cartoon() {
       color : color.ssSuccession(), showRelated : '1',
   });
   var rotation = viewpoint.principalAxes(go);
+  go.setSelection(go.select({rtype : 'C' }));
   viewer.setRotation(rotation)
 }
 
@@ -96,7 +97,8 @@ function load(pdb_id) {
   $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
     structure = io.pdb(data);
     //mol.assignHelixSheet(structure);
-    preset();
+    cartoon();
+    viewer.spheres('helices', structure.select({ aname : 'CA', rtype : 'C'}), { color : color.uniform('red'), radiusMultiplier : 0.3, showRelated : '1' });
     viewer.autoZoom();
   }});
 }
@@ -251,7 +253,7 @@ viewer = pv.Viewer(document.getElementById('viewer'), {
     selectionColor : 'white', transparency : 'screendoor', 
     background : '#ccc', animateTime: 500, doubleClick : null
 });
-viewer.addListener('viewerReady', transferase);
+viewer.addListener('viewerReady', crambin);
 
 viewer.on('doubleClick', function(picked) {
   if (picked === null) {

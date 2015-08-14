@@ -64,6 +64,11 @@ function _residuePredicates(dict) {
       return r.num() === dict.rnum;
     });
   }
+  if (dict.rtype !== undefined) {
+    predicates.push(function(r) {
+      return r.ss() === dict.rtype;
+    });
+  }
   return predicates;
 }
 

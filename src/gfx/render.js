@@ -954,7 +954,8 @@ var _cartoonForSingleTrace = (function() {
     vertArray.addVertex(pos, [-tangent[0], -tangent[1], -tangent[2]], 
                         color, objIds[0]);
     
-    _cartoonAddTube(vertArray, pos, normal, trace.residueAt(0).ss(), tangent,
+    var currentSS = trace.residueAt(0).ss();
+    _cartoonAddTube(vertArray, pos, normal, currentSS, tangent,
                     color, radius, true, opts, 0, objIds[0]);
     capTubeStart(vertArray, vertStart, opts.arcDetail * 4);
     var vertEnd = vertArray.numVerts();
@@ -989,8 +990,9 @@ var _cartoonForSingleTrace = (function() {
 
       var offset = 0; // <- set special handling of coil to helix,strand
                       //    transitions.
-      var residueIndex = Math.floor(i / opts.splineDetail);
-      var prevResidueIndex = Math.floor((i - 1) / opts.splineDetail);
+      var iCentered = i + opts.splineDetail / 2;
+      var residueIndex = Math.floor(iCentered / opts.splineDetail);
+      var prevResidueIndex = Math.floor((iCentered - 1) / opts.splineDetail);
 
       // used to determine whether we have to add an arrow profile. when the 
       // current residue is the last strand residue, the arrow tip has to land 
@@ -998,7 +1000,7 @@ var _cartoonForSingleTrace = (function() {
       // to have larger arrows we use multiple slices for the arrow (set to 
       // 3/4 of splineDetail).
       var arrowEndIndex = 
-        Math.floor((i + opts.arrowSkip) / opts.splineDetail);
+        Math.floor((iCentered + opts.arrowSkip) / opts.splineDetail);
       var drawArrow = false;
       var thisSS = trace.residueAt(residueIndex).ss();
       if (!opts.forceTube) {
