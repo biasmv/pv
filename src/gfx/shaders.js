@@ -374,7 +374,8 @@ void main() {\n\
   vertColor = attrColor;\n\
   vertSelect = attrSelect;\n\
   vertCenter = modelviewMat* vec4(attrPos, 1.0);\n\
-  float dd = length((projectionMat * vertCenter).xy - gl_Position.xy) / gl_Position.w;\n\
+  float dist = length((projectionMat * vertCenter).xy - gl_Position.xy);\n\
+  float dd = dist / gl_Position.w;\n\
   border = 1.0 - outlineWidth * 1.4 * length(relativePixelSize)/dd;\n\
   radius = attrNormal.z;\n\
 }',

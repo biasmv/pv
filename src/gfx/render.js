@@ -34,8 +34,8 @@ define(
     BillboardGeom,
     LineGeom, 
     MeshGeom, 
-    geomBuilders, 
-    vertAssoc, 
+    gfxGeomBuilders, 
+    gfxVertAssoc, 
     color, 
     glMatrix) {
 "use strict";
@@ -44,12 +44,12 @@ var vec3 = glMatrix.vec3;
 var vec4 = glMatrix.vec4;
 var mat3 = glMatrix.mat3;
 
-var TubeProfile = geomBuilders.TubeProfile;
-var ProtoSphere = geomBuilders.ProtoSphere;
-var ProtoCylinder = geomBuilders.ProtoCylinder;
+var TubeProfile = gfxGeomBuilders.TubeProfile;
+var ProtoSphere = gfxGeomBuilders.ProtoSphere;
+var ProtoCylinder = gfxGeomBuilders.ProtoCylinder;
 
-var TraceVertexAssoc = vertAssoc.TraceVertexAssoc;
-var AtomVertexAssoc = vertAssoc.AtomVertexAssoc;
+var TraceVertexAssoc = gfxVertAssoc.TraceVertexAssoc;
+var AtomVertexAssoc = gfxVertAssoc.AtomVertexAssoc;
 var interpolateColor = color.interpolateColor;
 
 var exports = {};
