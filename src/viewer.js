@@ -378,6 +378,7 @@ Viewer.prototype = {
     this._cam = new Cam(this._canvas.gl());
     this._cam.setUpsamplingFactor(this._canvas.superSamplingFactor());
     this._cam.setOutlineWidth(this._options.outlineWidth);
+    this._cam.setOutlineEnabled(this._options.outline);
     var sd = this._options.transparency === 'screendoor';
     this._cam.setScreenDoorTransparency(sd);
     this._cam.fog(this._options.fog);
@@ -407,9 +408,6 @@ Viewer.prototype = {
       this._shaderCatalog.spheres = 
         c.initShader(shaders.SPHERES_VS, 
                      shaders.PRELUDE_FS + shaders.SPHERES_FS, p);
-      this._shaderCatalog.outlineSpheres = 
-        c.initShader(shaders.SPHERES_VS, 
-                     shaders.PRELUDE_FS + shaders.OUTLINE_SPHERES_FS, p);
       this._shaderCatalog.selectSpheres = 
         c.initShader(shaders.SELECT_SPHERES_VS, 
                      shaders.PRELUDE_FS + shaders.SELECT_SPHERES_FS, p);

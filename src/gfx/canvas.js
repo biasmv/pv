@@ -235,6 +235,8 @@ Canvas.prototype = {
                                                  'selectionColor');
     shaderProgram.pointSize = getUniformLoc(shaderProgram, 'pointSize');
     shaderProgram.zoom = getUniformLoc(shaderProgram, 'zoom');
+    shaderProgram.outlineEnabled = getUniformLoc(shaderProgram, 
+                                                 'outlineEnabled');
 
     return shaderProgram;
   },

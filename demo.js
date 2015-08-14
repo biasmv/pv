@@ -87,7 +87,7 @@ function ballsAndSticks() {
 function preset() {
   viewer.clear();
   var ligand = structure.select({'rnames' : ['SAH', 'RVP']});
-  viewer.ballsAndSticks('structure.ligand', ligand, {
+  viewer.spheres('structure.ligand', ligand, {
   });
   viewer.cartoon('structure.protein', structure, { boundingSpheres: false });
 }
@@ -96,7 +96,7 @@ function load(pdb_id) {
   $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
     structure = io.pdb(data);
     //mol.assignHelixSheet(structure);
-    spheres();
+    preset();
     viewer.autoZoom();
   }});
 }
@@ -251,7 +251,7 @@ viewer = pv.Viewer(document.getElementById('viewer'), {
     selectionColor : 'white', transparency : 'screendoor', 
     background : '#ccc', animateTime: 500, doubleClick : null
 });
-viewer.addListener('viewerReady', crambin);
+viewer.addListener('viewerReady', transferase);
 
 viewer.on('doubleClick', function(picked) {
   if (picked === null) {

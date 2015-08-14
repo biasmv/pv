@@ -311,31 +311,6 @@ void main() { \n\
 }',
 
 // spherical billboard fragment shader
-OUTLINE_SPHERES_FS : '\n\
-#extension GL_EXT_frag_depth : enable\n\
-\n\
-varying vec2 vertTex;\n\
-varying vec4 vertCenter;\n\
-varying vec4 vertColor;\n\
-varying float radius;\n\
-uniform vec3 outlineColor;\n\
-uniform mat4 projectionMat;\n\
-varying float vertSelect;\n\
-\n\
-void main(void) {\n\
-  float zz = dot(vertTex, vertTex);\n\
-  if (zz > 1.0 && zz < 0.8)\n\
-    discard;\n\
-  vec3 normal = vec3(vertTex.x, vertTex.y, sqrt(1.0-zz));\n\
-  vec3 pos = vertCenter.xyz + normal * radius;\n\
-  vec4 projected = projectionMat * (vertCenter + vec4(pos, 1.0));\n\
-  float depth = projected.z / projected.w;\n\
-  gl_FragDepthEXT = depth;\n\
-  vec3 color = handleSelect(outlineColor, vertSelect);\n\
-  gl_FragColor = vec4(handleFog(color), vertColor.a);\n\
-  gl_FragColor = handleAlpha(gl_FragColor);\n\
-}',
-// spherical billboard fragment shader
 SPHERES_FS : '\n\
 #extension GL_EXT_frag_depth : enable\n\
 \n\
@@ -345,23 +320,31 @@ varying vec4 vertColor;\n\
 varying float vertSelect;\n\
 varying float radius;\n\
 uniform mat4 projectionMat;\n\
+uniform vec3 outlineColor;\n\
+varying float border;\n\
+uniform bool outlineEnabled;\n\
 \n\
 void main(void) {\n\
   float zz = dot(vertTex, vertTex);\n\
-  if (zz > 0.8)\n\
+  if (zz > 1.0)\n\
     discard;\n\
   vec3 normal = vec3(vertTex.x, vertTex.y, sqrt(1.0-zz));\n\
   vec3 pos = vertCenter.xyz + normal * radius;\n\
   float dp = normal.z;\n\
-  float hemi = min(1.0, max(0.6, dp));\n\
+  float hemi = sqrt(min(1.0, max(0.5, dp)));\n\
   vec4 projected = projectionMat * vec4(pos, 1.0);\n\
   float depth = projected.z / projected.w;\n\
   gl_FragDepthEXT = depth;\n\
   vec3 rgbColor = vertColor.rgb * hemi; \n\
-  rgbColor += min(vertColor.rgb, 0.8) * pow(max(0.0, dp), 128.0);\n\
-  vec3 color = handleSelect(rgbColor * hemi, vertSelect);\n\
-  gl_FragColor = vec4(handleFog(color), vertColor.a);\n\
-  gl_FragColor = handleAlpha(gl_FragColor);\n\
+  rgbColor += 0.15 * max(vertColor.rgb, 0.8) * pow(max(0.0, dp), 256.0);\n\
+  if (outlineEnabled) { \n\
+    rgbColor = mix(rgbColor * hemi, outlineColor, step(border, sqrt(zz)));\n\
+  } else { \n\
+    rgbColor *= hemi; \n\
+  } \n\
+  rgbColor = handleSelect(rgbColor, vertSelect);\n\
+  vec4 fogged = vec4(handleFog(rgbColor), vertColor.a);\n\
+  gl_FragColor = handleAlpha(fogged);\n\
 }',
 
 SPHERES_VS : '\n\
@@ -370,6 +353,8 @@ attribute vec3 attrPos;\n\
 attribute vec4 attrColor;\n\
 attribute vec3 attrNormal;\n\
 attribute float attrSelect;\n\
+uniform vec2 relativePixelSize;\n\
+uniform float outlineWidth;\n\
 varying float radius;\n\
 \n\
 uniform mat4 projectionMat;\n\
@@ -377,18 +362,20 @@ uniform mat4 modelviewMat;\n\
 uniform mat4 rotationMat;\n\
 varying vec4 vertColor;\n\
 varying vec2 vertTex;\n\
+varying float border;\n\
 varying vec4 vertCenter;\n\
 varying float vertSelect;\n\
 void main() {\n\
   vec3 d = vec3(attrNormal.xy * attrNormal.z, 0.0);\n\
   vec4 rotated = vec4(d, 0.0)*rotationMat;\n\
-  //vec4 rotated = vec4(d, 0.0);\n\
   gl_Position = projectionMat * modelviewMat * \n\
                 (vec4(attrPos, 1.0)+rotated);\n\
   vertTex = attrNormal.xy;\n\
   vertColor = attrColor;\n\
   vertSelect = attrSelect;\n\
   vertCenter = modelviewMat* vec4(attrPos, 1.0);\n\
+  float dd = length((projectionMat * vertCenter).xy - gl_Position.xy) / gl_Position.w;\n\
+  border = 1.0 - outlineWidth * 1.4 * length(relativePixelSize)/dd;\n\
   radius = attrNormal.z;\n\
 }',
 

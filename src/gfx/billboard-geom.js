@@ -43,11 +43,11 @@ utils.derive(BillboardGeom, MeshGeom, {
   },
   shaderForStyleAndPass :
       function(shaderCatalog, style, pass) {
+    // the normal pass contains render code for both the normal 
+    // and outline pass which is toggled on/off by a boolean 
+    // uniform.
     if (pass === 'normal') {
       return shaderCatalog.spheres;
-    }
-    if (pass === 'outline') {
-      return shaderCatalog.outlineSpheres;
     }
     if (pass === 'select') {
       return shaderCatalog.selectSpheres;
