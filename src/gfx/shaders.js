@@ -128,20 +128,24 @@ uniform mat4 modelviewMat;\n\
 uniform float pointSize;\n\
 attribute vec3 attrPos;\n\
 attribute float attrObjId;\n\
+attribute vec4 attrColor;\n\
 \n\
 varying float objId;\n\
+varying float objAlpha;\n\
 \n\
 void main(void) {\n\
   gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
   float distToCamera = vec4(modelviewMat * vec4(attrPos, 1.0)).z;\n\
   gl_PointSize = pointSize * 200.0 / abs(distToCamera); \n\
   objId = attrObjId;\n\
+  objAlpha = attrColor.a;\n\
 }',
 
 SELECT_FS : '\n\
 precision ${PRECISION} float;\n\
 \n\
 varying float objId;\n\
+varying float objAlpha;\n\
 uniform int symId;\n\
 \n\
 int intMod(int x, int y) { \n\
@@ -149,6 +153,7 @@ int intMod(int x, int y) { \n\
   return x-y*z;\n\
 }\n\
 void main(void) {\n\
+  if (objAlpha == 0.0) { discard; }\n\
   // ints are only required to be 7bit...\n\
   int integralObjId = int(objId+0.5);\n\
   int red = intMod(integralObjId, 256);\n\
