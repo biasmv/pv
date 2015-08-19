@@ -609,36 +609,41 @@ Viewer.prototype = {
         eventName === 'keydown' || 
         eventName === 'keyup') {
       // attach keyboard events to key input text area. We will 
-      // only receive these events in case the text area has focus.
+      // only receive these events in case the text area has focus. Note that 
+      // _keyInput is set to the document in case we are running on a 
+      // tablet/phone as we wold pop up the on-screen keyboard otherwise.
       this._keyInput.addEventListener(eventName, callback, false);
+      return;
     }
-    else {
+    if (eventName === 'mousemove' || 
+        eventName === 'mousedown' || eventName === 'mouseup') {
+      this._canvas.domElement().addEventListener(eventName, callback, false);
+    }
 
-      var callbacks = this.listenerMap[eventName];
-      if (typeof callbacks === 'undefined') {
-        callbacks = [];
-        this.listenerMap[eventName] = callbacks;
-      }
-      if (callback === 'center') {
-        var cb = utils.bind(this._mouseHandler, 
-                            this._mouseHandler._centerOnClicked);
-        callbacks.push(cb);
-      } else {
-        callbacks.push(callback);
-      }
-      // in case viewer is already initialized, fire viewerReady immediately. 
-      // Otherwise, the callback would never be invoked in this case:
-      //  
-      // document.addEventListener('DOMContentLoaded', function() {
-      //    viewer = pv.Viewer(...);
-      //    viewer.on('viewerReady', function(viewer) {
-      //    });
-      // });
-      if (this._initialized && eventName === 'viewerReady') {
-        // don't use dispatch here, we only want this very callback to be 
-        // invoked.
-        callback(this, null);
-      }
+    var callbacks = this.listenerMap[eventName];
+    if (typeof callbacks === 'undefined') {
+      callbacks = [];
+      this.listenerMap[eventName] = callbacks;
+    }
+    if (callback === 'center') {
+      var cb = utils.bind(this._mouseHandler, 
+                          this._mouseHandler._centerOnClicked);
+      callbacks.push(cb);
+    } else {
+      callbacks.push(callback);
+    }
+    // in case viewer is already initialized, fire viewerReady immediately. 
+    // Otherwise, the callback would never be invoked in this case:
+    //  
+    // document.addEventListener('DOMContentLoaded', function() {
+    //    viewer = pv.Viewer(...);
+    //    viewer.on('viewerReady', function(viewer) {
+    //    });
+    // });
+    if (this._initialized && eventName === 'viewerReady') {
+      // don't use dispatch here, we only want this very callback to be 
+      // invoked.
+      callback(this, null);
     }
   },
 
