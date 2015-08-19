@@ -255,6 +255,9 @@ viewer = pv.Viewer(document.getElementById('viewer'), {
 });
 viewer.addListener('viewerReady', crambin);
 
+viewer.on('keypress', function() {
+  viewer.rotate([1,0,0], Math.PI/2);
+});
 viewer.on('doubleClick', function(picked) {
   if (picked === null) {
     viewer.fitTo(structure);

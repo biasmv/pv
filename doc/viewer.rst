@@ -263,6 +263,16 @@ Camera Positioning/Orientation
   :param what: must be an object which implements updateProjectionInterval, e.g. a SceneNode, a :class:`pv.mol.MolView`, or :class:`pv.mol.Mol`.
 
 
+.. function:: pv.Viewer.rotate(axis, angle, ms)
+
+  Rotate the viewer around an axis by a certain amount.
+
+  :param axis: 3-dimensional axis to rotate around. The axes are in the screen coordinate system, meaning the X- and Y-axes are aligned to the screen's X and Y axes and the Z axis points towards the camera's eye position. The default rotation axis is [0,1,0]. The axis must be normalized.
+
+  :param angle: the rotation angle in radians. When positive, the rotation is in counter-clockwise direction, when negative, the rotation is in clockwise-direction. The rotation angle is always used modulo 2π.
+
+  :param ms: When provided, the rotation is animated from the current to the target rotation. When omitted (or 0) the camera is immediately rotation to the target rotation. 
+
 .. function:: pv.Viewer.spin(enable)
               pv.Viewer.spin(speed[, axis])
 

@@ -36,6 +36,7 @@ define([
   './gfx/custom-mesh', 
   './gfx/animation', 
   './gfx/scene-node',
+  './geom',
   './slab'], 
   function(
     glMatrix, 
@@ -54,6 +55,7 @@ define([
     CustomMesh, 
     anim, 
     SceneNode,
+    geom,
     // slab must be last due to a problem in AMDClean that occurs
     // when the last parameter name does not match the module file 
     // name
@@ -81,6 +83,7 @@ on how to unblock it.\
 
 
 var vec3 = glMatrix.vec3;
+var mat3 = glMatrix.mat3;
 var mat4 = glMatrix.mat4;
 
 function isiOS() {
@@ -481,6 +484,28 @@ Viewer.prototype = {
     this._canvas.domElement()
         .addEventListener('mousedown', utils.bind(this, this.focus));
   },
+
+  rotate : (function() {
+    var normalizedAxis = vec3.create();
+    var targetRotation3 = mat3.create();
+    var targetRotation4 = mat4.create();
+    return function(axis, angle, ms) {
+      ms |= 0;
+      vec3.normalize(normalizedAxis, axis);
+      geom.axisRotation(targetRotation3, normalizedAxis, angle);
+      mat4.fromMat3(targetRotation4, targetRotation3);
+      mat4.mul(targetRotation4, targetRotation4, this._cam.rotation());
+      if (ms === 0) {
+        this._cam.setRotation(targetRotation4);
+        this.requestRedraw();
+        return;
+      }
+
+      this._animControl.add(anim.rotate(this._cam.rotation(), 
+                                        targetRotation4, ms));
+      this.requestRedraw();
+    }; 
+  })(),
 
   setRotation : function(rotation, ms) {
     ms |= 0;
