@@ -168,6 +168,7 @@ utils.derive(Spin, Animation, {
   })(),
   setSpeed : function(speed) {
     this._speed = speed;
+    this._duration = 1000 * (2 * Math.PI / speed);
   },
   setAxis : function(axis) {
     this._axis = axis;
