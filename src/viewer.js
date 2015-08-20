@@ -119,13 +119,15 @@ function slabModeToStrategy(mode, options) {
 }
 
 
-function PickedObject(target, node, symIndex, pos, object, transform) {
+function PickedObject(target, node, symIndex, pos, object, 
+                      transform, connectivity) {
   this._pos = pos;
   this._target = target;
   this._node = node;
   this._symIndex = symIndex;
   this._legacyObject = object;
   this._legacyTransform = transform;
+  this._connectivity = connectivity;
 }
 
 PickedObject.prototype =  {
@@ -137,6 +139,10 @@ PickedObject.prototype =  {
   },
   pos : function() {
     return this._pos;
+  },
+
+  connectivity : function() {
+    return this._connectivity;
   },
 
   node : function() {
@@ -1019,14 +1025,17 @@ Viewer.prototype = {
       var transformedPos = vec3.create();
       var target = null;
       var transform = null;
+      var connectivity = 'unknown';
       if (symIndex !== 255) {
         target = picked.atom;
         transform = picked.geom.symWithIndex(symIndex);
         vec3.transformMat4(transformedPos, picked.atom.pos(), transform);
+        connectivity = picked.isTrace ? 'trace' : 'full';
       } else {
         if (picked.atom !== undefined) {
           target = picked.atom;
           transformedPos = picked.atom.pos();
+          connectivity = picked.isTrace ? 'trace' : 'full';
         } else {
           target = picked.userData;
           transformedPos = picked.center;
@@ -1034,7 +1043,8 @@ Viewer.prototype = {
       }
       return new PickedObject(target, picked.geom, 
                               symIndex < 255 ? symIndex : null,
-                              transformedPos, picked, transform);
+                              transformedPos, picked, transform,
+                              connectivity);
     };
   })(),
 

@@ -247,18 +247,22 @@ $('#load-from-pdb').change(function() {
     viewer.autoZoom();
   });
 });
+
 viewer = pv.Viewer(document.getElementById('viewer'), { 
     width : 'auto', height: 'auto', antialias : true, fog : true,
     outline : true, quality : 'high', style : 'phong',
     selectionColor : 'white', transparency : 'screendoor', 
     background : '#ccc', animateTime: 500, doubleClick : null
 });
+
 viewer.addListener('viewerReady', crambin);
 
 viewer.on('keypress', function() {
   viewer.rotate([1,0,0], Math.PI/2);
 });
+
 viewer.on('doubleClick', function(picked) {
+  console.log(picked.connectivity());
   if (picked === null) {
     viewer.fitTo(structure);
     return;

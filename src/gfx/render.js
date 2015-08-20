@@ -388,7 +388,8 @@ var makeLineTrace = (function() {
     var idRange = opts.idPool.getContinuousRange(trace.length());
     lineGeom.addIdRange(idRange);
     var idOne = idRange.nextId({ geom: lineGeom, 
-                                 atom : trace.centralAtomAt(0) });
+                                 atom : trace.centralAtomAt(0),
+                                 isTrace : true });
     var idTwo;
     for (var i = 1; i < trace.length(); ++i) {
 
@@ -401,7 +402,7 @@ var makeLineTrace = (function() {
       trace.posAt(posOne, i - 1);
       trace.posAt(posTwo, i);
       idTwo = idRange.nextId({ 
-        geom: lineGeom, atom : trace.centralAtomAt(i)});
+        geom: lineGeom, atom : trace.centralAtomAt(i), isTrace : true});
       va.addLine(posOne, colorOne, posTwo, colorTwo, idOne, idTwo);
       idOne = idTwo;
       idTwo = null;
@@ -489,7 +490,8 @@ var slineMakeTrace = (function() {
       positions[i * 3] = posOne[0];
       positions[i * 3 + 1] = posOne[1];
       positions[i * 3 + 2] = posOne[2];
-      objIds.push(idRange.nextId({ geom : lineGeom, atom : atom }));
+      objIds.push(idRange.nextId({ geom : lineGeom, atom : atom, 
+                                   isTrace : true }));
     }
     var idStart = objIds[0], idEnd = 0;
     var sdiv = geom.catmullRomSpline(positions, trace.length(),
@@ -678,7 +680,8 @@ var _addNucleotideSticks = (function() {
         if (endAtom === null || startAtom === null) {
           continue;
         }
-        var objId = idRange.nextId({ geom: meshGeom, atom : endAtom });
+        var objId = idRange.nextId({ geom: meshGeom, atom : 
+                                     endAtom, isTrace : true });
         vec3.add(center, startAtom.pos(), endAtom.pos());
         vec3.scale(center, center, 0.5);
 
@@ -853,7 +856,8 @@ var _colorPosNormalsFromTrace = (function() {
     vec3.set(lastNormal, 0.0, 0.0, 0.0);
     for (var i = 0; i < trace_length; ++i) {
       objIds.push(pool.nextId({ geom : meshGeom, 
-                                atom : trace.centralAtomAt(i)}));
+                                atom : trace.centralAtomAt(i),
+                                isTrace : true }));
       trace.smoothPosAt(pos, i, opts.strength);
       positions[i * 3] = pos[0];
       positions[i * 3 + 1] = pos[1];
@@ -1116,7 +1120,8 @@ var _renderSingleTrace = (function() {
     var vertStart = va.numVerts();
     trace.posAt(caPrevPos, 0);
     var idStart = idRange.nextId({ geom : meshGeom, 
-                                   atom : trace.centralAtomAt(0)}), 
+                                   atom : trace.centralAtomAt(0),
+                                   isTrace : true }), 
         idEnd = 0;
     opts.protoSphere.addTransformed(va, caPrevPos, opts.radius,
                                    colorOne, idStart);
@@ -1130,7 +1135,8 @@ var _renderSingleTrace = (function() {
     var vertsPerIteration = opts.protoCyl.numVerts() + 
                             opts.protoSphere.numVerts();
     for (var i = 1; i < trace.length(); ++i) {
-      idEnd = idRange.nextId({ geom : meshGeom, atom : trace.centralAtomAt(i)});
+      idEnd = idRange.nextId({ geom : meshGeom, atom : trace.centralAtomAt(i),
+                               isTrace : true });
       trace.posAt(caPrevPos, i - 1);
       trace.posAt(caThisPos, i);
       opts.color.colorFor(trace.centralAtomAt(i), colorTwo, 0);
