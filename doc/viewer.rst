@@ -263,6 +263,14 @@ Camera Positioning/Orientation
   :param what: must be an object which implements updateProjectionInterval, e.g. a SceneNode, a :class:`pv.mol.MolView`, or :class:`pv.mol.Mol`.
 
 
+.. function:: pv.Viewer.translate(vector, ms)
+
+  Translate the viewer center.
+
+  :param vector: The 3-dimensional vector to translate by. The vector is in screen coordinates, e.g. the vector [1,0,0] is aligned to the X-axis as currently seen on screen.
+  :param ms: When provided, the translation is animated from the current to the target position. When omitted (or 0) the camera is immediately set to the target position. 
+
+
 .. function:: pv.Viewer.rotate(axis, angle, ms)
 
   Rotate the viewer around an axis by a certain amount.

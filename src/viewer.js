@@ -485,6 +485,25 @@ Viewer.prototype = {
         .addEventListener('mousedown', utils.bind(this, this.focus));
   },
 
+  translate : (function() {
+    var newCenter = vec3.create();
+    var inverseRotation = mat4.create();
+    return function(vector, ms) {
+      ms |= 0;
+      mat4.transpose(inverseRotation, this._cam.rotation());
+      vec3.transformMat4(newCenter, vector, inverseRotation);
+      vec3.sub(newCenter, this._cam.center(), newCenter);
+      if (ms === 0) {
+        this._cam.setCenter(newCenter);
+        this.requestRedraw();
+        return;
+      }
+      this._animControl.add(anim.move(this._cam.center(), 
+                                      vec3.clone(newCenter), ms));
+      this.requestRedraw();
+    };
+  })(),
+
   rotate : (function() {
     var normalizedAxis = vec3.create();
     var targetRotation3 = mat3.create();
@@ -582,6 +601,9 @@ Viewer.prototype = {
     this.requestRedraw();
   },
 
+  zoom : function() {
+    return this._cam.zoom();
+  },
   setZoom : function(zoom, ms) {
     ms |= 0;
     if (ms === 0) {
