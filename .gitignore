@@ -13,3 +13,4 @@ build
 *.csf
 *.tgz
 *.pyc
+*.egg-info
