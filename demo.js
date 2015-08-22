@@ -47,7 +47,7 @@ function cartoon() {
       color : color.ssSuccession(), showRelated : '1',
   });
   var rotation = viewpoint.principalAxes(go);
-  go.setSelection(go.select({rtype : 'C' }));
+  //go.setSelection(go.select({rtype : 'C' }));
   viewer.setRotation(rotation)
 }
 
@@ -98,7 +98,7 @@ function load(pdb_id) {
     structure = io.pdb(data);
     //mol.assignHelixSheet(structure);
     cartoon();
-    viewer.spheres('helices', structure.select({ aname : 'CA', rtype : 'C'}), { color : color.uniform('red'), radiusMultiplier : 0.3, showRelated : '1' });
+    //viewer.spheres('helices', structure.select({ aname : 'CA', rtype : 'C'}), { color : color.uniform('red'), radiusMultiplier : 0.3, showRelated : '1' });
     viewer.autoZoom();
   }});
 }
