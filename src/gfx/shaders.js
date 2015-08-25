@@ -208,6 +208,7 @@ void main(void) {\n\
   float hemi = min(1.0, max(0.3, dp)+0.2);\n\
   //hemi *= vertColor.a;\n\
   vec3 rgbColor = vertColor.rgb * hemi; \n\
+  //gl_FragDepthEXT = gl_FragCoord.z;\n\
   rgbColor += min(vertColor.rgb, 0.8) * pow(max(0.0, dp), 18.0);\n\
   rgbColor = handleSelect(rgbColor, vertSelect);\n\
   gl_FragColor = vec4(clamp(rgbColor, 0.0, 1.0), vertColor.a);\n\
@@ -339,7 +340,7 @@ void main(void) {\n\
   float hemi = sqrt(min(1.0, max(0.3, dp) + 0.2));\n\
   vec4 projected = projectionMat * vec4(pos, 1.0);\n\
   float depth = projected.z / projected.w;\n\
-  gl_FragDepthEXT = depth;\n\
+  gl_FragDepthEXT = (depth + 1.0) * 0.5;\n\
   vec3 rgbColor = vertColor.rgb * hemi; \n\
   rgbColor += min(vertColor.rgb, 0.8) * pow(max(0.0, dp), 18.0);\n\
   if (outlineEnabled) { \n\
@@ -405,7 +406,7 @@ void main(void) {\n\
   vec3 pos = vertCenter.xyz + normal * radius;\n\
   vec4 projected = projectionMat * vec4(pos, 1.0);\n\
   float depth = projected.z / projected.w;\n\
-  gl_FragDepthEXT = depth;\n\
+  gl_FragDepthEXT = (depth + 1.0) * 0.5;\n\
   // ints are only required to be 7bit...\n\
   int integralObjId = int(objId+0.5);\n\
   int red = intMod(integralObjId, 256);\n\
