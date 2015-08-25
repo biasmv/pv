@@ -235,12 +235,12 @@ utils.derive(Chain, ChainBase, {
     var to = rnumInsCodeHash(toNumAndIns[0], toNumAndIns[1]);
     for (var i = 1; i < this._residues.length-1; ++i) {
       var res = this._residues[i];
-      // FIXME: we currently don't set the secondary structure of the first and 
-      // last residue of helices and sheets. that takes care of better 
-      // transitions between coils and helices. ideally, this should be done
-      // in the cartoon renderer, NOT in this function.
+      // FIXME: we currently don't set the secondary structure of the last 
+      // residue of helices and sheets. that takes care of better transitions 
+      // between coils and helices. ideally, this should be done in the 
+      // cartoon renderer, NOT in this function.
       var combined = rnumInsCodeHash(res.num(), res.insCode());
-      if (combined <=  from || combined >= to) {
+      if (combined <  from || combined >= to) {
         continue;
       }
       res.setSS(ss);
