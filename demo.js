@@ -97,7 +97,7 @@ function load(pdb_id) {
   $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
     structure = io.pdb(data);
     //mol.assignHelixSheet(structure);
-    cartoon();
+    preset();
     //viewer.spheres('helices', structure.select({ aname : 'CA', rtype : 'C'}), { color : color.uniform('red'), radiusMultiplier : 0.3, showRelated : '1' });
     viewer.autoZoom();
   }});

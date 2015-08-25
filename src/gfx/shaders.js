@@ -336,12 +336,12 @@ void main(void) {\n\
   vec3 normal = vec3(vertTex.x, vertTex.y, sqrt(1.0-zz));\n\
   vec3 pos = vertCenter.xyz + normal * radius;\n\
   float dp = normal.z;\n\
-  float hemi = sqrt(min(1.0, max(0.5, dp)));\n\
+  float hemi = sqrt(min(1.0, max(0.3, dp) + 0.2));\n\
   vec4 projected = projectionMat * vec4(pos, 1.0);\n\
   float depth = projected.z / projected.w;\n\
   gl_FragDepthEXT = depth;\n\
   vec3 rgbColor = vertColor.rgb * hemi; \n\
-  rgbColor += 0.15 * max(vertColor.rgb, 0.8) * pow(max(0.0, dp), 256.0);\n\
+  rgbColor += min(vertColor.rgb, 0.8) * pow(max(0.0, dp), 18.0);\n\
   if (outlineEnabled) { \n\
     rgbColor = mix(rgbColor * hemi, outlineColor, step(border, sqrt(zz)));\n\
   } else { \n\
