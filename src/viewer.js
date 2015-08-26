@@ -1079,6 +1079,14 @@ Viewer.prototype = {
       }
     }
   },
+  rotation : function() {
+    return this._cam.rotation();
+  },
+
+  center : function() {
+    return this._cam.center();
+  },
+
 
   get : function(name) {
     for (var i = 0; i < this._objects.length; ++i) {
