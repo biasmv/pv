@@ -250,6 +250,12 @@ Viewer.prototype = {
 
   _initOptions : function(opts, domElement) {
     opts = opts || {};
+    this._extensions = opts.extensions || [];
+    this._extensions.forEach(function(ext) {
+      if (ext.optionOverrides !== null) {
+        utils.update(opts, ext.optionOverrides());
+      }
+    });
     var options = {
       width : (opts.width || 500),
       height : (opts.height || 500),
@@ -424,6 +430,11 @@ Viewer.prototype = {
     this._boundDraw = utils.bind(this, this._draw);
     this._touchHandler = new TouchHandler(this._canvas.domElement(), 
                                           this, this._cam);
+    var viewer = this;
+    // call init on all registered extensions
+    this._extensions.forEach(function(ext) {
+      ext.init(viewer);
+    });
     if (!this._initialized) {
       this._initialized = true;
       this._dispatchEvent({'name':'viewerReadyEvent'},
@@ -632,7 +643,7 @@ Viewer.prototype = {
     this._objects = [];
   },
 
-  addListener : function(eventName, callback) {
+  on : function(eventName, callback) {
     if (eventName === 'keypress' || 
         eventName === 'keydown' || 
         eventName === 'keyup') {
@@ -1134,7 +1145,7 @@ Viewer.prototype = {
   },
 };
 
-Viewer.prototype.on = Viewer.prototype.addListener;
+Viewer.prototype.addListener = Viewer.prototype.on;
 
 return { 
   Viewer : function(elem, options) { 

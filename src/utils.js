@@ -43,14 +43,19 @@ exports.bind = function (obj, fn) {
   };
 };
 
-exports.copy = function(src) {
+exports.update = function(dst, src) {
   src = src || {};
-  var cloned = {};
   for (var prop in src) {
     if (src.hasOwnProperty(prop)) {
-      cloned[prop] = src[prop];
+      dst[prop] = src[prop];
     }
   }
+  return dst;
+};
+
+exports.copy = function(src) {
+  var cloned = {};
+  exports.update(cloned, src);
   return cloned;
 };
 
