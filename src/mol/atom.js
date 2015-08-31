@@ -39,6 +39,10 @@ AtomBase.prototype = {
 
   bondCount : function() { return this.bonds().length; },
 
+  prop : function(propName) { 
+    return this[propName]();
+  },
+
   eachBond : function(callback) {
     var bonds = this.bonds();
     for (var i = 0, e = bonds.length; i < e; ++i) {
@@ -98,9 +102,6 @@ utils.derive(Atom, AtomBase, {
   element : function() { return this._element; },
   index : function() { return this._index; },
 
-  prop : function(propName) { 
-    return this[propName]();
-  },
   occupancy : function() { return this._occupancy; },
 
   tempFactor : function() { return this._tempFactor; },
