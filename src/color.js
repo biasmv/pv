@@ -190,7 +190,7 @@ exports.gradient = function(colors, stops) {
 var gradient = exports.gradient;
 
 exports.initGradients = function() {
-  GRADIENTS.rainbow = gradient(['red', 'yellow', 'green', 'blue']);
+  GRADIENTS.rainbow = gradient(['blue', 'green', 'yellow', 'red']);
   GRADIENTS.reds = gradient(['lightred', 'darkred']);
   GRADIENTS.greens = gradient(['lightgreen', 'darkgreen']);
   GRADIENTS.blues = gradient(['lightblue', 'darkblue']);
