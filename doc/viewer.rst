@@ -394,6 +394,25 @@ The following code shows how to listen for double click events to either make th
   });
 
 
+
+Camera Position/Rotation/Zoom Changed Event (experimental)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+The *viewpointChanged* event is fired whenever the camera orientation/center or zoom changes. The callback is invoked with the camera object as the first argument. As an example, the following code shows how to synchronize the orientation of two viewers. Whenever the orientation of one of them changes, the other is updated as well:
+
+.. code-block:: javascript
+
+  viewer1.on('viewpointChanged', function(cam) {
+    viewer2.setCenter(cam.center());
+    viewer2.setCamera(cam.rotation(), cam.center(), cam.zoom());
+  });
+  viewer2.on('viewpointChanged', function(cam) {
+    viewer1.setCenter(cam.center());
+    viewer1.setCamera(cam.rotation(), cam.center(), cam.zoom());
+  });
+
+This is an experimental feature and might change in future releases.
+
 .. _pv.viewer.management:
 
 Object Management

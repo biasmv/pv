@@ -654,6 +654,10 @@ Viewer.prototype = {
       this._keyInput.addEventListener(eventName, callback, false);
       return;
     }
+    if (eventName === 'viewpointChanged') {
+      this._cam.addOnCameraChanged(callback);
+      return;
+    }
     if (eventName === 'mousemove' || 
         eventName === 'mousedown' || eventName === 'mouseup') {
       this._canvas.domElement().addEventListener(eventName, callback, false);
