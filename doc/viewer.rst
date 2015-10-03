@@ -327,7 +327,7 @@ Custom viewer event handlers can be registered by calling :func:`pv.Viewer.addLi
 .. function:: pv.Viewer.addListener(type, callback)
               pv.Viewer.on(type, callback)
 
-  :param type: The type of event to listen to. Must be either 'atomClicked', 'atomDoubleClicked', or 'viewerReady'.
+  :param type: The type of event to listen to. Must be either 'atomClicked', 'atomDoubleClicked', 'viewerReady', 'keypress', 'keydown', 'keyup', 'mousemove', 'mousedown', 'mouseup', or 'viewpointChanged'.
 
   When an event fires, callbacks registered for that event type are invoked with type-specific arguments. See documentation for the individual events for more details
 
