@@ -64,6 +64,17 @@ Documentation for pv is available [here](http://pv.readthedocs.org).
 Changelog
 ----------------------------------------
 
+# New since latest release
+
+- Added experimental viewpointChanged event to viewer that allows to synchronize the orientation of two viewers.
+- Inverted color of rainbow gradient.
+- Add missing prop implementation for atom view.
+- Add very basic extension/plugin mechanism.
+- Getters for getting rotation/center.
+- Add a billboard-based sphere shader. This improves rendering speed when rendering whole structures using spheres. They also look much smoother.
+- Objects with an opacity of 0 can no longer be picked.
+- Support pan by middle-click.
+
 # New in Version 1.8.1
 
 - A few additional improvements to outline rendering quality
