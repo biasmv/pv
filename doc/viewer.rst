@@ -295,6 +295,10 @@ Camera Positioning/Orientation
 
     :return: true when spinning is enabled, false if not.
 
+.. function:: pv.Viewer.requestRedraw()
+
+  Request a redraw of the viewer, e.g. to refresh the content visible on the screen. Most of the time, you will not have to call this function directly. However, if you notice that a certain change is not taking effect, try adding requestRedraw().
+
 
 Fog and Slab Modes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -439,4 +443,8 @@ Multiple render objects can be displayed at once. To be able to refer to these o
 .. function:: pv.Viewer.rm(globPattern)
 
   Remove objects matching glob pattern from the viewer.
+
+.. function:: pv.Viewer.clear()
+
+  Remove all objects from the viewer. In case you are calling this function, but are not adding new content after that, you will need to call :func:`~pv.Viewer.requestRedraw` to update the content of the screen.
 
