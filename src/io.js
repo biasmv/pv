@@ -146,6 +146,7 @@ function PDBReader(options) {
   this._sheets = [];
   this._conect = [];
   this._serialToAtomMap = {};
+  this._rosettaMode = false;
   this._structure = new mol.Mol();
   this._remark350Reader = new Remark350Reader();
   this._currChain =  null;
@@ -173,6 +174,38 @@ PDBReader.prototype = {
             last : [lastNum, lastInsCode], chainName : chainName 
     });
     return true;
+  },
+
+  parseRosettaAnnotation : function(line) {
+    // FIXME: for now this only works when there is one chain, 
+    // since the Rosetta format does not include any chain identifier.
+    if (line.length < 5) {
+      return this.CONTINUE;
+    }
+    var ss = line[5];
+    var resNum = parseInt(line.substr(0, 5).trim(), 10);
+    if (isNaN(resNum)) {
+      console.error('could not parse residue number');
+      return this.ERROR;
+    }
+    var secStructure = 'C';
+    if (ss === 'H' || ss === 'E') {
+      secStructure = ss;
+    }
+    if (this._structure.chains().length !== 1) {
+      console.warn('multiple chains are present. arbitrarily',
+                   'assigning secondary structure to the last chain.');
+    }
+    // for now just use the first chain
+    var res = this._currChain.residueByRnum(resNum);
+    if (res === null) {
+      console.warn('could not find residue', resNum, 'in last chain.',
+                   'Skipping ROSETTA secondary structure annotation');
+      return this.CONTINUE;
+    }
+    res.setSS(secStructure);
+    return this.CONTINUE;
+
   },
 
   parseSheetRecord : function(line) {
@@ -292,6 +325,13 @@ PDBReader.prototype = {
     if (recordName === 'ENDMDL') {
       return this.MODEL_COMPLETE;
     }
+    if (line.substr(0, 9) === 'complete:') {
+      this._rosettaMode = true;
+      return this.CONTINUE;
+    }
+    if (this._rosettaMode) {
+      return this.parseRosettaAnnotation(line);
+    }
     return this.CONTINUE;
   },
 
@@ -333,6 +373,7 @@ PDBReader.prototype = {
     this._currChain =  null;
     this._currRes = null;
     this._currAtom = null;
+    this._rosettaMode = false;
     return result;
   },
   _assignBondsFromConectRecords : function(structure) {
