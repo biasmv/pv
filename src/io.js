@@ -330,6 +330,12 @@ PDBReader.prototype = {
       return this.CONTINUE;
     }
     if (this._rosettaMode) {
+      if (line.trim().length === 0) {
+        // as soon as we hit an empty line, don't treat what comes after 
+        // as ROSETTA annotation
+        this._rosettaMode = false;
+        return this.CONTINUE;
+      }
       return this.parseRosettaAnnotation(line);
     }
     return this.CONTINUE;
