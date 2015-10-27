@@ -1,11 +1,17 @@
 #!/usr/bin/env python
-import SimpleHTTPServer
-import BaseHTTPServer
+try:
+    from SimpleHTTPServer import SimpleHTTPRequestHandler
+    import BaseHTTPServer
+except ImportError:
+    # PY3
+    from http.server import (SimpleHTTPRequestHandler, BaseHTTPRequestHandler, HTTPServer)
+    import http.server as BaseHTTPServer
+
 import os
 
 # essentially like SimpleHTTPRequestHandler, but sets the allow origin
 # header.
-class RelaxedRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+class RelaxedRequestHandler(SimpleHTTPRequestHandler):
     def send_head(self):
         """
         This is a verbatim copy of the SimpleHTTPRequestHandler.send_head
@@ -47,4 +53,4 @@ class RelaxedRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
         return f
 
 
-BaseHTTPServer.test(RelaxedRequestHandler, BaseHTTPServer.HTTPServer)
+BaseHTTPServer.test(RelaxedRequestHandler, HTTPServer)
