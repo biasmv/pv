@@ -2,6 +2,7 @@
 try:
     from SimpleHTTPServer import SimpleHTTPRequestHandler
     import BaseHTTPServer
+    HTTPServer = BaseHTTPServer.HTTPServer
 except ImportError:
     # PY3
     from http.server import (SimpleHTTPRequestHandler, BaseHTTPRequestHandler, HTTPServer)
