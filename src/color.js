@@ -503,12 +503,12 @@ exports.interpolateColor = function(colors, num) {
   var out = new Float32Array((num*(colors.length/4-1) + 1)*4);
   var index = 0;
   var bf = vec4.create(), af = vec4.create();
-  var delta = 1/num;
+  var halfNum = num/2;
   for (var i = 0; i < colors.length/4-1; ++i) {
     vec4.set(bf, colors[4*i+0], colors[4*i+1], colors[4*i+2], colors[4*i+3]);
     vec4.set(af, colors[4*i+4], colors[4*i+5], colors[4*i+6], colors[4*i+7]);
     for (var j = 0; j < num; ++j) {
-      var t = delta * j;
+      var t = j < halfNum ? 0.0 : 1.0; 
       out[index+0] = bf[0]*(1-t)+af[0]*t;
       out[index+1] = bf[1]*(1-t)+af[1]*t;
       out[index+2] = bf[2]*(1-t)+af[2]*t;
