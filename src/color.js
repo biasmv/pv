@@ -351,6 +351,8 @@ exports.ssSuccession = function(grad, coilColor) {
   }
   if (!coilColor) {
     coilColor = exports.forceRGB('lightgrey');
+  } else {
+    coilColor = exports.forceRGB(coilColor);
   }
   var colorFunc = new ColorOp(function(a, out, index) {
     var idx = a.residue().index();
