@@ -14,3 +14,6 @@ build
 *.tgz
 *.pyc
 *.egg-info
+dist
+.ipynb_checkpoints
+.idea/workspace.xml
