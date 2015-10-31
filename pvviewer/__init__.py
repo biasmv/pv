@@ -7,6 +7,11 @@ except ImportError:
 
 import uuid
 
+from viewer import Viewer
+import color
+import mol
+
+
 base_url = ('http://www.rcsb.org/pdb/download/downloadFile.do'
             '?fileFormat=pdb&structureId=')
 

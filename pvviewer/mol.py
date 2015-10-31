@@ -38,6 +38,22 @@ class Mol:
         with open(file_name, 'r') as data:
             return Mol(data.read())
 
+
+def from_url(url):
+    return Mol.from_url(url)
+
+
+def from_file(file_name):
+    return Mol.from_file(file_name)
+
+
+def from_pdb_id(pdb_id):
+    return Mol.from_pdb_id(pdb_id)
+
+
 __all__ = (
     Mol,
+    from_file,
+    from_pdb_id,
+    from_url
 )

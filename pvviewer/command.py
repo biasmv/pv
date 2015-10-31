@@ -18,7 +18,7 @@ def encode(obj):
         # FIXME: Nan, Inf handling
         return str(obj)
     if isinstance(obj, dict):
-        contents = ['%s:%s' % (encode(k), encode(v)) for k,v in obj]
+        contents = ['%s:%s' % (encode(k), encode(v)) for k,v in obj.iteritems()]
         return '{%s}' % ', '.join(contents)
 
 
@@ -28,11 +28,12 @@ class Command:
     call that can be translated to JS.
     """
 
-    def __init__(self, receiver, command, args, kwargs):
+    def __init__(self, receiver, command, args, kwargs, terminate=False):
         self._receiver = receiver
         self._command = command
         self._args = args
         self._kwargs = kwargs
+        self._terminate = terminate
 
     def to_js(self):
         all_args = [', '.join(encode(arg) for arg in self._args)]
@@ -40,4 +41,9 @@ class Command:
             all_args.append(encode(self._kwargs))
 
         args_string = ', '.join(all_args)
-        return '%s.%s(%s);' % (self._receiver, self._command, args_string)
+        t = self._terminate and ';' or ''
+        if not self._receiver:
+            call = self._command
+        else:
+            call = '%s.%s' % (self._receiver, self._command)
+        return '%s(%s)%s' % (call, args_string, t)

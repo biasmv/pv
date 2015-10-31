@@ -3,7 +3,7 @@ Defines the main protein viewer interface to be used with ipython/jupyter
 notebooks.
 """
 
-import random
+import uuid
 from command import Command
 
 _VIEWER_SCAFFOLD_BEGIN = """
@@ -19,7 +19,7 @@ _VIEWER_SCAFFOLD_BEGIN = """
         viewer = pv.Viewer(document.getElementById('%(id)s'),
                            {quality : 'medium', width: 'auto',
                             height : 'auto', antialias : true,
-                            background : '#ddd',
+                            background : '#eee',
                             outline : true, style : '%(style)s' });
         viewer.fitParent();
 """
@@ -30,20 +30,13 @@ _VIEWER_SCAFFOLD_END = """
 """
 
 
-def _generate_id():
-    """
-    Generate a random id, suitable for use as a JS identifier.
-    """
-    lower_case_letters = 'abcdefghijklmnopqrstuvwxyz'
-    return '_%s' % ''.join(random.choice(lower_case_letters) for i in xrange(5))
-
-
 class Rendered:
     def __init__(self, data):
         self._data =data
 
     def _repr_html_(self):
         return self._data
+
 
 class Viewer:
     """
@@ -54,8 +47,6 @@ class Viewer:
     """
 
     def __init__(self):
-        # unique name for our parent div. Will come in handy later.
-        self._id = _generate_id()
         self._style = 'phong'
         self._width = 500
         self._height = 500
@@ -63,7 +54,7 @@ class Viewer:
 
     def show(self):
         replacements = {
-            'id': self._id,
+            'id': str(uuid.uuid4()),
             'width': self._width,
             'height': self._height,
             'style': self._style
