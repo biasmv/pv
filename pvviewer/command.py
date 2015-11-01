@@ -6,8 +6,17 @@ try:
 except NameError:
     string_base_type = str
 
-def encode(obj):
 
+def encode(obj):
+    """
+    Dead-simple serialization of Python objects to JavaScript. The serialization
+    format is not pure JSON, but instead is allowed to contain arbitrary JS
+    expressions such as function calls. Basic data types (strings, numbers,
+    bool, dict, list) are directly converted to their JS counterpart. Custom,
+    user-defined objects must have a to_js method defined on them that converts
+    the object to a string. Note that the object strings are not escaped, so
+    the to_js methods are allowed to arbitrary expressions themselves.
+    """
     if hasattr(obj, 'to_js'):
         return obj.to_js()
     if isinstance(obj, bool):
