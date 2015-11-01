@@ -541,6 +541,55 @@ SDFReader.prototype = {
   }
 };
 
+function CRDReader() {
+  this._structure = new mol.Mol();
+  this._reset();
+  this._sawEnd = false;
+}
+
+CRDReader.prototype = {
+  processLine : function(line) {
+    if (line.length === 0 || line[0] === '*') {
+      return true;
+    }
+    if (line.length < 52) {
+      return true;
+    }
+
+    var aName = line.substr(16, 5);
+    var rNum =  parseInt(line.substr(6, 4).trim(), 10);
+    var rName = line.substr(11, 3).trim();
+    var pos = vec3.create();
+    for (var i = 0; i < 3; ++i) {
+      pos[i] = parseFloat(line.substr(20 + i * 10, 10).trim());
+    }
+    var cName =  line[51];
+    if (this._currentChain === null || this._currentChain.name() !== cName) {
+      this._currentResidue = null;
+      this._currentChain = this._structure.chain(cName);
+      if (this._currentChain === null) {
+        this._currentChain = this._structure.addChain(cName);
+      }
+    }
+    if (this._currentResidue === null || this._currentResidue.num() !== rNum) {
+      this._currentResidue = this._currentChain.addResidue(rName, rNum);
+    }
+    this._currentResidue.addAtom(aName.trim(), pos, 
+                                 aName[0], false, 
+                                 1.00, 0.00);
+    return true;
+  },
+  _reset : function() {
+    this._currentResidue = null;
+    this._currentChain = null;
+  },
+  finish : function() {
+    this._structure.deriveConnectivity();
+    return this._structure;
+  }
+};
+
+
 function sdf(text) {
   console.time('sdf'); 
   var reader = new SDFReader();
@@ -552,6 +601,20 @@ function sdf(text) {
   }
   var structure = reader.finish();
   console.timeEnd('sdf');
+  return structure;
+}
+
+function crd(text) {
+  console.time('crd'); 
+  var reader = new CRDReader();
+  var lines = getLines(text);
+  for (var i = 0; i < lines.length; i++) {
+    if (!reader.processLine(lines[i])) {
+      break;
+    }
+  }
+  var structure = reader.finish();
+  console.timeEnd('crd');
   return structure;
 }
 
@@ -581,12 +644,21 @@ function fetchSdf(url, callback) {
   });
 }
 
+function fetchCrd(url, callback) {
+  fetch(url, function(data) {
+    var structure = crd(data);
+    callback(structure);
+  });
+}
+
 return {
   pdb : pdb,
   sdf : sdf,
+  crd : crd,
   Remark350Reader : Remark350Reader,
   fetchPdb : fetchPdb,
   fetchSdf : fetchSdf,
+  fetchCrd : fetchCrd,
   guessAtomElementFromName : guessAtomElementFromName
 };
 
