@@ -15,7 +15,7 @@ def encode(obj):
     bool, dict, list) are directly converted to their JS counterpart. Custom,
     user-defined objects must have a to_js method defined on them that converts
     the object to a string. Note that the object strings are not escaped, so
-    the to_js methods are allowed to arbitrary expressions themselves.
+    the to_js methods are allowed to be arbitrary JS expressions themselves.
     """
     if hasattr(obj, 'to_js'):
         return obj.to_js()
