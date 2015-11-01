@@ -1,5 +1,10 @@
 import json
 
+# Python2/3 compatibility
+try:
+    string_base_type = basestring
+except NameError:
+    string_base_type = str
 
 def encode(obj):
 
@@ -9,7 +14,7 @@ def encode(obj):
         return obj and 'true' or 'false'
     if isinstance(obj, type(None)):
         return 'null'
-    if isinstance(obj, basestring):
+    if isinstance(obj, string_base_type):
         # use json.dumps here to handle special characters etc.
         return json.dumps(obj)
     if isinstance(obj, list):
@@ -18,7 +23,10 @@ def encode(obj):
         # FIXME: Nan, Inf handling
         return str(obj)
     if isinstance(obj, dict):
-        contents = ['%s:%s' % (encode(k), encode(v)) for k,v in obj.iteritems()]
+        # use items here for Python3 compat, even tough it's not as efficient
+        # as it can be. But then again, I'm not expecting huge dictionaries
+        # here.
+        contents = ['%s:%s' % (encode(k), encode(v)) for k,v in obj.items()]
         return '{%s}' % ', '.join(contents)
 
 

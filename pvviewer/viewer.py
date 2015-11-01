@@ -4,7 +4,7 @@ notebooks.
 """
 
 import uuid
-from command import Command
+from .command import Command
 
 _VIEWER_SCAFFOLD_BEGIN = """
 <div id="%(id)s" style="width: %(width)dpx; height: %(height)dpx"><div>

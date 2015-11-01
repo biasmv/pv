@@ -2,7 +2,7 @@
 Contains the coloring operations
 """
 
-from command import Command
+from .command import Command
 
 
 def _color_command(name, *args, **kwargs):
