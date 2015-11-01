@@ -8,4 +8,5 @@ setup(name="pvviewer",
       description="View Protein Stuctures in Jupyter Notebooks",
       author="Marco Biasini",
       url="https://github.com/biasmv/pv",
-      py_modules=["pvviewer"])
+      packages=["pvviewer"]
+)
