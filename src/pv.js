@@ -19,14 +19,16 @@
 // DEALINGS IN THE SOFTWARE.
 
 define(
-  ['./gl-matrix', './viewer', './io', './mol/all', './color', './viewpoint'], 
-  function(glMatrix, viewer, io, mol, color, viewpoint) {
+  ['./gl-matrix', './viewer', './io', './mol/all', './color', 
+    './viewpoint', './traj'], 
+  function(glMatrix, viewer, io, mol, color, viewpoint, traj) {
   'use strict';
   // export 
   return {
     Viewer : viewer.Viewer,
     isWebGLSupported : viewer.isWebGLSupported,
     io : io,
+    traj : traj,
     color : color,
     mol : mol,
     // for backward compatibility prior to version 1.4

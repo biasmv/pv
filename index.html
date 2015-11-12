@@ -25,6 +25,15 @@
         padding:0px;
         overflow:hidden;
       }
+      #traj-widget {
+        width: 200px;
+        height: 20px;
+        background: #aaa;
+        position: absolute;
+        top: 50px;
+        left: 50px;
+        display: none;
+      }
     </style>
     </head>
     <body>
@@ -61,6 +70,7 @@
           <li><a id=1ake href="#">Adenylate Kinase</a></li>
           <li><a id=4ubb href="#">DNA Polymerase</a></li>
           <li><a id=ensemble href="#">NMR ensemble</a></li>
+          <li><a id=trajectory href="#">Trajectory</a></li>
         </ul>
       </li>
       <li class="has-dropdown">
@@ -99,6 +109,9 @@
   </section>
 </nav>
 </div>
-    </body>
+<div id=traj-widget>
+    <a id=traj-button href="#" class="alert button expand">Start</a>
+</div>
+</body>
 </html>
 

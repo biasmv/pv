@@ -94,6 +94,7 @@ function preset() {
 }
 
 function load(pdb_id) {
+  $('#traj-widget').hide();
   $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
     structure = io.pdb(data);
     //mol.assignHelixSheet(structure);
@@ -102,6 +103,39 @@ function load(pdb_id) {
     viewer.autoZoom();
   }});
 }
+
+function trajectory() {
+  viewer.clear();
+  $('#traj-widget').show();
+  var theTimeOut;
+  var intervalFunc;
+  $('#traj-button').click(function() {
+    var t = $('#traj-button').text();
+    if (t === 'Start') {
+      $('#traj-button').text('Stop');
+      theTimeOut = setInterval(intervalFunc, 1000.0/15.0);
+    } else {
+      clearInterval(theTimeOut);
+      $('#traj-button').text('Start');
+    }
+  });
+  pv.io.fetchCrd('pdbs/trj.crd', function(s) {
+    structure = s;
+    viewer.ballsAndSticks('trajectory', structure);
+    viewer.autoZoom();
+    pv.traj.fetchDcd('pdbs/trj.dcd', s, function(cg) {
+      var frameId = 0;
+      intervalFunc = function() {
+        cg.useFrame(frameId);
+        frameId += 1;
+        frameId = frameId % 32;
+        viewer.clear();
+        viewer.ballsAndSticks('trajectory', structure);
+      };
+    });
+  });
+}
+
 function kinase() {
   load('1ake');
 }
@@ -201,6 +235,7 @@ function cross() {
 }
 
 function ensemble() {
+  $('#traj-widget').hide();
   io.fetchPdb('pdbs/1nmr.pdb', function(structures) {
     viewer.clear()
     structure = structures[i];
@@ -233,6 +268,7 @@ $('#color-chain').click(byChain);
 $('#color-ss-succ').click(ssSuccession);
 $('#color-ss').click(ss);
 $('#phong').click(phong);
+$('#trajectory').click(trajectory);
 $('#hemilight').click(hemilight);
 $('#color-rainbow').click(rainbow);
 $('#load-from-pdb').change(function() {
@@ -255,11 +291,7 @@ viewer = pv.Viewer(document.getElementById('viewer'), {
     background : '#ccc', animateTime: 500, doubleClick : null
 });
 
-viewer.addListener('viewerReady', crambin);
-
-viewer.on('keypress', function() {
-  viewer.rotate([1,0,0], Math.PI/2);
-});
+viewer.addListener('viewerReady', trajectory);
 
 viewer.on('doubleClick', function(picked) {
   console.log(picked.connectivity());

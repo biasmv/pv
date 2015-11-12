@@ -589,7 +589,6 @@ CRDReader.prototype = {
   }
 };
 
-
 function sdf(text) {
   console.time('sdf'); 
   var reader = new SDFReader();
