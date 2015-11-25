@@ -861,7 +861,7 @@ Viewer.prototype = {
     }
   },
 
-  fitTo : function(what) {
+  fitTo : function(what, ms) {
     var axes = this._cam.mainAxes();
     var intervals = [ new utils.Range(), new utils.Range(), new utils.Range() ];
     if (what instanceof SceneNode) {
@@ -874,10 +874,10 @@ Viewer.prototype = {
         this._updateProjectionIntervals(axes, intervals, what[i]);
       }
     }
-    this._fitToIntervals(axes, intervals);
+    this._fitToIntervals(axes, intervals, ms);
   },
 
-  _fitToIntervals : function(axes, intervals) {
+  _fitToIntervals : function(axes, intervals, ms) {
     if (intervals[0].empty() || intervals[1].empty() || intervals[2].empty()) {
       console.error('could not determine interval. No objects shown?');
       return;
@@ -903,12 +903,12 @@ Viewer.prototype = {
     var far = 2 * grace + distanceToFront + intervals[2].length();
     this._cam.setNearFar(near,  far);
     this.setCamera(this._cam.rotation(), center, newZoom, 
-                   this._options.animateTime);
+                   ms || this._options.animateTime);
     this.requestRedraw();
   },
 
   // adapt the zoom level to fit the viewport to all visible objects.
-  autoZoom : function() {
+  autoZoom : function(ms) {
     var axes = this._cam.mainAxes();
     var intervals = [ new utils.Range(), new utils.Range(), new utils.Range() ];
     this.forEach(function(obj) {
@@ -918,7 +918,7 @@ Viewer.prototype = {
       obj.updateProjectionIntervals(axes[0], axes[1], axes[2], intervals[0],
                                     intervals[1], intervals[2]);
     });
-    this._fitToIntervals(axes, intervals);
+    this._fitToIntervals(axes, intervals, ms);
   },
 
   slabInterval : function() {
