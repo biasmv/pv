@@ -38,7 +38,7 @@ Citing PV?
 
 I'm planning on writing a small application note, but in the mean time, use the following DOI for citing PV in your work.
 
-[![DOI](https://zenodo.org/badge/7050/biasmv/pv.png)](http://dx.doi.org/10.5281/zenodo.12620)
+[![DOI](https://zenodo.org/badge/doi/10.5281/zenodo.20980.svg)](http://dx.doi.org/10.5281/zenodo.20980)
 
 
 
