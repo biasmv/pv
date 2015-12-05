@@ -245,14 +245,13 @@ Camera Positioning/Orientation
 
   Adjusts the zoom level such that all objects are visible on screen and occupy as much space as possible. The center and orientation of the camera are not modified.  
   
-  :param ms: if provided and non-zero defines the time in which the camera zoom level moves from thecurrent zoom level to the target zoom. If zero, the zoom is immediately set to the target zoom. If no value is provided it will go off of the animateTime option passed into the viewer.
+  :param ms: if provided and non-zero defines the time in which the camera zoom level moves from the current zoom level to the target zoom. If zero, the zoom is immediately set to the target zoom. If no value is provided it use the default animation time of the viewer.
 
 .. function:: pv.Viewer.fitTo(obj [, ms])
 
   Adjust the zoom level and center of the camera to fit the viewport to a given object. The method supports fitting to selections, or arbitrary SceneNodes. To fit to a subset of atoms, pass the selection as the *obj* argument:
 
-  :param ms: if provided and non-zero defines the time in which the camera zoom level moves from thecurrent zoom level to the target zoom. If zero, the zoom is immediately set to the target zoom. If no value
-       is provided it will go off of the animateTime option passed into the viewer.
+  :param ms: if provided and non-zero defines the time in which the camera zoom level moves from the current zoom level to the target zoom. If zero, the zoom is immediately set to the target zoom. If no value is provided it will use the default animation time of the viewer.
 
   .. code-block:: javascript
 

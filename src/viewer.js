@@ -902,8 +902,8 @@ Viewer.prototype = {
     var near = Math.max(distanceToFront - grace, 0.1);
     var far = 2 * grace + distanceToFront + intervals[2].length();
     this._cam.setNearFar(near,  far);
-    this.setCamera(this._cam.rotation(), center, newZoom, 
-                   ms || this._options.animateTime);
+    var time = ms === undefined ? this._options.animateTime : ms | 0;
+    this.setCamera(this._cam.rotation(), center, newZoom, time);
     this.requestRedraw();
   },
 
