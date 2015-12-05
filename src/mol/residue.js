@@ -69,7 +69,7 @@ ResidueBase.prototype = {
       }
       return null;
     }
-    if (index_or_name >= this._atoms.length && index_or_name < 0) {
+    if (index_or_name >= this._atoms.length || index_or_name < 0) {
       return null;
     }
     return this._atoms[index_or_name]; 
