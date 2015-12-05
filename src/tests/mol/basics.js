@@ -180,6 +180,12 @@ test('get atom by name', function(assert) {
   assert.strictEqual(oxygen.residue().chain().name(), 'A');
 });
 
+test('get atom by index (out of bounds)', function(assert) {
+  var r = FRAGMENT.chain('A').residueByRnum(905);
+  assert.strictEqual(r.atom(r.atoms().length), null);
+  assert.strictEqual(r.atom(-1), null);
+});
+
 test('get atom by name that does not exists', function(assert) {
   assert.strictEqual(FRAGMENT.atom('A.905.OX'), null);
   assert.strictEqual(FRAGMENT.atom('A.100000.CA'), null);
