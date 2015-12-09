@@ -33,10 +33,6 @@ function ResidueBase() {
 
 ResidueBase.prototype = {
 
-  prop : function(propName) { 
-    return this[propName]();
-  },
-
   isWater : function() {
     return this.name() === 'HOH' || this.name() === 'DOD';
   },
@@ -120,6 +116,7 @@ function Residue(chain, name, num, insCode) {
   this._isAminoacid = false;
   this._isNucleotide = false;
   this._index = chain.residues().length;
+  this._properties = {};
 }
 
 utils.derive(Residue, ResidueBase, {
@@ -154,6 +151,19 @@ utils.derive(Residue, ResidueBase, {
 
   structure : function() { 
     return this._chain.structure(); 
+  },
+
+  prop : function(propName) { 
+    var fn = this[propName];
+    if (fn !== undefined) {
+      return fn.call(this);
+    }
+    var property = this._properties[propName];
+    return property === undefined ? 0 : property;
+  },
+
+  setProp : function(propName, value) {
+    this._properties[propName] = value;
   }
 
 });
@@ -215,6 +225,12 @@ utils.derive(ResidueView, ResidueBase, {
   },
   isWater : function() { 
     return this._residue.isWater(); 
+  },
+  prop : function(propName) { 
+    return this._residue.prop(propName); 
+  },
+  setProp : function(propName, value) { 
+    this._residue.setProp(propName, value); 
   }
 });
 

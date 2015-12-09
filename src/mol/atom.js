@@ -39,16 +39,13 @@ AtomBase.prototype = {
 
   bondCount : function() { return this.bonds().length; },
 
-  prop : function(propName) { 
-    return this[propName]();
-  },
-
   eachBond : function(callback) {
     var bonds = this.bonds();
     for (var i = 0, e = bonds.length; i < e; ++i) {
       callback(bonds[i]);
     }
   },
+
   isConnectedTo: function(otherAtom) {
     if (otherAtom === null) {
       return false;
@@ -70,6 +67,7 @@ AtomBase.prototype = {
 function Atom(residue, name, pos, element, index, isHetatm,
               occupancy, tempFactor) {
   AtomBase.call(this);
+  this._properties = {};
   this._residue = residue;
   this._bonds = [];
   this._isHetatm = !!isHetatm;
@@ -109,6 +107,18 @@ utils.derive(Atom, AtomBase, {
   isHetatm : function() { 
     return this._isHetatm; 
   },
+  prop : function(propName) { 
+    var fn = this[propName];
+    if (fn !== undefined) {
+      return fn.call(this);
+    }
+    var property = this._properties[propName];
+    return property === undefined ? 0 : property;
+  },
+
+  setProp : function(propName, value) {
+    this._properties[propName] = value;
+  }
 });
 
 function AtomView(resView, atom) {
@@ -134,6 +144,12 @@ utils.derive(AtomView, AtomBase, {
   },
   isHetatm : function() {
     return this._atom.isHetatm();
+  },
+  prop : function(propName) { 
+    return this._atom.prop(propName); 
+  },
+  setProp : function(propName, value) { 
+    this._atom.setProp(propName, value); 
   }
 });
 
