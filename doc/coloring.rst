@@ -9,7 +9,7 @@ The coloring scheme can be specified when generating the render geometry, e.g. w
 
   // color the whole structure in red, while generating the geometry.
   var geom = viewer.lines('myStructure', myStructure,  { color: pv.color.uniform('red') });
-  // oh, no, I changed my mind: We wan't everything in blue!
+  // oh, no, I changed my mind: We want everything in blue!
   geom.colorBy(pv.color.uniform('blue'));
 
 Coloring is implemented with coloring operations. These operations are small function objects which map a certain atom or residue to a color. They can be as simple as coloring a complete structure in :func:`one color <pv.color.uniform>`, or as complex as mapping a :func:`numeric property to a color gradient <pv.color.byAtomProp>`. PV includes a variety of coloring operations for the most common tasks. For more complex applications it is also possible to extend the coloring with new operations.
