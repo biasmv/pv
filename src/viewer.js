@@ -789,6 +789,8 @@ Viewer.prototype = {
     options.arcDetail = options.arcDetail || this.options('arcDetail');
     options.radius = options.radius || 0.3;
     options.forceTube = options.forceTube || false;
+    options.smoothStrands = 
+        options.smoothStrands === undefined ? true : options.smoothStrands;
     var obj = render.cartoon(structure, this._canvas.gl(), options);
     var added = this.add(name, obj);
     return added;

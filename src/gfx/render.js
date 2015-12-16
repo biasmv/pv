@@ -872,7 +872,8 @@ var _colorPosNormalsFromTrace = (function() {
       if (vec3.dot(normal, lastNormal) < 0) {
         vec3.scale(normal, normal, -1);
       }
-      if (trace.residueAt(i).ss() === 'E' && !opts.forceTube) {
+      if (trace.residueAt(i).ss() === 'E' && 
+          !opts.forceTube && opts.smoothStrands) {
         if (strandStart === null) {
           strandStart = i;
         }
