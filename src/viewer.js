@@ -343,25 +343,26 @@ Viewer.prototype = {
   },
 
   quality : function(qual) {
+    if (qual === undefined) {
+      return this._options.quality;
+    }
     this._options.quality = qual;
     if (qual === 'high') {
       this._options.arcDetail = 4;
       this._options.sphereDetail = 16;
       this._options.splineDetail = 8;
-      return;
     }
     if (qual === 'medium') {
       this._options.arcDetail = 2;
       this._options.sphereDetail = 10;
       this._options.splineDetail = 5;
-      return;
     }
     if (qual === 'low') {
       this._options.arcDetail = 2;
       this._options.sphereDetail = 8;
       this._options.splineDetail = 3;
-      return;
     }
+    return this._options.quality;
     console.error('invalid quality argument', qual);
   },
 
