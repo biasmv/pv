@@ -267,12 +267,13 @@ PDBReader.prototype = {
     }
     var occupancy = parseFloat(line.substr(54,6).trim());
     var tempFactor = parseFloat(line.substr(60,6).trim());
+    var serial = parseInt(line.substr(6,5).trim(), 10);
     var atom = this._currRes.addAtom(atomName, pos, element, isHetatm,
                                      isNaN(occupancy) ? null : occupancy, 
-                                     isNaN(tempFactor) ? null : tempFactor);
+                                     isNaN(tempFactor) ? null : tempFactor,
+                                     serial);
     // in case parseConect records is set to true, store away the atom serial
     if (this._options.conectRecords) {
-      var serial = parseInt(line.substr(6,5).trim(), 10);
       this._serialToAtomMap[serial] = atom;
     }
     return true;
