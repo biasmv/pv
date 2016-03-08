@@ -363,7 +363,6 @@ Viewer.prototype = {
       this._options.splineDetail = 3;
     }
     return this._options.quality;
-    console.error('invalid quality argument', qual);
   },
 
   // returns the content of the WebGL context as a data URL element which can be
