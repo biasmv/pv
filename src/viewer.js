@@ -813,10 +813,15 @@ Viewer.prototype = {
   },
 
   ballsAndSticks : function(name, structure, opts) {
+    if (opts.radius) {
+      console.warn('use of radius for ballsAndSticks is deprecated.',
+                   'use cylRadius and sphereRadius instead');
+    }
     var options = this._handleStandardMolOptions(opts, structure);
 
     options.color = options.color || color.byElement();
-    options.radius = options.radius || 0.3;
+    options.cylRadius = options.cylRadius || 0.1;
+    options.sphereRadius = options.sphereRadius || 0.3;
     options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
     options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
 

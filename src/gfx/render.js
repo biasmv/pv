@@ -87,6 +87,19 @@ var ARROW_POINTS = [
  -10.0 * R,  0.9 * R2, 0
 ];
 
+// van der Waals radius by atom._element
+var VDW_RADIUS = {
+  H: 1.2,
+  C: 1.7,
+  N: 1.55,
+  O: 1.52,
+  F: 1.47,
+  P: 1.8,
+  S: 1.8,
+  CL: 1.75,
+  CU: 1.4
+};
+
 // performs an in-place smoothing over 3 consecutive positions.
 var smoothStrandInplace = (function() {
   var bf = vec3.create(), af = vec3.create(), cf = vec3.create();
@@ -218,6 +231,7 @@ var ballsAndSticksForChain = (function() {
     meshGeom.addIdRange(idRange);
     // generate geometry for each atom
     chain.eachAtom(function(atom) {
+      var atomRadius = opts.sphereRadius * VDW_RADIUS[atom._element];
       var atomVerts = opts.protoSphere.numVerts() + 
                       atom.bondCount() * opts.protoCyl.numVerts();
       var va = meshGeom.vertArrayWithSpaceFor(atomVerts);
@@ -225,7 +239,7 @@ var ballsAndSticksForChain = (function() {
       var objId = idRange.nextId({ geom: meshGeom, atom : atom });
 
       opts.color.colorFor(atom, color, 0);
-      opts.protoSphere.addTransformed(va, atom.pos(), opts.radius, color,
+      opts.protoSphere.addTransformed(va, atom.pos(), atomRadius, color,
                                          objId);
       atom.eachBond(function(bond) {
         bond.mid_point(midPoint);
@@ -238,7 +252,7 @@ var ballsAndSticksForChain = (function() {
 
         vec3.add(midPoint, midPoint, atom.pos());
         vec3.scale(midPoint, midPoint, 0.5);
-        opts.protoCyl.addTransformed(va, midPoint, length, opts.radius, 
+        opts.protoCyl.addTransformed(va, midPoint, length, opts.cylRadius, 
                                         rotation, color, color, objId, objId);
       });
       var vertEnd = va.numVerts();

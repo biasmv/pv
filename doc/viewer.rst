@@ -159,6 +159,17 @@ These methods will automatically add the object to the viewer, there is not need
   * *strength*: influences the magnitude of the tangents for the Catmull-Rom spline. Defaults to 1.0. Meaningful values are between 0 and 1.
   * *splineDetail* number of subdivisions per Carbon-alpha atom. The default is termined by :func:`pv.Viewer.quality`.
 
+.. function:: pv.Viewer.ballsAndSticks(name, structure[,options])
+
+  Renders the structure (:class:`~pv.mol.Mol`, or :class:`~pv.mol.MolView`) as a 
+  ball and stick model. Accepted *options* are:
+
+  * *color*: the color operation to be used. Defaults to :func:`pv.color.byElement`.
+  * *cylRadius*: Radius of the tube profile. Defaults to 0.1.
+  * *sphereRadius*: Radius of the sphere profile. Defaults to 0.3.
+  * *arcDetail*: number of vertices on the tube. The default is determined by :func:`pv.Viewer.quality`.
+  * *sphereDetail* number of vertical and horizontal arcs for the spheres.
+
 .. function:: pv.Viewer.renderAs(name, structure, mode[,options])
 
   Function to render the structure in any of the supported render styles. This essentially makes it possible to write code that is independent of the particular chosen render style.
