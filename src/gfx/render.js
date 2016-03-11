@@ -87,17 +87,41 @@ var ARROW_POINTS = [
  -10.0 * R,  0.9 * R2, 0
 ];
 
-// van der Waals radius by atom._element
+/* van der Waals radius by atom._element
+ * from Royal Society of Chemistry
+ * http://www.rsc.org/periodic-table/trends
+*/
 var VDW_RADIUS = {
-  H: 1.2,
+  H: 1.1,
   C: 1.7,
   N: 1.55,
   O: 1.52,
   F: 1.47,
+  CL: 1.75,
+  BR: 1.85,
+  I : 1.98,
+  HE : 1.4,
+  NE : 1.54,
+  AR : 1.88,
+  XE : 2.16,
+  KR : 2.02,
   P: 1.8,
   S: 1.8,
-  CL: 1.75,
-  CU: 1.4
+  B : 1.92,
+  LI : 1.82,
+  NA : 2.27,
+  K : 2.75,
+  RB : 3.03,
+  CS : 3.43,
+  FR : 3.48,
+  BE : 1.53,
+  MG : 1.73,
+  SR : 2.49,
+  BA : 2.68,
+  RA : 2.83,
+  TI : 2.11,
+  FE : 2.04,
+  CU: 1.96,
 };
 
 // performs an in-place smoothing over 3 consecutive positions.
@@ -231,7 +255,10 @@ var ballsAndSticksForChain = (function() {
     meshGeom.addIdRange(idRange);
     // generate geometry for each atom
     chain.eachAtom(function(atom) {
-      var atomRadius = opts.sphereRadius * VDW_RADIUS[atom._element];
+      var atomScale = opts.scaleByAtomRadius ?
+        VDW_RADIUS[atom.element()] || 1 :
+        1;
+      var atomRadius = opts.sphereRadius * atomScale;
       var atomVerts = opts.protoSphere.numVerts() + 
                       atom.bondCount() * opts.protoCyl.numVerts();
       var va = meshGeom.vertArrayWithSpaceFor(atomVerts);

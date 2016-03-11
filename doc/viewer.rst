@@ -169,6 +169,7 @@ These methods will automatically add the object to the viewer, there is not need
   * *sphereRadius*: Radius of the sphere profile. Defaults to 0.3.
   * *arcDetail*: number of vertices on the tube. The default is determined by :func:`pv.Viewer.quality`.
   * *sphereDetail* number of vertical and horizontal arcs for the spheres.
+  * *scaleByAtomRadius* Whether to scale spheres by atom's van der Waals radius. Defaults to true.
 
 .. function:: pv.Viewer.renderAs(name, structure, mode[,options])
 
