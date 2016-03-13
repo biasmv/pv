@@ -142,7 +142,7 @@ utils.derive(AtomView, AtomBase, {
   index : function() { return this._atom.index(); },
   occupancy : function() { return this._atom.occupancy(); },
   tempFactor : function() { return this._atom.tempFactor(); },
-  serial : function() { return this._serial; },
+  serial : function() { return this._atom.serial(); },
   qualifiedName : function() {
     return this._atom.qualifiedName();
   },
