@@ -820,7 +820,7 @@ Viewer.prototype = {
     options.sphereRadius = options.radius || options.sphereRadius || 0.3;
     options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
     options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
-    options.scaleByAtomRadius = options.scaleByAtomRadius || true;
+    options.scaleByAtomRadius = optValue(options, 'scaleByAtomRadius', true); 
 
     var obj = render.ballsAndSticks(structure, this._canvas.gl(), options);
     return this.add(name, obj);
