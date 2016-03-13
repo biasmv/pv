@@ -816,9 +816,11 @@ Viewer.prototype = {
     var options = this._handleStandardMolOptions(opts, structure);
 
     options.color = options.color || color.byElement();
-    options.radius = options.radius || 0.3;
+    options.cylRadius = options.radius || options.cylRadius || 0.1;
+    options.sphereRadius = options.radius || options.sphereRadius || 0.3;
     options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
     options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
+    options.scaleByAtomRadius = options.scaleByAtomRadius || true;
 
     var obj = render.ballsAndSticks(structure, this._canvas.gl(), options);
     return this.add(name, obj);
