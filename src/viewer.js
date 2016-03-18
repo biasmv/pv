@@ -189,10 +189,12 @@ function Viewer(domElement, opts) {
 
   if (this._options.click !== null) {
     this.on('click', this._options.click);
+    this.on('touchend', this._options.click);
   }
-  if (this._options.doubleClicked !== null) {
+  if (this._options.doubleClick !== null) {
     this.on('doubleClick', this._options.doubleClick);
   }
+  
 
   if (document.readyState === "complete" ||  
     document.readyState === "loaded" ||  
