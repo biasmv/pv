@@ -96,7 +96,7 @@ function isAndroid() {
 function shouldUseHighPrecision() {
   // high precision for shaders is only required on iOS, all the other browsers 
   // are doing just fine with mediump.
-  return isiOS();
+  return isiOS() || isAndroid();
 }
 
 var requestAnimFrame = (function(){
