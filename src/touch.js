@@ -162,6 +162,7 @@ TouchHandler.prototype = {
           this._viewer._mouseHandler._mouseDoubleClick({ 
               clientX : event.targetTouches[0].clientX, 
               clientY : event.targetTouches[0].clientY });
+          now = null;
         }
       }
       this._lastSingleTap = now;
