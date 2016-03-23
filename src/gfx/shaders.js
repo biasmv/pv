@@ -51,10 +51,11 @@ int intMod(int x, int y) { \n\
   return x-y*z;\n\
 }\n\
 \n\
-uniform vec3 selectionColor;\n\
+uniform vec4 selectionColor;\n\
 \n\
 vec3 handleSelect(vec3 inColor, float vertSelect) { \n\
-  return mix(inColor, selectionColor, step(0.5, vertSelect) * 0.7); \n\
+  return mix(inColor, selectionColor.rgb, \n\
+             step(0.5, vertSelect) * selectionColor.a); \n\
 } \n\
 \n\
 uniform bool fog;\n\
@@ -90,11 +91,11 @@ uniform float fogNear;\n\
 uniform float fogFar;\n\
 uniform vec3 fogColor;\n\
 uniform bool fog;\n\
-uniform vec3 selectionColor;\n\
+uniform vec4 selectionColor;\n\
 \n\
 void main(void) {\n\
-  gl_FragColor = mix(vec4(0.0, 0.0, 0.0, 0.0), vec4(selectionColor, 1.0), \n\
-                     vertSelect);\n\
+  gl_FragColor = mix(vec4(0.0, 0.0, 0.0, 0.0), \n\
+                     vec4(selectionColor.rgb, 1.0), vertSelect);\n\
   gl_FragColor.a = step(0.5, vertSelect);\n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
   float depth = gl_FragCoord.z / gl_FragCoord.w;\n\
@@ -246,7 +247,7 @@ varying float vertSelect;\n\
 uniform vec3 outlineColor;\n\
 \n\
 void main() {\n\
-  gl_FragColor = vec4(mix(outlineColor, selectionColor, \n\
+  gl_FragColor = vec4(mix(outlineColor, selectionColor.rgb, \n\
                           step(0.5, vertSelect)), \n\
                       vertAlpha);\n\
   gl_FragColor.rgb = handleFog(gl_FragColor.rgb);\n\

@@ -118,7 +118,7 @@ exports.forceRGB = function(color) {
   if (typeof color === 'string') {
     var lookup = COLORS[color];
     if (lookup !== undefined) {
-      return lookup;
+      color = lookup;
     }
     if (color.length > 0 && color[0] === '#') {
      return exports.hex2rgb(color);
