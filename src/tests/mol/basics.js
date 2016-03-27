@@ -258,6 +258,27 @@ test('residue select on structure', function(assert) {
   assert.strictEqual(view.chains().length, 1);
 });
 
+test('select polymer on structure', function(assert) {
+  var view = FRAGMENT.select('polymer');
+  var count = 0;
+  view.eachResidue(function(r) {
+      assert.ok(r.isAminoacid());
+      count++;
+  });
+  assert.strictEqual(count, 9);
+  assert.strictEqual(view.chains().length, 1);
+});
+
+test('select polymer on view', function(assert) {
+  var view = FRAGMENT.select().select('polymer');
+  var count = 0;
+  view.eachResidue(function(r) {
+      assert.ok(r.isAminoacid());
+      count++;
+  });
+  assert.strictEqual(count, 9);
+  assert.strictEqual(view.chains().length, 1);
+});
 
 test('add residues', function(assert) {
   var rnums = [268,903,904,905];

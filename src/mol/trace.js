@@ -86,6 +86,8 @@ BackboneTrace.prototype = {
     return index;
   },
 
+  residues: function() { return this._trace; },
+
   subsets : function(residues) {
     // we assume that the residue list is ordered from N- to C-
     // terminus and we can traverse it in one go.
@@ -155,6 +157,15 @@ TraceSubset.prototype = {
   residueAt : function(index) {
     return this._fullTrace.residueAt(this._fullTraceBegin + index);
   },
+
+  residues: function() { 
+    var residues = [];
+    for (var i = 0; i < this._length; ++i) {
+      residues.push(this.residueAt(i));
+    }
+    return residues;
+  },
+
   _interpolate : (function() {
     var tangentOne = vec3.create();
     var tangentTwo = vec3.create();

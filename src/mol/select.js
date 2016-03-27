@@ -166,8 +166,28 @@ function dictSelect(structure, view, dict) {
   return view;
 }
 
+
+function polymerSelect(structure, view) {
+  for (var ci = 0; ci < structure._chains.length; ++ci) {
+    var chain = structure._chains[ci];
+    var traces = chain.backboneTraces();
+    if (traces.length === 0) {
+      continue;
+    }
+    var chainView = view.addChain(chain);
+    for (var bi = 0; bi < traces.length; ++bi) {
+      var residues = traces[bi].residues();
+      for (var ri = 0; ri < residues.length; ++ri) {
+        chainView.addResidue(residues[ri], true);
+      }
+    }
+  }
+  return view;
+}
+
 return {
-  dict : dictSelect
+  dict : dictSelect,
+  polymer : polymerSelect
 };
 
 });

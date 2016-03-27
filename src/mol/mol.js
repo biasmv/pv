@@ -196,6 +196,9 @@ MolBase.prototype = {
         return !r.isAminoacid() && !r.isWater();
       });
     }
+    if (what === 'polymer') {
+      return select.polymer(this, new MolView(this));
+    }
     // when what is not one of the simple strings above, we assume what
     // is a dictionary containing predicates which have to be fulfilled.
     return select.dict(this, new MolView(this), what || {});
