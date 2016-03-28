@@ -819,7 +819,7 @@ Viewer.prototype = {
 
     options.color = options.color || color.byElement();
     options.cylRadius = options.radius || options.cylRadius || 0.1;
-    options.sphereRadius = options.radius || options.sphereRadius || 0.3;
+    options.sphereRadius = options.radius || options.sphereRadius || 0.2;
     options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
     options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
     options.scaleByAtomRadius = optValue(options, 'scaleByAtomRadius', true); 
