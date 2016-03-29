@@ -28,6 +28,7 @@ define(
 "use strict";
 
 var vec3 = glMatrix.vec3;
+var vec4 = glMatrix.vec4;
 var mat4 = glMatrix.mat4;
 
 function floatArraysAreEqual(lhs, rhs) {
@@ -62,7 +63,7 @@ function Cam(gl) {
   this._outlineColor = vec3.fromValues(0.1, 0.1, 0.1);
   this._outlineWidth = 1.0;
   this._outlineEnabled = true;
-  this._selectionColor = vec3.fromValues(0.1, 1.0, 0.1);
+  this._selectionColor = vec4.fromValues(0.1, 1.0, 0.1, 0.7);
   this._center = vec3.create();
   this._zoom = 50;
   this._screenDoorTransparency = false;
@@ -333,6 +334,11 @@ Cam.prototype = {
   },
   setSelectionColor : function(color) {
     this._selectionColor = vec3.clone(color);
+    if (color.length === 3) {
+      this._selectionColor = vec4.fromValues(color[0], color[1], color[2], 0.7);
+    } else {
+      this._selectionColor = vec4.clone(color);
+    }
   },
 
   // sets all OpenGL parameters to make this camera active.
@@ -382,7 +388,7 @@ Cam.prototype = {
     gl.uniform1f(shader.fogNear, this._fogNear + nearOffset);
     gl.uniform3fv(shader.fogColor, this._fogColor);
     gl.uniform3fv(shader.outlineColor, this._outlineColor);
-    gl.uniform3fv(shader.selectionColor, this._selectionColor);
+    gl.uniform4fv(shader.selectionColor, this._selectionColor);
     gl.uniform2fv(shader.relativePixelSize, this._relativePixelSize);
     gl.uniform1f(shader.outlineWidth, this._outlineWidth);
     gl.uniform1i(shader.screenDoorTransparency, this._screenDoorTransparency);

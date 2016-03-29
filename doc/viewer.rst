@@ -26,8 +26,8 @@ Initialization and Configuration
   * *quality* the level of detail for the geometry. Accepted values are *low*, *medium*, and *high*. See :func:`~pv.Viewer.quality` for a description of these values. Defaults to *low*.
   * *slabMode* sets the default slab mode for the viewer. See :func:`~pv.Viewer.slabMode` for possible values. Defaults to 'auto'.
   * *background* set the default background color of the viewer. Defaults to 'white'. See :ref:`pv.color.notation`
-  * *atomDoubleClicked* set the event handler for an atom double clicked event. When the parameter is a function it is added as a new 'atomDoubleClicked' event handler. See :func:`~pv.Viewer.addListener` for details. If it is set to the special value 'center', an event listener is installed that centers the viewer on the double clicked atom, residue. The default is 'center'.
-  * *atomClicked* set the event handler for an atom double clicked event (see *atomDoubleClicked*). The default is null (no listener).
+  * *doubleClick* set the event handler for an atom double click/touch event. When the parameter is a function it is added as a new 'doubleClick' event handler. See :func:`~pv.Viewer.addListener` for details. If it is set to the special value 'center', an event listener is installed that centers the viewer on the double clicked atom, residue. The default is 'center'.
+  * *click* set the event handler for an atom click/touch event (see *doubleClick*). The default is null (no listener).
   * *animateTime* controls the default animation duration in milliseconds. By default, the animation is set to 0 (no animation). By setting it to higher values, rotation, zoom and shift are animated. Note that enabling this can have negative impact on performance, especially with large molecules and on low-end devices.
   * *fog* whether depth-cue ('fog') should be enabled. By default, fog is enabled. Pass false to disable fog.
   * *fov* the field of view in degrees. Default is 45 degrees.

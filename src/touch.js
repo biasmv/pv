@@ -146,6 +146,7 @@ TouchHandler.prototype = {
     }
     this._viewer.requestRedraw();
     this._touchState = newState;
+    this._lastSingleTap = null;
   },
 
 
@@ -157,10 +158,11 @@ TouchHandler.prototype = {
       var now = new Date().getTime();
       if (this._lastSingleTap !== null) {
         var delta = now - this._lastSingleTap;
-        if (delta < 500) {
-          this._viewer._mouseDoubleClick({ 
+        if (delta < 300) {
+          this._viewer._mouseHandler._mouseDoubleClick({ 
               clientX : event.targetTouches[0].clientX, 
               clientY : event.targetTouches[0].clientY });
+          now = null;
         }
       }
       this._lastSingleTap = now;
@@ -173,6 +175,14 @@ TouchHandler.prototype = {
 
   _touchEnd : function(event) {
     event.preventDefault();
+    // detect first tap
+    if (this._lastSingleTap) {
+      var rect = this._element.getBoundingClientRect();
+      var pointer = this._touchState.pointers[0];
+      var picked = this._viewer.pick(
+          { x : pointer.x - rect.left, y : pointer.y - rect.top });
+      this._viewer._dispatchEvent(event, 'touchend', picked);
+    } 
   },
 };
 
