@@ -990,7 +990,7 @@ var _cartoonForSingleTrace = (function() {
     // add tube (or rectangular profile for helices and strands).
     vec3.set(tangent, sdiv[3] - sdiv[0], sdiv[4] - sdiv[1], sdiv[5] - sdiv[2]);
     vec3.set(pos, sdiv[0], sdiv[1], sdiv[2]);
-    vec3.set(normal, normalSdiv[0] - sdiv[0], normalSdiv[1] - sdiv[0],
+    vec3.set(normal, normalSdiv[0] - sdiv[0], normalSdiv[1] - sdiv[1],
               normalSdiv[2] - sdiv[2]);
     vec3.normalize(tangent, tangent);
     vec3.normalize(normal, normal);

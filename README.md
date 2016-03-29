@@ -1,9 +1,9 @@
 pv - WebGL protein viewer
 =========================================
 
-pv  is a WebGL-based protein viewer whose goal is to once-for-all end the reign of Java applets on websites that require visualisation of protein structures. It's not you Java, it's all the annoying security popups and slow loading times. pv implements all major render modes that you would expect, and supports custom color schemes. 
+`pv`  is a WebGL-based protein viewer whose goal is to once-for-all end the reign of Java applets on websites that require visualisation of protein structures. It's not you Java, it's all the annoying security popups and slow loading times. `pv` implements all major render modes that you would expect, and supports custom color schemes. 
 
-Because there is nothing worse than a unresponsive website, pv has been implemented with maximum performane in mind. Even very large macromolecules can be visualised at interactive framerates.
+Because there is nothing worse than an unresponsive website, `pv` has been implemented with maximum performance in mind. Even very large macromolecules can be visualised at interactive framerates.
 
 
 Trying it out
@@ -17,7 +17,7 @@ Clone this repository
 git clone https://github.com/biasmv/pv.git
 ```
 
-Change to the pv directory and serve the files using the serve script in the source directory. This will start a simple static-file server using Python's SimpleHTTPServer module.
+Change to the `pv` directory and serve the files using the serve script in the source directory. This will start a simple static-file server using Python's SimpleHTTPServer module.
 
 ```bash
 cd pv
@@ -45,7 +45,7 @@ I'm planning on writing a small application note, but in the mean time, use the 
 Contributing
 -----------------------------------------
 
-Contributions of any kind (bugfixes, documentation, new features etc) are more than welcome. Just file bugs or file bug requests. Before submitting pull requests, please make sure to follow these [guide-lines](https://github.com/biasmv/pv/blob/master/CONTRIBUTE.md).
+Contributions of any kind (bugfixes, documentation, new features, etc.) are more than welcome. Just file bugs or open a pull request. Before submitting pull requests, please make sure to follow these [guide-lines](https://github.com/biasmv/pv/blob/master/CONTRIBUTE.md).
 
 
 Acknowledgements
@@ -59,7 +59,7 @@ Thanks to @Traksewt, @kozmad, @greenify for their contributions
 Documentation
 ---------------------------------------
 
-Documentation for pv is available [here](http://pv.readthedocs.org). 
+Documentation for `pv` is available [here](http://pv.readthedocs.org). 
 
 Changelog
 ----------------------------------------

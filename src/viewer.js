@@ -93,10 +93,12 @@ function isiOS() {
 function isAndroid() {
   return (/Android/ig).test(navigator.userAgent);
 }
-function shouldUseHighPrecision() {
+function shouldUseHighPrecision(gl) {
   // high precision for shaders is only required on iOS, all the other browsers 
   // are doing just fine with mediump.
-  return isiOS() || isAndroid();
+  var highp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
+  var highpSupported = highp.precision != 0;
+  return highpSupported && (isiOS() || isAndroid());
 }
 
 var requestAnimFrame = (function(){
@@ -406,7 +408,7 @@ Viewer.prototype = {
     this._mouseHandler.setCam(this._cam);
 
     var c = this._canvas;
-    var p = shouldUseHighPrecision() ? 'highp' : 'mediump';
+    var p = shouldUseHighPrecision(c.gl()) ? 'highp' : 'mediump';
     this._shaderCatalog = {
       hemilight : c.initShader(shaders.HEMILIGHT_VS, 
                                shaders.PRELUDE_FS + shaders.HEMILIGHT_FS, p),
@@ -819,10 +821,10 @@ Viewer.prototype = {
 
     options.color = options.color || color.byElement();
     options.cylRadius = options.radius || options.cylRadius || 0.1;
-    options.sphereRadius = options.radius || options.sphereRadius || 0.3;
+    options.sphereRadius = options.radius || options.sphereRadius || 0.2;
     options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
     options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
-    options.scaleByAtomRadius = options.scaleByAtomRadius || true;
+    options.scaleByAtomRadius = optValue(options, 'scaleByAtomRadius', true); 
 
     var obj = render.ballsAndSticks(structure, this._canvas.gl(), options);
     return this.add(name, obj);
