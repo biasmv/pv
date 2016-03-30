@@ -97,7 +97,7 @@ function shouldUseHighPrecision(gl) {
   // high precision for shaders is only required on iOS, all the other browsers 
   // are doing just fine with mediump.
   var highp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
-  var highpSupported = highp.precision != 0;
+  var highpSupported = !!highp.precision;
   return highpSupported && (isiOS() || isAndroid());
 }
 
