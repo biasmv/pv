@@ -181,7 +181,7 @@ TouchHandler.prototype = {
       var pointer = this._touchState.pointers[0];
       var picked = this._viewer.pick(
           { x : pointer.x - rect.left, y : pointer.y - rect.top });
-      this._viewer._dispatchEvent(event, 'touchend', picked);
+      this._viewer._dispatchEvent(event, 'click', picked);
     } 
   },
 };
