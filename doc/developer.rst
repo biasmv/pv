@@ -43,6 +43,7 @@ Before submitting, or sending the pull request
  - make sure that there are no unrelated changes checked in.
  - run grunt to check for any coding convention violations and in general make sure that grunt is still able to minify your code without problems.
  - in case you are adding new functionality, make sure you area adding it to the API documentation
+ - make sure you don't check-in changes to bio-pv.min.js. These changes are  very likely to cause conflicts.
 
 
 
