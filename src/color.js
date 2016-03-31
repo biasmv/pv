@@ -79,6 +79,7 @@ var COLORS = {
 
 
 exports.hex2rgb = function(color, alpha) {
+  alpha = alpha === undefined ? 1.0 : + alpha;
   var r, g, b, a;
   if (color.length === 4 || color.length === 5 ) {
     r = parseInt(color[1], 16);
