@@ -271,7 +271,7 @@ Viewer.prototype = {
       outline : optValue(opts, 'outline', true),
       outlineColor : color.forceRGB(optValue(opts, 'outlineColor', 'black')),
       outlineWidth: optValue(opts, 'outlineWidth', 1.5),
-      selectionColor : color.forceRGB(optValue(opts, 'selectionColor', '#3f3')),
+      selectionColor : color.forceRGB(optValue(opts, 'selectionColor', '#3f3'), 0.7),
       fov : optValue(opts, 'fov', 45.0),
       doubleClick : getDoubleClickHandler(opts),
       click : getClickHandler(opts),
@@ -332,7 +332,7 @@ Viewer.prototype = {
       } else if (optName === 'fov') {
         this._cam.setFieldOfViewY(value * Math.PI / 180.0);
       } else if (optName === 'selectionColor') {
-        this._cam.setSelectionColor(color.forceRGB(value));
+        this._cam.setSelectionColor(color.forceRGB(value, 0.7));
       } else if (optName === 'outlineColor') {
         this._cam.setOutlineColorColor(color.forceRGB(value));
       } else if (optName === 'outlineWidth') {

@@ -36,6 +36,7 @@ var rgb = exports.rgb;
 exports.rgb.create = vec4.create;
 exports.rgb.scale = vec4.scale;
 exports.rgb.copy = vec4.copy;
+exports.rgb.clone = vec4.clone;
 exports.rgb.fromValues = vec4.fromValues;
 
 exports.rgb.mix = function(out, colorOne, colorTwo, t) {
@@ -77,13 +78,13 @@ var COLORS = {
 };
 
 
-exports.hex2rgb = function(color){
+exports.hex2rgb = function(color, alpha) {
   var r, g, b, a;
   if (color.length === 4 || color.length === 5 ) {
     r = parseInt(color[1], 16);
     g = parseInt(color[2], 16);
     b = parseInt(color[3], 16);
-    a = 15;
+    a = Math.round(alpha * 15);
     if(color.length===5) {
       a = parseInt(color[4], 16);
     }
@@ -95,7 +96,7 @@ exports.hex2rgb = function(color){
     r = parseInt(color.substr(1, 2), 16);
     g = parseInt(color.substr(3, 2), 16);
     b = parseInt(color.substr(5, 2), 16);
-    a = 255;
+    a = Math.round(255 * alpha);
     if(color.length===9) {
       a = parseInt(color.substr(7, 2), 16);
     }
@@ -114,19 +115,21 @@ exports.setColorPalette = function(customColors){
 };
 
 // internal function to force various types into an RGBA quadruplet 
-exports.forceRGB = function(color) {
+exports.forceRGB = function(color, alpha) {
+  alpha = alpha === undefined ? 1.0 : +alpha;
   if (typeof color === 'string') {
     var lookup = COLORS[color];
     if (lookup !== undefined) {
-      return lookup;
+      color = rgb.clone(lookup);
+      color[3] = alpha;
     }
     if (color.length > 0 && color[0] === '#') {
-     return exports.hex2rgb(color);
+     return exports.hex2rgb(color, alpha);
     }
   }
   // in case no alpha component is provided, default alpha to 1.0
   if (color.length === 3) {
-    return [color[0], color[1], color[2], 1.0];
+    return [color[0], color[1], color[2], alpha];
   }
   return color;
 };
