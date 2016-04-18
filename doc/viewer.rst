@@ -23,6 +23,7 @@ Initialization and Configuration
   * *width* The width (in pixels) of the viewer. The special value 'auto' can be used to set the width to the width of the parent element. Defaults to 500.
   * *height* The height (in pixels) of the viewer. The special value 'auto' can be used to set the height to the height of the parent element. Defaults to 500.
   * *antialias*: whether full-scene antialiasing should be enabled. When available, antialiasing will use the built-in WebGL antialiasing. When not, it will fall back to a manual supersampling of the scene. Enabling antialiasing improve the visual results considerably, but also slows down rendering. When rendering speed is a concern, the *antialias* option should be set to false. Defaults to false.
+  * *forceManualAntialiasing*: whether manual antialiasing should be enabled. Defaults to true. 
   * *quality* the level of detail for the geometry. Accepted values are *low*, *medium*, and *high*. See :func:`~pv.Viewer.quality` for a description of these values. Defaults to *low*.
   * *slabMode* sets the default slab mode for the viewer. See :func:`~pv.Viewer.slabMode` for possible values. Defaults to 'auto'.
   * *background* set the default background color of the viewer. Defaults to 'white'. See :ref:`pv.color.notation`

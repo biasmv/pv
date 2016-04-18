@@ -264,6 +264,7 @@ Viewer.prototype = {
       height : (opts.height || 500),
       animateTime : (opts.animateTime || 0),
       antialias : opts.antialias,
+      forceManualAntialiasing: optValue(opts, 'forceManualAntialiasing', true),
       quality : optValue(opts, 'quality', 'low'),
       style : optValue(opts, 'style', 'hemilight'),
       background : color.forceRGB(opts.background || 'white'),
@@ -492,6 +493,7 @@ Viewer.prototype = {
   _initCanvas : function() {
     var canvasOptions = {
       antialias : this._options.antialias,
+      forceManualAntialiasing: this._options.forceManualAntialiasing,
       height : this._options.height,
       width : this._options.width,
       backgroundColor : this._options.background
