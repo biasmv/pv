@@ -147,8 +147,8 @@ Canvas.prototype = {
     }
 
     var gl = this._gl;
-    if ((!gl.getContextAttributes().antialias || 
-         this._forceManualAntialiasing) && this._antialias) {
+    if (!gl.getContextAttributes().antialias && 
+        this._forceManualAntialiasing && this._antialias) {
       samples = 2;
     }
     this._realWidth = this._width * samples;
