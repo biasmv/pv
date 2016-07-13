@@ -48,11 +48,11 @@ The following color operations are available:
   :param gradient: The graident to draw colors from. Defaults to rainbow.
   :param coilColor: The color for residues without regular secondary structure. Defaults to lightgrey.
 
-.. function:: pv.color.bySS([gradient])
+.. function:: pv.color.bySS([palette])
 
   Colors the structure based on secondary structure type of the residue. Distinct colors are used for helices, strands and coil residues.
 
-  :param gradient: An optional gradient to draw colors from. Defaults to lightgrey, blue, green gradient.
+  :param palette: An optional `gradient` or `object` to draw colors from. Object must include `C`, `H`, `E` fields. Defaults to lightgrey, blue, green.
 
 
 .. function:: pv.color.rainbow([gradient])

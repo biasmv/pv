@@ -268,9 +268,12 @@ var CPK_TABLE = {
 };
 
 exports.byElement = function(palette) {
+  if (!palette) {
+    palette = CPK_TABLE;
+  }
   return new ColorOp(function(atom, out, index) {
     var ele = atom.element();
-    var color = palette ? palette[ele] : CPK_TABLE[ele];
+    var color = palette[ele];
     if (color !== undefined) {
       out[index] = color[0]; 
       out[index+1] = color[1]; 
@@ -288,12 +291,14 @@ exports.byElement = function(palette) {
 
 exports.bySS = function(grad) {
   var palette;
-  if (grad) {
+  if (grad && Array.isArray(grad)) {
     palette = {
       C: grad._colors[0],
       H: grad._colors[1],
       E: grad._colors[2],
     };
+  } else if (grad) {
+    palette = grad;
   } else {
     palette = {
       C: [0.8, 0.8, 0.8, 1.0],
@@ -303,19 +308,13 @@ exports.bySS = function(grad) {
   }
 
   return new ColorOp(function(atom, out, index) {
-    switch (atom.residue().ss()) {
-      case 'C':
-        out[index] = palette.C[0];   out[index+1] = palette.C[1]; 
-        out[index+2] = palette.C[2]; out[index+3] = palette.C[3];
-        return;
-      case 'H':
-        out[index] = palette.H[0];   out[index+1] = palette.H[1]; 
-        out[index+2] = palette.H[2]; out[index+3] = palette.H[3];
-        return;
-      case 'E':
-        out[index] = palette.E[0];   out[index+1] = palette.E[1]; 
-        out[index+2] = palette.E[2]; out[index+3] = palette.E[3];
-        return;
+    var ss = atom.residue().ss();
+    var color = palette[ss];
+    if (color !== undefined) {
+      out[index] = color[0];
+      out[index+1] = color[1]; 
+      out[index+2] = color[2];
+      out[index+3] = color[3];
     }
   }, null, null);
 };
