@@ -291,7 +291,7 @@ exports.byElement = function(palette) {
 
 exports.bySS = function(grad) {
   var palette;
-  if (grad && Array.isArray(grad)) {
+  if (grad && grad._colors) {
     palette = {
       C: grad._colors[0],
       H: grad._colors[1],
