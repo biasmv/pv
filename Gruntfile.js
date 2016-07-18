@@ -41,6 +41,7 @@ SOURCE_FILES = [
   'src/viewer.js',
   'src/viewpoint.js',
   'src/traj.js',
+  '!src/gunzip.min.js'
 ];
 
 ALL_FILES = ['src/gl-matrix.js'];
@@ -115,7 +116,8 @@ module.exports = function(grunt) {
         browser : true,
         devel : true,
         predef : [ 'define' ],
-        unused : true
+        unused : true,
+        force : true
       },
       all : SOURCE_FILES
     },
@@ -164,6 +166,8 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-remove-logging');
   grunt.loadNpmTasks('grunt-contrib-requirejs');
+  grunt.loadNpmTasks('grunt-contrib-compress');
+
 
   // Default task(s).
   grunt.registerTask('default', [

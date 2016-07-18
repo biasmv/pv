@@ -634,15 +634,38 @@ function endsWith(str, suffix) {
   return str.indexOf(suffix, str.length - suffix.length) !== -1;
 }
 
+function loadCompressed(url) {
+    var req = new XMLHttpRequest();
+    req.open('GET', url, false);
+    req.overrideMimeType('text\/plain; charset=x-user-defined');    
+    req.send(null);
+
+    if (req.status !== 200) {
+        return '';
+    }
+    var rawfile = req.responseText;
+    var bytes = [];
+
+    for (var i = 0; i < rawfile.length; i++) {
+        var abyte = rawfile.charCodeAt(i) & 0xff;
+        bytes.push(abyte);
+    }
+    return bytes;
+}
+
 function fetchPdb(url, callback, options) {
   fetch(url, function(data) {
 
-    $.getScript("gunzip.min.js", function(){
-      if (endsWith(url,"gz")) {
-        var gunzip = new Zlib.Gunzip(data);
-        data = gunzip.decompress();
+    if (endsWith(url,"gz")) {
+      data = loadCompressed(url);
+      var gunzip = new Zlib.Gunzip(data);
+      data = gunzip.decompress();
+      var asciistring = "";
+      for (var i = 0; i < data.length; ++i) {         
+          asciistring += String.fromCharCode(data[i]);
       }
-    });
+    data = asciistring;
+    }
 
     var structure = pdb(data, options);
     callback(structure);
