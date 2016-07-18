@@ -295,10 +295,14 @@ exports.bySS = function(grad) {
     palette = {
       C: grad._colors[0],
       H: grad._colors[1],
-      E: grad._colors[2],
+      E: grad._colors[2]
     };
   } else if (grad) {
-    palette = grad;
+    palette = {
+      C : exports.forceRGB(grad.C),
+      H : exports.forceRGB(grad.H),
+      E : exports.forceRGB(grad.E)
+    };
   } else {
     palette = {
       C: [0.8, 0.8, 0.8, 1.0],
