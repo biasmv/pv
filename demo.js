@@ -95,7 +95,7 @@ function preset() {
 
 function load(pdb_id) {
   $('#traj-widget').hide();
-  $.ajax({ url : 'pdbs/'+pdb_id+'.pdb', success : function(data) {
+  $.ajax({ url : 'pdbs/'+pdb_id+'.pdb.gz', success : function(data) {
     structure = io.pdb(data);
     //mol.assignHelixSheet(structure);
     preset();

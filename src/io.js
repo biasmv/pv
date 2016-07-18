@@ -630,8 +630,20 @@ function fetch(url, callback) {
   oReq.send(null);
 }
 
+function endsWith(str, suffix) {
+  return str.indexOf(suffix, str.length - suffix.length) !== -1;
+}
+
 function fetchPdb(url, callback, options) {
   fetch(url, function(data) {
+
+    $.getScript("gunzip.min.js", function(){
+      if (endsWith(url,"gz")) {
+        var gunzip = new Zlib.Gunzip(data);
+        data = gunzip.decompress();
+      }
+    });
+
     var structure = pdb(data, options);
     callback(structure);
   });
@@ -650,6 +662,8 @@ function fetchCrd(url, callback) {
     callback(structure);
   });
 }
+
+
 
 return {
   pdb : pdb,
