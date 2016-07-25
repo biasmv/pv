@@ -636,7 +636,7 @@ function endsWith(str, suffix) {
 
 function loadCompressed(url) {
     var req = new XMLHttpRequest();
-    req.open('GET', url, false);
+    req.open('GET', url, true);
     req.overrideMimeType('text\/plain; charset=x-user-defined');    
     req.send(null);
 
