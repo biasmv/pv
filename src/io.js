@@ -636,19 +636,21 @@ function endsWith(str, suffix) {
 
 function loadCompressed(url) {
     var req = new XMLHttpRequest();
-    req.open('GET', url, true);
-    req.overrideMimeType('text\/plain; charset=x-user-defined');    
-    req.send(null);
+
+    req.open('GET', url, false);
+    req.overrideMimeType('text\/plain; charset=x-user-defined');
+
+    req.send();
 
     if (req.status !== 200) {
-        return '';
+      return '';
     }
-    var rawfile = req.responseText;
+    var rawfile = req.responseText;  
     var bytes = [];
 
     for (var i = 0; i < rawfile.length; i++) {
-        var abyte = rawfile.charCodeAt(i) & 0xff;
-        bytes.push(abyte);
+      var abyte = rawfile.charCodeAt(i) & 0xff;
+      bytes.push(abyte);
     }
     return bytes;
 }
@@ -662,9 +664,9 @@ function fetchPdb(url, callback, options) {
       data = gunzip.decompress();
       var asciistring = "";
       for (var i = 0; i < data.length; ++i) {         
-          asciistring += String.fromCharCode(data[i]);
+        asciistring += String.fromCharCode(data[i]);
       }
-    data = asciistring;
+      data = asciistring;
     }
 
     var structure = pdb(data, options);

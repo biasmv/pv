@@ -10022,9 +10022,9 @@ io = function (symmetry) {
   }
   function loadCompressed(url) {
     var req = new XMLHttpRequest();
-    req.open('GET', url, true);
+    req.open('GET', url, false);
     req.overrideMimeType('text/plain; charset=x-user-defined');
-    req.send(null);
+    req.send();
     if (req.status !== 200) {
       return '';
     }
