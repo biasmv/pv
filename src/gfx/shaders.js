@@ -271,6 +271,7 @@ varying float vertAlpha;\n\
 varying float vertSelect;\n\
 uniform vec2 relativePixelSize;\n\
 uniform float outlineWidth;\n\
+uniform float outlineOffset;\n\
 \n\
 void main(void) {\n\
   gl_Position = projectionMat * modelviewMat * vec4(attrPos, 1.0);\n\
@@ -281,6 +282,7 @@ void main(void) {\n\
        (outlineWidth + 2.0 * step(0.5, attrSelect));\n\
   vec2 offset = normal.xy * expansion;\n\
   gl_Position.xy += gl_Position.w * offset;\n\
+  gl_Position.z += gl_Position.w * outlineOffset;\n\
 }',
 
 TEXT_VS : '\n\

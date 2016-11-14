@@ -435,6 +435,18 @@ Viewer.prototype = {
     this._boundDraw = utils.bind(this, this._draw);
     this._touchHandler = new TouchHandler(this._canvas.domElement(), 
                                           this, this._cam);
+    var gl = c.gl();
+    var outlineOffset = 0.0;
+    // in case we have fewer than 24 depth bits, we need to add offset
+    // the drawn outline a tiny bit, as otherwise the outline appears on 
+    // top of the actual geometry.
+    if (gl.getParameter(gl.DEPTH_BITS) >= 24) {
+        outlineOffset = 0.00001;
+    } 
+    var outlineProg = this._shaderCatalog.outline;
+    gl.useProgram(outlineProg);
+    gl.uniform1f(gl.getUniformLocation(outlineProg, 'outlineOffset'),
+                 outlineOffset);
     var viewer = this;
     // call init on all registered extensions
     this._extensions.forEach(function(ext) {
