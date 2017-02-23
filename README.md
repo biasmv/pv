@@ -5,6 +5,10 @@ pv - WebGL protein viewer
 
 Because there is nothing worse than an unresponsive website, `pv` has been implemented with maximum performance in mind. Even very large macromolecules can be visualised at interactive framerates.
 
+Project Status
+-----------------------------------------
+
+This project is currently in maintenance mode. I simply just don't have the time to work on it anymore. I'm happy to fix smaller bugs and answer support requests, though it might take a while until I can answer those.
 
 Trying it out
 -----------------------------------------
