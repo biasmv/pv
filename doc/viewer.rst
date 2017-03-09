@@ -317,6 +317,30 @@ Camera Positioning/Orientation
   Request a redraw of the viewer, e.g. to refresh the content visible on the screen. Most of the time, you will not have to call this function directly. However, if you notice that a certain change is not taking effect, try adding requestRedraw().
 
 
+.. function:: pv.setCenter(center, ms)
+
+  Convenience function to set the camera center.
+  
+  :param center: the new camera center.
+  :param ms: if provided and non-zero defines the animation time for moving the camera from the current position to the new center.
+
+.. function:: pv.setRotation(rotation, ms)
+
+  Convenience function to set the camera rotation.
+  
+  :param rotation: Either a 4x4 or 3x3 matrix, e.g. as returned by :func:`mat4.create` or :func:`mat3.create` that contains the rotation.
+  :param ms: if provided and non-zero defines the animation time for moving the camera from the current position to the new center.
+
+.. function:: pv.computeEntropy(rotation)
+
+  Computes the viewpoint-entropy of the view after applying a rotation.
+  The viewpoint-entropy is a measure for the amount of information shown by a view, based on the number of visible pixels
+  for each object. High viewpoint-entropies result in more information shown.
+  A typical use case of this function is to sample a number of camera positions, evaluate the entropy, and chose the
+  maximum for the final view.
+  
+  :param rotation: Either a 4x4 or 3x3 matrix, e.g. as returned by :func:`mat4.create` or :func:`mat3.create` that contains the rotation.
+
 Fog and Slab Modes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
