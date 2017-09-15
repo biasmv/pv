@@ -279,6 +279,7 @@ Viewer.prototype = {
       click : getClickHandler(opts),
       fog : optValue(opts, 'fog', true),
       transparency : optValue(opts, 'transparency', 'alpha'),
+      noKeyboardGrab : optValue(opts, 'noKeyboardGrab', false),
     };
     var parentRect = domElement.getBoundingClientRect();
     if (options.width === 'auto') {
@@ -480,6 +481,10 @@ Viewer.prototype = {
   },
 
   _initKeyboardInput: function() {
+    if (this._options.noKeyboardGrab) {
+        this._keyInput = null;
+        return;
+    }
     if (isiOS() || isAndroid()) {
       this._keyInput = document;
       return;
@@ -497,9 +502,10 @@ Viewer.prototype = {
   },
 
   focus : function() {
-    if (this._keyInput !== document) {
-      this._keyInput.focus();
+    if (this._keyInput === document || this._keyInput === null) {
+      return;
     }
+    this._keyInput.focus();
   },
 
   _initCanvas : function() {
