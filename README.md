@@ -6,6 +6,25 @@ pv - WebGL protein viewer
 Because there is nothing worse than an unresponsive website, `pv` has been implemented with maximum performance in mind. Even very large macromolecules can be visualised at interactive framerates.
 
 
+
+## Build
+
+`scripts/make.sh`
+
+
+
+## Run sample pages
+
+Run in project root directory:
+
+`python -m SimpleHTTPServer`
+
+For cyanide example, go to:
+
+`http://localhost:8000/samples/cyanide/index.html`
+
+
+
 Trying it out
 -----------------------------------------
 
