@@ -8,7 +8,7 @@ Because there is nothing worse than an unresponsive website, `pv` has been imple
 Project Status
 -----------------------------------------
 
-This project is currently in maintenance mode. I simply just don't have the time to work on it anymore. I'm happy to fix smaller bugs and answer support requests, though it might take a while until I can answer those.
+This project is no longer maintained. I simply don't have the time to work on it anymore. 
 
 Trying it out
 -----------------------------------------
