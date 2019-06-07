@@ -1,33 +1,33 @@
 // Copyright (c) 2013-2015 Marco Biasini
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to 
-// deal in the Software without restriction, including without limitation the 
-// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or 
-// sell copies of the Software, and to permit persons to whom the Software is 
+// of this software and associated documentation files (the "Software"), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
-// The above copyright notice and this permission notice shall be included in 
+//
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
-// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+// FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
 // DEALINGS IN THE SOFTWARE.
 
 define({
-// NOTE: The shader code below use the placeholder ${PRECISION} variable 
-// for the shader precision. This values is replaced before compiling 
-// the shader program with highp on iOS and mediump on all other devices. 
-// This is required, because the outline shaders do not work well on iOS 
+// NOTE: The shader code below use the placeholder ${PRECISION} variable
+// for the shader precision. This values is replaced before compiling
+// the shader program with highp on iOS and mediump on all other devices.
+// This is required, because the outline shaders do not work well on iOS
 // with mediump, but some android devices do not support highp.
 
 
-// this fragment shader prelude gets added to all fragment shader code 
-// before  compiling. It essentially contains a selection of functions 
+// this fragment shader prelude gets added to all fragment shader code
+// before  compiling. It essentially contains a selection of functions
 // required by  multiple fragment shaders, e.g. the code for screen-door-
 // transparency, selection highlighting etc.
 PRELUDE_FS : '\n\
@@ -121,7 +121,7 @@ void main(void) {\n\
   gl_PointSize = pointSize * 200.0 / abs(distToCamera); \n\
   vertSelect = attrSelect;\n\
 }',
- 
+
 SELECT_VS : '\n\
 precision ${PRECISION} float;\n\
 uniform mat4 projectionMat;\n\
@@ -319,10 +319,14 @@ void main() { \n\
   if (gl_FragColor.a == 0.0) { discard; }\n\
 }',
 
-// spherical billboard fragment shader
-SPHERES_FS : '\n\
+// extension must come at top of shader file
+SPHERES_EXT : '\n\
 #extension GL_EXT_frag_depth : enable\n\
 \n\
+',
+
+// spherical billboard fragment shader
+SPHERES_FS : '\n\
 varying vec2 vertTex;\n\
 varying vec4 vertCenter;\n\
 varying vec4 vertColor;\n\
@@ -391,8 +395,6 @@ void main() {\n\
 
 // spherical billboard fragment shader
 SELECT_SPHERES_FS : '\n\
-#extension GL_EXT_frag_depth : enable\n\
-\n\
 varying vec2 vertTex;\n\
 varying vec4 vertCenter;\n\
 varying vec4 vertColor;\n\
