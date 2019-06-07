@@ -5,6 +5,10 @@ pv - WebGL protein viewer
 
 Because there is nothing worse than an unresponsive website, `pv` has been implemented with maximum performance in mind. Even very large macromolecules can be visualised at interactive framerates.
 
+Project Status
+-----------------------------------------
+
+This project is currently in maintenance mode. I simply just don't have the time to work on it anymore. I'm happy to fix smaller bugs and answer support requests, though it might take a while until I can answer those.
 
 
 ## Build
@@ -64,7 +68,7 @@ I'm planning on writing a small application note, but in the mean time, use the 
 Contributing
 -----------------------------------------
 
-Contributions of any kind (bugfixes, documentation, new features, etc.) are more than welcome. Just file bugs or open a pull request. Before submitting pull requests, please make sure to follow these [guide-lines](https://github.com/biasmv/pv/blob/master/CONTRIBUTE.md).
+Contributions of any kind (bugfixes, documentation, new features, etc.) are more than welcome. Just file bugs or open a pull request. Before submitting pull requests, please make sure to follow these [guide-lines](http://pv.readthedocs.io/en/v1.8.1/developer.html).
 
 
 Acknowledgements

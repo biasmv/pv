@@ -339,6 +339,7 @@ Cam.prototype = {
     } else {
       this._selectionColor = vec4.clone(color);
     }
+    this._incrementStateId();
   },
 
   // sets all OpenGL parameters to make this camera active.

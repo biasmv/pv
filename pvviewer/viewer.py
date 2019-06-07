@@ -11,7 +11,7 @@ _VIEWER_SCAFFOLD_BEGIN = """
 <script>
     require.config({
         paths: {
-            pv: '//raw.githubusercontent.com/biasmv/pv/master/bio-pv.min'
+            pv: '//cdn.rawgit.com/biasmv/pv/master/bio-pv.min'
         }
     });
     require(["pv"], function (pv) {

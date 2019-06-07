@@ -29,7 +29,7 @@ class PDBViewer(object):
         return """
         <div id="%s" style="width: 500px; height: 500px"><div>
         <script>
-        require.config({paths: {"pv": "//biasmv.github.io/pv/js/pv.min"}});
+        require.config({paths: {"pv": "//cdn.rawgit.com/biasmv/pv/master/bio-pv.min"}});
         require(["pv"], function (pv) {
             pdb = "%s";
             structure = pv.io.pdb(pdb);

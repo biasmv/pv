@@ -26,9 +26,11 @@ The following color operations are available:
 
   :param color: a valid color identifier, or rgb instance to be used for the structure. Defaults to red.
 
-  .. function:: pv.color.byElement()
+  .. function:: pv.color.byElement([palette])
 
   Applies the `CPK coloring scheme <http://en.wikipedia.org/wiki/CPK_coloring>`_ to the atoms. For example, carbon atoms are colored in light-grey, oxygen in red, nitrogen in blue, sulfur in yellow.
+
+  :param palette: an optional object of colors to draw from. Include H, C, N, O, S, P. Defaults to CPK.
 
 
 .. function:: pv.color.byChain([gradient])
@@ -46,9 +48,12 @@ The following color operations are available:
   :param gradient: The graident to draw colors from. Defaults to rainbow.
   :param coilColor: The color for residues without regular secondary structure. Defaults to lightgrey.
 
-.. function:: pv.color.bySS()
+.. function:: pv.color.bySS([palette])
 
   Colors the structure based on secondary structure type of the residue. Distinct colors are used for helices, strands and coil residues.
+
+  :param palette: An optional `gradient` or `object` to draw colors from. Object must include `C`, `H`, `E` fields. Defaults to lightgrey, blue, green.
+
 
 .. function:: pv.color.rainbow([gradient])
 

@@ -114,7 +114,7 @@ utils.derive(TextLabel, SceneNode, {
   _prepareText : function(canvas, ctx, text) {
     this._setupTextParameters(ctx);
     var estimatedWidth = ctx.measureText(text).width;
-    var estimatedHeight = 24;
+    var estimatedHeight = this._options.fontSize;
     canvas.width = smallestPowerOfTwo(estimatedWidth);
     canvas.height = smallestPowerOfTwo(estimatedHeight);
     ctx.fillStyle = this._options.fillStyle;

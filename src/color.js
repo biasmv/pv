@@ -267,10 +267,13 @@ var CPK_TABLE = {
  FE : [0.56, 0.31, 0.12]
 };
 
-exports.byElement = function() {
+exports.byElement = function(palette) {
+  if (!palette) {
+    palette = CPK_TABLE;
+  }
   return new ColorOp(function(atom, out, index) {
     var ele = atom.element();
-    var color = CPK_TABLE[ele];
+    var color = palette[ele];
     if (color !== undefined) {
       out[index] = color[0]; 
       out[index+1] = color[1]; 
@@ -286,22 +289,36 @@ exports.byElement = function() {
   }, null, null);
 };
 
-exports.bySS = function() {
+exports.bySS = function(grad) {
+  var palette;
+  if (grad && grad._colors) {
+    palette = {
+      C: grad._colors[0],
+      H: grad._colors[1],
+      E: grad._colors[2]
+    };
+  } else if (grad) {
+    palette = {
+      C : exports.forceRGB(grad.C),
+      H : exports.forceRGB(grad.H),
+      E : exports.forceRGB(grad.E)
+    };
+  } else {
+    palette = {
+      C: [0.8, 0.8, 0.8, 1.0],
+      H: [0.6, 0.6, 0.9, 1.0],
+      E: [0.2, 0.8, 0.2, 1.0]
+    };
+  }
 
   return new ColorOp(function(atom, out, index) {
-    switch (atom.residue().ss()) {
-      case 'C':
-        out[index] = 0.8;   out[index+1] = 0.8; 
-        out[index+2] = 0.8; out[index+3] = 1.0;
-        return;
-      case 'H':
-        out[index] = 0.6;   out[index+1] = 0.6; 
-        out[index+2] = 0.9; out[index+3] = 1.0;
-        return;
-      case 'E':
-        out[index] = 0.2;   out[index+1] = 0.8; 
-        out[index+2] = 0.2; out[index+3] = 1.0;
-        return;
+    var ss = atom.residue().ss();
+    var color = palette[ss];
+    if (color !== undefined) {
+      out[index] = color[0];
+      out[index+1] = color[1]; 
+      out[index+2] = color[2];
+      out[index+3] = color[3];
     }
   }, null, null);
 };

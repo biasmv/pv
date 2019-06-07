@@ -264,6 +264,7 @@ Viewer.prototype = {
       height : (opts.height || 500),
       animateTime : (opts.animateTime || 0),
       antialias : opts.antialias,
+      forceManualAntialiasing: optValue(opts, 'forceManualAntialiasing', true),
       quality : optValue(opts, 'quality', 'low'),
       style : optValue(opts, 'style', 'hemilight'),
       background : color.forceRGB(opts.background || 'white'),
@@ -278,6 +279,7 @@ Viewer.prototype = {
       click : getClickHandler(opts),
       fog : optValue(opts, 'fog', true),
       transparency : optValue(opts, 'transparency', 'alpha'),
+      noKeyboardGrab : optValue(opts, 'noKeyboardGrab', false),
     };
     var parentRect = domElement.getBoundingClientRect();
     if (options.width === 'auto') {
@@ -434,6 +436,18 @@ Viewer.prototype = {
     this._boundDraw = utils.bind(this, this._draw);
     this._touchHandler = new TouchHandler(this._canvas.domElement(), 
                                           this, this._cam);
+    var gl = c.gl();
+    var outlineOffset = 0.0;
+    // in case we have fewer than 24 depth bits, we need to add offset
+    // the drawn outline a tiny bit, as otherwise the outline appears on 
+    // top of the actual geometry.
+    if (gl.getParameter(gl.DEPTH_BITS) >= 24) {
+        outlineOffset = 0.00001;
+    } 
+    var outlineProg = this._shaderCatalog.outline;
+    gl.useProgram(outlineProg);
+    gl.uniform1f(gl.getUniformLocation(outlineProg, 'outlineOffset'),
+                 outlineOffset);
     var viewer = this;
     // call init on all registered extensions
     this._extensions.forEach(function(ext) {
@@ -467,6 +481,10 @@ Viewer.prototype = {
   },
 
   _initKeyboardInput: function() {
+    if (this._options.noKeyboardGrab) {
+        this._keyInput = null;
+        return;
+    }
     if (isiOS() || isAndroid()) {
       this._keyInput = document;
       return;
@@ -484,14 +502,16 @@ Viewer.prototype = {
   },
 
   focus : function() {
-    if (this._keyInput !== document) {
-      this._keyInput.focus();
+    if (this._keyInput === document || this._keyInput === null) {
+      return;
     }
+    this._keyInput.focus();
   },
 
   _initCanvas : function() {
     var canvasOptions = {
       antialias : this._options.antialias,
+      forceManualAntialiasing: this._options.forceManualAntialiasing,
       height : this._options.height,
       width : this._options.width,
       backgroundColor : this._options.background
