@@ -20,44 +20,44 @@
 
 
 define([
-  './gl-matrix', 
-  './color', 
-  './unique-object-id-pool', 
-  './gfx/canvas', 
-  './utils', 
-  './gfx/framebuffer', 
-  './buffer-allocators', 
-  './gfx/cam', 
-  './gfx/shaders', 
-  './touch', 
-  './mouse', 
-  './gfx/render', 
-  './gfx/label', 
-  './gfx/custom-mesh', 
-  './gfx/animation', 
+  './gl-matrix',
+  './color',
+  './unique-object-id-pool',
+  './gfx/canvas',
+  './utils',
+  './gfx/framebuffer',
+  './buffer-allocators',
+  './gfx/cam',
+  './gfx/shaders',
+  './touch',
+  './mouse',
+  './gfx/render',
+  './gfx/label',
+  './gfx/custom-mesh',
+  './gfx/animation',
   './gfx/scene-node',
   './geom',
-  './slab'], 
+  './slab'],
   function(
-    glMatrix, 
-    color, 
-    UniqueObjectIdPool, 
-    canvas, 
-    utils, 
-    FrameBuffer, 
-    PoolAllocator, 
-    Cam, 
-    shaders, 
-    TouchHandler, 
+    glMatrix,
+    color,
+    UniqueObjectIdPool,
+    canvas,
+    utils,
+    FrameBuffer,
+    PoolAllocator,
+    Cam,
+    shaders,
+    TouchHandler,
     MouseHandler,
-    render, 
-    TextLabel, 
-    CustomMesh, 
-    anim, 
+    render,
+    TextLabel,
+    CustomMesh,
+    anim,
     SceneNode,
     geom,
     // slab must be last due to a problem in AMDClean that occurs
-    // when the last parameter name does not match the module file 
+    // when the last parameter name does not match the module file
     // name
     slab) {
 
@@ -94,7 +94,7 @@ function isAndroid() {
   return (/Android/ig).test(navigator.userAgent);
 }
 function shouldUseHighPrecision(gl) {
-  // high precision for shaders is only required on iOS, all the other browsers 
+  // high precision for shaders is only required on iOS, all the other browsers
   // are doing just fine with mediump.
   var highp = gl.getShaderPrecisionFormat(gl.FRAGMENT_SHADER, gl.HIGH_FLOAT);
   var highpSupported = !!highp.precision;
@@ -121,7 +121,7 @@ function slabModeToStrategy(mode, options) {
 }
 
 
-function PickedObject(target, node, symIndex, pos, object, 
+function PickedObject(target, node, symIndex, pos, object,
                       transform, connectivity) {
   this._pos = pos;
   this._target = target;
@@ -133,8 +133,8 @@ function PickedObject(target, node, symIndex, pos, object,
 }
 
 PickedObject.prototype =  {
-  symIndex : function() { 
-    return this._symIndex; 
+  symIndex : function() {
+    return this._symIndex;
   },
   target : function() {
     return this._target;
@@ -171,7 +171,7 @@ function Viewer(domElement, opts) {
   this._resize = false;
   this._lastTimestamp = null;
   this._objectIdManager = new UniqueObjectIdPool();
-  // these two are set to the animation objects when spin/rockAndRoll 
+  // these two are set to the animation objects when spin/rockAndRoll
   // are active
   this._spin = null;
   this._rockAndRoll = null;
@@ -183,7 +183,7 @@ function Viewer(domElement, opts) {
   // NOTE: make sure to only request features supported by all browsers,
   // not only browsers that support WebGL in this constructor. WebGL
   // detection only happens in Viewer._initGL. Once this happened, we are
-  // save to use whatever feature pleases us, e.g. typed arrays, 2D 
+  // save to use whatever feature pleases us, e.g. typed arrays, 2D
   // contexts etc.
   this._initCanvas();
 
@@ -195,14 +195,14 @@ function Viewer(domElement, opts) {
   if (this._options.doubleClick !== null) {
     this.on('doubleClick', this._options.doubleClick);
   }
-  
 
-  if (document.readyState === "complete" ||  
-    document.readyState === "loaded" ||  
+
+  if (document.readyState === "complete" ||
+    document.readyState === "loaded" ||
       document.readyState === "interactive") {
     this._initViewer();
   } else {
-    document.addEventListener('DOMContentLoaded', 
+    document.addEventListener('DOMContentLoaded',
                               utils.bind(this, this._initViewer));
   }
 }
@@ -272,7 +272,7 @@ Viewer.prototype = {
       outline : optValue(opts, 'outline', true),
       outlineColor : color.forceRGB(optValue(opts, 'outlineColor', 'black')),
       outlineWidth: optValue(opts, 'outlineWidth', 1.5),
-      selectionColor : color.forceRGB(optValue(opts, 'selectionColor', '#3f3'), 
+      selectionColor : color.forceRGB(optValue(opts, 'selectionColor', '#3f3'),
                                       0.7),
       fov : optValue(opts, 'fov', 45.0),
       doubleClick : getDoubleClickHandler(opts),
@@ -297,7 +297,7 @@ Viewer.prototype = {
       return;
     }
     this._resize = false;
-    this._cam.setViewportSize(this._canvas.viewportWidth(), 
+    this._cam.setViewportSize(this._canvas.viewportWidth(),
                               this._canvas.viewportHeight());
     this._pickBuffer.resize(this._options.width, this._options.height);
   },
@@ -412,38 +412,38 @@ Viewer.prototype = {
     var c = this._canvas;
     var p = shouldUseHighPrecision(c.gl()) ? 'highp' : 'mediump';
     this._shaderCatalog = {
-      hemilight : c.initShader(shaders.HEMILIGHT_VS, 
+      hemilight : c.initShader(shaders.HEMILIGHT_VS,
                                shaders.PRELUDE_FS + shaders.HEMILIGHT_FS, p),
-      phong : c.initShader(shaders.HEMILIGHT_VS, 
+      phong : c.initShader(shaders.HEMILIGHT_VS,
                            shaders.PRELUDE_FS + shaders.PHONG_FS, p),
-      outline : c.initShader(shaders.OUTLINE_VS, 
+      outline : c.initShader(shaders.OUTLINE_VS,
                              shaders.PRELUDE_FS + shaders.OUTLINE_FS, p),
-      lines : c.initShader(shaders.LINES_VS, 
+      lines : c.initShader(shaders.LINES_VS,
                            shaders.PRELUDE_FS + shaders.LINES_FS, p),
       text : c.initShader(shaders.TEXT_VS, shaders.TEXT_FS, p),
-      selectLines : c.initShader(shaders.SELECT_LINES_VS, 
+      selectLines : c.initShader(shaders.SELECT_LINES_VS,
                                  shaders.SELECT_LINES_FS, p),
       select : c.initShader(shaders.SELECT_VS, shaders.SELECT_FS, p)
     };
     if (c.gl().getExtension('EXT_frag_depth')) {
-      this._shaderCatalog.spheres = 
-        c.initShader(shaders.SPHERES_VS, 
-                     shaders.PRELUDE_FS + shaders.SPHERES_FS, p);
-      this._shaderCatalog.selectSpheres = 
-        c.initShader(shaders.SELECT_SPHERES_VS, 
-                     shaders.PRELUDE_FS + shaders.SELECT_SPHERES_FS, p);
+      this._shaderCatalog.spheres =
+        c.initShader(shaders.SPHERES_VS,
+                     shaders.SPHERES_EXT + shaders.PRELUDE_FS + shaders.SPHERES_FS, p);
+      this._shaderCatalog.selectSpheres =
+        c.initShader(shaders.SELECT_SPHERES_VS,
+                     shaders.SPHERES_EXT + shaders.PRELUDE_FS + shaders.SELECT_SPHERES_FS, p);
     }
     this._boundDraw = utils.bind(this, this._draw);
-    this._touchHandler = new TouchHandler(this._canvas.domElement(), 
+    this._touchHandler = new TouchHandler(this._canvas.domElement(),
                                           this, this._cam);
     var gl = c.gl();
     var outlineOffset = 0.0;
     // in case we have fewer than 24 depth bits, we need to add offset
-    // the drawn outline a tiny bit, as otherwise the outline appears on 
+    // the drawn outline a tiny bit, as otherwise the outline appears on
     // top of the actual geometry.
     if (gl.getParameter(gl.DEPTH_BITS) >= 24) {
         outlineOffset = 0.00001;
-    } 
+    }
     var outlineProg = this._shaderCatalog.outline;
     gl.useProgram(outlineProg);
     gl.uniform1f(gl.getUniformLocation(outlineProg, 'outlineOffset'),
@@ -489,9 +489,9 @@ Viewer.prototype = {
       this._keyInput = document;
       return;
     }
-    // this function creates a textarea element inside a div with height 
-    // and width of zero. When the user clicks on the viewer, we set 
-    // focus on the text area to receive text input. This makes sure we 
+    // this function creates a textarea element inside a div with height
+    // and width of zero. When the user clicks on the viewer, we set
+    // focus on the text area to receive text input. This makes sure we
     // only capture keypress events when the viewer is focused.
     var zeroSizedDiv = document.createElement('div');
     zeroSizedDiv.setAttribute('style', 'overflow:hidden;width:0;height:0');
@@ -520,7 +520,7 @@ Viewer.prototype = {
     this._textureCanvas = document.createElement('canvas');
     this._textureCanvas.style.display = 'none';
     this._domElement.appendChild(this._textureCanvas);
-    this._mouseHandler = new MouseHandler(this._canvas, this, this._cam, 
+    this._mouseHandler = new MouseHandler(this._canvas, this, this._cam,
                                           this._options.animateTime);
     this._canvas.domElement()
         .addEventListener('mousedown', utils.bind(this, this.focus));
@@ -539,7 +539,7 @@ Viewer.prototype = {
         this.requestRedraw();
         return;
       }
-      this._animControl.add(anim.move(this._cam.center(), 
+      this._animControl.add(anim.move(this._cam.center(),
                                       vec3.clone(newCenter), ms));
       this.requestRedraw();
     };
@@ -561,10 +561,10 @@ Viewer.prototype = {
         return;
       }
 
-      this._animControl.add(anim.rotate(this._cam.rotation(), 
+      this._animControl.add(anim.rotate(this._cam.rotation(),
                                         targetRotation4, ms));
       this.requestRedraw();
-    }; 
+    };
   })(),
 
   setRotation : function(rotation, ms) {
@@ -575,7 +575,7 @@ Viewer.prototype = {
       return;
     }
     // in case it's a mat3, convert to mat4
-    var rotation4;  
+    var rotation4;
     if (rotation.length === 9) {
       rotation4 = mat4.create();
       mat4.fromMat3(rotation4, rotation);
@@ -637,7 +637,7 @@ Viewer.prototype = {
       this._cam.setCenter(center);
       return;
     }
-    this._animControl.add(anim.move(this._cam.center(), 
+    this._animControl.add(anim.move(this._cam.center(),
                                     vec3.clone(center), ms));
     this.requestRedraw();
   },
@@ -668,12 +668,12 @@ Viewer.prototype = {
   },
 
   on : function(eventName, callback) {
-    if (eventName === 'keypress' || 
-        eventName === 'keydown' || 
+    if (eventName === 'keypress' ||
+        eventName === 'keydown' ||
         eventName === 'keyup') {
-      // attach keyboard events to key input text area. We will 
-      // only receive these events in case the text area has focus. Note that 
-      // _keyInput is set to the document in case we are running on a 
+      // attach keyboard events to key input text area. We will
+      // only receive these events in case the text area has focus. Note that
+      // _keyInput is set to the document in case we are running on a
       // tablet/phone as we wold pop up the on-screen keyboard otherwise.
       this._keyInput.addEventListener(eventName, callback, false);
       return;
@@ -682,7 +682,7 @@ Viewer.prototype = {
       this._cam.addOnCameraChanged(callback);
       return;
     }
-    if (eventName === 'mousemove' || 
+    if (eventName === 'mousemove' ||
         eventName === 'mousedown' || eventName === 'mouseup') {
       this._canvas.domElement().addEventListener(eventName, callback, false);
     }
@@ -693,22 +693,22 @@ Viewer.prototype = {
       this.listenerMap[eventName] = callbacks;
     }
     if (callback === 'center') {
-      var cb = utils.bind(this._mouseHandler, 
+      var cb = utils.bind(this._mouseHandler,
                           this._mouseHandler._centerOnClicked);
       callbacks.push(cb);
     } else {
       callbacks.push(callback);
     }
-    // in case viewer is already initialized, fire viewerReady immediately. 
+    // in case viewer is already initialized, fire viewerReady immediately.
     // Otherwise, the callback would never be invoked in this case:
-    //  
+    //
     // document.addEventListener('DOMContentLoaded', function() {
     //    viewer = pv.Viewer(...);
     //    viewer.on('viewerReady', function(viewer) {
     //    });
     // });
     if (this._initialized && eventName === 'viewerReady') {
-      // don't use dispatch here, we only want this very callback to be 
+      // don't use dispatch here, we only want this very callback to be
       // invoked.
       callback(this, null);
     }
@@ -723,8 +723,8 @@ Viewer.prototype = {
     }
   },
 
-  RENDER_MODES : [ 
-    'sline', 'lines', 'trace', 'lineTrace', 'cartoon', 'tube', 'spheres', 
+  RENDER_MODES : [
+    'sline', 'lines', 'trace', 'lineTrace', 'cartoon', 'tube', 'spheres',
     'ballsAndSticks', 'points'
   ],
 
@@ -783,8 +783,8 @@ Viewer.prototype = {
     options.sphereDetail = this.options('sphereDetail');
     options.radiusMultiplier = options.radiusMultiplier || 1.0;
     var obj;
-    // in case we can write to the depth buffer from the fragment shader 
-    // (EXT_frag_depth) we can use billboarded spheres instead of creating 
+    // in case we can write to the depth buffer from the fragment shader
+    // (EXT_frag_depth) we can use billboarded spheres instead of creating
     // the full sphere geometry. That's faster AND looks better.
     if (this._canvas.gl().getExtension('EXT_frag_depth')) {
       obj = render.billboardedSpheres(structure, this._canvas.gl(), options);
@@ -813,7 +813,7 @@ Viewer.prototype = {
     options.arcDetail = options.arcDetail || this.options('arcDetail');
     options.radius = options.radius || 0.3;
     options.forceTube = options.forceTube || false;
-    options.smoothStrands = 
+    options.smoothStrands =
         options.smoothStrands === undefined ? true : options.smoothStrands;
     var obj = render.cartoon(structure, this._canvas.gl(), options);
     var added = this.add(name, obj);
@@ -844,7 +844,7 @@ Viewer.prototype = {
     options.sphereRadius = options.radius || options.sphereRadius || 0.2;
     options.arcDetail = (options.arcDetail || this.options('arcDetail')) * 2;
     options.sphereDetail = options.sphereDetail || this.options('sphereDetail');
-    options.scaleByAtomRadius = optValue(options, 'scaleByAtomRadius', true); 
+    options.scaleByAtomRadius = optValue(options, 'scaleByAtomRadius', true);
 
     var obj = render.ballsAndSticks(structure, this._canvas.gl(), options);
     return this.add(name, obj);
@@ -972,7 +972,7 @@ Viewer.prototype = {
         this.requestRedraw();
       }
       return true;
-    } 
+    }
     this._animControl.remove(this._rockAndRoll);
     this._rockAndRoll = null;
     this.requestRedraw();
@@ -988,7 +988,7 @@ Viewer.prototype = {
       this._spin = null;
       this.requestRedraw();
       return false;
-    } 
+    }
     if (speed === true) {
       speed = Math.PI/8;
     }
@@ -1016,16 +1016,16 @@ Viewer.prototype = {
   },
 
   label : function(name, text, pos, options) {
-    var label = new TextLabel(this._canvas.gl(), this._textureCanvas, 
+    var label = new TextLabel(this._canvas.gl(), this._textureCanvas,
                               this._2dcontext, pos, text, options);
     this.add(name, label);
     return label;
   },
   customMesh : function(name, opts) {
     var options = this._handleStandardOptions(opts);
-    
-    var mesh = new CustomMesh(name, this._canvas.gl(), 
-                              options.float32Allocator, 
+
+    var mesh = new CustomMesh(name, this._canvas.gl(),
+                              options.float32Allocator,
                               options.uint16Allocator,
                               options.idPool);
     this.add(name, mesh);
@@ -1039,7 +1039,7 @@ Viewer.prototype = {
     gl.clearColor(0.0, 0.0, 0.0, 0.0);
     gl.disable(gl.BLEND);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-    gl.clearColor(this._options.background[0], this._options.background[1], 
+    gl.clearColor(this._options.background[0], this._options.background[1],
                   this._options.background[2], 1.0);
     gl.cullFace(gl.FRONT);
     gl.enable(gl.CULL_FACE);
@@ -1084,7 +1084,7 @@ Viewer.prototype = {
           transformedPos = picked.center;
         }
       }
-      return new PickedObject(target, picked.geom, 
+      return new PickedObject(target, picked.geom,
                               symIndex < 255 ? symIndex : null,
                               transformedPos, picked, transform,
                               connectivity);
@@ -1094,8 +1094,8 @@ Viewer.prototype = {
   add : function(name, obj) {
     obj.name(name);
     this._objects.push(obj);
-    this._objects.sort(function(lhs, rhs) { 
-      return lhs.order() - rhs.order(); 
+    this._objects.sort(function(lhs, rhs) {
+      return lhs.order() - rhs.order();
     });
     this.requestRedraw();
     return obj;
@@ -1179,9 +1179,9 @@ Viewer.prototype = {
 
 Viewer.prototype.addListener = Viewer.prototype.on;
 
-return { 
-  Viewer : function(elem, options) { 
-    return new Viewer(elem, options); 
+return {
+  Viewer : function(elem, options) {
+    return new Viewer(elem, options);
   },
   isWebGLSupported : canvas.isWebGLSupported
 };
